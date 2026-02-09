@@ -8,10 +8,13 @@ This repository stores project management requirements and execution logs for a 
 - Per-member work logs
 - Team-level daily/weekly summary
 - Cross-tool machine-readable format (Markdown + YAML front matter + JSON Schema)
+- Tool-agnostic project requirements and tooling adapters
 
 ## Directory Layout
 
+- `PROJECT_REQUIREMENTS.md`: Tool-agnostic project requirements (`MUST/SHOULD/MAY`).
 - `PROJECT_MANAGEMENT_REQUIREMENTS.md`: Project management policy and mandatory logging rules.
+- `TOOLING_ADAPTERS.md`: Mapping from tool-specific behavior (for example Codex) to project policy.
 - `logs/daily/`: Daily project-level entries (`YYYY-MM-DD.md`).
 - `logs/members/`: Per-member logs (`<member-id>/YYYY-MM-DD.md`).
 - `logs/summary/`: Team summaries (`weekly-YYYY-Www.md`, `monthly-YYYY-MM.md`).
