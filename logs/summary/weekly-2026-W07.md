@@ -6,33 +6,33 @@ author: project-manager
 updated_at: 2026-02-09T18:00:00+08:00
 ---
 
-# Team Weekly Summary - 2026-W07
+# 团队周报 - 2026-W07
 
-## Completed Outputs
+## 已完成产出
 
-- item: Initialized PM repository and logging standards
+- item: 初始化项目管理仓库与日志标准
   owner: project-manager
-  business_value: Enables multi-person, multi-tool execution traceability
+  business_value: 支持多人、多工具执行过程可追溯
 
-## Outstanding / Blocked
+## 待处理 / 阻塞
 
-- item: Contributor registry and role matrix
-  blocker: Pending team onboarding
+- item: 贡献者名录与角色矩阵
+  blocker: 待团队完成入组
   owner: project-manager
 
-## Risk Trend
+## 风险趋势
 
-- risk: Inconsistent logging behavior across tools in early phase
+- risk: 早期阶段跨工具日志行为不一致
   trend: flat
-  note: Mitigated by templates and schema validation
+  note: 通过模板与 Schema 校验进行缓解
 
-## Next Week Priorities
+## 下周优先事项
 
-- priority: onboard contributors and enforce daily logs
+- priority: 完成贡献者入组并执行每日日志机制
   owner: project-manager
   target_date: 2026-02-12
 
-## Evidence Links
+## 证据链接
 
 - type: doc
   ref: /Users/01411043/code/ShowHub/spatial-intelligence-data-factory/README.md

@@ -1,16 +1,16 @@
-# Project Management Requirements
+# 项目管理要求
 
-## 1. Objective
+## 1. 目标
 
-Create a durable process record that can be understood by different contributors, AI coding environments, and toolchains.
+建立可长期维护的流程记录，便于不同贡献者、AI 编码环境与工具链理解和执行。
 
-## 2. Mandatory Logging Objects
+## 2. 强制日志对象
 
-1. Project daily key output log
-2. Individual member daily log
-3. Team summary log (weekly/monthly)
+1. 项目每日关键产出日志
+2. 成员个人每日日志
+3. 团队汇总日志（周/月）
 
-## 3. Required Fields (All Logs)
+## 3. 必填字段（所有日志）
 
 - `date`
 - `timezone`
@@ -23,35 +23,35 @@ Create a durable process record that can be understood by different contributors
 - `evidence_links`
 - `updated_at`
 
-## 4. Governance Rules
+## 4. 治理规则
 
-1. Every contributor must submit a daily log before end-of-day.
-2. Every deliverable entry must map to at least one evidence link.
-3. Weekly summary must aggregate:
-- completed outputs
-- blocked items
-- risk trend
-- next-week priorities
-4. Any scope or architecture decision change must be recorded in logs on the same day.
-5. Logs are append-only for history. If corrections are required, add a correction entry with timestamp.
+1. 每位贡献者必须在当日结束前提交每日日志。
+2. 每条交付记录必须对应至少一个证据链接。
+3. 周报必须汇总：
+- 已完成产出
+- 阻塞事项
+- 风险趋势
+- 下周优先级
+4. 任何范围或架构决策变更必须在当日写入日志。
+5. 日志历史采用追加写入；若需更正，必须新增带时间戳的更正记录。
 
-## 5. Definition of Done (Log Compliance)
+## 5. 完成定义（日志合规）
 
-A day is compliant only if:
-1. Project daily log exists.
-2. Each active contributor has an individual log.
-3. Evidence links are valid and reachable in repository/tooling context.
-4. Next actions are explicit and executable.
+仅在满足以下条件时，当日才算合规：
+1. 存在项目每日日志。
+2. 每位活跃贡献者都有个人日志。
+3. 证据链接在仓库/工具上下文中有效且可访问。
+4. 后续行动明确且可执行。
 
-## 6. Cross-Environment Compatibility Standard
+## 6. 跨环境兼容标准
 
-1. Markdown files must use UTF-8 and Unix line endings.
-2. Front matter must be valid YAML.
-3. Fields must conform to `schemas/worklog.schema.json`.
-4. Prefer stable IDs over free text when possible (`task_id`, `epic_id`, `story_id`).
+1. Markdown 文件必须使用 UTF-8 和 Unix 换行。
+2. Front Matter 必须是合法 YAML。
+3. 字段必须符合 `schemas/worklog.schema.json`。
+4. 在可行时优先使用稳定 ID，而不是自由文本（`task_id`、`epic_id`、`story_id`）。
 
-## 7. Recommended Automation
+## 7. 推荐自动化
 
-1. CI validation for front matter + JSON Schema compliance.
-2. Daily check for missing member logs.
-3. Weekly auto-generation of summary draft from individual logs.
+1. 通过 CI 校验 Front Matter 与 JSON Schema 合规性。
+2. 每日检查缺失的成员日志。
+3. 每周根据成员日志自动生成汇总草稿。

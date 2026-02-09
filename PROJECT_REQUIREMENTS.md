@@ -1,103 +1,103 @@
 # PROJECT REQUIREMENTS
 
-## 1. Purpose
+## 1. 目的
 
-Define tool-agnostic project requirements that work across teams and AI coding environments.
+定义可跨团队与 AI 编码环境通用的工具无关项目要求。
 
-## 2. Scope
+## 2. 范围
 
-Applies to requirement management, delivery process, quality gates, worklogs, and security controls.
+适用于需求管理、交付流程、质量门禁、工作日志与安全控制。
 
-## 3. Requirement Levels
+## 3. 要求等级
 
-- MUST: mandatory, non-compliance blocks delivery.
-- SHOULD: recommended default.
-- MAY: optional enhancement.
+- MUST：强制要求，不满足即阻断交付。
+- SHOULD：推荐默认做法。
+- MAY：可选增强项。
 
-## 4. Governance
+## 4. 治理
 
-### 4.1 Ownership
+### 4.1 责任归属
 
-- MUST assign `Project Owner`, `Tech Lead`, and `Release Owner`.
-- MUST assign one clear owner to each work item.
-- SHOULD assign backup owner for critical streams.
+- MUST 指定 `Project Owner`、`Tech Lead` 与 `Release Owner`。
+- MUST 为每个工作项指定唯一明确负责人。
+- SHOULD 为关键工作流指定后备负责人。
 
-### 4.2 Decision Traceability
+### 4.2 决策可追溯性
 
-- MUST record major decisions in ADR-like form.
-- MUST include context, options, decision, impact, and rollback condition.
-- SHOULD review unresolved risks weekly.
+- MUST 以类似 ADR 的形式记录重大决策。
+- MUST 包含背景、备选方案、决策内容、影响与回滚条件。
+- SHOULD 每周审查未解决风险。
 
-## 5. Delivery Process
+## 5. 交付流程
 
-### 5.1 Requirement to Delivery
+### 5.1 从需求到交付
 
-- MUST define acceptance criteria before implementation.
-- MUST keep tasks small enough for one iteration and one validation cycle.
-- SHOULD structure planning as `Epic -> Story -> Task`.
+- MUST 在实现前定义验收标准。
+- MUST 将任务拆分到可在一次迭代与一次验证周期内完成。
+- SHOULD 采用 `Epic -> Story -> Task` 的规划结构。
 
-### 5.2 Branch and Commit
+### 5.2 分支与提交
 
-- MUST follow controlled branch strategy (for example `main` + feature/hotfix).
-- MUST use a consistent commit format (for example Conventional Commits).
-- MUST avoid direct unreviewed merge to `main`, except emergency fixes with post-review.
+- MUST 遵循受控分支策略（例如 `main` + feature/hotfix）。
+- MUST 使用一致的提交格式（例如 Conventional Commits）。
+- MUST 避免未经评审直接合并到 `main`，紧急修复除外但需事后评审。
 
-### 5.3 Code Review
+### 5.3 代码评审
 
-- MUST review all code changes before merge.
-- MUST check correctness, regression risk, and test coverage in review.
-- SHOULD require dual review for high-risk modules.
+- MUST 所有代码变更在合并前完成评审。
+- MUST 在评审中检查正确性、回归风险与测试覆盖。
+- SHOULD 对高风险模块执行双人评审。
 
-## 6. Quality Gates
+## 6. 质量门禁
 
-### 6.1 Pre-merge Gates
+### 6.1 合并前门禁
 
-- MUST pass lint checks.
-- MUST pass automated tests.
-- MUST pass build validation.
-- MUST include regression evidence for critical-path changes.
+- MUST 通过 Lint 检查。
+- MUST 通过自动化测试。
+- MUST 通过构建校验。
+- MUST 为关键路径变更提供回归验证证据。
 
-### 6.2 Release Gates
+### 6.2 发布门禁
 
-- MUST provide release change list and rollback plan.
-- MUST ensure observability for key signals (error rate, latency, availability).
-- SHOULD run a short post-release stabilization check.
+- MUST 提供发布变更清单与回滚方案。
+- MUST 确保关键指标具备可观测性（错误率、延迟、可用性）。
+- SHOULD 执行简短的发布后稳定性检查。
 
-## 7. Worklog Standard
+## 7. 工作日志标准
 
-### 7.1 Daily Project Log
+### 7.1 项目每日日志
 
-- MUST record daily key outputs, risks, and next actions.
-- MUST attach at least one evidence link for each key output.
+- MUST 记录每日关键产出、风险与后续行动。
+- MUST 每项关键产出至少附带一条证据链接。
 
-### 7.2 Member Daily Log
+### 7.2 成员每日日志
 
-- MUST require each active contributor to submit one daily log.
-- MUST include work items, outputs, blockers, and next steps.
+- MUST 要求每位活跃贡献者每天提交一份日志。
+- MUST 包含工作项、产出、阻塞项与下一步。
 
-### 7.3 Team Summary
+### 7.3 团队汇总
 
-- MUST publish weekly summary: completed items, blockers, risk trend, next-week priorities.
-- SHOULD publish monthly summary with KPI comparison.
+- MUST 发布周报：已完成项、阻塞项、风险趋势、下周优先级。
+- SHOULD 发布含 KPI 对比的月报。
 
-## 8. Security and Compliance
+## 8. 安全与合规
 
-- MUST NOT store plaintext secrets/tokens in repository or logs.
-- MUST apply least privilege for data, systems, and APIs.
-- MUST keep auditable trace of changes.
-- SHOULD run security review for high-risk changes.
+- MUST NOT 在仓库或日志中存储明文密钥/令牌。
+- MUST 对数据、系统与 API 采用最小权限原则。
+- MUST 保留可审计的变更轨迹。
+- SHOULD 对高风险变更执行安全评审。
 
-## 9. Tool-Agnostic Policy
+## 9. 工具无关策略
 
-- MUST keep requirements independent from any single AI tool.
-- MUST make key processes readable, executable, and auditable in repository docs.
-- SHOULD maintain per-tool adapters without changing project requirement semantics.
+- MUST 保持要求不依赖任何单一 AI 工具。
+- MUST 使关键流程在仓库文档中可读、可执行、可审计。
+- SHOULD 维护各工具适配层，且不改变项目要求语义。
 
-## 10. Definition of Done
+## 10. 完成定义
 
-A work item is done only when all are true:
+仅当以下条件全部满足时，工作项才视为完成：
 
-- MUST pass functional acceptance.
-- MUST pass quality gates.
-- MUST update required docs and logs.
-- MUST record residual risks and next actions.
+- MUST 通过功能验收。
+- MUST 通过质量门禁。
+- MUST 更新所需文档与日志。
+- MUST 记录剩余风险与后续行动。

@@ -1,67 +1,67 @@
-# TOOLING ADAPTERS
+# 工具适配规范
 
-## Objective
+## 目标
 
-Map previous Codex-specific operating rules into project-level requirements that can be enforced in any AI coding IDE/toolchain.
+将此前 Codex 特定的操作规则映射为可在任意 AI 编码 IDE/工具链中执行的项目级要求。
 
-## Mapping Principles
+## 映射原则
 
-1. Keep project requirement semantics unchanged across tools.
-2. Treat tool-specific syntax as implementation detail.
-3. Keep policy in repository, not in chat memory.
+1. 在不同工具间保持项目要求语义不变。
+2. 将工具特定语法视为实现细节。
+3. 策略应保存在仓库中，而非聊天记忆中。
 
-## Codex-to-Project Mapping
+## Codex 到项目要求映射
 
-### A. Communication and Output
+### A. 沟通与输出
 
-- Codex behavior: concise, structured, actionable responses.
-- Project requirement: all implementation reports MUST include scope, changes, validation, and next actions.
-- Cross-tool implementation: PR template and change summary checklist.
+- Codex 行为：回复简洁、结构化、可执行。
+- 项目要求：所有实施报告 MUST 包含范围、变更、验证与后续行动。
+- 跨工具实现：PR 模板与变更总结清单。
 
-### B. Work Execution
+### B. 工作执行
 
-- Codex behavior: inspect before edit, verify after edit, avoid destructive commands.
-- Project requirement: changes MUST include pre-change context capture and post-change verification evidence.
-- Cross-tool implementation: commit checklist + CI logs + rollback note.
+- Codex 行为：先检查再修改，修改后验证，避免破坏性命令。
+- 项目要求：变更 MUST 包含变更前上下文记录与变更后验证证据。
+- 跨工具实现：提交清单 + CI 日志 + 回滚说明。
 
-### C. Engineering Quality
+### C. 工程质量
 
-- Codex behavior: lint/test/build before completion when applicable.
-- Project requirement: pre-merge quality gates are mandatory.
-- Cross-tool implementation: CI pipeline with blocking checks.
+- Codex 行为：在适用时于完成前执行 lint/test/build。
+- 项目要求：合并前质量门禁为强制要求。
+- 跨工具实现：具备阻断检查的 CI 流水线。
 
-### D. Collaboration and Handoff
+### D. 协作与交接
 
-- Codex behavior: frequent progress updates and explicit assumptions.
-- Project requirement: each meaningful milestone MUST be logged with owner, timestamp, impact, and evidence links.
-- Cross-tool implementation: daily logs + weekly summary.
+- Codex 行为：频繁进度更新并明确说明假设。
+- 项目要求：每个关键里程碑 MUST 记录负责人、时间戳、影响与证据链接。
+- 跨工具实现：每日日志 + 每周汇总。
 
-### E. Safety and Security
+### E. 安全与防护
 
-- Codex behavior: do not leak secrets, cautious escalation.
-- Project requirement: no plaintext secrets in repo; least privilege; audit trail required.
-- Cross-tool implementation: secret scanning + access review.
+- Codex 行为：不泄露密钥，谨慎执行提权。
+- 项目要求：仓库内不得出现明文密钥；遵循最小权限；必须保留审计轨迹。
+- 跨工具实现：密钥扫描 + 访问权限审查。
 
-### F. Tool Operations
+### F. 工具运行规则
 
-- Codex behavior: skills, sandbox, escalation prefixes.
-- Project requirement: tool operational rules MAY vary, but MUST preserve governance, security, and traceability outcomes.
-- Cross-tool implementation: maintain per-tool runbook without changing project policy.
+- Codex 行为：技能、沙箱、提权前缀等机制。
+- 项目要求：工具运行规则 MAY 因工具而异，但 MUST 保持治理、安全与可追溯结果一致。
+- 跨工具实现：维护按工具划分的运行手册，同时不改变项目策略。
 
-## Per-Tool Adapter Template
+## 各工具适配模板
 
-Use this section for each tool (Codex/Cursor/Claude Code/etc.):
+为每个工具（Codex/Cursor/Claude Code 等）使用以下条目：
 
-- Tool name:
-- Environment constraints:
-- Command execution model:
-- Approval/escalation flow:
-- Required checks before merge:
-- Logging path and format:
-- Known limitations:
+- 工具名称：
+- 环境约束：
+- 命令执行模型：
+- 审批/提权流程：
+- 合并前必需检查：
+- 日志路径与格式：
+- 已知限制：
 
-## Current Status
+## 当前状态
 
-- Project-level policies are stored in `PROJECT_REQUIREMENTS.md`.
-- Logging standards are stored in `PROJECT_MANAGEMENT_REQUIREMENTS.md` and `schemas/worklog.schema.json`.
-- Tool-specific behavior should be added only as adapters in this file.
+- 项目级策略存放于 `PROJECT_REQUIREMENTS.md`。
+- 日志标准存放于 `PROJECT_MANAGEMENT_REQUIREMENTS.md` 与 `schemas/worklog.schema.json`。
+- 工具特定行为仅应以本文件中的适配项形式补充。

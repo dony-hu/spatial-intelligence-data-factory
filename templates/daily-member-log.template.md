@@ -8,31 +8,31 @@ role: ai-engineer
 updated_at: 2026-02-09T18:00:00+08:00
 ---
 
-# Member Daily Log - agent-codex - 2026-02-09
+# 成员每日日志 - agent-codex - 2026-02-09
 
-## Work Items
+## 工作项
 
 - task_id:
   title:
   output:
   status:
 
-## Deliverables
+## 交付物
 
 - file_or_artifact:
   summary:
 
-## Risks / Questions
+## 风险 / 问题
 
 - item:
   required_support:
 
-## Next Actions
+## 后续行动
 
 - action:
   due_date:
 
-## Evidence Links
+## 证据链接
 
 - type: pr|issue|commit|doc|chat
   ref:

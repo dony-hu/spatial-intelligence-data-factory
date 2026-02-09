@@ -7,33 +7,33 @@ role: management
 updated_at: 2026-02-09T18:00:00+08:00
 ---
 
-# Daily Project Log - 2026-02-09
+# 项目每日日志 - 2026-02-09
 
-## Work Items
+## 工作项
 
 - task_id:
   title:
   status:
 
-## Key Deliverables
+## 关键交付物
 
 - deliverable:
   owner:
   impact:
 
-## Risks / Blockers
+## 风险 / 阻塞
 
 - risk:
   severity:
   mitigation:
 
-## Next Actions
+## 后续行动
 
 - owner:
   action:
   due_date:
 
-## Evidence Links
+## 证据链接
 
 - type: pr|issue|commit|doc|dashboard
   ref:
