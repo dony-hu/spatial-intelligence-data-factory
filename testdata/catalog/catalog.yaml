@@ -1,0 +1,19 @@
+version: 1
+updated_at: "2026-02-09"
+datasets:
+  - id: geo_poi_smoke_p0
+    version: v2026.02.09.1
+    level: p0
+    purpose: "smoke test for poi parsing pipeline"
+    owner: "data-platform"
+    source: "synthetic-generator-v1"
+    pii: "synthetic"
+    retention_days: 365
+    format: json
+    local_path: "testdata/fixtures/geo/geo_poi_smoke_p0__v2026.02.09.1__json.json"
+    storage:
+      type: local
+      uri: "testdata/fixtures/geo/geo_poi_smoke_p0__v2026.02.09.1__json.json"
+    checksum:
+      algo: sha256
+      value: "3b820e802ba06a81cb013d85f85e0dcd560da10020861394c90bd88dcaac110e"

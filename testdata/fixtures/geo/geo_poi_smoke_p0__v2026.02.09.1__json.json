@@ -1,0 +1,18 @@
+[
+  {
+    "poi_id": "poi-1001",
+    "name": "sample coffee",
+    "lat": 31.2304,
+    "lng": 121.4737,
+    "category": "food",
+    "source": "synthetic"
+  },
+  {
+    "poi_id": "poi-1002",
+    "name": "sample park",
+    "lat": 31.228,
+    "lng": 121.4801,
+    "category": "outdoor",
+    "source": "synthetic"
+  }
+]

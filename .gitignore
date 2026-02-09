@@ -1,1 +1,4 @@
 .DS_Store
+testdata/cache/
+testdata/downloads/
+testdata/tmp/

@@ -33,3 +33,18 @@
 - AI/工具可读：YAML Front Matter + JSON Schema
 - 所有日志都必须包含时区字段（`Asia/Shanghai`、`UTC` 等）
 - 每条记录都必须包含可追溯的证据链接（PR、Issue、Commit、文档路径）
+
+## 测试数据管理
+
+- 目录入口：`testdata/README.md`
+- 数据治理：`docs/testdata-governance.md`
+- 清单注册：`testdata/catalog/catalog.yaml`
+- 拉取脚本：`scripts/testdata/pull.sh <dataset-id>`
+- 校验脚本：`scripts/testdata/verify.sh <dataset-id>`
+
+示例：
+
+```bash
+scripts/testdata/pull.sh geo_poi_smoke_p0
+scripts/testdata/verify.sh geo_poi_smoke_p0
+```
