@@ -1,24 +1,24 @@
-# Test Data Governance
+# 测试数据治理规范
 
-## Scope
+## 范围
 
-This document defines how test datasets are created, stored, versioned, and consumed in this repository.
+本文档定义本仓库中测试数据集的创建、存储、版本管理与使用方式。
 
-## Dataset Policy
+## 数据集策略
 
-1. Allowed data classes: `synthetic`, `masked`.
-2. Forbidden in Git: raw production exports, unmasked PII, large snapshots.
-3. Every dataset must be registered in `testdata/catalog/catalog.yaml`.
+1. 允许的数据类别：`synthetic`、`masked`。
+2. 禁止提交到 Git：生产原始导出数据、未脱敏 PII、大体积快照。
+3. 每个数据集都必须在 `testdata/catalog/catalog.yaml` 中登记。
 
-## Naming
+## 命名规范
 
-- Dataset ID: `<domain>_<scenario>_<level>` (example: `geo_poi_smoke_p0`).
-- Version: `vYYYY.MM.DD.N`.
-- File name: `<dataset_id>__<version>__<format>.<ext>`.
+- 数据集 ID：`<domain>_<scenario>_<level>`（例如：`geo_poi_smoke_p0`）。
+- 版本号：`vYYYY.MM.DD.N`。
+- 文件名：`<dataset_id>__<version>__<format>.<ext>`。
 
-## Metadata Requirements
+## 元数据要求
 
-Each catalog entry must include:
+每条清单记录必须包含：
 
 - `id`, `version`, `level`, `purpose`, `owner`, `source`
 - `pii` (`none|masked|synthetic`)
@@ -26,17 +26,17 @@ Each catalog entry must include:
 - `storage` (`type`, `uri`)
 - `checksum` (`algo`, `value`)
 
-## Lifecycle
+## 生命周期
 
-1. Register request in `catalog.yaml`.
-2. Generate or mask dataset.
-3. Compute checksum.
-4. Commit fixture (small only) or upload large data to object storage.
-5. Use `scripts/testdata/pull.sh` and `scripts/testdata/verify.sh` in CI.
-6. Remove expired datasets based on `retention_days`.
+1. 在 `catalog.yaml` 中登记数据需求。
+2. 生成数据集或执行脱敏处理。
+3. 计算校验和（checksum）。
+4. 小样本提交到仓库；大数据上传到对象存储。
+5. 在 CI 中执行 `scripts/testdata/pull.sh` 与 `scripts/testdata/verify.sh`。
+6. 按 `retention_days` 清理过期数据。
 
-## Access Control
+## 访问控制
 
-- Object storage access must use least privilege and short-lived credentials.
-- Environment isolation required (`dev`, `test`, `stage`).
-- Direct access to raw source data is restricted to approved operators.
+- 对象存储访问必须采用最小权限和短时凭证。
+- 必须按环境隔离（`dev`、`test`、`stage`）。
+- 原始来源数据仅允许经审批的操作人员直接访问。
