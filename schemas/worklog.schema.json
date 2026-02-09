@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/worklog.schema.json",
+  "title": "Work Log Front Matter",
+  "type": "object",
+  "required": [
+    "log_type",
+    "date",
+    "timezone",
+    "author",
+    "updated_at"
+  ],
+  "properties": {
+    "log_type": {
+      "type": "string",
+      "enum": [
+        "project_daily",
+        "member_daily",
+        "team_weekly_summary",
+        "team_monthly_summary"
+      ]
+    },
+    "member_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "week": {
+      "type": "string",
+      "pattern": "^\\d{4}-W\\d{2}$"
+    },
+    "month": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}$"
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "log_type": {
+            "const": "member_daily"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "member_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "log_type": {
+            "const": "team_weekly_summary"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "week"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "log_type": {
+            "const": "team_monthly_summary"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "month"
+        ]
+      }
+    }
+  ]
+}
