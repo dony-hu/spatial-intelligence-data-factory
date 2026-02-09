@@ -1,50 +1,82 @@
-# Spatial-Intelligence Data Factory 项目管理仓库
+# 数据工厂项目（Data Factory Project）
 
-本仓库用于存放多人、多 AI、多工具协作流程下的项目管理要求与执行日志。
+本仓库用于承载数据工厂项目的项目规范、治理规则、执行日志与测试数据管理机制，服务于多人、多 AI、多工具协作下的数据平台建设与持续交付。
 
-## 范围
+## 项目背景
 
-- 每日关键交付物追踪
-- 成员维度工作日志
-- 团队级日/周总结
-- 跨工具机器可读格式（Markdown + YAML Front Matter + JSON Schema）
-- 工具无关的项目要求与工具适配规范
+在企业数字化与智能化转型过程中，数据已成为核心资产。现有数据建设面临以下共性问题：
 
-## 目录结构
+- 数据孤岛与重复开发并存，采集/清洗/计算逻辑复用不足。
+- 数据质量不可控，缺乏统一、自动化的检测与反馈机制。
+- 数据流程可追踪性不足，问题定位与责任归属困难。
+- 实时与批处理任务协同能力弱，难以支撑准实时业务需求。
+- 数据交付稳定性不足，影响分析质量与决策效率。
 
-- `PROJECT_REQUIREMENTS.md`：工具无关的项目要求（`MUST/SHOULD/MAY`）。
-- `PROJECT_MANAGEMENT_REQUIREMENTS.md`：项目管理策略与强制日志规则。
-- `TOOLING_ADAPTERS.md`：将工具特定行为（如 Codex）映射到项目策略。
-- `logs/daily/`：项目级每日记录（`YYYY-MM-DD.md`）。
-- `logs/members/`：成员日志（`<member-id>/YYYY-MM-DD.md`）。
-- `logs/summary/`：团队汇总（`weekly-YYYY-Www.md`、`monthly-YYYY-MM.md`）。
-- `templates/`：可复用 Markdown 模板。
-- `schemas/`：用于校验的 JSON Schema。
+组织已具备数据湖/数仓、基础 ETL 和初步治理能力，但缺少覆盖全流程的统一执行与交付体系，因此需要建设数据工厂平台。
 
-## 命名约定
+## 项目目标
 
-- 日期格式：`YYYY-MM-DD`（ISO-8601）
-- 周格式：`YYYY-Www`（ISO 周）
-- 成员 ID：小写 kebab-case（例如：`li-ming`、`agent-codex`）
+核心目标：建立可复用、可治理、可监控、可扩展的数据工厂平台，支撑全组织数据自动化生产与消费。
 
-## 互操作约定
+具体目标：
 
-- 人类可读：Markdown
-- AI/工具可读：YAML Front Matter + JSON Schema
-- 所有日志都必须包含时区字段（`Asia/Shanghai`、`UTC` 等）
-- 每条记录都必须包含可追溯的证据链接（PR、Issue、Commit、文档路径）
+1. 标准化数据生产：统一采集、清洗、转换框架，支持批流一体任务模型。
+2. 可控的数据质量：提供规则校验、统计校验与异常检测能力。
+3. 全流程可追踪与可审计：支持血缘、执行日志、指标变更与运行快照查询。
+4. 提升开发效率与交付质量：提供统一组件、模板、CI/CD 与版本回滚机制。
+5. 支撑实时数据能力：打通消息队列与流计算引擎，统一调度与监控。
+6. 增强数据消费能力：通过数据 API 服务 BI、模型训练与报告系统。
 
-## 测试数据管理
+## 关键里程碑
 
-- 目录入口：`testdata/README.md`
-- 数据治理：`docs/testdata-governance.md`
-- 清单注册：`testdata/catalog/catalog.yaml`
-- 拉取脚本：`scripts/testdata/pull.sh <dataset-id>`
-- 校验脚本：`scripts/testdata/verify.sh <dataset-id>`
+1. `0-2 个月`：启动与基础能力搭建  
+产出：架构白皮书、基础可运行版本、初始监控看板。
+2. `2-4 个月`：核心模块与流程规范化  
+产出：组件库、任务模板、SQL/任务规范指南。
+3. `4-6 个月`：可视化开发与自助分析  
+产出：可视化编排工具、元数据查询中心、API 服务。
+4. `6-9 个月`：全面上线与优化  
+产出：全链路 SLA 报表、运维 SOP、治理手册。
 
-示例：
+## 预期价值
+
+- 降低数据开发与维护成本，提升组件复用率。
+- 提升数据质量与稳定性，减少下游返工。
+- 缩短数据交付周期，提升业务响应速度。
+- 增强数据资产可治理、可追踪、可度量能力。
+- 支撑 BI 与 AI 场景，提升决策质量与业务增长能力。
+
+## 成功衡量标准（KPI）
+
+| KPI 项目 | 目标 |
+| --- | --- |
+| 数据任务开发周期 | 比现状提升 `>= 50%` |
+| 数据质量自动检测覆盖率 | `>= 90%` |
+| 数据任务失败自动恢复率 | `>= 95%` |
+| 数据血缘完整率 | `>= 98%` |
+| 实时数据延迟 | `<= 30s` |
+
+## 仓库结构
+
+- `PROJECT_REQUIREMENTS.md`：项目级通用要求（MUST/SHOULD/MAY）。
+- `PROJECT_MANAGEMENT_REQUIREMENTS.md`：项目管理、日志与治理规则。
+- `TOOLING_ADAPTERS.md`：不同 AI/IDE 工具的适配规范。
+- `AGENTS.md`：仓库级代理规则（含文档中文强制策略）。
+- `logs/`：项目每日、成员每日、团队周/月报。
+- `templates/`：日志与汇报模板。
+- `schemas/`：日志结构校验 Schema。
+- `testdata/`：测试数据目录、清单、样例与约束。
+- `scripts/testdata/`：测试数据拉取与校验脚本。
+- `docs/`：专题治理文档（如测试数据治理）。
+
+## 快速开始（测试数据）
 
 ```bash
 scripts/testdata/pull.sh geo_poi_smoke_p0
 scripts/testdata/verify.sh geo_poi_smoke_p0
 ```
+
+更多说明见：
+
+- `testdata/README.md`
+- `docs/testdata-governance.md`
