@@ -1,0 +1,71 @@
+version: "6.0.0"
+last_updated: "2026-02-10"
+project:
+  name: "spatial-intelligence-data-factory"
+  type: "other"
+  level: 4
+
+current_phase: "planning"
+current_workflow: "prd"
+overall_status: "in_progress"
+
+phases:
+  analysis:
+    status: "completed"
+    workflows:
+      product-brief:
+        required: false
+        status: "completed"
+        output: "docs/product-brief-spatial-intelligence-data-factory-2026-02-10.md"
+      brainstorm:
+        required: false
+        status: "not_started"
+        output: ""
+      research:
+        required: false
+        status: "not_started"
+        output: ""
+
+  planning:
+    status: "in_progress"
+    workflows:
+      prd:
+        required: true
+        status: "in_progress"
+        output: "docs/prd-spatial-intelligence-data-factory-2026-02-10.md"
+      tech-spec:
+        required: false
+        status: "not_started"
+        output: ""
+
+  solutioning:
+    status: "not_started"
+    workflows:
+      architecture:
+        required: true
+        status: "not_started"
+        output: ""
+
+  implementation:
+    status: "not_started"
+    workflows:
+      sprint-planning:
+        required: true
+        status: "not_started"
+        output: ""
+      create-story:
+        required: true
+        status: "not_started"
+        output: ""
+      dev-story:
+        required: true
+        status: "not_started"
+        output: ""
+      code-review:
+        required: true
+        status: "not_started"
+        output: ""
+
+recommendation:
+  next_workflow: "评审并完成 /prd"
+  reason: "已生成 PRD 骨架，下一步补齐 Epic 优先级、迭代排期与验收细节。"

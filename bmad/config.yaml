@@ -1,0 +1,25 @@
+version: "6.0.0"
+project:
+  name: "spatial-intelligence-data-factory"
+  display_name: "数据工厂项目"
+  type: "other"
+  level: 4
+  description: "空间智能数据工厂平台，覆盖数据治理、质量、可追踪与闭环运营。"
+
+paths:
+  docs_dir: "docs"
+  stories_dir: "docs/stories"
+  workflow_status: "docs/bmm-workflow-status.yaml"
+
+method:
+  name: "BMAD"
+  phases:
+    - analysis
+    - planning
+    - solutioning
+    - implementation
+
+defaults:
+  language: "zh-CN"
+  status_command: "/workflow-status"
+  init_command: "/workflow-init"
