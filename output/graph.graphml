@@ -1,0 +1,1325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlformat/graphml-1.1rc1.xsd">
+  <graph id="entity_relationship_graph" edgedefault="directed">
+    <key id="type" for="node" attr.name="type" attr.type="string"/>
+    <key id="name" for="node" attr.name="name" attr.type="string"/>
+    <key id="level" for="node" attr.name="level" attr.type="int"/>
+    <key id="latitude" for="node" attr.name="latitude" attr.type="double"/>
+    <key id="longitude" for="node" attr.name="longitude" attr.type="double"/>
+    <key id="confidence" for="node" attr.name="confidence" attr.type="double"/>
+    <key id="rel_type" for="edge" attr.name="type" attr.type="string"/>
+    <key id="rel_confidence" for="edge" attr.name="confidence" attr.type="double"/>
+    <node id="admin_3100">
+      <data key="type">province</data>
+      <data key="name">上海</data>
+      <data key="level">1</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_3101">
+      <data key="type">city</data>
+      <data key="name">上海市</data>
+      <data key="level">2</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310101">
+      <data key="type">district</data>
+      <data key="name">黄浦区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310115">
+      <data key="type">district</data>
+      <data key="name">浦东新区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310104">
+      <data key="type">district</data>
+      <data key="name">徐汇区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310106">
+      <data key="type">district</data>
+      <data key="name">静安区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310109">
+      <data key="type">district</data>
+      <data key="name">虹口区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310110">
+      <data key="type">district</data>
+      <data key="name">杨浦区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310112">
+      <data key="type">district</data>
+      <data key="name">闵行区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310113">
+      <data key="type">district</data>
+      <data key="name">宝山区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310114">
+      <data key="type">district</data>
+      <data key="name">嘉定区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="admin_310120">
+      <data key="type">district</data>
+      <data key="name">奉贤区</data>
+      <data key="level">3</data>
+      <data key="confidence">1.0</data>
+    </node>
+    <node id="addr_std_sh_0001">
+      <data key="type">address</data>
+      <data key="name">上海市黄浦区中山东一路1号</data>
+      <data key="latitude">31.2387</data>
+      <data key="longitude">121.4877</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0002">
+      <data key="type">address</data>
+      <data key="name">上海市黄浦区中山东一路10号</data>
+      <data key="latitude">31.2389</data>
+      <data key="longitude">121.4878</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0003">
+      <data key="type">address</data>
+      <data key="name">上海市黄浦区中山东一路50号</data>
+      <data key="latitude">31.2395</data>
+      <data key="longitude">121.488</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0004">
+      <data key="type">address</data>
+      <data key="name">上海市黄浦区中山东一路100号5单元3层02室</data>
+      <data key="latitude">31.24</data>
+      <data key="longitude">121.4882</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0005">
+      <data key="type">address</data>
+      <data key="name">上海市黄浦区南京东路10号</data>
+      <data key="latitude">31.2365</data>
+      <data key="longitude">121.4835</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0006">
+      <data key="type">address</data>
+      <data key="name">上海市浦东新区浦东南路1号</data>
+      <data key="latitude">31.2328</data>
+      <data key="longitude">121.5254</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0007">
+      <data key="type">address</data>
+      <data key="name">上海市浦东新区世纪大道100号</data>
+      <data key="latitude">31.232</data>
+      <data key="longitude">121.5305</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0008">
+      <data key="type">address</data>
+      <data key="name">上海市浦东新区环路333号</data>
+      <data key="latitude">31.234</data>
+      <data key="longitude">121.528</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0009">
+      <data key="type">address</data>
+      <data key="name">上海市浦东新区浦东南路500号</data>
+      <data key="latitude">31.2305</data>
+      <data key="longitude">121.527</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0010">
+      <data key="type">address</data>
+      <data key="name">上海市浦东新区张江路888号</data>
+      <data key="latitude">31.2015</data>
+      <data key="longitude">121.5735</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0011">
+      <data key="type">address</data>
+      <data key="name">上海市徐汇区淮海中路1号</data>
+      <data key="latitude">31.2269</data>
+      <data key="longitude">121.4596</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0012">
+      <data key="type">address</data>
+      <data key="name">上海市徐汇区衡山路100号</data>
+      <data key="latitude">31.2233</data>
+      <data key="longitude">121.4508</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0013">
+      <data key="type">address</data>
+      <data key="name">上海市徐汇区武康路200号</data>
+      <data key="latitude">31.2205</data>
+      <data key="longitude">121.4473</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0014">
+      <data key="type">address</data>
+      <data key="name">上海市徐汇区复兴中路300号</data>
+      <data key="latitude">31.2248</data>
+      <data key="longitude">121.4635</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0015">
+      <data key="type">address</data>
+      <data key="name">上海市徐汇区龙腾大道400号</data>
+      <data key="latitude">31.1987</data>
+      <data key="longitude">121.5078</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0016">
+      <data key="type">address</data>
+      <data key="name">上海市静安区南京西路500号</data>
+      <data key="latitude">31.2389</data>
+      <data key="longitude">121.449</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0017">
+      <data key="type">address</data>
+      <data key="name">上海市静安区昌平路600号</data>
+      <data key="latitude">31.2453</data>
+      <data key="longitude">121.4565</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0018">
+      <data key="type">address</data>
+      <data key="name">上海市静安区中山北路700号</data>
+      <data key="latitude">31.2511</data>
+      <data key="longitude">121.4457</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0019">
+      <data key="type">address</data>
+      <data key="name">上海市静安区和田路800号</data>
+      <data key="latitude">31.2478</data>
+      <data key="longitude">121.4723</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0020">
+      <data key="type">address</data>
+      <data key="name">上海市静安区胶州路900号</data>
+      <data key="latitude">31.2405</data>
+      <data key="longitude">121.4683</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0021">
+      <data key="type">address</data>
+      <data key="name">上海市虹口区四川北路1000号</data>
+      <data key="latitude">31.2753</data>
+      <data key="longitude">121.484</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0022">
+      <data key="type">address</data>
+      <data key="name">上海市虹口区塘沽路1100号</data>
+      <data key="latitude">31.2813</data>
+      <data key="longitude">121.4902</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0023">
+      <data key="type">address</data>
+      <data key="name">上海市虹口区赤峰路1200号</data>
+      <data key="latitude">31.2845</data>
+      <data key="longitude">121.4753</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0024">
+      <data key="type">address</data>
+      <data key="name">上海市虹口区虹口路1300号</data>
+      <data key="latitude">31.2876</data>
+      <data key="longitude">121.4667</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0025">
+      <data key="type">address</data>
+      <data key="name">上海市虹口区溶阳路1400号</data>
+      <data key="latitude">31.2907</data>
+      <data key="longitude">121.481</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0026">
+      <data key="type">address</data>
+      <data key="name">上海市杨浦区五角场路1500号</data>
+      <data key="latitude">31.295</data>
+      <data key="longitude">121.5133</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0027">
+      <data key="type">address</data>
+      <data key="name">上海市杨浦区新江湾城路1600号</data>
+      <data key="latitude">31.3085</data>
+      <data key="longitude">121.526</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0028">
+      <data key="type">address</data>
+      <data key="name">上海市杨浦区控江路1700号</data>
+      <data key="latitude">31.2815</data>
+      <data key="longitude">121.5318</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0029">
+      <data key="type">address</data>
+      <data key="name">上海市杨浦区政民路1800号</data>
+      <data key="latitude">31.2912</data>
+      <data key="longitude">121.5401</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0030">
+      <data key="type">address</data>
+      <data key="name">上海市杨浦区国权路1900号</data>
+      <data key="latitude">31.2978</data>
+      <data key="longitude">121.5285</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0031">
+      <data key="type">address</data>
+      <data key="name">上海市闵行区莘庄路2000号</data>
+      <data key="latitude">31.1315</data>
+      <data key="longitude">121.3938</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0032">
+      <data key="type">address</data>
+      <data key="name">上海市闵行区春申路2100号</data>
+      <data key="latitude">31.1422</data>
+      <data key="longitude">121.3865</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0033">
+      <data key="type">address</data>
+      <data key="name">上海市闵行区虹梅路2200号</data>
+      <data key="latitude">31.098</data>
+      <data key="longitude">121.4205</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0034">
+      <data key="type">address</data>
+      <data key="name">上海市闵行区浦三路2300号</data>
+      <data key="latitude">31.1145</data>
+      <data key="longitude">121.542</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0035">
+      <data key="type">address</data>
+      <data key="name">上海市闵行区龙吴路2400号</data>
+      <data key="latitude">31.089</data>
+      <data key="longitude">121.4687</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0036">
+      <data key="type">address</data>
+      <data key="name">上海市宝山区共和新路2500号</data>
+      <data key="latitude">31.3878</data>
+      <data key="longitude">121.4645</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0037">
+      <data key="type">address</data>
+      <data key="name">上海市宝山区淞浦大道2600号</data>
+      <data key="latitude">31.3756</data>
+      <data key="longitude">121.4523</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0038">
+      <data key="type">address</data>
+      <data key="name">上海市宝山区月浦路2700号</data>
+      <data key="latitude">31.3648</data>
+      <data key="longitude">121.4802</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0039">
+      <data key="type">address</data>
+      <data key="name">上海市宝山区通河新村路2800号</data>
+      <data key="latitude">31.4012</data>
+      <data key="longitude">121.489</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0040">
+      <data key="type">address</data>
+      <data key="name">上海市宝山区罗店路2900号</data>
+      <data key="latitude">31.4145</data>
+      <data key="longitude">121.4567</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0041">
+      <data key="type">address</data>
+      <data key="name">上海市嘉定区城中路3000号</data>
+      <data key="latitude">31.3867</data>
+      <data key="longitude">121.2987</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0042">
+      <data key="type">address</data>
+      <data key="name">上海市嘉定区曹安公路3100号</data>
+      <data key="latitude">31.3754</data>
+      <data key="longitude">121.2654</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0043">
+      <data key="type">address</data>
+      <data key="name">上海市嘉定区真南路3200号</data>
+      <data key="latitude">31.3582</data>
+      <data key="longitude">121.2834</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0044">
+      <data key="type">address</data>
+      <data key="name">上海市嘉定区永安路3300号</data>
+      <data key="latitude">31.3456</data>
+      <data key="longitude">121.3012</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0045">
+      <data key="type">address</data>
+      <data key="name">上海市嘉定区新城路3400号</data>
+      <data key="latitude">31.3678</data>
+      <data key="longitude">121.3145</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0046">
+      <data key="type">address</data>
+      <data key="name">上海市奉贤区南奉公路3500号</data>
+      <data key="latitude">30.8456</data>
+      <data key="longitude">121.489</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0047">
+      <data key="type">address</data>
+      <data key="name">上海市奉贤区四团路3600号</data>
+      <data key="latitude">30.7812</data>
+      <data key="longitude">121.5234</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0048">
+      <data key="type">address</data>
+      <data key="name">上海市奉贤区海湾路3700号</data>
+      <data key="latitude">30.8234</data>
+      <data key="longitude">121.6012</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0049">
+      <data key="type">address</data>
+      <data key="name">上海市奉贤区邬桥路3800号</data>
+      <data key="latitude">30.7654</data>
+      <data key="longitude">121.5456</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="addr_std_sh_0050">
+      <data key="type">address</data>
+      <data key="name">上海市奉贤区金海路3900号</data>
+      <data key="latitude">30.8123</data>
+      <data key="longitude">121.5789</data>
+      <data key="confidence">0.95</data>
+    </node>
+    <node id="poi_std_sh_0001">
+      <data key="type">poi</data>
+      <data key="name">外滩陈毅广场</data>
+      <data key="latitude">31.2387</data>
+      <data key="longitude">121.4877</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0002">
+      <data key="type">poi</data>
+      <data key="name">外滩国际金融中心</data>
+      <data key="latitude">31.2389</data>
+      <data key="longitude">121.4878</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0003">
+      <data key="type">poi</data>
+      <data key="name">外滩酒店</data>
+      <data key="latitude">31.2395</data>
+      <data key="longitude">121.488</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0004">
+      <data key="type">poi</data>
+      <data key="name">中山东一路100号居住楼</data>
+      <data key="latitude">31.24</data>
+      <data key="longitude">121.4882</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0005">
+      <data key="type">poi</data>
+      <data key="name">南京路商业街</data>
+      <data key="latitude">31.2365</data>
+      <data key="longitude">121.4835</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0006">
+      <data key="type">poi</data>
+      <data key="name">陆家嘴环路金融中心</data>
+      <data key="latitude">31.2328</data>
+      <data key="longitude">121.5254</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0007">
+      <data key="type">poi</data>
+      <data key="name">世纪大道商务楼</data>
+      <data key="latitude">31.232</data>
+      <data key="longitude">121.5305</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0008">
+      <data key="type">poi</data>
+      <data key="name">浦东金融楼</data>
+      <data key="latitude">31.234</data>
+      <data key="longitude">121.528</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0009">
+      <data key="type">poi</data>
+      <data key="name">浦东南路公寓</data>
+      <data key="latitude">31.2305</data>
+      <data key="longitude">121.527</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0010">
+      <data key="type">poi</data>
+      <data key="name">张江高科技园区</data>
+      <data key="latitude">31.2015</data>
+      <data key="longitude">121.5735</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0011">
+      <data key="type">poi</data>
+      <data key="name">淮海路商业街</data>
+      <data key="latitude">31.2269</data>
+      <data key="longitude">121.4596</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0012">
+      <data key="type">poi</data>
+      <data key="name">衡山路文化街</data>
+      <data key="latitude">31.2233</data>
+      <data key="longitude">121.4508</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0013">
+      <data key="type">poi</data>
+      <data key="name">武康大楼</data>
+      <data key="latitude">31.2205</data>
+      <data key="longitude">121.4473</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0014">
+      <data key="type">poi</data>
+      <data key="name">复兴中路商务楼</data>
+      <data key="latitude">31.2248</data>
+      <data key="longitude">121.4635</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0015">
+      <data key="type">poi</data>
+      <data key="name">龙华产业园</data>
+      <data key="latitude">31.1987</data>
+      <data key="longitude">121.5078</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0016">
+      <data key="type">poi</data>
+      <data key="name">南京西路商业街</data>
+      <data key="latitude">31.2389</data>
+      <data key="longitude">121.449</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0017">
+      <data key="type">poi</data>
+      <data key="name">昌平路公寓</data>
+      <data key="latitude">31.2453</data>
+      <data key="longitude">121.4565</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0018">
+      <data key="type">poi</data>
+      <data key="name">中山北路商务楼</data>
+      <data key="latitude">31.2511</data>
+      <data key="longitude">121.4457</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0019">
+      <data key="type">poi</data>
+      <data key="name">和田路研发中心</data>
+      <data key="latitude">31.2478</data>
+      <data key="longitude">121.4723</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0020">
+      <data key="type">poi</data>
+      <data key="name">胶州路创意园</data>
+      <data key="latitude">31.2405</data>
+      <data key="longitude">121.4683</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0021">
+      <data key="type">poi</data>
+      <data key="name">四川北路商业街</data>
+      <data key="latitude">31.2753</data>
+      <data key="longitude">121.484</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0022">
+      <data key="type">poi</data>
+      <data key="name">塘沽路文化广场</data>
+      <data key="latitude">31.2813</data>
+      <data key="longitude">121.4902</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0023">
+      <data key="type">poi</data>
+      <data key="name">赤峰路居住区</data>
+      <data key="latitude">31.2845</data>
+      <data key="longitude">121.4753</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0024">
+      <data key="type">poi</data>
+      <data key="name">虹口路办公楼</data>
+      <data key="latitude">31.2876</data>
+      <data key="longitude">121.4667</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0025">
+      <data key="type">poi</data>
+      <data key="name">溶阳路研究所</data>
+      <data key="latitude">31.2907</data>
+      <data key="longitude">121.481</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0026">
+      <data key="type">poi</data>
+      <data key="name">五角场商业街</data>
+      <data key="latitude">31.295</data>
+      <data key="longitude">121.5133</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0027">
+      <data key="type">poi</data>
+      <data key="name">新江湾城居住区</data>
+      <data key="latitude">31.3085</data>
+      <data key="longitude">121.526</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0028">
+      <data key="type">poi</data>
+      <data key="name">控江路公寓</data>
+      <data key="latitude">31.2815</data>
+      <data key="longitude">121.5318</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0029">
+      <data key="type">poi</data>
+      <data key="name">政民路文化中心</data>
+      <data key="latitude">31.2912</data>
+      <data key="longitude">121.5401</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0030">
+      <data key="type">poi</data>
+      <data key="name">国权路教育园区</data>
+      <data key="latitude">31.2978</data>
+      <data key="longitude">121.5285</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0031">
+      <data key="type">poi</data>
+      <data key="name">莘庄地铁站</data>
+      <data key="latitude">31.1315</data>
+      <data key="longitude">121.3938</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0032">
+      <data key="type">poi</data>
+      <data key="name">春申路商业广场</data>
+      <data key="latitude">31.1422</data>
+      <data key="longitude">121.3865</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0033">
+      <data key="type">poi</data>
+      <data key="name">虹梅路工业园</data>
+      <data key="latitude">31.098</data>
+      <data key="longitude">121.4205</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0034">
+      <data key="type">poi</data>
+      <data key="name">浦三路科技园</data>
+      <data key="latitude">31.1145</data>
+      <data key="longitude">121.542</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0035">
+      <data key="type">poi</data>
+      <data key="name">龙吴路医疗中心</data>
+      <data key="latitude">31.089</data>
+      <data key="longitude">121.4687</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0036">
+      <data key="type">poi</data>
+      <data key="name">共和新路商业街</data>
+      <data key="latitude">31.3878</data>
+      <data key="longitude">121.4645</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0037">
+      <data key="type">poi</data>
+      <data key="name">淞浦大道办公楼</data>
+      <data key="latitude">31.3756</data>
+      <data key="longitude">121.4523</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0038">
+      <data key="type">poi</data>
+      <data key="name">月浦路工业园</data>
+      <data key="latitude">31.3648</data>
+      <data key="longitude">121.4802</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0039">
+      <data key="type">poi</data>
+      <data key="name">通河新村居住区</data>
+      <data key="latitude">31.4012</data>
+      <data key="longitude">121.489</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0040">
+      <data key="type">poi</data>
+      <data key="name">罗店路商务中心</data>
+      <data key="latitude">31.4145</data>
+      <data key="longitude">121.4567</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0041">
+      <data key="type">poi</data>
+      <data key="name">城中路商业街</data>
+      <data key="latitude">31.3867</data>
+      <data key="longitude">121.2987</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0042">
+      <data key="type">poi</data>
+      <data key="name">曹安公路汽车城</data>
+      <data key="latitude">31.3754</data>
+      <data key="longitude">121.2654</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0043">
+      <data key="type">poi</data>
+      <data key="name">真南路居住区</data>
+      <data key="latitude">31.3582</data>
+      <data key="longitude">121.2834</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0044">
+      <data key="type">poi</data>
+      <data key="name">永安路工业区</data>
+      <data key="latitude">31.3456</data>
+      <data key="longitude">121.3012</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0045">
+      <data key="type">poi</data>
+      <data key="name">新城路开发区</data>
+      <data key="latitude">31.3678</data>
+      <data key="longitude">121.3145</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0046">
+      <data key="type">poi</data>
+      <data key="name">南奉公路商业中心</data>
+      <data key="latitude">30.8456</data>
+      <data key="longitude">121.489</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0047">
+      <data key="type">poi</data>
+      <data key="name">四团路工业园</data>
+      <data key="latitude">30.7812</data>
+      <data key="longitude">121.5234</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0048">
+      <data key="type">poi</data>
+      <data key="name">海湾路度假区</data>
+      <data key="latitude">30.8234</data>
+      <data key="longitude">121.6012</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0049">
+      <data key="type">poi</data>
+      <data key="name">邬桥路驿站</data>
+      <data key="latitude">30.7654</data>
+      <data key="longitude">121.5456</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <node id="poi_std_sh_0050">
+      <data key="type">poi</data>
+      <data key="name">金海路研究院</data>
+      <data key="latitude">30.8123</data>
+      <data key="longitude">121.5789</data>
+      <data key="confidence">0.9</data>
+    </node>
+    <edge id="e0" source="admin_3100" target="admin_3101">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e1" source="admin_3101" target="admin_310101">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e2" source="admin_3101" target="admin_310115">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e3" source="admin_3101" target="admin_310104">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e4" source="admin_3101" target="admin_310106">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e5" source="admin_3101" target="admin_310109">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e6" source="admin_3101" target="admin_310110">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e7" source="admin_3101" target="admin_310112">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e8" source="admin_3101" target="admin_310113">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e9" source="admin_3101" target="admin_310114">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e10" source="admin_3101" target="admin_310120">
+      <data key="rel_type">hierarchical</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e11" source="admin_310101" target="addr_std_sh_0001">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e12" source="admin_310101" target="addr_std_sh_0002">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e13" source="admin_310101" target="addr_std_sh_0003">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e14" source="admin_310101" target="addr_std_sh_0004">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e15" source="admin_310101" target="addr_std_sh_0005">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e16" source="admin_310115" target="addr_std_sh_0006">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e17" source="admin_310115" target="addr_std_sh_0007">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e18" source="admin_310115" target="addr_std_sh_0008">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e19" source="admin_310115" target="addr_std_sh_0009">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e20" source="admin_310115" target="addr_std_sh_0010">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e21" source="admin_310104" target="addr_std_sh_0011">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e22" source="admin_310104" target="addr_std_sh_0012">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e23" source="admin_310104" target="addr_std_sh_0013">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e24" source="admin_310104" target="addr_std_sh_0014">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e25" source="admin_310104" target="addr_std_sh_0015">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e26" source="admin_310106" target="addr_std_sh_0016">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e27" source="admin_310106" target="addr_std_sh_0017">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e28" source="admin_310106" target="addr_std_sh_0018">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e29" source="admin_310106" target="addr_std_sh_0019">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e30" source="admin_310106" target="addr_std_sh_0020">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e31" source="admin_310109" target="addr_std_sh_0021">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e32" source="admin_310109" target="addr_std_sh_0022">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e33" source="admin_310109" target="addr_std_sh_0023">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e34" source="admin_310109" target="addr_std_sh_0024">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e35" source="admin_310109" target="addr_std_sh_0025">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e36" source="admin_310110" target="addr_std_sh_0026">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e37" source="admin_310110" target="addr_std_sh_0027">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e38" source="admin_310110" target="addr_std_sh_0028">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e39" source="admin_310110" target="addr_std_sh_0029">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e40" source="admin_310110" target="addr_std_sh_0030">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e41" source="admin_310112" target="addr_std_sh_0031">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e42" source="admin_310112" target="addr_std_sh_0032">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e43" source="admin_310112" target="addr_std_sh_0033">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e44" source="admin_310112" target="addr_std_sh_0034">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e45" source="admin_310112" target="addr_std_sh_0035">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e46" source="admin_310113" target="addr_std_sh_0036">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e47" source="admin_310113" target="addr_std_sh_0037">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e48" source="admin_310113" target="addr_std_sh_0038">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e49" source="admin_310113" target="addr_std_sh_0039">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e50" source="admin_310113" target="addr_std_sh_0040">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e51" source="admin_310114" target="addr_std_sh_0041">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e52" source="admin_310114" target="addr_std_sh_0042">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e53" source="admin_310114" target="addr_std_sh_0043">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e54" source="admin_310114" target="addr_std_sh_0044">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e55" source="admin_310114" target="addr_std_sh_0045">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e56" source="admin_310120" target="addr_std_sh_0046">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e57" source="admin_310120" target="addr_std_sh_0047">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e58" source="admin_310120" target="addr_std_sh_0048">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e59" source="admin_310120" target="addr_std_sh_0049">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e60" source="admin_310120" target="addr_std_sh_0050">
+      <data key="rel_type">spatial_contains</data>
+      <data key="rel_confidence">1.0</data>
+    </edge>
+    <edge id="e61" source="addr_std_sh_0001" target="poi_std_sh_0001">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e62" source="addr_std_sh_0002" target="poi_std_sh_0002">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e63" source="addr_std_sh_0003" target="poi_std_sh_0003">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e64" source="addr_std_sh_0004" target="poi_std_sh_0004">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e65" source="addr_std_sh_0005" target="poi_std_sh_0005">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e66" source="addr_std_sh_0006" target="poi_std_sh_0006">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e67" source="addr_std_sh_0007" target="poi_std_sh_0007">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e68" source="addr_std_sh_0008" target="poi_std_sh_0008">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e69" source="addr_std_sh_0009" target="poi_std_sh_0009">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e70" source="addr_std_sh_0010" target="poi_std_sh_0010">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e71" source="addr_std_sh_0011" target="poi_std_sh_0011">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e72" source="addr_std_sh_0012" target="poi_std_sh_0012">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e73" source="addr_std_sh_0013" target="poi_std_sh_0013">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e74" source="addr_std_sh_0014" target="poi_std_sh_0014">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e75" source="addr_std_sh_0015" target="poi_std_sh_0015">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e76" source="addr_std_sh_0016" target="poi_std_sh_0016">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e77" source="addr_std_sh_0017" target="poi_std_sh_0017">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e78" source="addr_std_sh_0018" target="poi_std_sh_0018">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e79" source="addr_std_sh_0019" target="poi_std_sh_0019">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e80" source="addr_std_sh_0020" target="poi_std_sh_0020">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e81" source="addr_std_sh_0021" target="poi_std_sh_0021">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e82" source="addr_std_sh_0022" target="poi_std_sh_0022">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e83" source="addr_std_sh_0023" target="poi_std_sh_0023">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e84" source="addr_std_sh_0024" target="poi_std_sh_0024">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e85" source="addr_std_sh_0025" target="poi_std_sh_0025">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e86" source="addr_std_sh_0026" target="poi_std_sh_0026">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e87" source="addr_std_sh_0027" target="poi_std_sh_0027">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e88" source="addr_std_sh_0028" target="poi_std_sh_0028">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e89" source="addr_std_sh_0029" target="poi_std_sh_0029">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e90" source="addr_std_sh_0030" target="poi_std_sh_0030">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e91" source="addr_std_sh_0031" target="poi_std_sh_0031">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e92" source="addr_std_sh_0032" target="poi_std_sh_0032">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e93" source="addr_std_sh_0033" target="poi_std_sh_0033">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e94" source="addr_std_sh_0034" target="poi_std_sh_0034">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e95" source="addr_std_sh_0035" target="poi_std_sh_0035">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e96" source="addr_std_sh_0036" target="poi_std_sh_0036">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e97" source="addr_std_sh_0037" target="poi_std_sh_0037">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e98" source="addr_std_sh_0038" target="poi_std_sh_0038">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e99" source="addr_std_sh_0039" target="poi_std_sh_0039">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e100" source="addr_std_sh_0040" target="poi_std_sh_0040">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e101" source="addr_std_sh_0041" target="poi_std_sh_0041">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e102" source="addr_std_sh_0042" target="poi_std_sh_0042">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e103" source="addr_std_sh_0043" target="poi_std_sh_0043">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e104" source="addr_std_sh_0044" target="poi_std_sh_0044">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e105" source="addr_std_sh_0045" target="poi_std_sh_0045">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e106" source="addr_std_sh_0046" target="poi_std_sh_0046">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e107" source="addr_std_sh_0047" target="poi_std_sh_0047">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e108" source="addr_std_sh_0048" target="poi_std_sh_0048">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e109" source="addr_std_sh_0049" target="poi_std_sh_0049">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e110" source="addr_std_sh_0050" target="poi_std_sh_0050">
+      <data key="rel_type">entity_mapping</data>
+      <data key="rel_confidence">0.95</data>
+    </edge>
+    <edge id="e111" source="addr_std_sh_0001" target="addr_std_sh_0002">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.9776393202255309</data>
+    </edge>
+    <edge id="e112" source="addr_std_sh_0001" target="addr_std_sh_0003">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.9145599625471486</data>
+    </edge>
+    <edge id="e113" source="addr_std_sh_0001" target="addr_std_sh_0004">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.860716117228356</data>
+    </edge>
+    <edge id="e114" source="addr_std_sh_0001" target="addr_std_sh_0005">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.525869216354958</data>
+    </edge>
+    <edge id="e115" source="addr_std_sh_0002" target="addr_std_sh_0003">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.9367544467965552</data>
+    </edge>
+    <edge id="e116" source="addr_std_sh_0002" target="addr_std_sh_0004">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.8829530008925909</data>
+    </edge>
+    <edge id="e117" source="addr_std_sh_0002" target="addr_std_sh_0005">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.5075571099113063</data>
+    </edge>
+    <edge id="e118" source="addr_std_sh_0003" target="addr_std_sh_0004">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.9461483519285165</data>
+    </edge>
+    <edge id="e119" source="addr_std_sh_0003" target="addr_std_sh_0005">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.45916730868097233</data>
+    </edge>
+    <edge id="e120" source="addr_std_sh_0004" target="addr_std_sh_0005">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.41399658704074205</data>
+    </edge>
+    <edge id="e121" source="addr_std_sh_0006" target="addr_std_sh_0007">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.4837636200344828</data>
+    </edge>
+    <edge id="e122" source="addr_std_sh_0006" target="addr_std_sh_0008">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.7136435787343463</data>
+    </edge>
+    <edge id="e123" source="addr_std_sh_0006" target="addr_std_sh_0009">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.7198214854776317</data>
+    </edge>
+    <edge id="e124" source="addr_std_sh_0007" target="addr_std_sh_0008">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.6798437881283824</data>
+    </edge>
+    <edge id="e125" source="addr_std_sh_0007" target="addr_std_sh_0009">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.6192113447065725</data>
+    </edge>
+    <edge id="e126" source="addr_std_sh_0008" target="addr_std_sh_0009">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.6359945055356024</data>
+    </edge>
+    <edge id="e127" source="addr_std_sh_0011" target="addr_std_sh_0012">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.04921085408012005</data>
+    </edge>
+    <edge id="e128" source="addr_std_sh_0011" target="addr_std_sh_0014">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.5570553081927551</data>
+    </edge>
+    <edge id="e129" source="addr_std_sh_0012" target="addr_std_sh_0013">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.551781303379691</data>
+    </edge>
+    <edge id="e130" source="addr_std_sh_0016" target="addr_std_sh_0017">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.014048682742896279</data>
+    </edge>
+    <edge id="e131" source="addr_std_sh_0019" target="addr_std_sh_0020">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.1675938491334289</data>
+    </edge>
+    <edge id="e132" source="addr_std_sh_0021" target="addr_std_sh_0022">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.13721381559457113</data>
+    </edge>
+    <edge id="e133" source="addr_std_sh_0023" target="addr_std_sh_0024">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.08583371315705834</data>
+    </edge>
+    <edge id="e134" source="addr_std_sh_0023" target="addr_std_sh_0025">
+      <data key="rel_type">spatial_near</data>
+      <data key="rel_confidence">0.15780049869472068</data>
+    </edge>
+  </graph>
+</graphml>
