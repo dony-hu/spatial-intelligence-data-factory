@@ -2,3 +2,18 @@
 testdata/cache/
 testdata/downloads/
 testdata/tmp/
+
+# Terraform local state and per-env vars (do not commit)
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/terraform.tfvars
+**/secrets.env
+
+# Ansible per-env inventory
+infra/ansible/inventory.ini
+
+# Local tooling
+tools/bin/
+tools/venv/
+tools/keys/

@@ -131,3 +131,5 @@ scripts/testdata/verify.sh geo_poi_smoke_p0
 - `docs/testdata-governance.md`
 - `docs/entity-operations-closed-loop.md`
 - `docs/test-case-matrix.md`
+- `docs/architecture-alignment-spatial-intelligence-data-factory-2026-02-11.md`（含云上建设、专网迁移与 Qwen/GLM/腾讯混元适配选型）
+- `docs/cloud-bootstrap-runbook.md`（云上环境搭建执行手册）

@@ -1,0 +1,48 @@
+---
+- name: Initialize Kubernetes control plane
+  hosts: k8s_control_plane
+  become: true
+  tasks:
+    - name: Check if cluster already initialized
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: k8s_admin_conf
+
+    - name: Initialize cluster
+      when: not k8s_admin_conf.stat.exists
+      command: >-
+        kubeadm init
+        --pod-network-cidr={{ pod_network_cidr }}
+        --service-cidr={{ service_cidr }}
+        --kubernetes-version=v{{ kubernetes_version }}.0
+        --node-name={{ inventory_hostname }}
+      register: kubeadm_init
+
+    - name: Create .kube directory for root
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0700'
+
+    - name: Copy admin kubeconfig
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: true
+        mode: '0600'
+
+    - name: Install Calico CNI
+      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.2/manifests/calico.yaml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      changed_when: false
+
+    - name: Generate worker join command
+      command: kubeadm token create --print-join-command
+      register: kubeadm_join_cmd
+
+    - name: Save join command to file
+      copy:
+        dest: /tmp/kubeadm_join_cmd.sh
+        content: "{{ kubeadm_join_cmd.stdout }}\n"
+        mode: '0700'
