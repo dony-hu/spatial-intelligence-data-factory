@@ -7,6 +7,7 @@ Factory Live Demo with Real-time Web Dashboard
 import sys
 import time
 import random
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -17,6 +18,133 @@ sys.path.insert(0, str(project_root))
 from tools.factory_workflow import FactoryWorkflow
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
 from tools.factory_simple_server import start_server, factory_state
+
+# 简单的中文分词函数
+def chinese_word_segment(address: str) -> list:
+    """
+    对中文地址进行分词
+    例如: "杨浦区四川北路8361号" -> ["杨浦区", "四川北路", "8361号"]
+    例如: "宝山区南京中路1231号" -> ["宝山区", "南京中路", "1231号"]
+    """
+    # 保留原始地址格式并智能分词
+    words = []
+
+    # 分离区名、街道、号码
+    # 匹配模式：区名(如"杨浦区") + 街道名 + 号码(如"8361号")
+    # 也支持: "1231号户室" 或 "1231号" 形式
+    match = re.match(r'([\u4e00-\u9fff]+?区)([\u4e00-\u9fff0-9]+?)(\d+号[\u4e00-\u9fff]*)', address)
+    if match:
+        district, street, number = match.groups()
+        words = [district, street, number]
+    else:
+        # 备用：简单分割
+        words = [address[i:i+2] for i in range(0, len(address), 2)]
+
+    return words
+
+def generate_graph_from_address(address: str, addr_id: int) -> dict:
+    """
+    从地址生成知识图谱（树形层级结构）
+    采用正确的地理层级关系：上海市 → 区 → 街道 → 建筑 → 房间
+
+    输入: "徐汇区南京西路8691号"
+    输出: 树形节点结构，保持地理层级关系
+    """
+    words = chinese_word_segment(address)
+
+    nodes = {}
+
+    # 确保中心节点存在（上海市）
+    if "node_shanghai" not in nodes:
+        nodes["node_shanghai"] = {
+            "id": "node_shanghai",
+            "label": "上海市",
+            "type": "city",
+            "parent": None,
+            "children": [],
+            "expanded": True,
+            "childrenLoaded": False,
+            "hasMore": False
+        }
+
+    # 节点1: 地区/区（第2层）
+    if len(words) > 0:
+        district_id = f"node_{addr_id}_district"
+        nodes[district_id] = {
+            "id": district_id,
+            "label": words[0],  # "徐汇区"
+            "type": "district",
+            "parent": "node_shanghai",  # 直接子节点
+            "children": [],
+            "expanded": False,
+            "childrenLoaded": False,
+            "hasMore": False
+        }
+
+    # 节点2: 街道（第3层）
+    if len(words) > 1:
+        street_id = f"node_{addr_id}_street"
+        nodes[street_id] = {
+            "id": street_id,
+            "label": words[1],  # "南京西路"
+            "type": "street",
+            "parent": district_id if len(words) > 0 else None,  # 街道的父节点是区
+            "children": [],
+            "expanded": False,
+            "childrenLoaded": False,
+            "hasMore": False
+        }
+        # 街道作为地区的子节点
+        if len(words) > 0:
+            nodes[district_id]["children"].append(street_id)
+
+    # 节点3: 号码/建筑（第4层）
+    if len(words) > 2:
+        building_id = f"node_{addr_id}_building"
+        nodes[building_id] = {
+            "id": building_id,
+            "label": words[2],  # "8691号"
+            "type": "building",
+            "parent": street_id if len(words) > 1 else None,  # 建筑的父节点是街道
+            "children": [],
+            "expanded": False,
+            "childrenLoaded": False,
+            "hasMore": False
+        }
+        # 建筑作为街道的子节点
+        if len(words) > 1:
+            nodes[street_id]["children"].append(building_id)
+        else:
+            # 如果没有街道，建筑直接挂在区下
+            nodes[district_id]["children"].append(building_id) if len(words) > 0 else None
+
+        # 如果包含房间号，额外添加房间节点（第5层）
+        room_match = re.search(r'(\d+)号(.+)', words[2])
+        if room_match:
+            building_num = room_match.group(1)
+            room_info = room_match.group(2)
+            if room_info and room_info != '号':
+                room_id = f"node_{addr_id}_room"
+                nodes[room_id] = {
+                    "id": room_id,
+                    "label": room_info,  # "502室"
+                    "type": "room",
+                    "parent": building_id,  # 房间的父节点是建筑
+                    "children": [],
+                    "expanded": False,
+                    "childrenLoaded": True,
+                    "hasMore": False
+                }
+                nodes[building_id]["children"].append(room_id)
+
+    # 地区作为上海市的子节点（注意：后续需要去重和限制数量）
+    if len(words) > 0 and district_id not in nodes["node_shanghai"]["children"]:
+        nodes["node_shanghai"]["children"].append(district_id)
+
+    return {
+        "nodes": nodes,
+        "segment_result": " → ".join(words)
+    }
 
 # Shanghai data
 SHANGHAI_STREETS = [
@@ -81,9 +209,12 @@ def run_live_demo(total_addresses: int = 100):
     # 初始化Web状态
     factory_state['factory_name'] = "上海数据工厂"
     factory_state['start_time'] = datetime.now().isoformat()
+    factory_state['address_details'] = []  # 记录每条地址的处理详情
+    factory_state['graph_nodes'] = []  # 图谱节点
+    factory_state['graph_relationships'] = []  # 图谱关系
 
     start_time = time.time()
-    
+
     # 逐条处理地址
     for addr_id in range(total_addresses):
         # 生成地址
@@ -126,6 +257,30 @@ def run_live_demo(total_addresses: int = 100):
             'total_tokens': summary['metrics']['total_tokens_consumed'],
             'quality_rate': quality.get('pass_rate', 0) if quality else 0
         }
+
+        # 记录地址处理详情
+        address_detail = {
+            'addr_id': addr_id,
+            'raw_address': address['raw'],
+            'source': address['source'],
+            'status': 'completed',
+            'timestamp': datetime.now().isoformat(),
+            'cleaning_result': {
+                'segment': chinese_word_segment(address['raw']),  # 分词结果
+                'segment_text': " → ".join(chinese_word_segment(address['raw'])),  # 分词文本
+                'tokens_used': random.uniform(1.5, 2.5)
+            }
+        }
+
+        # 生成图谱数据
+        graph_data = generate_graph_from_address(address['raw'], addr_id)
+        address_detail['graph_result'] = {
+            'nodes': graph_data['nodes'],
+            'segment_result': graph_data['segment_result'],
+            'tokens_used': random.uniform(2.0, 3.0)
+        }
+
+        factory_state['address_details'].append(address_detail)
 
         # 显示进度
         progress = ((addr_id + 1) / total_addresses) * 100
