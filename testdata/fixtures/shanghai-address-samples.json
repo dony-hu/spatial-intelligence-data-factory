@@ -1,0 +1,264 @@
+{
+  "name": "shanghai-address-samples",
+  "version": "2026.02.11.1",
+  "description": "Sample data for Shanghai 24-level address system testing",
+  "region": "Shanghai",
+  "datasets": [
+    {
+      "table": "address_admin_division",
+      "records": 5,
+      "sample_records": [
+        {
+          "code": "310101",
+          "name": "黄浦区",
+          "level": 2,
+          "parent_code": "3101",
+          "region": "Shanghai",
+          "status": "active"
+        },
+        {
+          "code": "310115",
+          "name": "浦东新区",
+          "level": 2,
+          "parent_code": "3101",
+          "region": "Shanghai",
+          "status": "active"
+        },
+        {
+          "code": "31010101",
+          "name": "外滩街道",
+          "level": 3,
+          "parent_code": "310101",
+          "region": "Shanghai",
+          "status": "active"
+        },
+        {
+          "code": "31010102",
+          "name": "五里桥街道",
+          "level": 3,
+          "parent_code": "310101",
+          "region": "Shanghai",
+          "status": "active"
+        },
+        {
+          "code": "31011501",
+          "name": "浦东南路街道",
+          "level": 3,
+          "parent_code": "310115",
+          "region": "Shanghai",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "table": "address_raw_input",
+      "records": 8,
+      "sample_records": [
+        {
+          "input_id": "input_sh_001",
+          "raw_address": "上海市黄浦区外滩街道中山东一路1号",
+          "source": "public_security",
+          "region": "Shanghai",
+          "status": "raw",
+          "confidence_score": 0.95
+        },
+        {
+          "input_id": "input_sh_002",
+          "raw_address": "浦东新区浦东南路街道世纪大道100号",
+          "source": "poi",
+          "region": "Shanghai",
+          "status": "raw",
+          "confidence_score": 0.88
+        },
+        {
+          "input_id": "input_sh_003",
+          "raw_address": "黄浦区五里桥街道圆明园路50号5单元302室",
+          "source": "real_estate",
+          "region": "Shanghai",
+          "status": "raw",
+          "confidence_score": 0.92
+        },
+        {
+          "input_id": "input_sh_004",
+          "raw_address": "上海黄浦中山东一路1号",
+          "source": "public_security",
+          "region": "Shanghai",
+          "status": "parsing",
+          "confidence_score": 0.75
+        },
+        {
+          "input_id": "input_sh_005",
+          "raw_address": "浦东新区陆家嘴环路333号",
+          "source": "poi",
+          "region": "Shanghai",
+          "status": "standardizing",
+          "confidence_score": 0.91
+        },
+        {
+          "input_id": "input_sh_006",
+          "raw_address": "黄浦区南京东路100号",
+          "source": "public_security",
+          "region": "Shanghai",
+          "status": "mapped",
+          "confidence_score": 0.98
+        },
+        {
+          "input_id": "input_sh_007",
+          "raw_address": "浦东浦东南路1000号",
+          "source": "poi",
+          "region": "Shanghai",
+          "status": "validated",
+          "confidence_score": 0.94
+        },
+        {
+          "input_id": "input_sh_008",
+          "raw_address": "黄浦外滩中山一路xxx号",
+          "source": "public_security",
+          "region": "Shanghai",
+          "status": "error",
+          "error_message": "Address parsing failed: invalid format",
+          "confidence_score": 0.15
+        }
+      ]
+    },
+    {
+      "table": "address_parsed",
+      "records": 7,
+      "sample_records": [
+        {
+          "parsed_id": "parsed_sh_001",
+          "input_id": "input_sh_001",
+          "province": "上海",
+          "city": "上海市",
+          "district": "黄浦区",
+          "street": "中山东一路",
+          "building": "1号",
+          "poi_name": "外滩陈毅广场",
+          "poi_category": "landmark",
+          "parsing_method": "regex",
+          "region": "Shanghai"
+        },
+        {
+          "parsed_id": "parsed_sh_002",
+          "input_id": "input_sh_002",
+          "province": "上海",
+          "city": "上海市",
+          "district": "浦东新区",
+          "street": "浦东南路",
+          "building": "100号",
+          "poi_name": "世纪大道",
+          "poi_category": "avenue",
+          "parsing_method": "ml_model",
+          "region": "Shanghai"
+        },
+        {
+          "parsed_id": "parsed_sh_003",
+          "input_id": "input_sh_003",
+          "province": "上海",
+          "city": "上海市",
+          "district": "黄浦区",
+          "street": "圆明园路",
+          "building": "50号",
+          "unit": "5",
+          "floor": "3",
+          "room": "02",
+          "parsing_method": "regex",
+          "region": "Shanghai"
+        }
+      ]
+    },
+    {
+      "table": "address_standardized",
+      "records": 6,
+      "sample_records": [
+        {
+          "standardized_id": "std_sh_001",
+          "parsed_id": "parsed_sh_001",
+          "standard_province": "上海市",
+          "standard_city": "上海市",
+          "standard_district": "黄浦区",
+          "standard_street": "中山东一路",
+          "standard_building": "1号",
+          "standard_full_address": "上海市黄浦区中山东一路1号",
+          "coordinate_x": 31.2387,
+          "coordinate_y": 121.4877,
+          "confidence_score": 0.98,
+          "region": "Shanghai",
+          "version": 1
+        },
+        {
+          "standardized_id": "std_sh_002",
+          "parsed_id": "parsed_sh_002",
+          "standard_province": "上海市",
+          "standard_city": "上海市",
+          "standard_district": "浦东新区",
+          "standard_street": "浦东南路",
+          "standard_building": "100号",
+          "standard_full_address": "上海市浦东新区浦东南路100号",
+          "coordinate_x": 31.2328,
+          "coordinate_y": 121.5254,
+          "confidence_score": 0.95,
+          "region": "Shanghai",
+          "version": 1
+        },
+        {
+          "standardized_id": "std_sh_003",
+          "parsed_id": "parsed_sh_003",
+          "standard_province": "上海市",
+          "standard_city": "上海市",
+          "standard_district": "黄浦区",
+          "standard_street": "圆明园路",
+          "standard_building": "50号",
+          "standard_unit": "5",
+          "standard_floor": "3",
+          "standard_room": "02",
+          "standard_full_address": "上海市黄浦区圆明园路50号5单元3层02室",
+          "coordinate_x": 31.2419,
+          "coordinate_y": 121.4965,
+          "confidence_score": 0.96,
+          "region": "Shanghai",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "table": "address_entity_mapping",
+      "records": 5,
+      "sample_records": [
+        {
+          "mapping_id": "map_sh_001",
+          "standardized_id": "std_sh_001",
+          "entity_id": "poi_bund_001",
+          "entity_type": "landmark",
+          "entity_name": "外滩陈毅广场",
+          "similarity_score": 0.99,
+          "mapping_method": "exact_match",
+          "match_confidence": 0.99,
+          "source_db": "baidu_maps",
+          "region": "Shanghai",
+          "is_confirmed": true
+        },
+        {
+          "mapping_id": "map_sh_002",
+          "standardized_id": "std_sh_002",
+          "entity_id": "poi_lujiazui_001",
+          "entity_type": "poi",
+          "entity_name": "陆家嘴金融中心",
+          "similarity_score": 0.94,
+          "mapping_method": "fuzzy_match",
+          "match_confidence": 0.94,
+          "source_db": "amap",
+          "region": "Shanghai",
+          "is_confirmed": true
+        }
+      ]
+    }
+  ],
+  "checksums": {
+    "address_admin_division": "sha256:abc123def456",
+    "address_raw_input": "sha256:ghi789jkl012",
+    "address_parsed": "sha256:mno345pqr678",
+    "address_standardized": "sha256:stu901vwx234",
+    "address_entity_mapping": "sha256:yza567bcd890"
+  }
+}
