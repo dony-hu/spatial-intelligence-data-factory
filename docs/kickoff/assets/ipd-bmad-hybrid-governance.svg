@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1180" viewBox="0 0 1920 1180">
+  <defs>
+    <style>
+      .title { font: 700 34px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .subtitle { font: 700 22px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .text { font: 600 16px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .small { font: 500 14px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #334155; }
+      .box { fill: #fff; stroke: #334155; stroke-width: 2; rx: 12; }
+      .core { fill: #dbeafe; }
+      .sub { fill: #dcfce7; }
+      .gate { fill: #fee2e2; }
+      .mile { fill: #fef3c7; }
+      .role { fill: #ede9fe; }
+      .line { stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow2); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1920" height="1180" fill="#f8fafc"/>
+  <text x="960" y="56" text-anchor="middle" class="title">核心仓 + 5 子仓 IPD x BMAD 混合治理图（角色 / 评审点 / 里程碑）</text>
+
+  <rect x="40" y="90" width="1840" height="230" class="box role"/>
+  <text x="960" y="128" text-anchor="middle" class="subtitle">角色层（RACI）</text>
+  <rect x="80" y="150" width="260" height="120" class="box"/>
+  <text x="210" y="185" text-anchor="middle" class="text">Project Owner</text>
+  <text x="210" y="215" text-anchor="middle" class="small">范围/目标最终责任</text>
+  <text x="210" y="240" text-anchor="middle" class="small">Gate 决策拍板</text>
+
+  <rect x="370" y="150" width="260" height="120" class="box"/>
+  <text x="500" y="185" text-anchor="middle" class="text">PM（平台/子项目）</text>
+  <text x="500" y="215" text-anchor="middle" class="small">PRD/Epic/优先级</text>
+  <text x="500" y="240" text-anchor="middle" class="small">里程碑维护</text>
+
+  <rect x="660" y="150" width="260" height="120" class="box"/>
+  <text x="790" y="185" text-anchor="middle" class="text">Tech Lead / Architect</text>
+  <text x="790" y="215" text-anchor="middle" class="small">架构/契约评审</text>
+  <text x="790" y="240" text-anchor="middle" class="small">技术风险控制</text>
+
+  <rect x="950" y="150" width="260" height="120" class="box"/>
+  <text x="1080" y="185" text-anchor="middle" class="text">Compliance</text>
+  <text x="1080" y="215" text-anchor="middle" class="small">合规边界/审计</text>
+  <text x="1080" y="240" text-anchor="middle" class="small">数据治理要求</text>
+
+  <rect x="1240" y="150" width="300" height="120" class="box"/>
+  <text x="1390" y="185" text-anchor="middle" class="text">BMad Master（总控）</text>
+  <text x="1390" y="215" text-anchor="middle" class="small">/workflow-status 路由</text>
+  <text x="1390" y="240" text-anchor="middle" class="small">状态一致性维护</text>
+
+  <rect x="1570" y="150" width="270" height="120" class="box"/>
+  <text x="1705" y="185" text-anchor="middle" class="text">SM / Dev / QA</text>
+  <text x="1705" y="215" text-anchor="middle" class="small">迭代交付与验证</text>
+  <text x="1705" y="240" text-anchor="middle" class="small">证据与复盘</text>
+
+  <rect x="40" y="350" width="900" height="560" class="box core"/>
+  <text x="490" y="390" text-anchor="middle" class="subtitle">核心仓（平台层） spatial-intelligence-data-factory</text>
+
+  <rect x="80" y="440" width="250" height="70" class="box"/>
+  <text x="205" y="482" text-anchor="middle" class="text">Analysis /product-brief</text>
+
+  <rect x="360" y="440" width="250" height="70" class="box"/>
+  <text x="485" y="482" text-anchor="middle" class="text">Planning /prd</text>
+
+  <rect x="640" y="440" width="250" height="70" class="box"/>
+  <text x="765" y="482" text-anchor="middle" class="text">Solutioning /architecture</text>
+
+  <rect x="220" y="560" width="530" height="80" class="box"/>
+  <text x="485" y="606" text-anchor="middle" class="text">Implementation /sprint-planning /create-story /dev-story /code-review</text>
+
+  <line x1="330" y1="475" x2="360" y2="475" class="line"/>
+  <line x1="610" y1="475" x2="640" y2="475" class="line"/>
+  <line x1="765" y1="510" x2="750" y2="560" class="line"/>
+
+  <rect x="80" y="680" width="810" height="200" class="box gate"/>
+  <text x="485" y="720" text-anchor="middle" class="subtitle">IPD 评审点（Gate）</text>
+  <text x="110" y="760" class="text">G1 洞察/立项：范围边界、投资优先级、目标一致性</text>
+  <text x="110" y="795" class="text">G2 计划：PRD 完整度、Epic 优先级、资源承诺</text>
+  <text x="110" y="830" class="text">G3 方案：架构评审、契约冻结、风险缓解</text>
+  <text x="110" y="865" class="text">G4 发布：质量门禁、上线窗口、回滚预案</text>
+
+  <line x1="485" y1="640" x2="485" y2="680" class="dash"/>
+
+  <rect x="980" y="350" width="900" height="560" class="box sub"/>
+  <text x="1430" y="390" text-anchor="middle" class="subtitle">子项目层（5 个独立仓）</text>
+
+  <rect x="1020" y="440" width="390" height="90" class="box"/>
+  <text x="1215" y="476" text-anchor="middle" class="text">上海地址治理 / 吴江公安治理 / 北京公安治理</text>
+  <text x="1215" y="506" text-anchor="middle" class="small">共性：地址治理、公安数据治理能力接入</text>
+
+  <rect x="1450" y="440" width="390" height="90" class="box"/>
+  <text x="1645" y="476" text-anchor="middle" class="text">昆山空间智能 / 宝安城市调度</text>
+  <text x="1645" y="506" text-anchor="middle" class="small">共性：空间感知、调度场景能力接入</text>
+
+  <rect x="1020" y="560" width="820" height="90" class="box"/>
+  <text x="1430" y="596" text-anchor="middle" class="text">每个子仓执行本地 BMAD：Analysis → Planning → Solutioning → Implementation</text>
+  <text x="1430" y="626" text-anchor="middle" class="small">本地定制需求在子仓闭环；可复用能力提交回流核心仓评审</text>
+
+  <rect x="1020" y="680" width="820" height="200" class="box mile"/>
+  <text x="1430" y="720" text-anchor="middle" class="subtitle">里程碑（建议）</text>
+  <text x="1050" y="760" class="text">M1（D+2）：5 子项目完成 PRD v0.1 补齐</text>
+  <text x="1050" y="795" class="text">M2（D+4）：跨项目评审完成，PRD 升级到 v1.0</text>
+  <text x="1050" y="830" class="text">M3（D+5）：冻结需求，进入 /architecture</text>
+  <text x="1050" y="865" class="text">M4（双周）：完成首轮架构评审与版本接入窗口确认</text>
+
+  <line x1="940" y1="560" x2="1020" y2="605" class="line"/>
+  <line x1="940" y1="475" x2="1020" y2="475" class="line"/>
+
+  <rect x="40" y="950" width="1840" height="180" class="box"/>
+  <text x="960" y="992" text-anchor="middle" class="subtitle">治理规则（执行底线）</text>
+  <text x="80" y="1030" class="text">1) 核心仓只收可复用能力（至少 2 地区复用）；2) 子仓承载本地定制；3) 版本化接入，禁止复制代码。</text>
+  <text x="80" y="1065" class="text">4) 固定节奏：周状态盘点、双周架构评审、月度复盘；5) 全部交付需日志+证据链接可审计。</text>
+</svg>

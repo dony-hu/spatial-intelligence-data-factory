@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="980" viewBox="0 0 1800 980">
+  <defs>
+    <style>
+      .title { font: 700 32px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .subtitle { font: 700 20px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .text { font: 600 16px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .small { font: 500 14px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #334155; }
+      .box { fill: #fff; stroke: #334155; stroke-width: 2; rx: 12; }
+      .zone { fill: #e0f2fe; }
+      .line { stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="1800" height="980" fill="#f8fafc"/>
+  <text x="900" y="54" text-anchor="middle" class="title">工厂部署拓扑图（生产运行态）</text>
+
+  <rect x="60" y="100" width="1680" height="820" class="box"/>
+  <text x="900" y="136" text-anchor="middle" class="subtitle">Multi-Cluster + Multi-Region Deployment</text>
+
+  <rect x="100" y="180" width="510" height="300" class="box zone"/>
+  <text x="355" y="215" text-anchor="middle" class="text">接入区（DMZ/API Gateway）</text>
+  <text x="130" y="250" class="small">• API 网关 / WAF / 鉴权</text>
+  <text x="130" y="280" class="small">• 统一入口：数据 API / 推理 API</text>
+  <text x="130" y="310" class="small">• 流量治理：限流、熔断、灰度</text>
+
+  <rect x="650" y="160" width="560" height="340" class="box zone"/>
+  <text x="930" y="195" text-anchor="middle" class="text">控制区（K8s 控制平面 + Agent Runtime）</text>
+  <text x="680" y="230" class="small">• Agent Orchestrator / Strategy Router</text>
+  <text x="680" y="260" class="small">• Workflow Engine / Scheduler / Queue</text>
+  <text x="680" y="290" class="small">• Tool Registry / Policy Engine</text>
+  <text x="680" y="320" class="small">• Approval Gate / Audit Service</text>
+  <text x="680" y="350" class="small">• State &amp; Memory Store</text>
+  <text x="680" y="380" class="small">• Config / Secret / Feature Flag</text>
+
+  <rect x="1260" y="180" width="440" height="300" class="box zone"/>
+  <text x="1480" y="215" text-anchor="middle" class="text">执行区（Data + ML Compute）</text>
+  <text x="1290" y="250" class="small">• ETL/ELT 执行集群</text>
+  <text x="1290" y="280" class="small">• 训练与评测集群</text>
+  <text x="1290" y="310" class="small">• 推理服务集群</text>
+  <text x="1290" y="340" class="small">• 批流一体处理引擎</text>
+
+  <rect x="180" y="540" width="1420" height="250" class="box"/>
+  <text x="890" y="575" text-anchor="middle" class="text">数据与治理区</text>
+  <text x="220" y="615" class="small">• Lakehouse：对象存储 + 开放表格式（明细、宽表、特征）</text>
+  <text x="220" y="645" class="small">• DW：权威指标层、审计输出层、监管报表层</text>
+  <text x="220" y="675" class="small">• Metadata + Lineage：目录、血缘、影响分析</text>
+  <text x="220" y="705" class="small">• Observability：日志、指标、Trace、数据质量监控</text>
+  <text x="220" y="735" class="small">• 安全合规：IAM、脱敏、数据分级、访问审计</text>
+
+  <line x1="610" y1="300" x2="650" y2="300" class="line"/>
+  <line x1="1210" y1="300" x2="1260" y2="300" class="line"/>
+  <line x1="930" y1="500" x2="930" y2="540" class="line"/>
+  <line x1="1480" y1="480" x2="1480" y2="540" class="line"/>
+  <line x1="355" y1="480" x2="355" y2="540" class="line"/>
+
+  <rect x="100" y="815" width="1600" height="90" class="box"/>
+  <text x="900" y="855" text-anchor="middle" class="text">部署原则：控制平面与执行平面解耦；关键路径全链路可观测；发布走灰度与回滚；关键动作走审批门禁</text>
+  <text x="900" y="883" text-anchor="middle" class="small">人参与环节：客户确认发布窗口与业务验收；丰图执行发布审批、故障处置与回滚决策</text>
+</svg>
