@@ -1,0 +1,546 @@
+"""
+Factory Dashboard - Generates interactive HTML visualization of factory operations
+"""
+
+import json
+import sys
+from pathlib import Path
+from typing import Dict, Any
+from datetime import datetime
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from tools.factory_workflow import FactoryWorkflow
+
+
+class FactoryDashboard:
+    """Generate HTML dashboard for factory visualization"""
+
+    def __init__(self, workflow: FactoryWorkflow = None):
+        self.workflow = workflow or FactoryWorkflow()
+
+    def generate_html_dashboard(self, output_path: str = "output/factory_dashboard.html") -> str:
+        """Generate interactive HTML dashboard"""
+
+        # Get all data
+        factory_status = self.workflow.get_factory_status()
+        cost_summary = self.workflow.get_worker_cost_summary()
+        quality_report = self.workflow.get_quality_report()
+        workflow_summary = self.workflow.get_workflow_summary()
+        db_stats = self.workflow.get_database_statistics()
+
+        html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据工厂演示系统 - 运营看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {{
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }}
+
+        body {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }}
+
+        .dashboard-container {{
+            max-width: 1400px;
+            margin: 0 auto;
+        }}
+
+        .dashboard-header {{
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }}
+
+        .factory-title {{
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }}
+
+        .factory-status {{
+            font-size: 1.2em;
+            color: #666;
+        }}
+
+        .status-badge {{
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 10px;
+        }}
+
+        .status-running {{
+            background-color: #d4edda;
+            color: #155724;
+        }}
+
+        .metric-card {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }}
+
+        .metric-card.success {{
+            border-left-color: var(--success-color);
+        }}
+
+        .metric-card.warning {{
+            border-left-color: var(--warning-color);
+        }}
+
+        .metric-card.danger {{
+            border-left-color: var(--danger-color);
+        }}
+
+        .metric-value {{
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }}
+
+        .metric-label {{
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+
+        .chart-container {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+            height: 400px;
+        }}
+
+        .section-title {{
+            color: white;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            font-size: 1.8em;
+        }}
+
+        .table-container {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }}
+
+        .table {{
+            margin-bottom: 0;
+            font-size: 0.95em;
+        }}
+
+        .table thead {{
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }}
+
+        .badge-success {{
+            background-color: var(--success-color);
+        }}
+
+        .badge-danger {{
+            background-color: var(--danger-color);
+        }}
+
+        .badge-warning {{
+            background-color: var(--warning-color);
+        }}
+
+        .badge-info {{
+            background-color: var(--info-color);
+        }}
+
+        .role-badge {{
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }}
+
+        .role-director {{ background-color: #e8f4f8; color: #0c5460; }}
+        .role-expert {{ background-color: #e7f3ff; color: #004085; }}
+        .role-leader {{ background-color: #fff3cd; color: #856404; }}
+        .role-worker {{ background-color: #e8f5e9; color: #1b5e20; }}
+        .role-inspector {{ background-color: #fce4ec; color: #880e4f; }}
+
+        .progress-bar {{
+            background-color: var(--primary-color);
+        }}
+
+        .footer {{
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+        }}
+
+        .row {{
+            margin-bottom: 20px;
+        }}
+
+        .col-md-6 {{
+            margin-bottom: 20px;
+        }}
+
+        .col-md-4 {{
+            margin-bottom: 20px;
+        }}
+
+        @media (max-width: 768px) {{
+            .factory-title {{
+                font-size: 1.8em;
+            }}
+
+            .metric-value {{
+                font-size: 1.8em;
+            }}
+
+            .section-title {{
+                font-size: 1.3em;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="factory-title">📊 数据工厂演示系统</div>
+            <div class="factory-status">
+                工厂运营状态:
+                <span class="status-badge status-running">运营中</span>
+            </div>
+            <div style="margin-top: 10px; color: #999; font-size: 0.9em;">
+                生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            </div>
+        </div>
+
+        <!-- KPI Overview -->
+        <div class="section-title">关键指标 (KPI)</div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">总生产线数</div>
+                    <div class="metric-value">{workflow_summary['production_lines']['total']}</div>
+                    <div style="font-size: 0.85em; color: #999;">
+                        运行中: {workflow_summary['production_lines']['running']} | 空闲: {workflow_summary['production_lines']['idle']}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card success">
+                    <div class="metric-label">已完成任务</div>
+                    <div class="metric-value">{workflow_summary['work_orders']['completed']}</div>
+                    <div style="font-size: 0.85em; color: #999;">
+                        总任务: {workflow_summary['work_orders']['total']}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">质检合格率</div>
+                    <div class="metric-value">{quality_report.get('pass_rate', 0):.1%}</div>
+                    <div style="font-size: 0.85em; color: #999;">
+                        合格: {quality_report.get('passed_checks', 0)} / {quality_report.get('total_checks', 0)}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card warning">
+                    <div class="metric-label">总Tokens消耗</div>
+                    <div class="metric-value">{workflow_summary['metrics']['total_tokens_consumed']:.2f}</div>
+                    <div style="font-size: 0.85em; color: #999;">
+                        平均: {cost_summary['average_cost_per_item']:.4f}/项
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Lines Status -->
+        <div class="section-title">生产线状态</div>
+        <div class="table-container">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>生产线ID</th>
+                        <th>生产线名称</th>
+                        <th>工人数</th>
+                        <th>完成任务</th>
+                        <th>利用率</th>
+                        <th>平均质量</th>
+                        <th>成本/项</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+
+        # Add production line rows
+        for line_id, line_data in cost_summary.get('lines', {}).items():
+            utilization = line_data.get('utilization', 0)
+            util_class = 'success' if utilization > 0.7 else 'warning' if utilization > 0.3 else 'danger'
+
+            html += f"""
+                    <tr>
+                        <td><code>{line_id[:12]}...</code></td>
+                        <td>{line_data['line_name']}</td>
+                        <td>{line_data['worker_count']}</td>
+                        <td>{line_data['completed_tasks']}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" style="width: {utilization*100:.0f}%; background-color: {'#28a745' if utilization > 0.7 else '#ffc107' if utilization > 0.3 else '#dc3545'};">
+                                    {utilization:.0%}
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>{line_data['average_cost_per_item']:.4f}</td>
+                    </tr>
+"""
+
+        html += """
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Work Orders Status -->
+        <div class="section-title">生产任务状态</div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-label">进行中</div>
+                    <div class="metric-value">{}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card success">
+                    <div class="metric-label">已完成</div>
+                    <div class="metric-value">{}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card warning">
+                    <div class="metric-label">等待中</div>
+                    <div class="metric-value">{}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Metrics -->
+        <div class="section-title">质量指标</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <canvas id="costChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="section-title">成本分析</div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="chart-container">
+                    <canvas id="costTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factory Roles -->
+        <div class="section-title">工厂角色与职责</div>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>角色</th>
+                        <th>职责</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="role-badge role-director">厂长</span></td>
+                        <td>整体工厂运营、需求评估、生产计划</td>
+                        <td><span class="badge badge-success">活跃</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">工艺专家</span></td>
+                        <td>工艺设计、流程优化、资源分配</td>
+                        <td><span class="badge badge-success">活跃</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-leader">生产线组长</span></td>
+                        <td>生产线创建、任务分配、进度监控</td>
+                        <td><span class="badge badge-success">活跃</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-worker">工人</span></td>
+                        <td>数据处理任务执行、成本记录</td>
+                        <td><span class="badge badge-success">活跃</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-inspector">质检员</span></td>
+                        <td>质量验证、检验报告、不合格处理</td>
+                        <td><span class="badge badge-success">活跃</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <strong>数据工厂演示系统</strong> |
+                <span id="auto-update">自动更新中...</span> |
+                <a href="javascript:location.reload()">刷新</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 0.85em;">
+                基于Agent的多角色协作制造工厂模型 |
+                <a href="https://github.com/spatial-intelligence-data-factory">GitHub</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Quality Chart
+        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        new Chart(qualityCtx, {{
+            type: 'doughnut',
+            data: {{
+                labels: ['合格', '不合格'],
+                datasets: [{{
+                    data: [{quality_report.get('passed_checks', 0)}, {quality_report.get('total_checks', 0) - quality_report.get('passed_checks', 0)}],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{
+                    legend: {{ position: 'bottom' }},
+                    title: {{ display: true, text: '质检合格率' }}
+                }}
+            }}
+        }});
+
+        // Cost Chart
+        const costCtx = document.getElementById('costChart').getContext('2d');
+        new Chart(costCtx, {{
+            type: 'bar',
+            data: {{
+                labels: {json.dumps([line_data['line_name'][:20] for line_data in cost_summary.get('lines', {}).values()])},
+                datasets: [{{
+                    label: 'Tokens消耗',
+                    data: {json.dumps([line_data['total_tokens'] for line_data in cost_summary.get('lines', {}).values()])},
+                    backgroundColor: '#007bff',
+                    borderColor: '#0056b3',
+                    borderWidth: 1
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{
+                    legend: {{ display: true }},
+                    title: {{ display: true, text: '各生产线成本' }}
+                }},
+                scales: {{
+                    y: {{ beginAtZero: true }}
+                }}
+            }}
+        }});
+
+        // Cost Trend Chart
+        const costTrendCtx = document.getElementById('costTrendChart').getContext('2d');
+        new Chart(costTrendCtx, {{
+            type: 'line',
+            data: {{
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+                datasets: [{{
+                    label: '累计成本 (tokens)',
+                    data: [0, {cost_summary['total_tokens']*0.15:.2f}, {cost_summary['total_tokens']*0.35:.2f}, {cost_summary['total_tokens']*0.6:.2f}, {cost_summary['total_tokens']*0.8:.2f}, {cost_summary['total_tokens']*0.95:.2f}, {cost_summary['total_tokens']:.2f}],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{
+                    legend: {{ display: true }},
+                    title: {{ display: true, text: '成本趋势' }}
+                }},
+                scales: {{
+                    y: {{ beginAtZero: true }}
+                }}
+            }}
+        }});
+
+        // Auto-update timestamp
+        function updateTimestamp() {{
+            const now = new Date();
+            document.getElementById('auto-update').textContent = '最后更新: ' + now.toLocaleTimeString();
+        }}
+        updateTimestamp();
+        setInterval(updateTimestamp, 60000);  // Update every minute
+    </script>
+</body>
+</html>
+"""
+
+        # Write to file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+
+        return output_path
+
+
+if __name__ == '__main__':
+    dashboard = FactoryDashboard()
+    output_file = dashboard.generate_html_dashboard()
+    print(f"✓ Dashboard generated: {output_file}")
+    print(f"  Open in browser: open {output_file}")
