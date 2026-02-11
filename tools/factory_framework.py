@@ -23,6 +23,7 @@ class FactoryRole(Enum):
 class ProductType(Enum):
     """Data product types"""
     ADDRESS_CLEANING = "address_cleaning"          # 地址清洗
+    ADDRESS_TO_GRAPH = "address_to_graph"          # 地址转图谱
     ENTITY_FUSION = "entity_fusion"                # 实体融合
     RELATIONSHIP_EXTRACTION = "relationship_extraction"  # 关系抽取
     DATA_VALIDATION = "data_validation"            # 数据验证
@@ -37,6 +38,50 @@ class ProcessStep(Enum):
     FUSION = "fusion"               # 融合
     EXTRACTION = "extraction"       # 抽取
     QUALITY_CHECK = "quality_check"  # 质检
+
+
+@dataclass
+class GraphNode:
+    """Knowledge graph node representing a spatial entity"""
+    node_id: str
+    node_type: str  # e.g., "location", "store", "address", "district"
+    name: str
+    properties: Dict[str, Any] = field(default_factory=dict)
+    source_address: str = ""  # Source address ID that generated this node
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'node_id': self.node_id,
+            'node_type': self.node_type,
+            'name': self.name,
+            'properties': self.properties,
+            'source_address': self.source_address,
+            'created_at': self.created_at.isoformat()
+        }
+
+
+@dataclass
+class GraphRelationship:
+    """Relationship between nodes in the knowledge graph"""
+    relationship_id: str
+    source_node_id: str
+    target_node_id: str
+    relationship_type: str  # e.g., "contains", "adjacent_to", "belongs_to"
+    properties: Dict[str, Any] = field(default_factory=dict)
+    source_address: str = ""  # Source address ID that generated this relationship
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'relationship_id': self.relationship_id,
+            'source_node_id': self.source_node_id,
+            'target_node_id': self.target_node_id,
+            'relationship_type': self.relationship_type,
+            'properties': self.properties,
+            'source_address': self.source_address,
+            'created_at': self.created_at.isoformat()
+        }
 
 
 class WorkOrderStatus(Enum):
@@ -151,6 +196,7 @@ class WorkOrder:
     priority: int = 5
     expected_completion: Optional[datetime] = None
     quality_checks: List[Dict[str, Any]] = field(default_factory=list)
+    depends_on_work_order_id: Optional[str] = None  # For pipeline dependencies
     created_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
 
@@ -164,6 +210,7 @@ class WorkOrder:
             'priority': self.priority,
             'expected_completion': self.expected_completion.isoformat() if self.expected_completion else None,
             'quality_checks_count': len(self.quality_checks),
+            'depends_on_work_order_id': self.depends_on_work_order_id,
             'created_at': self.created_at.isoformat(),
             'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }
@@ -322,6 +369,8 @@ class FactoryState:
         self.product_requirements: Dict[str, ProductRequirement] = {}
         self.task_executions: List[TaskExecution] = []
         self.quality_checks: List[QualityCheckResult] = []
+        self.graph_nodes: List[GraphNode] = []  # Knowledge graph nodes
+        self.graph_relationships: List[GraphRelationship] = []  # Knowledge graph relationships
         self.metrics = FactoryMetrics()
         self.created_at = datetime.now()
         self.status = "running"  # running, paused, maintenance
@@ -350,6 +399,14 @@ class FactoryState:
     def record_quality_check(self, check: QualityCheckResult) -> None:
         """Record a quality check result"""
         self.quality_checks.append(check)
+
+    def add_graph_node(self, node: GraphNode) -> None:
+        """Add a node to the knowledge graph"""
+        self.graph_nodes.append(node)
+
+    def add_graph_relationship(self, relationship: GraphRelationship) -> None:
+        """Add a relationship to the knowledge graph"""
+        self.graph_relationships.append(relationship)
 
     def get_pending_work_orders(self) -> List[WorkOrder]:
         """Get all pending work orders"""

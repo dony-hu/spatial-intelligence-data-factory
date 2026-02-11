@@ -175,11 +175,40 @@ class FactoryDB:
                 )
             """)
 
+            # Graph nodes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS graph_nodes (
+                    node_id TEXT PRIMARY KEY,
+                    node_type TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    properties TEXT,  -- JSON
+                    source_address TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Graph relationships table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS graph_relationships (
+                    relationship_id TEXT PRIMARY KEY,
+                    source_node_id TEXT NOT NULL,
+                    target_node_id TEXT NOT NULL,
+                    relationship_type TEXT NOT NULL,
+                    properties TEXT,  -- JSON
+                    source_address TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(source_node_id) REFERENCES graph_nodes(node_id),
+                    FOREIGN KEY(target_node_id) REFERENCES graph_nodes(node_id)
+                )
+            """)
+
             # Create indexes for common queries
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_work_orders_status ON work_orders(status)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_executions_worker ON task_executions(worker_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_executions_line ON task_executions(work_order_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_quality_checks_status ON quality_checks(passed)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_graph_nodes_type ON graph_nodes(node_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_graph_rels_type ON graph_relationships(relationship_type)")
 
             conn.commit()
 
@@ -483,4 +512,69 @@ class FactoryDB:
                 'total_tokens_consumed': total_tokens,
                 'quality_checks': quality_stats,
                 'workers': worker_stats
+            }
+
+    # Graph operations
+    def save_graph_node(self, node) -> None:
+        """Save a graph node"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO graph_nodes
+                (node_id, node_type, name, properties, source_address)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                node.node_id,
+                node.node_type,
+                node.name,
+                json.dumps(node.properties),
+                node.source_address
+            ))
+
+    def save_graph_relationship(self, relationship) -> None:
+        """Save a graph relationship"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO graph_relationships
+                (relationship_id, source_node_id, target_node_id, relationship_type, properties, source_address)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                relationship.relationship_id,
+                relationship.source_node_id,
+                relationship.target_node_id,
+                relationship.relationship_type,
+                json.dumps(relationship.properties),
+                relationship.source_address
+            ))
+
+    def get_graph_statistics(self) -> Dict[str, Any]:
+        """Get knowledge graph statistics"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Count nodes by type
+            cursor.execute("""
+                SELECT node_type, COUNT(*) as count FROM graph_nodes GROUP BY node_type
+            """)
+            nodes_by_type = {row['node_type']: row['count'] for row in cursor.fetchall()}
+
+            # Total nodes and relationships
+            cursor.execute("SELECT COUNT(*) as total FROM graph_nodes")
+            total_nodes = cursor.fetchone()['total'] or 0
+
+            cursor.execute("SELECT COUNT(*) as total FROM graph_relationships")
+            total_relationships = cursor.fetchone()['total'] or 0
+
+            # Relationships by type
+            cursor.execute("""
+                SELECT relationship_type, COUNT(*) as count FROM graph_relationships GROUP BY relationship_type
+            """)
+            relationships_by_type = {row['relationship_type']: row['count'] for row in cursor.fetchall()}
+
+            return {
+                'total_nodes': total_nodes,
+                'total_relationships': total_relationships,
+                'nodes_by_type': nodes_by_type,
+                'relationships_by_type': relationships_by_type
             }

@@ -10,7 +10,7 @@ import json
 from tools.factory_framework import (
     FactoryState, ProductRequirement, ProcessSpec, ProductionLine,
     WorkOrder, TaskExecution, QualityCheckResult, WorkOrderStatus,
-    ProductionLineStatus, generate_id, ProcessStep
+    ProductionLineStatus, generate_id, ProcessStep, ProductType, GraphNode, GraphRelationship
 )
 from tools.factory_agents import (
     FactoryDirector, ProcessExpert, ProductionLineLeader,
@@ -22,9 +22,14 @@ from database.factory_db import FactoryDB
 class FactoryWorkflow:
     """Orchestrates factory operations and workflows"""
 
-    def __init__(self, factory_name: str = "Data Factory", db_path: str = "database/factory.db"):
+    # 两条固定产线ID
+    ADDRESS_CLEANING_LINE_ID = "line_address_cleaning"
+    ADDRESS_TO_GRAPH_LINE_ID = "line_address_to_graph"
+
+    def __init__(self, factory_name: str = "Data Factory", db_path: str = "database/factory.db", init_production_lines: bool = True):
         self.factory_state = FactoryState(factory_name)
         self.db = FactoryDB(db_path)
+        self.production_lines_initialized = False
 
         # Initialize agents
         self.director = FactoryDirector()
@@ -32,6 +37,77 @@ class FactoryWorkflow:
         self.leader = ProductionLineLeader()
         self.inspector = QualityInspector()
         self.workers: Dict[str, Worker] = {}
+
+        # Initialize fixed production lines if needed
+        if init_production_lines:
+            self._initialize_production_lines()
+
+    def _initialize_production_lines(self) -> None:
+        """Initialize the two fixed production lines for the address-to-graph pipeline"""
+        if self.production_lines_initialized:
+            return
+
+        # Line 1: Address Cleaning
+        process_spec_1 = ProcessSpec(
+            process_id=generate_id('proc'),
+            process_name='地址清洗工艺',
+            steps=[ProcessStep.PARSING, ProcessStep.STANDARDIZATION, ProcessStep.VALIDATION],
+            estimated_duration=1.0,
+            required_workers=2,
+            quality_rules={'min_quality_score': 0.85},
+            resource_requirements={'cpu': 'standard', 'memory': '512MB'}
+        )
+        self.factory_state.add_process_spec(process_spec_1)
+        self.db.save_process_spec(process_spec_1)
+
+        line_1 = self.leader.execute(self.factory_state, {
+            'action': 'create',
+            'process_spec': process_spec_1,
+            'worker_count': 2,
+            'line_name': '地址清洗产线'
+        })['production_line']
+
+        # 强制设置产线ID为固定值
+        line_1.line_id = self.ADDRESS_CLEANING_LINE_ID
+
+        self.factory_state.add_production_line(line_1)
+        self.db.save_production_line(line_1)
+
+        for worker in line_1.workers:
+            worker_agent = Worker(worker.worker_id)
+            self.workers[worker.worker_id] = worker_agent
+
+        # Line 2: Address to Graph
+        process_spec_2 = ProcessSpec(
+            process_id=generate_id('proc'),
+            process_name='地址转图谱工艺',
+            steps=[ProcessStep.EXTRACTION, ProcessStep.FUSION, ProcessStep.VALIDATION],
+            estimated_duration=1.0,
+            required_workers=2,
+            quality_rules={'min_quality_score': 0.85},
+            resource_requirements={'cpu': 'standard', 'memory': '512MB'}
+        )
+        self.factory_state.add_process_spec(process_spec_2)
+        self.db.save_process_spec(process_spec_2)
+
+        line_2 = self.leader.execute(self.factory_state, {
+            'action': 'create',
+            'process_spec': process_spec_2,
+            'worker_count': 2,
+            'line_name': '地址-图谱产线'
+        })['production_line']
+
+        # 强制设置产线ID为固定值
+        line_2.line_id = self.ADDRESS_TO_GRAPH_LINE_ID
+
+        self.factory_state.add_production_line(line_2)
+        self.db.save_production_line(line_2)
+
+        for worker in line_2.workers:
+            worker_agent = Worker(worker.worker_id)
+            self.workers[worker.worker_id] = worker_agent
+
+        self.production_lines_initialized = True
 
     def submit_product_requirement(self, requirement: ProductRequirement) -> Dict[str, Any]:
         """Submit a new product requirement to the factory"""
@@ -53,7 +129,11 @@ class FactoryWorkflow:
         requirement: ProductRequirement,
         auto_execute: bool = False
     ) -> Dict[str, Any]:
-        """Create and optionally execute a complete production workflow"""
+        """
+        Create and optionally execute a complete production workflow with two pipelines:
+        Pipeline 1: Address Cleaning (原始地址 -> 标准化地址)
+        Pipeline 2: Address-to-Graph (标准化地址 -> 图谱节点和关系)
+        """
         workflow_id = generate_id('wf')
         workflow_start = datetime.now()
 
@@ -66,147 +146,236 @@ class FactoryWorkflow:
             }
         }
 
-        # Stage 1: Director evaluates requirement
-        director_eval = self.director.execute(self.factory_state, {
-            'action': 'evaluate_requirement',
-            'requirement': requirement
-        })
-        workflow['stages']['director_evaluation'] = director_eval
+        # Get the two fixed production lines
+        cleaning_line = self.factory_state.get_production_line(self.ADDRESS_CLEANING_LINE_ID)
+        graph_line = self.factory_state.get_production_line(self.ADDRESS_TO_GRAPH_LINE_ID)
 
-        if not director_eval.get('feasible'):
+        if not cleaning_line or not graph_line:
             workflow['status'] = 'rejected'
-            workflow['timestamps']['completed_at'] = datetime.now().isoformat()
+            workflow['error'] = 'Production lines not initialized'
             return workflow
 
-        # Stage 2: Expert designs process
-        expert_design = self.expert.execute(self.factory_state, {
-            'action': 'design',
-            'requirement': requirement
-        })
-        process_spec = expert_design['process_spec']
-        workflow['stages']['expert_design'] = {
-            'process_id': process_spec.process_id,
-            'steps': [s.value for s in process_spec.steps],
-            'estimated_duration': process_spec.estimated_duration
-        }
-        self.factory_state.add_process_spec(process_spec)
-        self.db.save_process_spec(process_spec)
+        # Get process specs for both lines
+        cleaning_specs = list(self.factory_state.process_specs.values())
+        if len(cleaning_specs) < 2:
+            workflow['status'] = 'rejected'
+            workflow['error'] = 'Process specifications not found'
+            return workflow
 
-        # Stage 3: Director creates production plan
-        plan = self.director.execute(self.factory_state, {
-            'action': 'create_plan',
-            'requirement': requirement,
-            'process_spec': process_spec
-        })['plan']
-        workflow['stages']['production_plan'] = plan
+        cleaning_spec = cleaning_specs[0]
+        graph_spec = cleaning_specs[1]
 
-        # Stage 4: Leader creates production lines
-        lines_needed = plan['production_lines_needed']
-        workers_per_line = plan['workers_per_line']
-        production_lines = []
-
-        for i in range(lines_needed):
-            line_creation = self.leader.execute(self.factory_state, {
-                'action': 'create',
-                'process_spec': process_spec,
-                'worker_count': workers_per_line,
-                'line_name': f"{requirement.product_name}_Line_{i+1}"
-            })
-            line = line_creation['production_line']
-            production_lines.append(line)
-            self.factory_state.add_production_line(line)
-            self.db.save_production_line(line)
-
-            # Register workers with workflow
-            for worker in line.workers:
-                worker_agent = Worker(worker.worker_id)
-                self.workers[worker.worker_id] = worker_agent
-
-        workflow['stages']['production_lines_created'] = {
-            'count': lines_needed,
-            'line_ids': [line.line_id for line in production_lines]
+        workflow['stages']['pipeline_setup'] = {
+            'cleaning_line': cleaning_line.line_name,
+            'graph_line': graph_line.line_name
         }
 
-        # Stage 5: Create work orders
-        work_orders = []
+        # Stage 1: Create work orders for address cleaning pipeline
+        cleaning_orders = []
+        graph_orders = []
+
         for i, input_item in enumerate(requirement.input_data):
-            order = WorkOrder(
+            # Order for cleaning line
+            cleaning_order = WorkOrder(
                 work_order_id=generate_id('wo'),
                 requirement_id=requirement.requirement_id,
-                product_name=requirement.product_name,
-                process_spec=process_spec,
-                assigned_line_id=production_lines[i % lines_needed].line_id,
+                product_name=f"{requirement.product_name}_Cleaning",
+                process_spec=cleaning_spec,
+                assigned_line_id=cleaning_line.line_id,
                 status=WorkOrderStatus.PENDING,
                 priority=requirement.priority,
-                expected_completion=datetime.now() + timedelta(minutes=process_spec.estimated_duration)
+                expected_completion=datetime.now() + timedelta(minutes=cleaning_spec.estimated_duration)
             )
-            work_orders.append(order)
-            self.factory_state.add_work_order(order)
-            self.db.save_work_order(order)
+            cleaning_orders.append(cleaning_order)
+            self.factory_state.add_work_order(cleaning_order)
+            self.db.save_work_order(cleaning_order)
+
+            # Order for graph line (depends on cleaning order)
+            graph_order = WorkOrder(
+                work_order_id=generate_id('wo'),
+                requirement_id=requirement.requirement_id,
+                product_name=f"{requirement.product_name}_ToGraph",
+                process_spec=graph_spec,
+                assigned_line_id=graph_line.line_id,
+                status=WorkOrderStatus.PENDING,
+                priority=requirement.priority,
+                depends_on_work_order_id=cleaning_order.work_order_id,
+                expected_completion=datetime.now() + timedelta(minutes=cleaning_spec.estimated_duration + graph_spec.estimated_duration)
+            )
+            graph_orders.append(graph_order)
+            self.factory_state.add_work_order(graph_order)
+            self.db.save_work_order(graph_order)
 
         workflow['stages']['work_orders_created'] = {
-            'count': len(work_orders),
-            'order_ids': [wo.work_order_id for wo in work_orders]
+            'cleaning_orders': len(cleaning_orders),
+            'graph_orders': len(graph_orders),
+            'total_orders': len(cleaning_orders) + len(graph_orders)
         }
 
-        # Stage 6: Execute tasks if auto_execute is True
+        # Stage 2: Execute if auto_execute is True
         if auto_execute:
-            execution_results = []
-            for order_idx, order in enumerate(work_orders):
-                # Get assigned line
-                line = self.factory_state.get_production_line(order.assigned_line_id)
-                if not line or not line.workers:
-                    continue
+            execution_results = {'cleaning': [], 'graph': []}
 
-                # Get a worker
-                worker = self.workers.get(line.workers[0].worker_id)
-                if not worker:
-                    continue
+            for order_idx, (cleaning_order, graph_order) in enumerate(zip(cleaning_orders, graph_orders)):
+                input_item = requirement.input_data[order_idx]
 
-                # Execute each step
-                for step in process_spec.steps:
-                    execution = worker.execute(self.factory_state, {
-                        'action': 'execute_task',
-                        'work_order': order,
-                        'input_data': requirement.input_data[order_idx],
-                        'process_step': step
-                    })['execution']
+                # Execute cleaning pipeline
+                cleaned_address = self._execute_cleaning_pipeline(
+                    cleaning_order, cleaning_spec, input_item, requirement
+                )
+                execution_results['cleaning'].append({
+                    'order_id': cleaning_order.work_order_id,
+                    'input': input_item.get('raw', ''),
+                    'output': cleaned_address
+                })
 
-                    self.factory_state.record_task_execution(execution)
-                    self.db.save_task_execution(execution)
-
-                    # Quality check
-                    quality_threshold = requirement.sla_metrics.get('quality_threshold', 0.9)
-                    check = self.inspector.execute(self.factory_state, {
-                        'action': 'inspect',
-                        'execution': execution,
-                        'quality_threshold': quality_threshold
-                    })['check_result']
-
-                    self.factory_state.record_quality_check(check)
-                    self.db.save_quality_check(check)
-
-                    execution_results.append({
-                        'execution_id': execution.execution_id,
-                        'quality_passed': check.passed,
-                        'tokens_consumed': execution.token_consumed
-                    })
-
-                # Mark order as completed
-                order.status = WorkOrderStatus.COMPLETED
-                order.completed_at = datetime.now()
-                self.db.save_work_order(order)
+                # Execute graph generation pipeline
+                graph_nodes, graph_relationships = self._execute_graph_pipeline(
+                    graph_order, graph_spec, cleaned_address, requirement, input_item.get('id', '')
+                )
+                execution_results['graph'].append({
+                    'order_id': graph_order.work_order_id,
+                    'nodes_generated': len(graph_nodes),
+                    'relationships_generated': len(graph_relationships)
+                })
 
             workflow['stages']['task_executions'] = {
-                'count': len(execution_results),
-                'quality_passed': sum(1 for r in execution_results if r['quality_passed']),
-                'total_tokens': sum(r['tokens_consumed'] for r in execution_results)
+                'cleaning_completed': len(execution_results['cleaning']),
+                'graph_completed': len(execution_results['graph']),
+                'graph_nodes_total': sum(r['nodes_generated'] for r in execution_results['graph']),
+                'graph_relationships_total': sum(r['relationships_generated'] for r in execution_results['graph'])
             }
 
         workflow['status'] = 'completed' if auto_execute else 'created'
         workflow['timestamps']['completed_at'] = datetime.now().isoformat()
 
         return workflow
+
+    def _execute_cleaning_pipeline(
+        self,
+        order: WorkOrder,
+        spec: ProcessSpec,
+        input_item: Dict[str, Any],
+        requirement: ProductRequirement
+    ) -> str:
+        """Execute address cleaning pipeline and return standardized address"""
+        line = self.factory_state.get_production_line(order.assigned_line_id)
+        if not line or not line.workers:
+            return ""
+
+        worker = self.workers.get(line.workers[0].worker_id)
+        if not worker:
+            return ""
+
+        cleaned_address = ""
+        quality_threshold = requirement.sla_metrics.get('quality_threshold', 0.9)
+
+        for step in spec.steps:
+            execution = worker.execute(self.factory_state, {
+                'action': 'execute_task',
+                'work_order': order,
+                'input_data': input_item,
+                'process_step': step
+            })['execution']
+
+            self.factory_state.record_task_execution(execution)
+            self.db.save_task_execution(execution)
+
+            if step == ProcessStep.STANDARDIZATION:
+                cleaned_address = execution.output_data.get('standardized_address', '')
+
+            # Quality check
+            check = self.inspector.execute(self.factory_state, {
+                'action': 'inspect',
+                'execution': execution,
+                'quality_threshold': quality_threshold
+            })['check_result']
+
+            self.factory_state.record_quality_check(check)
+            self.db.save_quality_check(check)
+
+        order.status = WorkOrderStatus.COMPLETED
+        order.completed_at = datetime.now()
+        self.db.save_work_order(order)
+
+        return cleaned_address
+
+    def _execute_graph_pipeline(
+        self,
+        order: WorkOrder,
+        spec: ProcessSpec,
+        standardized_address: str,
+        requirement: ProductRequirement,
+        source_address_id: str
+    ) -> tuple:
+        """Execute address-to-graph pipeline and return generated nodes and relationships"""
+        line = self.factory_state.get_production_line(order.assigned_line_id)
+        if not line or not line.workers:
+            return [], []
+
+        worker = self.workers.get(line.workers[0].worker_id)
+        if not worker:
+            return [], []
+
+        graph_nodes = []
+        graph_relationships = []
+        quality_threshold = requirement.sla_metrics.get('quality_threshold', 0.9)
+
+        for step in spec.steps:
+            execution = worker.execute(self.factory_state, {
+                'action': 'execute_task',
+                'work_order': order,
+                'input_data': {'standardized_address': standardized_address},
+                'process_step': step
+            })['execution']
+
+            self.factory_state.record_task_execution(execution)
+            self.db.save_task_execution(execution)
+
+            if step == ProcessStep.EXTRACTION or step == ProcessStep.FUSION:
+                output = execution.output_data
+                # Extract graph nodes from output
+                for node_data in output.get('nodes', []):
+                    node = GraphNode(
+                        node_id=generate_id('node'),
+                        node_type=node_data.get('type', 'location'),
+                        name=node_data.get('name', ''),
+                        properties=node_data.get('properties', {}),
+                        source_address=source_address_id
+                    )
+                    graph_nodes.append(node)
+                    self.factory_state.add_graph_node(node)
+                    self.db.save_graph_node(node)
+
+                # Extract graph relationships from output
+                for rel_data in output.get('relationships', []):
+                    relationship = GraphRelationship(
+                        relationship_id=generate_id('rel'),
+                        source_node_id=rel_data.get('source', ''),
+                        target_node_id=rel_data.get('target', ''),
+                        relationship_type=rel_data.get('type', 'related'),
+                        properties=rel_data.get('properties', {}),
+                        source_address=source_address_id
+                    )
+                    graph_relationships.append(relationship)
+                    self.factory_state.add_graph_relationship(relationship)
+                    self.db.save_graph_relationship(relationship)
+
+            # Quality check
+            check = self.inspector.execute(self.factory_state, {
+                'action': 'inspect',
+                'execution': execution,
+                'quality_threshold': quality_threshold
+            })['check_result']
+
+            self.factory_state.record_quality_check(check)
+            self.db.save_quality_check(check)
+
+        order.status = WorkOrderStatus.COMPLETED
+        order.completed_at = datetime.now()
+        self.db.save_work_order(order)
+
+        return graph_nodes, graph_relationships
 
     def get_factory_status(self) -> Dict[str, Any]:
         """Get current factory operational status"""
