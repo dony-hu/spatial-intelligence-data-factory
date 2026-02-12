@@ -1,0 +1,11 @@
+{
+  "task_id": "task_001",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "DDL Dry-run Gate",
+      "status": "PASS",
+      "details": "所有 DDL 均 dry-run 通过"
+    }
+  ]
+}

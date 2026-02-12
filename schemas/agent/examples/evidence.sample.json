@@ -1,0 +1,12 @@
+{
+  "task_id": "task_001",
+  "records": [
+    {
+      "timestamp": "2026-02-12T12:00:00Z",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#SUBMITTED->PLANNED",
+      "result": "success"
+    }
+  ]
+}
