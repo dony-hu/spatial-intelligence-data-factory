@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Cross-Repo Governance Workflow API
+  version: 0.1.0
+  description: >-
+    规格层接口契约，用于管理多仓协同中的交付包、评审门、审批记录与对齐状态。
+servers:
+  - url: https://governance.example.internal
+paths:
+  /delivery-packages:
+    post:
+      summary: 创建交付包
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryPackageCreateRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryPackage'
+  /delivery-packages/{packageId}/gates/{gateType}/decision:
+    post:
+      summary: 提交评审决策
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gateType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [business, technical, compliance, release]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GateDecisionRequest'
+      responses:
+        '200':
+          description: 决策提交成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewGate'
+  /alignment/status:
+    get:
+      summary: 查询各子仓规格对齐状态
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AlignmentStatus'
+components:
+  schemas:
+    DeliveryPackageCreateRequest:
+      type: object
+      required: [packageId, domainId, repoId, milestone]
+      properties:
+        packageId:
+          type: string
+        domainId:
+          type: string
+        repoId:
+          type: string
+        milestone:
+          type: string
+        artifactSet:
+          type: array
+          items:
+            type: string
+    DeliveryPackage:
+      type: object
+      required: [packageId, domainId, repoId, milestone, qualityStatus]
+      properties:
+        packageId:
+          type: string
+        domainId:
+          type: string
+        repoId:
+          type: string
+        milestone:
+          type: string
+        qualityStatus:
+          type: string
+          enum: [draft, in_review, approved, released]
+        artifactSet:
+          type: array
+          items:
+            type: string
+    GateDecisionRequest:
+      type: object
+      required: [decision, decidedByRole]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+        decidedByRole:
+          type: string
+        comment:
+          type: string
+        traceId:
+          type: string
+    ReviewGate:
+      type: object
+      required: [gateType, status, requiredRoles]
+      properties:
+        gateType:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, reopened]
+        requiredRoles:
+          type: array
+          items:
+            type: string
+        latestDecision:
+          $ref: '#/components/schemas/GateDecisionRequest'
+    AlignmentStatus:
+      type: object
+      required: [repoId, foundationCoverage, reviewReadiness]
+      properties:
+        repoId:
+          type: string
+        foundationCoverage:
+          type: number
+          format: float
+        reviewReadiness:
+          type: string
+          enum: [not_started, in_progress, ready]
+        blockers:
+          type: array
+          items:
+            type: string

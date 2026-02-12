@@ -1,0 +1,24 @@
+---
+- name: Join worker nodes to cluster
+  hosts: k8s_workers
+  become: true
+  tasks:
+    - name: Check if worker already joined
+      stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: worker_kubelet_conf
+
+    - name: Read join command from control plane
+      slurp:
+        src: /tmp/kubeadm_join_cmd.sh
+      register: join_cmd_file
+      delegate_to: "{{ groups['k8s_control_plane'][0] }}"
+      run_once: true
+
+    - name: Set join command fact
+      set_fact:
+        kubeadm_join_command: "{{ join_cmd_file.content | b64decode | trim }}"
+
+    - name: Join node to cluster
+      command: "{{ kubeadm_join_command }}"
+      when: not worker_kubelet_conf.stat.exists

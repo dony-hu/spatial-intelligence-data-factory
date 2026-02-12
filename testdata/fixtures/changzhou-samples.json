@@ -1,0 +1,312 @@
+{
+  "name": "changzhou-urban-command-samples",
+  "version": "2026.02.11.1",
+  "description": "Sample data for Changzhou urban command and governance testing",
+  "region": "Changzhou",
+  "datasets": [
+    {
+      "table": "urban_functional_zone",
+      "records": 4,
+      "sample_records": [
+        {
+          "zone_id": "zone_cz_001",
+          "zone_name": "常州市中心商业区",
+          "zone_type": "commercial",
+          "area_sqkm": 3.2,
+          "population": 50000,
+          "total_businesses": 1200,
+          "primary_industries": ["retail", "dining", "entertainment"],
+          "manager_department": "市商务部门",
+          "contact_person": "王经理"
+        },
+        {
+          "zone_id": "zone_cz_002",
+          "zone_name": "常州市工业园区",
+          "zone_type": "industrial",
+          "area_sqkm": 15.5,
+          "population": 8000,
+          "total_businesses": 150,
+          "primary_industries": ["manufacturing", "electronics", "chemicals"],
+          "manager_department": "市工业部门"
+        },
+        {
+          "zone_id": "zone_cz_003",
+          "zone_name": "常州市文化创意产业园",
+          "zone_type": "cultural",
+          "area_sqkm": 2.8,
+          "population": 5000,
+          "total_businesses": 200,
+          "primary_industries": ["design", "media", "technology"],
+          "manager_department": "市文化部门"
+        },
+        {
+          "zone_id": "zone_cz_004",
+          "zone_name": "常州市南大街居住区",
+          "zone_type": "residential",
+          "area_sqkm": 5.2,
+          "population": 35000,
+          "total_businesses": 350,
+          "primary_industries": ["residential", "services"],
+          "manager_department": "市房管部门"
+        }
+      ]
+    },
+    {
+      "table": "urban_event_management",
+      "records": 5,
+      "sample_records": [
+        {
+          "event_id": "event_cz_001",
+          "event_type": "交通事故",
+          "severity_level": "medium",
+          "event_location": "常州市南大街与中山路交叉口",
+          "reported_time": "2026-02-11T10:30:00Z",
+          "report_source": "police",
+          "zone_id": "zone_cz_001",
+          "status": "handling",
+          "assigned_department": "交警大队",
+          "first_responder_id": "officer_cz_001",
+          "arrival_time": "2026-02-11T10:35:00Z",
+          "incident_count": 2,
+          "estimated_impact_score": 45
+        },
+        {
+          "event_id": "event_cz_002",
+          "event_type": "火灾预警",
+          "severity_level": "high",
+          "event_location": "常州市中心商业区某商场",
+          "reported_time": "2026-02-11T09:15:00Z",
+          "report_source": "sensor",
+          "zone_id": "zone_cz_001",
+          "status": "dispatched",
+          "assigned_department": "消防队",
+          "incident_count": 1,
+          "estimated_impact_score": 75,
+          "media_attention": true
+        },
+        {
+          "event_id": "event_cz_003",
+          "event_type": "道路拥堵",
+          "severity_level": "low",
+          "event_location": "常州市环城高速",
+          "reported_time": "2026-02-11T16:45:00Z",
+          "report_source": "sensor",
+          "zone_id": "zone_cz_001",
+          "status": "resolved",
+          "assigned_department": "交通运输部门",
+          "resolution_time": "2026-02-11T17:30:00Z",
+          "incident_count": 1,
+          "estimated_impact_score": 30
+        },
+        {
+          "event_id": "event_cz_004",
+          "event_type": "环境污染报警",
+          "severity_level": "critical",
+          "event_location": "常州市工业园区",
+          "reported_time": "2026-02-10T14:20:00Z",
+          "report_source": "sensor",
+          "zone_id": "zone_cz_002",
+          "status": "investigation",
+          "assigned_department": "环保部门",
+          "estimated_impact_score": 88
+        }
+      ]
+    },
+    {
+      "table": "urban_resource_dispatch",
+      "records": 4,
+      "sample_records": [
+        {
+          "dispatch_id": "disp_cz_001",
+          "event_id": "event_cz_001",
+          "dispatch_time": "2026-02-11T10:32:00Z",
+          "resource_type": "police",
+          "resource_count": 2,
+          "dispatch_instructions": "处理交通事故，疏导交通",
+          "estimated_arrival_time": "2026-02-11T10:35:00Z",
+          "actual_arrival_time": "2026-02-11T10:35:00Z",
+          "mission_status": "on_scene",
+          "priority": "high"
+        },
+        {
+          "dispatch_id": "disp_cz_002",
+          "event_id": "event_cz_002",
+          "dispatch_time": "2026-02-11T09:16:00Z",
+          "resource_type": "fire",
+          "resource_count": 3,
+          "dispatch_instructions": "火灾现场控制和人员疏散",
+          "estimated_arrival_time": "2026-02-11T09:22:00Z",
+          "actual_arrival_time": "2026-02-11T09:20:00Z",
+          "mission_status": "on_scene",
+          "priority": "critical"
+        },
+        {
+          "dispatch_id": "disp_cz_003",
+          "event_id": "event_cz_003",
+          "dispatch_time": "2026-02-11T16:47:00Z",
+          "resource_type": "traffic_control",
+          "resource_count": 1,
+          "dispatch_instructions": "设置提示标志，指导车辆分流",
+          "mission_status": "completed",
+          "priority": "medium"
+        }
+      ]
+    },
+    {
+      "table": "urban_public_service_request",
+      "records": 3,
+      "sample_records": [
+        {
+          "request_id": "req_cz_001",
+          "request_type": "路面坑洞",
+          "request_category": "infrastructure",
+          "request_location": "常州市南大街500号附近",
+          "requestor_name": "市民李先生",
+          "request_date": "2026-02-10T11:20:00Z",
+          "request_details": "南大街路面有一个约1米的坑洞，影响行车安全",
+          "assigned_department": "市政部门",
+          "priority": "high",
+          "status": "in_progress"
+        },
+        {
+          "request_id": "req_cz_002",
+          "request_type": "街道清洁",
+          "request_category": "cleanliness",
+          "request_location": "常州市中山路",
+          "requestor_name": "居民王女士",
+          "request_date": "2026-02-10T14:30:00Z",
+          "request_details": "中山路垃圾没有及时清理",
+          "assigned_department": "城管部门",
+          "priority": "medium",
+          "status": "assigned",
+          "assigned_team_id": "team_clean_001"
+        },
+        {
+          "request_id": "req_cz_003",
+          "request_type": "路灯损坏",
+          "request_category": "infrastructure",
+          "request_location": "常州市解放路",
+          "requestor_name": "市民张先生",
+          "request_date": "2026-02-09T18:45:00Z",
+          "request_details": "解放路第56个路灯不亮，存在安全隐患",
+          "assigned_department": "电力部门",
+          "priority": "high",
+          "status": "completed",
+          "completion_date": "2026-02-11T10:15:00Z",
+          "satisfaction_rating": 4
+        }
+      ]
+    },
+    {
+      "table": "urban_traffic_management",
+      "records": 3,
+      "sample_records": [
+        {
+          "traffic_id": "traffic_cz_001",
+          "event_id": "event_cz_001",
+          "incident_type": "交通事故",
+          "incident_location": "常州市南大街与中山路交叉口",
+          "incident_time": "2026-02-11T10:30:00Z",
+          "road_segment_id": "seg_001",
+          "estimated_duration_min": 30,
+          "affected_lanes": 2,
+          "estimated_vehicles_affected": 150,
+          "congestion_level": "heavy",
+          "traffic_signal_adjustment": true,
+          "police_dispatch": true,
+          "alternate_route_suggested": true,
+          "alternate_route": "建议通过北大街和西大街绕行",
+          "status": "active"
+        },
+        {
+          "traffic_id": "traffic_cz_002",
+          "incident_type": "道路施工",
+          "incident_location": "常州市环城南路",
+          "incident_time": "2026-02-11T06:00:00Z",
+          "road_segment_id": "seg_002",
+          "estimated_duration_min": 480,
+          "affected_lanes": 1,
+          "estimated_vehicles_affected": 5000,
+          "congestion_level": "moderate",
+          "alternate_route_suggested": true,
+          "alternate_route": "通过环城北路绕行",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "table": "urban_environmental_monitoring",
+      "records": 3,
+      "sample_records": [
+        {
+          "monitor_id": "env_cz_001",
+          "station_id": "station_cz_001",
+          "monitor_type": "空气质量",
+          "monitor_location": "常州市中心商业区",
+          "measurement_time": "2026-02-11T10:00:00Z",
+          "air_quality_aqi": 78,
+          "air_quality_level": "good",
+          "pm25_level": 32,
+          "pm10_level": 45,
+          "no2_level": 38,
+          "temperature_c": 12.5,
+          "humidity_percent": 65,
+          "alert_triggered": false
+        },
+        {
+          "monitor_id": "env_cz_002",
+          "station_id": "station_cz_002",
+          "monitor_type": "空气质量",
+          "monitor_location": "常州市工业园区",
+          "measurement_time": "2026-02-11T10:00:00Z",
+          "air_quality_aqi": 165,
+          "air_quality_level": "hazardous",
+          "pm25_level": 185,
+          "pm10_level": 220,
+          "alert_triggered": true,
+          "alert_severity": "critical"
+        },
+        {
+          "monitor_id": "env_cz_003",
+          "station_id": "station_cz_003",
+          "monitor_type": "噪声监测",
+          "monitor_location": "常州市南大街",
+          "measurement_time": "2026-02-11T09:30:00Z",
+          "noise_level_db": 72,
+          "alert_triggered": false
+        }
+      ]
+    },
+    {
+      "table": "urban_dashboard_metrics",
+      "records": 1,
+      "sample_records": [
+        {
+          "metric_id": "metrics_cz_20260211",
+          "metric_date": "2026-02-11",
+          "metric_hour": 10,
+          "total_events_today": 8,
+          "critical_events_today": 2,
+          "average_response_time_sec": 420,
+          "resources_deployed_count": 12,
+          "citizen_complaints_today": 3,
+          "public_service_requests_pending": 5,
+          "traffic_incidents_active": 2,
+          "environmental_alerts_active": 1,
+          "system_status": "operational",
+          "dashboard_availability_percent": 99.8,
+          "data_freshness_sec": 45
+        }
+      ]
+    }
+  ],
+  "checksums": {
+    "urban_functional_zone": "sha256:cz001001001",
+    "urban_event_management": "sha256:cz002002002",
+    "urban_resource_dispatch": "sha256:cz003003003",
+    "urban_public_service_request": "sha256:cz004004004",
+    "urban_traffic_management": "sha256:cz005005005",
+    "urban_environmental_monitoring": "sha256:cz006006006",
+    "urban_dashboard_metrics": "sha256:cz007007007"
+  }
+}

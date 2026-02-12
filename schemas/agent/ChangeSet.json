@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChangeSet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["changeset_id", "task_id", "env", "operations", "rollback", "requires_approvals"],
+  "properties": {
+    "changeset_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "env": {"type": "string", "enum": ["dev", "staging", "prod"]},
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["op_id", "op_type", "payload", "idempotency_key"],
+        "properties": {
+          "op_id": {"type": "string"},
+          "op_type": {"type": "string", "enum": ["DDL", "DAG", "QUALITY_RULE", "PERMISSION", "JOB_RUN"]},
+          "payload": {"type": "object"},
+          "idempotency_key": {"type": "string"},
+          "dry_run_supported": {"type": "boolean", "default": true}
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "payload"],
+      "properties": {
+        "strategy": {"type": "string", "enum": ["sql_rollback", "version_pin", "git_revert"]},
+        "payload": {"type": "object"}
+      }
+    },
+    "requires_approvals": {"type": "array", "items": {"type": "string"}}
+  }
+}

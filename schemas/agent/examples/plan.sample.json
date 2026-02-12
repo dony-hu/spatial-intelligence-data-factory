@@ -1,0 +1,18 @@
+{
+  "plan_id": "plan_001",
+  "task_id": "task_001",
+  "steps": [
+    {
+      "step_id": "s1",
+      "intent": "做源表探查",
+      "tool": "profiling_tool",
+      "inputs": {
+        "source": "ods_address_raw"
+      },
+      "expected_output": "生成字段画像报告"
+    }
+  ],
+  "deliverables": ["profiling_report.md", "changeset.json"],
+  "assumptions": ["源表字段稳定"],
+  "risks": ["字段缺失导致建表失败"]
+}

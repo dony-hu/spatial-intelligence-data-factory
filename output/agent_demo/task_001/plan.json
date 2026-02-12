@@ -1,0 +1,50 @@
+{
+  "plan_id": "plan_566c7ca2115f",
+  "task_id": "task_001",
+  "steps": [
+    {
+      "step_id": "s1",
+      "intent": "做源数据探查",
+      "tool": "profiling_tool",
+      "inputs": {
+        "sources": [
+          "ods_police_events",
+          "ods_address_raw"
+        ]
+      },
+      "expected_output": "profiling_report.json"
+    },
+    {
+      "step_id": "s2",
+      "intent": "生成建表变更",
+      "tool": "ddl_tool",
+      "inputs": {
+        "domain": "address_governance"
+      },
+      "expected_output": "ddl_changes.sql"
+    },
+    {
+      "step_id": "s3",
+      "intent": "生成调度产物",
+      "tool": "airflow_tool",
+      "inputs": {
+        "target_platform": "airflow"
+      },
+      "expected_output": "dag_generated.py"
+    }
+  ],
+  "deliverables": [
+    "profiling_report.json",
+    "ddl_changes.sql",
+    "dag_generated.py",
+    "changeset.json"
+  ],
+  "assumptions": [
+    "源系统连通且字段可读",
+    "dev 环境具备 dry-run 能力"
+  ],
+  "risks": [
+    "字段漂移导致 DDL 不兼容",
+    "审批未通过导致执行阻断"
+  ]
+}

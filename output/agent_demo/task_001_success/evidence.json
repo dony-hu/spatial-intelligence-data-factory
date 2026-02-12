@@ -1,0 +1,590 @@
+{
+  "task_id": "task_001_success",
+  "records": [
+    {
+      "timestamp": "2026-02-12T03:11:14.142255+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.143618+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.145949+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.147452+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:METRIC_DEFINITION",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.149429+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:SECURITY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.151561+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:PROD_RELEASE",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.153178+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001_success#approval-check",
+      "result": "pass",
+      "metadata": {
+        "pass": true,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.155216+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVAL_PENDING->APPROVED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.157009+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVED->CHANGESET_READY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.158612+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#CHANGESET_READY->EXECUTING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.211707+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Approval Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all approvals satisfied"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.212795+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:DDL Dry-run Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "ddl dry-run passed"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.213499+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Idempotency Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all operations have idempotency_key"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.214136+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Data Quality Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "max_null_ratio=0.01, has_schema_drift=False"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.216042+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EXECUTING->EVALUATING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.217304+00:00",
+      "actor": "evaluator",
+      "action": "eval_report",
+      "artifact_ref": "task_001_success#eval-report",
+      "result": "pass",
+      "metadata": {
+        "checks": [
+          {
+            "name": "Approval Gate",
+            "status": "PASS",
+            "details": "all approvals satisfied",
+            "missing": []
+          },
+          {
+            "name": "DDL Dry-run Gate",
+            "status": "PASS",
+            "details": "ddl dry-run passed",
+            "failures": []
+          },
+          {
+            "name": "Idempotency Gate",
+            "status": "PASS",
+            "details": "all operations have idempotency_key",
+            "missing_ops": []
+          },
+          {
+            "name": "Data Quality Gate",
+            "status": "PASS",
+            "details": "max_null_ratio=0.01, has_schema_drift=False"
+          },
+          {
+            "name": "Execution Gate",
+            "status": "PASS",
+            "details": "EXECUTION"
+          },
+          {
+            "name": "Budget Step Gate",
+            "status": "PASS",
+            "details": "used_steps=2, max_steps=10"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.219366+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EVALUATING->COMPLETED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.688848+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.690762+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.693072+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.694898+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:METRIC_DEFINITION",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.696711+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:SECURITY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.698141+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:PROD_RELEASE",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.699033+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001_success#approval-check",
+      "result": "pass",
+      "metadata": {
+        "pass": true,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.700272+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVAL_PENDING->APPROVED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.701602+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVED->CHANGESET_READY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.702955+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#CHANGESET_READY->EXECUTING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.726375+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Approval Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all approvals satisfied"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.726895+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:DDL Dry-run Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "ddl dry-run passed"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.727652+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Idempotency Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all operations have idempotency_key"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.728701+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Data Quality Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "max_null_ratio=0.01, has_schema_drift=False"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.730446+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EXECUTING->EVALUATING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.731184+00:00",
+      "actor": "evaluator",
+      "action": "eval_report",
+      "artifact_ref": "task_001_success#eval-report",
+      "result": "pass",
+      "metadata": {
+        "checks": [
+          {
+            "name": "Approval Gate",
+            "status": "PASS",
+            "details": "all approvals satisfied",
+            "missing": []
+          },
+          {
+            "name": "DDL Dry-run Gate",
+            "status": "PASS",
+            "details": "ddl dry-run passed",
+            "failures": []
+          },
+          {
+            "name": "Idempotency Gate",
+            "status": "PASS",
+            "details": "all operations have idempotency_key",
+            "missing_ops": []
+          },
+          {
+            "name": "Data Quality Gate",
+            "status": "PASS",
+            "details": "max_null_ratio=0.01, has_schema_drift=False"
+          },
+          {
+            "name": "Execution Gate",
+            "status": "PASS",
+            "details": "EXECUTION"
+          },
+          {
+            "name": "Budget Step Gate",
+            "status": "PASS",
+            "details": "used_steps=2, max_steps=10"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:23.732190+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EVALUATING->COMPLETED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.061241+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.063897+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.066919+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.068925+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:METRIC_DEFINITION",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.074365+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:SECURITY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.081506+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_success#approval:PROD_RELEASE",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.083564+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001_success#approval-check",
+      "result": "pass",
+      "metadata": {
+        "pass": true,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.086181+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVAL_PENDING->APPROVED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.087911+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#APPROVED->CHANGESET_READY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.089790+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#CHANGESET_READY->EXECUTING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.151301+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Approval Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all approvals satisfied"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.151983+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:DDL Dry-run Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "ddl dry-run passed"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.152643+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Idempotency Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "all operations have idempotency_key"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.153411+00:00",
+      "actor": "evaluator",
+      "action": "gate_check",
+      "artifact_ref": "task_001_success#gate:Data Quality Gate",
+      "result": "pass",
+      "metadata": {
+        "details": "max_null_ratio=0.01, has_schema_drift=False"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.155237+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EXECUTING->EVALUATING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.156111+00:00",
+      "actor": "evaluator",
+      "action": "eval_report",
+      "artifact_ref": "task_001_success#eval-report",
+      "result": "pass",
+      "metadata": {
+        "checks": [
+          {
+            "name": "Approval Gate",
+            "status": "PASS",
+            "details": "all approvals satisfied",
+            "missing": []
+          },
+          {
+            "name": "DDL Dry-run Gate",
+            "status": "PASS",
+            "details": "ddl dry-run passed",
+            "failures": []
+          },
+          {
+            "name": "Idempotency Gate",
+            "status": "PASS",
+            "details": "all operations have idempotency_key",
+            "missing_ops": []
+          },
+          {
+            "name": "Data Quality Gate",
+            "status": "PASS",
+            "details": "max_null_ratio=0.01, has_schema_drift=False"
+          },
+          {
+            "name": "Execution Gate",
+            "status": "PASS",
+            "details": "EXECUTION"
+          },
+          {
+            "name": "Budget Step Gate",
+            "status": "PASS",
+            "details": "used_steps=2, max_steps=10"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:15:18.157588+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_success#EVALUATING->COMPLETED",
+      "result": "success",
+      "metadata": {}
+    }
+  ]
+}

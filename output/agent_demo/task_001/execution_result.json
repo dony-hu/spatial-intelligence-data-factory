@@ -1,0 +1,117 @@
+{
+  "status": "PASS",
+  "stage": "EXECUTION",
+  "workflow_result": {
+    "workflow_id": "wf_29482d92e9bd",
+    "requirement_id": "req_6c2965a8b34b",
+    "stages": {
+      "pipeline_setup": {
+        "cleaning_line": "地址清洗产线",
+        "graph_line": "地址-图谱产线"
+      },
+      "work_orders_created": {
+        "cleaning_orders": 2,
+        "graph_orders": 2,
+        "total_orders": 4
+      },
+      "approval_gates": {
+        "required": [
+          "kpi_frozen",
+          "compliance_approved",
+          "release_window_confirmed"
+        ],
+        "approved": [
+          "kpi_frozen",
+          "compliance_approved",
+          "release_window_confirmed"
+        ],
+        "missing": [],
+        "records": [
+          {
+            "gate": "kpi_frozen",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:06:01.544386"
+          },
+          {
+            "gate": "compliance_approved",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:06:01.544390"
+          },
+          {
+            "gate": "release_window_confirmed",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:06:01.544391"
+          }
+        ]
+      },
+      "task_executions": {
+        "cleaning_completed": 2,
+        "graph_completed": 2,
+        "graph_nodes_total": 0,
+        "graph_relationships_total": 0
+      }
+    },
+    "timestamps": {
+      "started_at": "2026-02-12T11:06:01.547272",
+      "completed_at": "2026-02-12T11:06:01.591969"
+    },
+    "status": "completed"
+  },
+  "summary": {
+    "timestamp": "2026-02-12T11:06:01.591983",
+    "factory_name": "Agent-task_001",
+    "factory_status": "running",
+    "production_lines": {
+      "total": 2,
+      "running": 0,
+      "idle": 2
+    },
+    "work_orders": {
+      "total": 4,
+      "pending": 0,
+      "in_progress": 0,
+      "completed": 4
+    },
+    "metrics": {
+      "total_products_processed": 0,
+      "total_tasks_completed": 12,
+      "total_tasks_failed": 0,
+      "quality_rate": 1.0,
+      "total_tokens_consumed": 5.94,
+      "average_turnaround_minutes": 1.2797216402241611,
+      "active_production_lines": 2,
+      "busy_workers": 0,
+      "last_updated": "2026-02-12T11:06:01.591983"
+    },
+    "cost_summary": {
+      "timestamp": "2026-02-12T11:06:01.591997",
+      "lines": {
+        "line_address_cleaning": {
+          "line_name": "地址清洗产线",
+          "total_tokens": 0.0,
+          "completed_tasks": 0,
+          "average_cost_per_item": 0.0,
+          "worker_count": 2,
+          "utilization": 0.0
+        },
+        "line_address_to_graph": {
+          "line_name": "地址-图谱产线",
+          "total_tokens": 0.0,
+          "completed_tasks": 0,
+          "average_cost_per_item": 0.0,
+          "worker_count": 2,
+          "utilization": 0.0
+        }
+      },
+      "total_tokens": 0.0,
+      "average_cost_per_item": 0.0
+    }
+  },
+  "executed_at": "2026-02-12T03:06:01.592004"
+}

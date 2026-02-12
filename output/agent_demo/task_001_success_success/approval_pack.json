@@ -1,0 +1,27 @@
+{
+  "pack_id": "pack_383ca21d3a",
+  "task_id": "task_001_success",
+  "items": [
+    {
+      "approval_id": "ap_c482ed5b",
+      "type": "METRIC_DEFINITION",
+      "summary": "确认指标口径与验收标准",
+      "owner_role": "product_owner",
+      "blocking": true
+    },
+    {
+      "approval_id": "ap_08541580",
+      "type": "SECURITY",
+      "summary": "确认权限和脱敏策略",
+      "owner_role": "security_officer",
+      "blocking": true
+    },
+    {
+      "approval_id": "ap_8bb24913",
+      "type": "PROD_RELEASE",
+      "summary": "确认生产发布窗口",
+      "owner_role": "release_owner",
+      "blocking": true
+    }
+  ]
+}

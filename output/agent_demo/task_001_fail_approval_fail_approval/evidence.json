@@ -1,0 +1,62 @@
+{
+  "task_id": "task_001_fail_approval",
+  "records": [
+    {
+      "timestamp": "2026-02-12T03:11:14.284208+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_approval#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.286501+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_approval#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.288783+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_approval#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.290242+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001_fail_approval#approval-check",
+      "result": "fail",
+      "metadata": {
+        "pass": false,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [],
+        "missing": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.291505+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_approval#APPROVAL_PENDING->FAILED",
+      "result": "success",
+      "metadata": {
+        "reason": "approval gate fail"
+      }
+    }
+  ]
+}

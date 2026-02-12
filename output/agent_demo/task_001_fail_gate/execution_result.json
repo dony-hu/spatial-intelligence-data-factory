@@ -1,0 +1,55 @@
+{
+  "status": "FAIL",
+  "stage": "GATE_CHECK",
+  "details": {
+    "status": "FAIL",
+    "checks": [
+      {
+        "name": "Approval Gate",
+        "status": "PASS",
+        "details": "all approvals satisfied",
+        "missing": []
+      },
+      {
+        "name": "DDL Dry-run Gate",
+        "status": "PASS",
+        "details": "ddl dry-run passed",
+        "failures": []
+      },
+      {
+        "name": "Idempotency Gate",
+        "status": "FAIL",
+        "details": "missing=op_ddl_001",
+        "missing_ops": [
+          "op_ddl_001"
+        ]
+      },
+      {
+        "name": "Data Quality Gate",
+        "status": "PASS",
+        "details": "max_null_ratio=0.01, has_schema_drift=False"
+      }
+    ]
+  },
+  "profiling_report": {
+    "source_count": 2,
+    "sources": [
+      {
+        "source": "ods_police_events",
+        "record_count": 100,
+        "null_ratio": 0.01,
+        "schema_drift": false
+      },
+      {
+        "source": "ods_address_raw",
+        "record_count": 100,
+        "null_ratio": 0.01,
+        "schema_drift": false
+      }
+    ],
+    "quality_summary": {
+      "max_null_ratio": 0.01,
+      "has_schema_drift": false
+    }
+  }
+}

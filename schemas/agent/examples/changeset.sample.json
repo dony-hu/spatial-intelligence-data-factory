@@ -1,0 +1,23 @@
+{
+  "changeset_id": "cs_001",
+  "task_id": "task_001",
+  "env": "dev",
+  "operations": [
+    {
+      "op_id": "op_ddl_001",
+      "op_type": "DDL",
+      "payload": {
+        "sql": "CREATE TABLE IF NOT EXISTS dwd_address_std(id TEXT);"
+      },
+      "idempotency_key": "ddl-dwd-address-std-v1",
+      "dry_run_supported": true
+    }
+  ],
+  "rollback": {
+    "strategy": "sql_rollback",
+    "payload": {
+      "sql": "DROP TABLE IF EXISTS dwd_address_std;"
+    }
+  },
+  "requires_approvals": ["METRIC_DEFINITION", "SECURITY"]
+}

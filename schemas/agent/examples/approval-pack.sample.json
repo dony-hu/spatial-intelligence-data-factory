@@ -1,0 +1,13 @@
+{
+  "pack_id": "ap_001",
+  "task_id": "task_001",
+  "items": [
+    {
+      "approval_id": "a_001",
+      "type": "SECURITY",
+      "summary": "确认脱敏策略与访问范围",
+      "owner_role": "security_officer",
+      "blocking": true
+    }
+  ]
+}

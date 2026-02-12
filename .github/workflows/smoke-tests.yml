@@ -1,0 +1,49 @@
+name: smoke-tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install jsonschema
+      - name: Compile core modules
+        run: |
+          python -m py_compile \
+            tools/factory_workflow.py \
+            tools/factory_agents.py \
+            tools/factory_framework.py \
+            tools/graph_visualizer.py \
+            tools/factory_simple_server.py \
+            scripts/factory_demo_workflow.py \
+            src/runtime/orchestrator.py \
+            src/runtime/state_store.py \
+            src/runtime/evidence_store.py \
+            src/agents/planner_adapter.py \
+            src/agents/executor_adapter.py \
+            src/agents/evaluator_adapter.py \
+            src/evaluation/gates.py \
+            src/tools/profiling_tool.py \
+            src/tools/ddl_tool.py \
+            src/tools/airflow_tool.py \
+            scripts/run_taskspec_demo.py \
+            scripts/validate_agent_schemas.py
+      - name: Validate agent schemas
+        run: |
+          python scripts/validate_agent_schemas.py
+      - name: Run unit smoke tests
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py'
+      - name: Run e2e TaskSpec smoke
+        run: |
+          python scripts/run_taskspec_demo.py --mode success

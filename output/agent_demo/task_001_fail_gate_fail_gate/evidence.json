@@ -1,0 +1,165 @@
+{
+  "task_id": "task_001_fail_gate",
+  "records": [
+    {
+      "timestamp": "2026-02-12T03:11:14.359476+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.362915+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.365165+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.368620+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_fail_gate#approval:METRIC_DEFINITION",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.371625+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_fail_gate#approval:SECURITY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.373427+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001_fail_gate#approval:PROD_RELEASE",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.374439+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001_fail_gate#approval-check",
+      "result": "pass",
+      "metadata": {
+        "pass": true,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.375705+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#APPROVAL_PENDING->APPROVED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.378032+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#APPROVED->CHANGESET_READY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.379902+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#CHANGESET_READY->EXECUTING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:11:14.381893+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001_fail_gate#EXECUTING->FAILED",
+      "result": "success",
+      "metadata": {
+        "reason": "execution fail",
+        "details": {
+          "status": "FAIL",
+          "stage": "GATE_CHECK",
+          "details": {
+            "status": "FAIL",
+            "checks": [
+              {
+                "name": "Approval Gate",
+                "status": "PASS",
+                "details": "all approvals satisfied",
+                "missing": []
+              },
+              {
+                "name": "DDL Dry-run Gate",
+                "status": "PASS",
+                "details": "ddl dry-run passed",
+                "failures": []
+              },
+              {
+                "name": "Idempotency Gate",
+                "status": "FAIL",
+                "details": "missing=op_ddl_001",
+                "missing_ops": [
+                  "op_ddl_001"
+                ]
+              },
+              {
+                "name": "Data Quality Gate",
+                "status": "PASS",
+                "details": "max_null_ratio=0.01, has_schema_drift=False"
+              }
+            ]
+          },
+          "profiling_report": {
+            "source_count": 2,
+            "sources": [
+              {
+                "source": "ods_police_events",
+                "record_count": 100,
+                "null_ratio": 0.01,
+                "schema_drift": false
+              },
+              {
+                "source": "ods_address_raw",
+                "record_count": 100,
+                "null_ratio": 0.01,
+                "schema_drift": false
+              }
+            ],
+            "quality_summary": {
+              "max_null_ratio": 0.01,
+              "has_schema_drift": false
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["task_id", "records"],
+  "properties": {
+    "task_id": {"type": "string"},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["timestamp", "actor", "action", "artifact_ref", "result"],
+        "properties": {
+          "timestamp": {"type": "string"},
+          "actor": {"type": "string"},
+          "action": {"type": "string"},
+          "artifact_ref": {"type": "string"},
+          "result": {"type": "string"}
+        }
+      }
+    }
+  }
+}

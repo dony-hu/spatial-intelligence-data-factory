@@ -1,0 +1,2506 @@
+{
+  "metadata": {
+    "region": "Shanghai",
+    "timestamp": "2026-02-12T00:02:57.568236",
+    "statistics": {
+      "total_nodes": 112,
+      "total_relationships": 135,
+      "node_types": {
+        "province": 1,
+        "city": 1,
+        "district": 10,
+        "street": 0,
+        "lane": 0,
+        "building": 0,
+        "poi": 50,
+        "landmark": 0,
+        "address": 50,
+        "fusion_entity": 0
+      },
+      "relationship_types": {
+        "hierarchical": 11,
+        "spatial_contains": 50,
+        "spatial_adjacent": 0,
+        "spatial_near": 24,
+        "entity_mapping": 50,
+        "multi_source_fusion": 0,
+        "data_lineage": 0
+      },
+      "region": "Shanghai",
+      "created_at": "2026-02-12T00:02:57.568317"
+    }
+  },
+  "nodes": [
+    {
+      "node_id": "admin_3100",
+      "node_type": "province",
+      "name": "上海",
+      "level": 1,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566367"
+    },
+    {
+      "node_id": "admin_3101",
+      "node_type": "city",
+      "name": "上海市",
+      "level": 2,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566370"
+    },
+    {
+      "node_id": "admin_310101",
+      "node_type": "district",
+      "name": "黄浦区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566372"
+    },
+    {
+      "node_id": "admin_310115",
+      "node_type": "district",
+      "name": "浦东新区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566374"
+    },
+    {
+      "node_id": "admin_310104",
+      "node_type": "district",
+      "name": "徐汇区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566376"
+    },
+    {
+      "node_id": "admin_310106",
+      "node_type": "district",
+      "name": "静安区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566377"
+    },
+    {
+      "node_id": "admin_310109",
+      "node_type": "district",
+      "name": "虹口区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566379"
+    },
+    {
+      "node_id": "admin_310110",
+      "node_type": "district",
+      "name": "杨浦区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566381"
+    },
+    {
+      "node_id": "admin_310112",
+      "node_type": "district",
+      "name": "闵行区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566382"
+    },
+    {
+      "node_id": "admin_310113",
+      "node_type": "district",
+      "name": "宝山区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566384"
+    },
+    {
+      "node_id": "admin_310114",
+      "node_type": "district",
+      "name": "嘉定区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566385"
+    },
+    {
+      "node_id": "admin_310120",
+      "node_type": "district",
+      "name": "奉贤区",
+      "level": 3,
+      "latitude": null,
+      "longitude": null,
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.566387"
+    },
+    {
+      "node_id": "addr_std_sh_0001",
+      "node_type": "address",
+      "name": "上海市黄浦区中山东一路1号",
+      "level": null,
+      "latitude": 31.2387,
+      "longitude": 121.4877,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567002"
+    },
+    {
+      "node_id": "addr_std_sh_0002",
+      "node_type": "address",
+      "name": "上海市黄浦区中山东一路10号",
+      "level": null,
+      "latitude": 31.2389,
+      "longitude": 121.4878,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567004"
+    },
+    {
+      "node_id": "addr_std_sh_0003",
+      "node_type": "address",
+      "name": "上海市黄浦区中山东一路50号",
+      "level": null,
+      "latitude": 31.2395,
+      "longitude": 121.488,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567006"
+    },
+    {
+      "node_id": "addr_std_sh_0004",
+      "node_type": "address",
+      "name": "上海市黄浦区中山东一路100号5单元3层02室",
+      "level": null,
+      "latitude": 31.24,
+      "longitude": 121.4882,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567007"
+    },
+    {
+      "node_id": "addr_std_sh_0005",
+      "node_type": "address",
+      "name": "上海市黄浦区南京东路10号",
+      "level": null,
+      "latitude": 31.2365,
+      "longitude": 121.4835,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567008"
+    },
+    {
+      "node_id": "addr_std_sh_0006",
+      "node_type": "address",
+      "name": "上海市浦东新区浦东南路1号",
+      "level": null,
+      "latitude": 31.2328,
+      "longitude": 121.5254,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567010"
+    },
+    {
+      "node_id": "addr_std_sh_0007",
+      "node_type": "address",
+      "name": "上海市浦东新区世纪大道100号",
+      "level": null,
+      "latitude": 31.232,
+      "longitude": 121.5305,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567011"
+    },
+    {
+      "node_id": "addr_std_sh_0008",
+      "node_type": "address",
+      "name": "上海市浦东新区环路333号",
+      "level": null,
+      "latitude": 31.234,
+      "longitude": 121.528,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567013"
+    },
+    {
+      "node_id": "addr_std_sh_0009",
+      "node_type": "address",
+      "name": "上海市浦东新区浦东南路500号",
+      "level": null,
+      "latitude": 31.2305,
+      "longitude": 121.527,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567014"
+    },
+    {
+      "node_id": "addr_std_sh_0010",
+      "node_type": "address",
+      "name": "上海市浦东新区张江路888号",
+      "level": null,
+      "latitude": 31.2015,
+      "longitude": 121.5735,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567015"
+    },
+    {
+      "node_id": "addr_std_sh_0011",
+      "node_type": "address",
+      "name": "上海市徐汇区淮海中路1号",
+      "level": null,
+      "latitude": 31.2269,
+      "longitude": 121.4596,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567017"
+    },
+    {
+      "node_id": "addr_std_sh_0012",
+      "node_type": "address",
+      "name": "上海市徐汇区衡山路100号",
+      "level": null,
+      "latitude": 31.2233,
+      "longitude": 121.4508,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567019"
+    },
+    {
+      "node_id": "addr_std_sh_0013",
+      "node_type": "address",
+      "name": "上海市徐汇区武康路200号",
+      "level": null,
+      "latitude": 31.2205,
+      "longitude": 121.4473,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567020"
+    },
+    {
+      "node_id": "addr_std_sh_0014",
+      "node_type": "address",
+      "name": "上海市徐汇区复兴中路300号",
+      "level": null,
+      "latitude": 31.2248,
+      "longitude": 121.4635,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567021"
+    },
+    {
+      "node_id": "addr_std_sh_0015",
+      "node_type": "address",
+      "name": "上海市徐汇区龙腾大道400号",
+      "level": null,
+      "latitude": 31.1987,
+      "longitude": 121.5078,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567022"
+    },
+    {
+      "node_id": "addr_std_sh_0016",
+      "node_type": "address",
+      "name": "上海市静安区南京西路500号",
+      "level": null,
+      "latitude": 31.2389,
+      "longitude": 121.449,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567023"
+    },
+    {
+      "node_id": "addr_std_sh_0017",
+      "node_type": "address",
+      "name": "上海市静安区昌平路600号",
+      "level": null,
+      "latitude": 31.2453,
+      "longitude": 121.4565,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567024"
+    },
+    {
+      "node_id": "addr_std_sh_0018",
+      "node_type": "address",
+      "name": "上海市静安区中山北路700号",
+      "level": null,
+      "latitude": 31.2511,
+      "longitude": 121.4457,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567026"
+    },
+    {
+      "node_id": "addr_std_sh_0019",
+      "node_type": "address",
+      "name": "上海市静安区和田路800号",
+      "level": null,
+      "latitude": 31.2478,
+      "longitude": 121.4723,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567027"
+    },
+    {
+      "node_id": "addr_std_sh_0020",
+      "node_type": "address",
+      "name": "上海市静安区胶州路900号",
+      "level": null,
+      "latitude": 31.2405,
+      "longitude": 121.4683,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567028"
+    },
+    {
+      "node_id": "addr_std_sh_0021",
+      "node_type": "address",
+      "name": "上海市虹口区四川北路1000号",
+      "level": null,
+      "latitude": 31.2753,
+      "longitude": 121.484,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567029"
+    },
+    {
+      "node_id": "addr_std_sh_0022",
+      "node_type": "address",
+      "name": "上海市虹口区塘沽路1100号",
+      "level": null,
+      "latitude": 31.2813,
+      "longitude": 121.4902,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567031"
+    },
+    {
+      "node_id": "addr_std_sh_0023",
+      "node_type": "address",
+      "name": "上海市虹口区赤峰路1200号",
+      "level": null,
+      "latitude": 31.2845,
+      "longitude": 121.4753,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567032"
+    },
+    {
+      "node_id": "addr_std_sh_0024",
+      "node_type": "address",
+      "name": "上海市虹口区虹口路1300号",
+      "level": null,
+      "latitude": 31.2876,
+      "longitude": 121.4667,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567033"
+    },
+    {
+      "node_id": "addr_std_sh_0025",
+      "node_type": "address",
+      "name": "上海市虹口区溶阳路1400号",
+      "level": null,
+      "latitude": 31.2907,
+      "longitude": 121.481,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567034"
+    },
+    {
+      "node_id": "addr_std_sh_0026",
+      "node_type": "address",
+      "name": "上海市杨浦区五角场路1500号",
+      "level": null,
+      "latitude": 31.295,
+      "longitude": 121.5133,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567035"
+    },
+    {
+      "node_id": "addr_std_sh_0027",
+      "node_type": "address",
+      "name": "上海市杨浦区新江湾城路1600号",
+      "level": null,
+      "latitude": 31.3085,
+      "longitude": 121.526,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567036"
+    },
+    {
+      "node_id": "addr_std_sh_0028",
+      "node_type": "address",
+      "name": "上海市杨浦区控江路1700号",
+      "level": null,
+      "latitude": 31.2815,
+      "longitude": 121.5318,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567038"
+    },
+    {
+      "node_id": "addr_std_sh_0029",
+      "node_type": "address",
+      "name": "上海市杨浦区政民路1800号",
+      "level": null,
+      "latitude": 31.2912,
+      "longitude": 121.5401,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567039"
+    },
+    {
+      "node_id": "addr_std_sh_0030",
+      "node_type": "address",
+      "name": "上海市杨浦区国权路1900号",
+      "level": null,
+      "latitude": 31.2978,
+      "longitude": 121.5285,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567040"
+    },
+    {
+      "node_id": "addr_std_sh_0031",
+      "node_type": "address",
+      "name": "上海市闵行区莘庄路2000号",
+      "level": null,
+      "latitude": 31.1315,
+      "longitude": 121.3938,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567041"
+    },
+    {
+      "node_id": "addr_std_sh_0032",
+      "node_type": "address",
+      "name": "上海市闵行区春申路2100号",
+      "level": null,
+      "latitude": 31.1422,
+      "longitude": 121.3865,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567043"
+    },
+    {
+      "node_id": "addr_std_sh_0033",
+      "node_type": "address",
+      "name": "上海市闵行区虹梅路2200号",
+      "level": null,
+      "latitude": 31.098,
+      "longitude": 121.4205,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567044"
+    },
+    {
+      "node_id": "addr_std_sh_0034",
+      "node_type": "address",
+      "name": "上海市闵行区浦三路2300号",
+      "level": null,
+      "latitude": 31.1145,
+      "longitude": 121.542,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567045"
+    },
+    {
+      "node_id": "addr_std_sh_0035",
+      "node_type": "address",
+      "name": "上海市闵行区龙吴路2400号",
+      "level": null,
+      "latitude": 31.089,
+      "longitude": 121.4687,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567051"
+    },
+    {
+      "node_id": "addr_std_sh_0036",
+      "node_type": "address",
+      "name": "上海市宝山区共和新路2500号",
+      "level": null,
+      "latitude": 31.3878,
+      "longitude": 121.4645,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567052"
+    },
+    {
+      "node_id": "addr_std_sh_0037",
+      "node_type": "address",
+      "name": "上海市宝山区淞浦大道2600号",
+      "level": null,
+      "latitude": 31.3756,
+      "longitude": 121.4523,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567054"
+    },
+    {
+      "node_id": "addr_std_sh_0038",
+      "node_type": "address",
+      "name": "上海市宝山区月浦路2700号",
+      "level": null,
+      "latitude": 31.3648,
+      "longitude": 121.4802,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567055"
+    },
+    {
+      "node_id": "addr_std_sh_0039",
+      "node_type": "address",
+      "name": "上海市宝山区通河新村路2800号",
+      "level": null,
+      "latitude": 31.4012,
+      "longitude": 121.489,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567056"
+    },
+    {
+      "node_id": "addr_std_sh_0040",
+      "node_type": "address",
+      "name": "上海市宝山区罗店路2900号",
+      "level": null,
+      "latitude": 31.4145,
+      "longitude": 121.4567,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567057"
+    },
+    {
+      "node_id": "addr_std_sh_0041",
+      "node_type": "address",
+      "name": "上海市嘉定区城中路3000号",
+      "level": null,
+      "latitude": 31.3867,
+      "longitude": 121.2987,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567114"
+    },
+    {
+      "node_id": "addr_std_sh_0042",
+      "node_type": "address",
+      "name": "上海市嘉定区曹安公路3100号",
+      "level": null,
+      "latitude": 31.3754,
+      "longitude": 121.2654,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567116"
+    },
+    {
+      "node_id": "addr_std_sh_0043",
+      "node_type": "address",
+      "name": "上海市嘉定区真南路3200号",
+      "level": null,
+      "latitude": 31.3582,
+      "longitude": 121.2834,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567117"
+    },
+    {
+      "node_id": "addr_std_sh_0044",
+      "node_type": "address",
+      "name": "上海市嘉定区永安路3300号",
+      "level": null,
+      "latitude": 31.3456,
+      "longitude": 121.3012,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567118"
+    },
+    {
+      "node_id": "addr_std_sh_0045",
+      "node_type": "address",
+      "name": "上海市嘉定区新城路3400号",
+      "level": null,
+      "latitude": 31.3678,
+      "longitude": 121.3145,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567119"
+    },
+    {
+      "node_id": "addr_std_sh_0046",
+      "node_type": "address",
+      "name": "上海市奉贤区南奉公路3500号",
+      "level": null,
+      "latitude": 30.8456,
+      "longitude": 121.489,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567120"
+    },
+    {
+      "node_id": "addr_std_sh_0047",
+      "node_type": "address",
+      "name": "上海市奉贤区四团路3600号",
+      "level": null,
+      "latitude": 30.7812,
+      "longitude": 121.5234,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567121"
+    },
+    {
+      "node_id": "addr_std_sh_0048",
+      "node_type": "address",
+      "name": "上海市奉贤区海湾路3700号",
+      "level": null,
+      "latitude": 30.8234,
+      "longitude": 121.6012,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567123"
+    },
+    {
+      "node_id": "addr_std_sh_0049",
+      "node_type": "address",
+      "name": "上海市奉贤区邬桥路3800号",
+      "level": null,
+      "latitude": 30.7654,
+      "longitude": 121.5456,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567124"
+    },
+    {
+      "node_id": "addr_std_sh_0050",
+      "node_type": "address",
+      "name": "上海市奉贤区金海路3900号",
+      "level": null,
+      "latitude": 30.8123,
+      "longitude": 121.5789,
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567125"
+    },
+    {
+      "node_id": "poi_std_sh_0001",
+      "node_type": "poi",
+      "name": "外滩陈毅广场",
+      "level": null,
+      "latitude": 31.2387,
+      "longitude": 121.4877,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567129"
+    },
+    {
+      "node_id": "poi_std_sh_0002",
+      "node_type": "poi",
+      "name": "外滩国际金融中心",
+      "level": null,
+      "latitude": 31.2389,
+      "longitude": 121.4878,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567130"
+    },
+    {
+      "node_id": "poi_std_sh_0003",
+      "node_type": "poi",
+      "name": "外滩酒店",
+      "level": null,
+      "latitude": 31.2395,
+      "longitude": 121.488,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567132"
+    },
+    {
+      "node_id": "poi_std_sh_0004",
+      "node_type": "poi",
+      "name": "中山东一路100号居住楼",
+      "level": null,
+      "latitude": 31.24,
+      "longitude": 121.4882,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567134"
+    },
+    {
+      "node_id": "poi_std_sh_0005",
+      "node_type": "poi",
+      "name": "南京路商业街",
+      "level": null,
+      "latitude": 31.2365,
+      "longitude": 121.4835,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567135"
+    },
+    {
+      "node_id": "poi_std_sh_0006",
+      "node_type": "poi",
+      "name": "陆家嘴环路金融中心",
+      "level": null,
+      "latitude": 31.2328,
+      "longitude": 121.5254,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567136"
+    },
+    {
+      "node_id": "poi_std_sh_0007",
+      "node_type": "poi",
+      "name": "世纪大道商务楼",
+      "level": null,
+      "latitude": 31.232,
+      "longitude": 121.5305,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567138"
+    },
+    {
+      "node_id": "poi_std_sh_0008",
+      "node_type": "poi",
+      "name": "浦东金融楼",
+      "level": null,
+      "latitude": 31.234,
+      "longitude": 121.528,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567140"
+    },
+    {
+      "node_id": "poi_std_sh_0009",
+      "node_type": "poi",
+      "name": "浦东南路公寓",
+      "level": null,
+      "latitude": 31.2305,
+      "longitude": 121.527,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567142"
+    },
+    {
+      "node_id": "poi_std_sh_0010",
+      "node_type": "poi",
+      "name": "张江高科技园区",
+      "level": null,
+      "latitude": 31.2015,
+      "longitude": 121.5735,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567143"
+    },
+    {
+      "node_id": "poi_std_sh_0011",
+      "node_type": "poi",
+      "name": "淮海路商业街",
+      "level": null,
+      "latitude": 31.2269,
+      "longitude": 121.4596,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567144"
+    },
+    {
+      "node_id": "poi_std_sh_0012",
+      "node_type": "poi",
+      "name": "衡山路文化街",
+      "level": null,
+      "latitude": 31.2233,
+      "longitude": 121.4508,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567146"
+    },
+    {
+      "node_id": "poi_std_sh_0013",
+      "node_type": "poi",
+      "name": "武康大楼",
+      "level": null,
+      "latitude": 31.2205,
+      "longitude": 121.4473,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567147"
+    },
+    {
+      "node_id": "poi_std_sh_0014",
+      "node_type": "poi",
+      "name": "复兴中路商务楼",
+      "level": null,
+      "latitude": 31.2248,
+      "longitude": 121.4635,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567148"
+    },
+    {
+      "node_id": "poi_std_sh_0015",
+      "node_type": "poi",
+      "name": "龙华产业园",
+      "level": null,
+      "latitude": 31.1987,
+      "longitude": 121.5078,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567149"
+    },
+    {
+      "node_id": "poi_std_sh_0016",
+      "node_type": "poi",
+      "name": "南京西路商业街",
+      "level": null,
+      "latitude": 31.2389,
+      "longitude": 121.449,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567150"
+    },
+    {
+      "node_id": "poi_std_sh_0017",
+      "node_type": "poi",
+      "name": "昌平路公寓",
+      "level": null,
+      "latitude": 31.2453,
+      "longitude": 121.4565,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567152"
+    },
+    {
+      "node_id": "poi_std_sh_0018",
+      "node_type": "poi",
+      "name": "中山北路商务楼",
+      "level": null,
+      "latitude": 31.2511,
+      "longitude": 121.4457,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567153"
+    },
+    {
+      "node_id": "poi_std_sh_0019",
+      "node_type": "poi",
+      "name": "和田路研发中心",
+      "level": null,
+      "latitude": 31.2478,
+      "longitude": 121.4723,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567154"
+    },
+    {
+      "node_id": "poi_std_sh_0020",
+      "node_type": "poi",
+      "name": "胶州路创意园",
+      "level": null,
+      "latitude": 31.2405,
+      "longitude": 121.4683,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567155"
+    },
+    {
+      "node_id": "poi_std_sh_0021",
+      "node_type": "poi",
+      "name": "四川北路商业街",
+      "level": null,
+      "latitude": 31.2753,
+      "longitude": 121.484,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567157"
+    },
+    {
+      "node_id": "poi_std_sh_0022",
+      "node_type": "poi",
+      "name": "塘沽路文化广场",
+      "level": null,
+      "latitude": 31.2813,
+      "longitude": 121.4902,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567158"
+    },
+    {
+      "node_id": "poi_std_sh_0023",
+      "node_type": "poi",
+      "name": "赤峰路居住区",
+      "level": null,
+      "latitude": 31.2845,
+      "longitude": 121.4753,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567159"
+    },
+    {
+      "node_id": "poi_std_sh_0024",
+      "node_type": "poi",
+      "name": "虹口路办公楼",
+      "level": null,
+      "latitude": 31.2876,
+      "longitude": 121.4667,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567160"
+    },
+    {
+      "node_id": "poi_std_sh_0025",
+      "node_type": "poi",
+      "name": "溶阳路研究所",
+      "level": null,
+      "latitude": 31.2907,
+      "longitude": 121.481,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567164"
+    },
+    {
+      "node_id": "poi_std_sh_0026",
+      "node_type": "poi",
+      "name": "五角场商业街",
+      "level": null,
+      "latitude": 31.295,
+      "longitude": 121.5133,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567166"
+    },
+    {
+      "node_id": "poi_std_sh_0027",
+      "node_type": "poi",
+      "name": "新江湾城居住区",
+      "level": null,
+      "latitude": 31.3085,
+      "longitude": 121.526,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567167"
+    },
+    {
+      "node_id": "poi_std_sh_0028",
+      "node_type": "poi",
+      "name": "控江路公寓",
+      "level": null,
+      "latitude": 31.2815,
+      "longitude": 121.5318,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567168"
+    },
+    {
+      "node_id": "poi_std_sh_0029",
+      "node_type": "poi",
+      "name": "政民路文化中心",
+      "level": null,
+      "latitude": 31.2912,
+      "longitude": 121.5401,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567169"
+    },
+    {
+      "node_id": "poi_std_sh_0030",
+      "node_type": "poi",
+      "name": "国权路教育园区",
+      "level": null,
+      "latitude": 31.2978,
+      "longitude": 121.5285,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567170"
+    },
+    {
+      "node_id": "poi_std_sh_0031",
+      "node_type": "poi",
+      "name": "莘庄地铁站",
+      "level": null,
+      "latitude": 31.1315,
+      "longitude": 121.3938,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567172"
+    },
+    {
+      "node_id": "poi_std_sh_0032",
+      "node_type": "poi",
+      "name": "春申路商业广场",
+      "level": null,
+      "latitude": 31.1422,
+      "longitude": 121.3865,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567173"
+    },
+    {
+      "node_id": "poi_std_sh_0033",
+      "node_type": "poi",
+      "name": "虹梅路工业园",
+      "level": null,
+      "latitude": 31.098,
+      "longitude": 121.4205,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567174"
+    },
+    {
+      "node_id": "poi_std_sh_0034",
+      "node_type": "poi",
+      "name": "浦三路科技园",
+      "level": null,
+      "latitude": 31.1145,
+      "longitude": 121.542,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567175"
+    },
+    {
+      "node_id": "poi_std_sh_0035",
+      "node_type": "poi",
+      "name": "龙吴路医疗中心",
+      "level": null,
+      "latitude": 31.089,
+      "longitude": 121.4687,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567177"
+    },
+    {
+      "node_id": "poi_std_sh_0036",
+      "node_type": "poi",
+      "name": "共和新路商业街",
+      "level": null,
+      "latitude": 31.3878,
+      "longitude": 121.4645,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567178"
+    },
+    {
+      "node_id": "poi_std_sh_0037",
+      "node_type": "poi",
+      "name": "淞浦大道办公楼",
+      "level": null,
+      "latitude": 31.3756,
+      "longitude": 121.4523,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567180"
+    },
+    {
+      "node_id": "poi_std_sh_0038",
+      "node_type": "poi",
+      "name": "月浦路工业园",
+      "level": null,
+      "latitude": 31.3648,
+      "longitude": 121.4802,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567182"
+    },
+    {
+      "node_id": "poi_std_sh_0039",
+      "node_type": "poi",
+      "name": "通河新村居住区",
+      "level": null,
+      "latitude": 31.4012,
+      "longitude": 121.489,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567183"
+    },
+    {
+      "node_id": "poi_std_sh_0040",
+      "node_type": "poi",
+      "name": "罗店路商务中心",
+      "level": null,
+      "latitude": 31.4145,
+      "longitude": 121.4567,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567184"
+    },
+    {
+      "node_id": "poi_std_sh_0041",
+      "node_type": "poi",
+      "name": "城中路商业街",
+      "level": null,
+      "latitude": 31.3867,
+      "longitude": 121.2987,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567186"
+    },
+    {
+      "node_id": "poi_std_sh_0042",
+      "node_type": "poi",
+      "name": "曹安公路汽车城",
+      "level": null,
+      "latitude": 31.3754,
+      "longitude": 121.2654,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567187"
+    },
+    {
+      "node_id": "poi_std_sh_0043",
+      "node_type": "poi",
+      "name": "真南路居住区",
+      "level": null,
+      "latitude": 31.3582,
+      "longitude": 121.2834,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567188"
+    },
+    {
+      "node_id": "poi_std_sh_0044",
+      "node_type": "poi",
+      "name": "永安路工业区",
+      "level": null,
+      "latitude": 31.3456,
+      "longitude": 121.3012,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567189"
+    },
+    {
+      "node_id": "poi_std_sh_0045",
+      "node_type": "poi",
+      "name": "新城路开发区",
+      "level": null,
+      "latitude": 31.3678,
+      "longitude": 121.3145,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567191"
+    },
+    {
+      "node_id": "poi_std_sh_0046",
+      "node_type": "poi",
+      "name": "南奉公路商业中心",
+      "level": null,
+      "latitude": 30.8456,
+      "longitude": 121.489,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567192"
+    },
+    {
+      "node_id": "poi_std_sh_0047",
+      "node_type": "poi",
+      "name": "四团路工业园",
+      "level": null,
+      "latitude": 30.7812,
+      "longitude": 121.5234,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567193"
+    },
+    {
+      "node_id": "poi_std_sh_0048",
+      "node_type": "poi",
+      "name": "海湾路度假区",
+      "level": null,
+      "latitude": 30.8234,
+      "longitude": 121.6012,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567194"
+    },
+    {
+      "node_id": "poi_std_sh_0049",
+      "node_type": "poi",
+      "name": "邬桥路驿站",
+      "level": null,
+      "latitude": 30.7654,
+      "longitude": 121.5456,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567195"
+    },
+    {
+      "node_id": "poi_std_sh_0050",
+      "node_type": "poi",
+      "name": "金海路研究院",
+      "level": null,
+      "latitude": 30.8123,
+      "longitude": 121.5789,
+      "confidence": 0.9,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567196"
+    }
+  ],
+  "edges": [
+    {
+      "relationship_id": "rel_hier_3100_3101",
+      "source_node_id": "admin_3100",
+      "target_node_id": "admin_3101",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567405"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310101",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310101",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567408"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310115",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310115",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567409"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310104",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310104",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567411"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310106",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310106",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567412"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310109",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310109",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567413"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310110",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310110",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567414"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310112",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310112",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567415"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310113",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310113",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567416"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310114",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310114",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567417"
+    },
+    {
+      "relationship_id": "rel_hier_3101_310120",
+      "source_node_id": "admin_3101",
+      "target_node_id": "admin_310120",
+      "relationship_type": "hierarchical",
+      "confidence": 1.0,
+      "metadata": {
+        "direction": "parent_to_child"
+      },
+      "created_at": "2026-02-12T00:02:57.567419"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310101_addr_std_sh_0001_spatial_contains",
+      "source_node_id": "admin_310101",
+      "target_node_id": "addr_std_sh_0001",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567439"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310101_addr_std_sh_0002_spatial_contains",
+      "source_node_id": "admin_310101",
+      "target_node_id": "addr_std_sh_0002",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567446"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310101_addr_std_sh_0003_spatial_contains",
+      "source_node_id": "admin_310101",
+      "target_node_id": "addr_std_sh_0003",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567451"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310101_addr_std_sh_0004_spatial_contains",
+      "source_node_id": "admin_310101",
+      "target_node_id": "addr_std_sh_0004",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567456"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310101_addr_std_sh_0005_spatial_contains",
+      "source_node_id": "admin_310101",
+      "target_node_id": "addr_std_sh_0005",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567461"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310115_addr_std_sh_0006_spatial_contains",
+      "source_node_id": "admin_310115",
+      "target_node_id": "addr_std_sh_0006",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567466"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310115_addr_std_sh_0007_spatial_contains",
+      "source_node_id": "admin_310115",
+      "target_node_id": "addr_std_sh_0007",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567470"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310115_addr_std_sh_0008_spatial_contains",
+      "source_node_id": "admin_310115",
+      "target_node_id": "addr_std_sh_0008",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567475"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310115_addr_std_sh_0009_spatial_contains",
+      "source_node_id": "admin_310115",
+      "target_node_id": "addr_std_sh_0009",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567480"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310115_addr_std_sh_0010_spatial_contains",
+      "source_node_id": "admin_310115",
+      "target_node_id": "addr_std_sh_0010",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567485"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310104_addr_std_sh_0011_spatial_contains",
+      "source_node_id": "admin_310104",
+      "target_node_id": "addr_std_sh_0011",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567491"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310104_addr_std_sh_0012_spatial_contains",
+      "source_node_id": "admin_310104",
+      "target_node_id": "addr_std_sh_0012",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567497"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310104_addr_std_sh_0013_spatial_contains",
+      "source_node_id": "admin_310104",
+      "target_node_id": "addr_std_sh_0013",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567502"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310104_addr_std_sh_0014_spatial_contains",
+      "source_node_id": "admin_310104",
+      "target_node_id": "addr_std_sh_0014",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567507"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310104_addr_std_sh_0015_spatial_contains",
+      "source_node_id": "admin_310104",
+      "target_node_id": "addr_std_sh_0015",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567512"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310106_addr_std_sh_0016_spatial_contains",
+      "source_node_id": "admin_310106",
+      "target_node_id": "addr_std_sh_0016",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567517"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310106_addr_std_sh_0017_spatial_contains",
+      "source_node_id": "admin_310106",
+      "target_node_id": "addr_std_sh_0017",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567523"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310106_addr_std_sh_0018_spatial_contains",
+      "source_node_id": "admin_310106",
+      "target_node_id": "addr_std_sh_0018",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567528"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310106_addr_std_sh_0019_spatial_contains",
+      "source_node_id": "admin_310106",
+      "target_node_id": "addr_std_sh_0019",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567533"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310106_addr_std_sh_0020_spatial_contains",
+      "source_node_id": "admin_310106",
+      "target_node_id": "addr_std_sh_0020",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567538"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310109_addr_std_sh_0021_spatial_contains",
+      "source_node_id": "admin_310109",
+      "target_node_id": "addr_std_sh_0021",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567545"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310109_addr_std_sh_0022_spatial_contains",
+      "source_node_id": "admin_310109",
+      "target_node_id": "addr_std_sh_0022",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567550"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310109_addr_std_sh_0023_spatial_contains",
+      "source_node_id": "admin_310109",
+      "target_node_id": "addr_std_sh_0023",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567555"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310109_addr_std_sh_0024_spatial_contains",
+      "source_node_id": "admin_310109",
+      "target_node_id": "addr_std_sh_0024",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567560"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310109_addr_std_sh_0025_spatial_contains",
+      "source_node_id": "admin_310109",
+      "target_node_id": "addr_std_sh_0025",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567565"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310110_addr_std_sh_0026_spatial_contains",
+      "source_node_id": "admin_310110",
+      "target_node_id": "addr_std_sh_0026",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567571"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310110_addr_std_sh_0027_spatial_contains",
+      "source_node_id": "admin_310110",
+      "target_node_id": "addr_std_sh_0027",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567576"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310110_addr_std_sh_0028_spatial_contains",
+      "source_node_id": "admin_310110",
+      "target_node_id": "addr_std_sh_0028",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567581"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310110_addr_std_sh_0029_spatial_contains",
+      "source_node_id": "admin_310110",
+      "target_node_id": "addr_std_sh_0029",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567587"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310110_addr_std_sh_0030_spatial_contains",
+      "source_node_id": "admin_310110",
+      "target_node_id": "addr_std_sh_0030",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567592"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310112_addr_std_sh_0031_spatial_contains",
+      "source_node_id": "admin_310112",
+      "target_node_id": "addr_std_sh_0031",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567598"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310112_addr_std_sh_0032_spatial_contains",
+      "source_node_id": "admin_310112",
+      "target_node_id": "addr_std_sh_0032",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567603"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310112_addr_std_sh_0033_spatial_contains",
+      "source_node_id": "admin_310112",
+      "target_node_id": "addr_std_sh_0033",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567609"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310112_addr_std_sh_0034_spatial_contains",
+      "source_node_id": "admin_310112",
+      "target_node_id": "addr_std_sh_0034",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567615"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310112_addr_std_sh_0035_spatial_contains",
+      "source_node_id": "admin_310112",
+      "target_node_id": "addr_std_sh_0035",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567620"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310113_addr_std_sh_0036_spatial_contains",
+      "source_node_id": "admin_310113",
+      "target_node_id": "addr_std_sh_0036",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567625"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310113_addr_std_sh_0037_spatial_contains",
+      "source_node_id": "admin_310113",
+      "target_node_id": "addr_std_sh_0037",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567630"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310113_addr_std_sh_0038_spatial_contains",
+      "source_node_id": "admin_310113",
+      "target_node_id": "addr_std_sh_0038",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567636"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310113_addr_std_sh_0039_spatial_contains",
+      "source_node_id": "admin_310113",
+      "target_node_id": "addr_std_sh_0039",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567641"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310113_addr_std_sh_0040_spatial_contains",
+      "source_node_id": "admin_310113",
+      "target_node_id": "addr_std_sh_0040",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567646"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310114_addr_std_sh_0041_spatial_contains",
+      "source_node_id": "admin_310114",
+      "target_node_id": "addr_std_sh_0041",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567652"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310114_addr_std_sh_0042_spatial_contains",
+      "source_node_id": "admin_310114",
+      "target_node_id": "addr_std_sh_0042",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567658"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310114_addr_std_sh_0043_spatial_contains",
+      "source_node_id": "admin_310114",
+      "target_node_id": "addr_std_sh_0043",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567663"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310114_addr_std_sh_0044_spatial_contains",
+      "source_node_id": "admin_310114",
+      "target_node_id": "addr_std_sh_0044",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567669"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310114_addr_std_sh_0045_spatial_contains",
+      "source_node_id": "admin_310114",
+      "target_node_id": "addr_std_sh_0045",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567674"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310120_addr_std_sh_0046_spatial_contains",
+      "source_node_id": "admin_310120",
+      "target_node_id": "addr_std_sh_0046",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567679"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310120_addr_std_sh_0047_spatial_contains",
+      "source_node_id": "admin_310120",
+      "target_node_id": "addr_std_sh_0047",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567685"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310120_addr_std_sh_0048_spatial_contains",
+      "source_node_id": "admin_310120",
+      "target_node_id": "addr_std_sh_0048",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567690"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310120_addr_std_sh_0049_spatial_contains",
+      "source_node_id": "admin_310120",
+      "target_node_id": "addr_std_sh_0049",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567695"
+    },
+    {
+      "relationship_id": "rel_spatial_admin_310120_addr_std_sh_0050_spatial_contains",
+      "source_node_id": "admin_310120",
+      "target_node_id": "addr_std_sh_0050",
+      "relationship_type": "spatial_contains",
+      "confidence": 1.0,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567700"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0001_poi_std_sh_0001",
+      "source_node_id": "addr_std_sh_0001",
+      "target_node_id": "poi_std_sh_0001",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567704"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0002_poi_std_sh_0002",
+      "source_node_id": "addr_std_sh_0002",
+      "target_node_id": "poi_std_sh_0002",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567706"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0003_poi_std_sh_0003",
+      "source_node_id": "addr_std_sh_0003",
+      "target_node_id": "poi_std_sh_0003",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567707"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0004_poi_std_sh_0004",
+      "source_node_id": "addr_std_sh_0004",
+      "target_node_id": "poi_std_sh_0004",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567708"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0005_poi_std_sh_0005",
+      "source_node_id": "addr_std_sh_0005",
+      "target_node_id": "poi_std_sh_0005",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567709"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0006_poi_std_sh_0006",
+      "source_node_id": "addr_std_sh_0006",
+      "target_node_id": "poi_std_sh_0006",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567710"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0007_poi_std_sh_0007",
+      "source_node_id": "addr_std_sh_0007",
+      "target_node_id": "poi_std_sh_0007",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567712"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0008_poi_std_sh_0008",
+      "source_node_id": "addr_std_sh_0008",
+      "target_node_id": "poi_std_sh_0008",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567713"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0009_poi_std_sh_0009",
+      "source_node_id": "addr_std_sh_0009",
+      "target_node_id": "poi_std_sh_0009",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567714"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0010_poi_std_sh_0010",
+      "source_node_id": "addr_std_sh_0010",
+      "target_node_id": "poi_std_sh_0010",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567715"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0011_poi_std_sh_0011",
+      "source_node_id": "addr_std_sh_0011",
+      "target_node_id": "poi_std_sh_0011",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567717"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0012_poi_std_sh_0012",
+      "source_node_id": "addr_std_sh_0012",
+      "target_node_id": "poi_std_sh_0012",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567718"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0013_poi_std_sh_0013",
+      "source_node_id": "addr_std_sh_0013",
+      "target_node_id": "poi_std_sh_0013",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567719"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0014_poi_std_sh_0014",
+      "source_node_id": "addr_std_sh_0014",
+      "target_node_id": "poi_std_sh_0014",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567720"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0015_poi_std_sh_0015",
+      "source_node_id": "addr_std_sh_0015",
+      "target_node_id": "poi_std_sh_0015",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567721"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0016_poi_std_sh_0016",
+      "source_node_id": "addr_std_sh_0016",
+      "target_node_id": "poi_std_sh_0016",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567723"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0017_poi_std_sh_0017",
+      "source_node_id": "addr_std_sh_0017",
+      "target_node_id": "poi_std_sh_0017",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567724"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0018_poi_std_sh_0018",
+      "source_node_id": "addr_std_sh_0018",
+      "target_node_id": "poi_std_sh_0018",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567725"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0019_poi_std_sh_0019",
+      "source_node_id": "addr_std_sh_0019",
+      "target_node_id": "poi_std_sh_0019",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567726"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0020_poi_std_sh_0020",
+      "source_node_id": "addr_std_sh_0020",
+      "target_node_id": "poi_std_sh_0020",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567727"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0021_poi_std_sh_0021",
+      "source_node_id": "addr_std_sh_0021",
+      "target_node_id": "poi_std_sh_0021",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567729"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0022_poi_std_sh_0022",
+      "source_node_id": "addr_std_sh_0022",
+      "target_node_id": "poi_std_sh_0022",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567730"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0023_poi_std_sh_0023",
+      "source_node_id": "addr_std_sh_0023",
+      "target_node_id": "poi_std_sh_0023",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567731"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0024_poi_std_sh_0024",
+      "source_node_id": "addr_std_sh_0024",
+      "target_node_id": "poi_std_sh_0024",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567732"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0025_poi_std_sh_0025",
+      "source_node_id": "addr_std_sh_0025",
+      "target_node_id": "poi_std_sh_0025",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567733"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0026_poi_std_sh_0026",
+      "source_node_id": "addr_std_sh_0026",
+      "target_node_id": "poi_std_sh_0026",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567736"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0027_poi_std_sh_0027",
+      "source_node_id": "addr_std_sh_0027",
+      "target_node_id": "poi_std_sh_0027",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567738"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0028_poi_std_sh_0028",
+      "source_node_id": "addr_std_sh_0028",
+      "target_node_id": "poi_std_sh_0028",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567739"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0029_poi_std_sh_0029",
+      "source_node_id": "addr_std_sh_0029",
+      "target_node_id": "poi_std_sh_0029",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567740"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0030_poi_std_sh_0030",
+      "source_node_id": "addr_std_sh_0030",
+      "target_node_id": "poi_std_sh_0030",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567741"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0031_poi_std_sh_0031",
+      "source_node_id": "addr_std_sh_0031",
+      "target_node_id": "poi_std_sh_0031",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567742"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0032_poi_std_sh_0032",
+      "source_node_id": "addr_std_sh_0032",
+      "target_node_id": "poi_std_sh_0032",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567743"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0033_poi_std_sh_0033",
+      "source_node_id": "addr_std_sh_0033",
+      "target_node_id": "poi_std_sh_0033",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567744"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0034_poi_std_sh_0034",
+      "source_node_id": "addr_std_sh_0034",
+      "target_node_id": "poi_std_sh_0034",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567745"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0035_poi_std_sh_0035",
+      "source_node_id": "addr_std_sh_0035",
+      "target_node_id": "poi_std_sh_0035",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567746"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0036_poi_std_sh_0036",
+      "source_node_id": "addr_std_sh_0036",
+      "target_node_id": "poi_std_sh_0036",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567748"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0037_poi_std_sh_0037",
+      "source_node_id": "addr_std_sh_0037",
+      "target_node_id": "poi_std_sh_0037",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567749"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0038_poi_std_sh_0038",
+      "source_node_id": "addr_std_sh_0038",
+      "target_node_id": "poi_std_sh_0038",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567750"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0039_poi_std_sh_0039",
+      "source_node_id": "addr_std_sh_0039",
+      "target_node_id": "poi_std_sh_0039",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567751"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0040_poi_std_sh_0040",
+      "source_node_id": "addr_std_sh_0040",
+      "target_node_id": "poi_std_sh_0040",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567754"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0041_poi_std_sh_0041",
+      "source_node_id": "addr_std_sh_0041",
+      "target_node_id": "poi_std_sh_0041",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567755"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0042_poi_std_sh_0042",
+      "source_node_id": "addr_std_sh_0042",
+      "target_node_id": "poi_std_sh_0042",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567756"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0043_poi_std_sh_0043",
+      "source_node_id": "addr_std_sh_0043",
+      "target_node_id": "poi_std_sh_0043",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567757"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0044_poi_std_sh_0044",
+      "source_node_id": "addr_std_sh_0044",
+      "target_node_id": "poi_std_sh_0044",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567758"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0045_poi_std_sh_0045",
+      "source_node_id": "addr_std_sh_0045",
+      "target_node_id": "poi_std_sh_0045",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567760"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0046_poi_std_sh_0046",
+      "source_node_id": "addr_std_sh_0046",
+      "target_node_id": "poi_std_sh_0046",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567761"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0047_poi_std_sh_0047",
+      "source_node_id": "addr_std_sh_0047",
+      "target_node_id": "poi_std_sh_0047",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567762"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0048_poi_std_sh_0048",
+      "source_node_id": "addr_std_sh_0048",
+      "target_node_id": "poi_std_sh_0048",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567763"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0049_poi_std_sh_0049",
+      "source_node_id": "addr_std_sh_0049",
+      "target_node_id": "poi_std_sh_0049",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567764"
+    },
+    {
+      "relationship_id": "rel_map_addr_std_sh_0050_poi_std_sh_0050",
+      "source_node_id": "addr_std_sh_0050",
+      "target_node_id": "poi_std_sh_0050",
+      "relationship_type": "entity_mapping",
+      "confidence": 0.95,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567765"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0001_addr_std_sh_0002",
+      "source_node_id": "addr_std_sh_0001",
+      "target_node_id": "addr_std_sh_0002",
+      "relationship_type": "spatial_near",
+      "confidence": 0.9776393202255309,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567782"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0001_addr_std_sh_0003",
+      "source_node_id": "addr_std_sh_0001",
+      "target_node_id": "addr_std_sh_0003",
+      "relationship_type": "spatial_near",
+      "confidence": 0.9145599625471486,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567784"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0001_addr_std_sh_0004",
+      "source_node_id": "addr_std_sh_0001",
+      "target_node_id": "addr_std_sh_0004",
+      "relationship_type": "spatial_near",
+      "confidence": 0.860716117228356,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567786"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0001_addr_std_sh_0005",
+      "source_node_id": "addr_std_sh_0001",
+      "target_node_id": "addr_std_sh_0005",
+      "relationship_type": "spatial_near",
+      "confidence": 0.525869216354958,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567788"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0002_addr_std_sh_0003",
+      "source_node_id": "addr_std_sh_0002",
+      "target_node_id": "addr_std_sh_0003",
+      "relationship_type": "spatial_near",
+      "confidence": 0.9367544467965552,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567805"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0002_addr_std_sh_0004",
+      "source_node_id": "addr_std_sh_0002",
+      "target_node_id": "addr_std_sh_0004",
+      "relationship_type": "spatial_near",
+      "confidence": 0.8829530008925909,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567807"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0002_addr_std_sh_0005",
+      "source_node_id": "addr_std_sh_0002",
+      "target_node_id": "addr_std_sh_0005",
+      "relationship_type": "spatial_near",
+      "confidence": 0.5075571099113063,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567808"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0003_addr_std_sh_0004",
+      "source_node_id": "addr_std_sh_0003",
+      "target_node_id": "addr_std_sh_0004",
+      "relationship_type": "spatial_near",
+      "confidence": 0.9461483519285165,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567823"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0003_addr_std_sh_0005",
+      "source_node_id": "addr_std_sh_0003",
+      "target_node_id": "addr_std_sh_0005",
+      "relationship_type": "spatial_near",
+      "confidence": 0.45916730868097233,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567824"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0004_addr_std_sh_0005",
+      "source_node_id": "addr_std_sh_0004",
+      "target_node_id": "addr_std_sh_0005",
+      "relationship_type": "spatial_near",
+      "confidence": 0.41399658704074205,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567840"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0006_addr_std_sh_0007",
+      "source_node_id": "addr_std_sh_0006",
+      "target_node_id": "addr_std_sh_0007",
+      "relationship_type": "spatial_near",
+      "confidence": 0.4837636200344828,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567869"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0006_addr_std_sh_0008",
+      "source_node_id": "addr_std_sh_0006",
+      "target_node_id": "addr_std_sh_0008",
+      "relationship_type": "spatial_near",
+      "confidence": 0.7136435787343463,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567870"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0006_addr_std_sh_0009",
+      "source_node_id": "addr_std_sh_0006",
+      "target_node_id": "addr_std_sh_0009",
+      "relationship_type": "spatial_near",
+      "confidence": 0.7198214854776317,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567873"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0007_addr_std_sh_0008",
+      "source_node_id": "addr_std_sh_0007",
+      "target_node_id": "addr_std_sh_0008",
+      "relationship_type": "spatial_near",
+      "confidence": 0.6798437881283824,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567887"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0007_addr_std_sh_0009",
+      "source_node_id": "addr_std_sh_0007",
+      "target_node_id": "addr_std_sh_0009",
+      "relationship_type": "spatial_near",
+      "confidence": 0.6192113447065725,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567888"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0008_addr_std_sh_0009",
+      "source_node_id": "addr_std_sh_0008",
+      "target_node_id": "addr_std_sh_0009",
+      "relationship_type": "spatial_near",
+      "confidence": 0.6359945055356024,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567902"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0011_addr_std_sh_0012",
+      "source_node_id": "addr_std_sh_0011",
+      "target_node_id": "addr_std_sh_0012",
+      "relationship_type": "spatial_near",
+      "confidence": 0.04921085408012005,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567941"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0011_addr_std_sh_0014",
+      "source_node_id": "addr_std_sh_0011",
+      "target_node_id": "addr_std_sh_0014",
+      "relationship_type": "spatial_near",
+      "confidence": 0.5570553081927551,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567942"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0012_addr_std_sh_0013",
+      "source_node_id": "addr_std_sh_0012",
+      "target_node_id": "addr_std_sh_0013",
+      "relationship_type": "spatial_near",
+      "confidence": 0.551781303379691,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.567955"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0016_addr_std_sh_0017",
+      "source_node_id": "addr_std_sh_0016",
+      "target_node_id": "addr_std_sh_0017",
+      "relationship_type": "spatial_near",
+      "confidence": 0.014048682742896279,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.568004"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0019_addr_std_sh_0020",
+      "source_node_id": "addr_std_sh_0019",
+      "target_node_id": "addr_std_sh_0020",
+      "relationship_type": "spatial_near",
+      "confidence": 0.1675938491334289,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.568035"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0021_addr_std_sh_0022",
+      "source_node_id": "addr_std_sh_0021",
+      "target_node_id": "addr_std_sh_0022",
+      "relationship_type": "spatial_near",
+      "confidence": 0.13721381559457113,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.568055"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0023_addr_std_sh_0024",
+      "source_node_id": "addr_std_sh_0023",
+      "target_node_id": "addr_std_sh_0024",
+      "relationship_type": "spatial_near",
+      "confidence": 0.08583371315705834,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.568074"
+    },
+    {
+      "relationship_id": "rel_near_addr_std_sh_0023_addr_std_sh_0025",
+      "source_node_id": "addr_std_sh_0023",
+      "target_node_id": "addr_std_sh_0025",
+      "relationship_type": "spatial_near",
+      "confidence": 0.15780049869472068,
+      "metadata": {},
+      "created_at": "2026-02-12T00:02:57.568075"
+    }
+  ]
+}

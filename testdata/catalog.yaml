@@ -1,0 +1,109 @@
+name: spatial-intelligence-data-factory
+description: Spatial Intelligence Data Factory Test Data Catalog
+version: 2026.02.11
+updated_at: 2026-02-11T00:00:00Z
+
+datasets:
+  shanghai-address-system:
+    version: 2026.02.11.1
+    region: Shanghai
+    description: Shanghai 24-level hierarchical address system test data
+    tables:
+      - address_admin_division
+      - address_component
+      - address_standardization_rule
+      - address_raw_input
+      - address_parsed
+      - address_standardized
+      - address_entity_mapping
+      - entity_multi_source_fusion
+      - address_quality_metrics
+      - address_library_version
+    total_records: 31
+    status: production
+    checksum: sha256:dataset_shanghai_001
+
+  wujiang-public-security:
+    version: 2026.02.11.1
+    region: Wujiang
+    description: Wujiang public security governance system test data
+    tables:
+      - ps_police_station
+      - ps_officer
+      - ps_resident_profile
+      - ps_case_record
+      - ps_dispatch_record
+      - ps_suspect_info
+      - ps_patrol_record
+      - ps_vehicle
+      - ps_incident_heatmap
+      - ps_public_feedback
+    total_records: 25
+    status: production
+    checksum: sha256:dataset_wujiang_001
+
+  changzhou-urban-command:
+    version: 2026.02.11.1
+    region: Changzhou
+    description: Changzhou urban command and governance system test data
+    tables:
+      - urban_functional_zone
+      - urban_event_management
+      - urban_resource_dispatch
+      - urban_command_center_ops
+      - urban_public_service_request
+      - urban_traffic_management
+      - urban_environmental_monitoring
+      - urban_emergency_shelter
+      - urban_dashboard_metrics
+      - urban_operational_kpi
+    total_records: 19
+    status: production
+    checksum: sha256:dataset_changzhou_001
+
+fixtures:
+  shanghai-address-samples:
+    file: fixtures/shanghai-address-samples.json
+    version: 2026.02.11.1
+    size_bytes: 8500
+    region: Shanghai
+    purpose: Smoke testing and validation for address processing pipeline
+    tables: 5
+    records: 31
+
+  wujiang-samples:
+    file: fixtures/wujiang-samples.json
+    version: 2026.02.11.1
+    size_bytes: 12300
+    region: Wujiang
+    purpose: Smoke testing for public security dispatch and case management
+    tables: 6
+    records: 25
+
+  changzhou-samples:
+    file: fixtures/changzhou-samples.json
+    version: 2026.02.11.1
+    size_bytes: 15800
+    region: Changzhou
+    purpose: Smoke testing for urban command center operations
+    tables: 7
+    records: 19
+
+contracts:
+  address-governance:
+    file: contracts/governance-workflow.openapi.yaml
+    version: 2026.02.11
+    status: active
+
+  poi-schema:
+    file: contracts/poi.schema.json
+    version: 2026.02.11
+    status: active
+
+governance:
+  data_sensitivity: public_safe
+  retention_period: permanent
+  review_frequency: quarterly
+  git_tracking: only_synthetic_masked_data
+  large_datasets_storage: object_storage
+  validation_required: true

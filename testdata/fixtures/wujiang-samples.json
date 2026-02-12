@@ -1,0 +1,209 @@
+{
+  "name": "wujiang-public-security-samples",
+  "version": "2026.02.11.1",
+  "description": "Sample data for Wujiang public security governance testing",
+  "region": "Wujiang",
+  "datasets": [
+    {
+      "table": "ps_police_station",
+      "records": 3,
+      "sample_records": [
+        {
+          "station_id": "ps_wj_001",
+          "station_name": "吴江公安分局城北派出所",
+          "district": "城北",
+          "contact_phone": "0512-63961110",
+          "address": "吴江区松陵镇中山路100号",
+          "is_active": true
+        },
+        {
+          "station_id": "ps_wj_002",
+          "station_name": "吴江公安分局城南派出所",
+          "district": "城南",
+          "contact_phone": "0512-63961120",
+          "address": "吴江区松陵镇南门大街200号",
+          "is_active": true
+        },
+        {
+          "station_id": "ps_wj_003",
+          "station_name": "吴江公安分局经济开发区派出所",
+          "district": "开发区",
+          "contact_phone": "0512-63961130",
+          "address": "吴江区开发区高新路300号",
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "table": "ps_officer",
+      "records": 5,
+      "sample_records": [
+        {
+          "officer_id": "po_wj_001",
+          "name": "王明",
+          "rank": "队长",
+          "department": "巡逻队",
+          "station_id": "ps_wj_001",
+          "position": "巡逻队队长",
+          "assigned_area": "城北区域",
+          "is_active": true
+        },
+        {
+          "officer_id": "po_wj_002",
+          "name": "李强",
+          "rank": "副队长",
+          "department": "巡逻队",
+          "station_id": "ps_wj_001",
+          "position": "副队长",
+          "assigned_area": "城北区域",
+          "is_active": true
+        },
+        {
+          "officer_id": "po_wj_003",
+          "name": "张建",
+          "rank": "警员",
+          "department": "刑侦队",
+          "station_id": "ps_wj_002",
+          "position": "刑警",
+          "assigned_area": "城南区域",
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "table": "ps_case_record",
+      "records": 6,
+      "sample_records": [
+        {
+          "case_id": "case_wj_001",
+          "case_number": "苏州市吴江区WJ2026020001",
+          "case_type": "盗窃罪",
+          "severity": "minor",
+          "reported_date": "2026-02-10T14:30:00Z",
+          "incident_location": "吴江区松陵镇中山路120号",
+          "reporting_officer_id": "po_wj_001",
+          "handling_station_id": "ps_wj_001",
+          "status": "investigation",
+          "description": "便利店失窃案件，损失约500元商品"
+        },
+        {
+          "case_id": "case_wj_002",
+          "case_number": "苏州市吴江区WJ2026020002",
+          "case_type": "诈骗罪",
+          "severity": "major",
+          "reported_date": "2026-02-09T10:15:00Z",
+          "incident_location": "吴江区开发区高科技园",
+          "reporting_officer_id": "po_wj_002",
+          "handling_station_id": "ps_wj_001",
+          "status": "open",
+          "description": "网络诈骗案件，涉及人数5人，损失约50000元"
+        },
+        {
+          "case_id": "case_wj_003",
+          "case_number": "苏州市吴江区WJ2026020003",
+          "case_type": "交通事故",
+          "severity": "minor",
+          "reported_date": "2026-02-11T08:45:00Z",
+          "incident_location": "吴江区南门大街与中山路交叉口",
+          "reporting_officer_id": "po_wj_003",
+          "handling_station_id": "ps_wj_002",
+          "status": "solved",
+          "description": "两车追尾事故，无人员伤亡"
+        }
+      ]
+    },
+    {
+      "table": "ps_dispatch_record",
+      "records": 4,
+      "sample_records": [
+        {
+          "dispatch_id": "disp_wj_001",
+          "case_id": "case_wj_001",
+          "dispatch_time": "2026-02-10T14:35:00Z",
+          "dispatch_location": "吴江区松陵镇中山路120号",
+          "dispatched_officer_ids": ["po_wj_001", "po_wj_002"],
+          "response_time_seconds": 180,
+          "arrival_time": "2026-02-10T14:38:00Z",
+          "on_scene_duration_seconds": 1800,
+          "incident_resolved": true,
+          "completion_time": "2026-02-10T15:08:00Z",
+          "priority": "high"
+        },
+        {
+          "dispatch_id": "disp_wj_002",
+          "case_id": "case_wj_002",
+          "dispatch_time": "2026-02-09T10:20:00Z",
+          "dispatch_location": "吴江区开发区高科技园",
+          "dispatched_officer_ids": ["po_wj_003"],
+          "response_time_seconds": 240,
+          "arrival_time": "2026-02-09T10:24:00Z",
+          "on_scene_duration_seconds": 3600,
+          "incident_resolved": false,
+          "priority": "critical"
+        }
+      ]
+    },
+    {
+      "table": "ps_suspect_info",
+      "records": 3,
+      "sample_records": [
+        {
+          "suspect_id": "susp_wj_001",
+          "name": "张某",
+          "gender": "M",
+          "age": 28,
+          "residence_address": "吴江区北厍镇",
+          "wanted_status": "wanted",
+          "wanted_crimes": ["盗窃", "诈骗"],
+          "danger_level": "medium"
+        },
+        {
+          "suspect_id": "susp_wj_002",
+          "name": "李某某",
+          "gender": "F",
+          "age": 35,
+          "residence_address": "吴江区平望镇",
+          "wanted_status": "on_trail",
+          "wanted_crimes": ["非法集资"],
+          "danger_level": "high"
+        }
+      ]
+    },
+    {
+      "table": "ps_patrol_record",
+      "records": 4,
+      "sample_records": [
+        {
+          "patrol_id": "patrol_wj_001",
+          "officer_id": "po_wj_001",
+          "patrol_start_time": "2026-02-11T09:00:00Z",
+          "patrol_end_time": "2026-02-11T12:00:00Z",
+          "patrol_area_id": "area_north",
+          "distance_km": 12.5,
+          "duration_minutes": 180,
+          "incidents_encountered": 2,
+          "status": "completed"
+        },
+        {
+          "patrol_id": "patrol_wj_002",
+          "officer_id": "po_wj_002",
+          "patrol_start_time": "2026-02-11T14:00:00Z",
+          "patrol_end_time": "2026-02-11T18:00:00Z",
+          "patrol_area_id": "area_north",
+          "distance_km": 10.2,
+          "duration_minutes": 240,
+          "incidents_encountered": 1,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "checksums": {
+    "ps_police_station": "sha256:wj001001001",
+    "ps_officer": "sha256:wj002002002",
+    "ps_case_record": "sha256:wj003003003",
+    "ps_dispatch_record": "sha256:wj004004004",
+    "ps_suspect_info": "sha256:wj005005005",
+    "ps_patrol_record": "sha256:wj006006006"
+  }
+}
