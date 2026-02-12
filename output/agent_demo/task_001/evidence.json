@@ -1,0 +1,116 @@
+{
+  "task_id": "task_001",
+  "records": [
+    {
+      "timestamp": "2026-02-12T03:06:01.491954+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#INIT->SUBMITTED",
+      "result": "success",
+      "metadata": {
+        "to": "SUBMITTED"
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.499580+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#SUBMITTED->PLANNED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.501917+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#PLANNED->APPROVAL_PENDING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.512959+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001#approval:METRIC_DEFINITION",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.519291+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001#approval:SECURITY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.524764+00:00",
+      "actor": "demo-human-gate",
+      "action": "approval_granted",
+      "artifact_ref": "task_001#approval:PROD_RELEASE",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.526203+00:00",
+      "actor": "orchestrator",
+      "action": "approval_gate_check",
+      "artifact_ref": "task_001#approval-check",
+      "result": "pass",
+      "metadata": {
+        "pass": true,
+        "required": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "approved": [
+          "METRIC_DEFINITION",
+          "SECURITY",
+          "PROD_RELEASE"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.529943+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#APPROVAL_PENDING->APPROVED",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.533497+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#APPROVED->CHANGESET_READY",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.537215+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#CHANGESET_READY->EXECUTING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.592799+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#EXECUTING->EVALUATING",
+      "result": "success",
+      "metadata": {}
+    },
+    {
+      "timestamp": "2026-02-12T03:06:01.594684+00:00",
+      "actor": "orchestrator",
+      "action": "state_transition",
+      "artifact_ref": "task_001#EVALUATING->COMPLETED",
+      "result": "success",
+      "metadata": {}
+    }
+  ]
+}

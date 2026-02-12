@@ -24,6 +24,30 @@
     .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .head h1 { font-size: 24px; color: #0f2f52; }
     .badge { background: #1f7a43; color: #fff; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+    .action-btn {
+      border: 1px solid #b6cae0;
+      background: #f0f6fd;
+      color: #1f5a8f;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .action-btn:hover { background: #e2eefb; }
+    .floating-controls {
+      position: fixed;
+      right: 18px;
+      top: 110px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #d8e5f3;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+    }
     .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
     .metric { border: 1px solid #d8e5f3; border-radius: 10px; padding: 12px; background: #f7fbff; }
     .metric .label { color: #4b5f75; font-size: 12px; }
@@ -32,12 +56,176 @@
     .line { border: 1px solid #d8e5f3; border-radius: 10px; padding: 12px; background: #fbfdff; }
     .line h3 { font-size: 16px; color: #0f2f52; margin-bottom: 8px; }
     .meta { color: #4b5f75; font-size: 13px; line-height: 1.7; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .filters label { font-size: 12px; color: #39546f; }
+    .filters select, .filters input {
+      border: 1px solid #c8daee;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #1f2f44;
+      background: #fff;
+      min-width: 140px;
+    }
+    .graph-meta { color: #4b5f75; font-size: 13px; line-height: 1.7; margin-top: 6px; }
+    .graph-board {
+      margin-top: 10px;
+      border: 1px solid #d8e5f3;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f7fbff 0%, #eef5fc 100%);
+      height: 320px;
+      position: relative;
+      overflow: hidden;
+    }
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .node-label {
+      font-size: 10px;
+      fill: #102a43;
+      paint-order: stroke;
+      stroke: #ffffff;
+      stroke-width: 2px;
+      pointer-events: none;
+    }
+    .edge-label {
+      font-size: 9px;
+      fill: #5b728a;
+      paint-order: stroke;
+      stroke: #ffffff;
+      stroke-width: 2px;
+      pointer-events: none;
+    }
+    .graph-legend {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      color: #35516d;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .graph-scroll {
+      margin-top: 10px;
+      border: 1px solid #d8e5f3;
+      border-radius: 8px;
+      background: #f7fbff;
+      max-height: 220px;
+      overflow: auto;
+      padding: 8px;
+      font-size: 12px;
+      color: #1f2f44;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
     .bar { margin-top: 10px; width: 100%; height: 10px; border-radius: 999px; background: #dbe7f4; overflow: hidden; }
     .fill { height: 100%; background: linear-gradient(90deg, #1f5a8f, #2f8dd0); width: 0%; transition: width .25s ease; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { border-bottom: 1px solid #e2ebf5; text-align: left; padding: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    th, td { border-bottom: 1px solid #e2ebf5; text-align: left; padding: 8px; vertical-align: top; }
     th { color: #39546f; }
     .foot { color: #4b5f75; font-size: 12px; text-align: right; }
+    .col-id { width: 60px; }
+    .col-addr { width: 42%; }
+    .col-line { width: 22%; }
+    .col-status { width: 100px; }
+    .col-time { width: 110px; }
+    .col-action { width: 80px; }
+    .recent-table-wrap {
+      margin-top: 8px;
+      border: 1px solid #d8e5f3;
+      border-radius: 8px;
+      max-height: 360px;
+      overflow: auto;
+      background: #fbfdff;
+    }
+    .ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: keep-all;
+    }
+    .line-cell {
+      white-space: normal;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .detail-btn { border: 1px solid #b6cae0; background: #f0f6fd; color: #1f5a8f; border-radius: 8px; padding: 2px 10px; cursor: pointer; }
+    .detail-btn:hover { background: #e2eefb; }
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 18, 30, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal {
+      width: min(860px, 100%);
+      max-height: 85vh;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(11, 24, 43, 0.28);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2ebf5;
+      background: #f7fbff;
+      color: #0f2f52;
+      font-weight: 600;
+    }
+    .modal-close {
+      border: 1px solid #b6cae0;
+      background: #fff;
+      color: #1f5a8f;
+      border-radius: 8px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .modal-body {
+      padding: 16px;
+      overflow: auto;
+    }
+    .detail-section { margin-bottom: 12px; }
+    .detail-section h4 { font-size: 13px; color: #0f2f52; margin-bottom: 6px; }
+    .detail-grid { display: grid; grid-template-columns: 130px 1fr; gap: 6px 8px; font-size: 12px; }
+    .detail-key { color: #39546f; }
+    .detail-val { color: #1f2f44; word-break: break-word; }
+    .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .chip-ok { background: #e7f8ee; color: #1f7a43; border: 1px solid #b5e5c9; }
+    .chip-fail { background: #fdecec; color: #b42318; border: 1px solid #f7c2c2; }
+    .detail-pre {
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #24415d;
+      background: #f7fbff;
+      border: 1px solid #d8e5f3;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .detail-list {
+      margin: 6px 0 0 0;
+      padding-left: 16px;
+      color: #1f2f44;
+      font-size: 12px;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -48,12 +236,19 @@
         <span class="badge" id="status">运行中</span>
       </div>
     </section>
+    <aside class="floating-controls">
+      <button id="btnRunNextCase" class="action-btn" onclick="runNextCase()">执行下一个用例</button>
+      <button id="btnCustomCase" class="action-btn" onclick="runCustomAddressCase()">手工输入地址用例</button>
+      <button id="btnResetEnv" class="action-btn" onclick="resetEnvironment()">复位测试环境</button>
+    </aside>
 
     <section class="card grid">
       <div class="metric"><div class="label">已处理地址</div><div class="value" id="processed">0</div></div>
       <div class="metric"><div class="label">完成任务</div><div class="value" id="completed">0</div></div>
       <div class="metric"><div class="label">质检合格率</div><div class="value" id="quality">0%</div></div>
       <div class="metric"><div class="label">Token 消耗</div><div class="value" id="tokens">0</div></div>
+      <div class="metric"><div class="label">当前轮次</div><div class="value" id="cycle">0</div></div>
+      <div class="metric"><div class="label">轮次进度</div><div class="value" id="cycleProgress">0/0</div></div>
     </section>
 
     <section class="card two">
@@ -69,21 +264,365 @@
       </div>
     </section>
 
-    <section class="card">
-      <h3 style="margin-bottom:8px;color:#0f2f52;">最近地址处理明细（前20条）</h3>
-      <table>
-        <thead><tr><th>ID</th><th>原始地址</th><th>状态</th><th>时间</th></tr></thead>
-        <tbody id="rows"><tr><td colspan="4">暂无数据</td></tr></tbody>
-      </table>
+    <section class="card two" id="graph-and-details">
+      <div class="line">
+        <h3>图谱累计状态</h3>
+        <div class="filters">
+          <label>产线</label>
+          <select id="graphLineFilter">
+            <option value="">全部</option>
+            <option value="line_address_cleaning">地址清洗产线</option>
+            <option value="line_address_to_graph">地址-图谱产线</option>
+          </select>
+          <label>case_name</label>
+          <select id="graphCaseFilter">
+            <option value="">全部</option>
+          </select>
+          <label>高亮秒数</label>
+          <input id="graphHighlightSeconds" type="number" min="1" value="30" />
+        </div>
+        <div class="graph-meta" id="graph-meta">等待数据...</div>
+        <div class="graph-board">
+          <svg id="graphSvg" class="graph-svg" viewBox="0 0 520 320" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="graph-legend">
+          <span><i class="legend-dot" style="background:#2f8dd0"></i>city</span>
+          <span><i class="legend-dot" style="background:#45b36b"></i>district</span>
+          <span><i class="legend-dot" style="background:#f2a03d"></i>road</span>
+          <span><i class="legend-dot" style="background:#7b7cf6"></i>community</span>
+          <span><i class="legend-dot" style="background:#d46be0"></i>building</span>
+          <span><i class="legend-dot" style="background:#8a5cff"></i>unit</span>
+          <span><i class="legend-dot" style="background:#c15ce0"></i>room</span>
+          <span><i class="legend-dot" style="background:#f05252"></i>recent/new</span>
+        </div>
+      </div>
+      <div class="line" id="recent-details-panel">
+        <h3 style="margin-bottom:8px;color:#0f2f52;">最近地址处理明细（前20条）</h3>
+        <div class="recent-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th class="col-addr">原始地址</th>
+                <th class="col-line">归属产线</th>
+                <th class="col-status">状态</th>
+                <th class="col-time">时间</th>
+                <th class="col-action">详情</th>
+              </tr>
+            </thead>
+            <tbody id="rows"><tr><td colspan="6">暂无数据</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <section class="card foot">最后更新：<span id="updated">--</span></section>
   </div>
+  <div class="modal-mask" id="detailModalMask" onclick="closeDetailModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <span id="detailTitle">生产详情</span>
+        <button class="modal-close" onclick="closeDetailModal()">关闭</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailContent"></div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    let latestDetails = [];
+    let graphFilterBound = false;
+    const graphRuntime = {
+      nodes: new Map(),
+      links: [],
+      rafId: 0,
+      width: 520,
+      height: 320,
+      lastResetKey: ''
+    };
+
     function pct(n, d) {
       if (!d) return 0;
       return Math.max(0, Math.min(100, Math.round((n / d) * 100)));
+    }
+    function esc(v) {
+      return String(v ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    }
+
+    function showDetail(index) {
+      const item = latestDetails[index];
+      if (!item) return;
+      document.getElementById('detailTitle').textContent = `生产详情 #${item.addr_id ?? '-'}`;
+      document.getElementById('detailContent').innerHTML = renderDetail(item);
+      document.getElementById('detailModalMask').style.display = 'flex';
+    }
+    function closeDetailModal(evt) {
+      if (evt && evt.target && evt.target.id !== 'detailModalMask') return;
+      document.getElementById('detailModalMask').style.display = 'none';
+    }
+    window.showDetail = showDetail;
+    window.closeDetailModal = closeDetailModal;
+    async function postAction(url, body = null) {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : null
+      });
+      return resp.json();
+    }
+    async function runNextCase() {
+      const r = await postAction('/api/actions/run-next-case');
+      if (r.status !== 'ok') alert(r.error || '执行失败');
+      await refresh();
+    }
+    async function resetEnvironment() {
+      const r = await postAction('/api/actions/reset-environment');
+      if (r.status !== 'ok') alert(r.error || '复位失败');
+      await refresh();
+    }
+    async function runCustomAddressCase() {
+      const raw = window.prompt('请输入地址（单条）：', '上海市黄浦区中山东一路88号');
+      if (!raw) return;
+      const r = await postAction('/api/actions/run-custom-address', { raw });
+      if (r.status !== 'ok') alert(r.error || '执行失败');
+      await refresh();
+    }
+    window.runNextCase = runNextCase;
+    window.resetEnvironment = resetEnvironment;
+    window.runCustomAddressCase = runCustomAddressCase;
+
+    function boolChip(v) {
+      return v
+        ? '<span class="chip chip-ok">PASS</span>'
+        : '<span class="chip chip-fail">FAIL</span>';
+    }
+
+    function nodeColor(type, isRecent) {
+      if (isRecent) return '#f05252';
+      if (type === 'city') return '#2f8dd0';
+      if (type === 'district') return '#45b36b';
+      if (type === 'road') return '#f2a03d';
+      if (type === 'community') return '#7b7cf6';
+      if (type === 'building') return '#d46be0';
+      if (type === 'unit') return '#8a5cff';
+      if (type === 'room') return '#c15ce0';
+      return '#7a8ca2';
+    }
+    function shortText(v, maxLen = 10) {
+      const s = String(v || '');
+      if (s.length <= maxLen) return s;
+      return `${s.slice(0, maxLen)}...`;
+    }
+
+    function resetGraphRuntime(resetKey) {
+      graphRuntime.nodes.clear();
+      graphRuntime.links = [];
+      if (graphRuntime.rafId) {
+        cancelAnimationFrame(graphRuntime.rafId);
+        graphRuntime.rafId = 0;
+      }
+      if (resetKey !== undefined) {
+        graphRuntime.lastResetKey = String(resetKey || '');
+      }
+      const svg = document.getElementById('graphSvg');
+      if (svg) while (svg.firstChild) svg.removeChild(svg.firstChild);
+    }
+
+    function ingestGraphData(nodes, relationships, resetKey = '') {
+      const key = String(resetKey || '');
+      if (key && graphRuntime.lastResetKey && key !== graphRuntime.lastResetKey) {
+        resetGraphRuntime(key);
+      } else if (key) {
+        graphRuntime.lastResetKey = key;
+      }
+
+      const incomingNodes = (nodes || []).slice(0, 120);
+      const incomingIds = new Set(incomingNodes.map((n) => n.node_id));
+      for (const id of Array.from(graphRuntime.nodes.keys())) {
+        if (!incomingIds.has(id)) graphRuntime.nodes.delete(id);
+      }
+      for (const n of incomingNodes) {
+        const old = graphRuntime.nodes.get(n.node_id);
+        if (!old) {
+          graphRuntime.nodes.set(n.node_id, {
+            ...n,
+            x: graphRuntime.width / 2 + (Math.random() - 0.5) * 24,
+            y: graphRuntime.height / 2 + (Math.random() - 0.5) * 24,
+            vx: 0,
+            vy: 0,
+            bornAt: Date.now()
+          });
+        } else {
+          graphRuntime.nodes.set(n.node_id, { ...old, ...n });
+        }
+      }
+      graphRuntime.links = (relationships || [])
+        .map((r) => ({
+          source_node_id: r.source_node_id,
+          target_node_id: r.target_node_id,
+          relationship_type: r.relationship_type || r.type || '',
+          relationship_id: r.relationship_id || ''
+        }))
+        .filter((r) => graphRuntime.nodes.has(r.source_node_id) && graphRuntime.nodes.has(r.target_node_id));
+
+      if (!graphRuntime.rafId) {
+        graphRuntime.rafId = requestAnimationFrame(stepGraphFrame);
+      }
+    }
+
+    function stepGraphFrame() {
+      const svg = document.getElementById('graphSvg');
+      if (!svg) return;
+      const width = graphRuntime.width;
+      const height = graphRuntime.height;
+      const ns = 'http://www.w3.org/2000/svg';
+      const list = Array.from(graphRuntime.nodes.values());
+      const id2idx = new Map(list.map((n, i) => [n.node_id, i]));
+      const links = graphRuntime.links
+        .map((r) => ({ s: id2idx.get(r.source_node_id), t: id2idx.get(r.target_node_id) }))
+        .filter((l) => l.s !== undefined && l.t !== undefined);
+
+      for (let iter = 0; iter < 3; iter++) {
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i];
+            const b = list[j];
+            let dx = a.x - b.x, dy = a.y - b.y;
+            const d2 = Math.max(25, dx * dx + dy * dy);
+            const f = 120 / d2;
+            dx *= f; dy *= f;
+            a.vx += dx; a.vy += dy;
+            b.vx -= dx; b.vy -= dy;
+          }
+        }
+        for (const l of links) {
+          const a = list[l.s], b = list[l.t];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+          const target = 42;
+          const k = 0.015 * (dist - target);
+          const fx = (dx / dist) * k, fy = (dy / dist) * k;
+          a.vx += fx; a.vy += fy;
+          b.vx -= fx; b.vy -= fy;
+        }
+        for (const n of list) {
+          n.vx *= 0.9; n.vy *= 0.9;
+          n.x = Math.max(14, Math.min(width - 14, n.x + n.vx));
+          n.y = Math.max(14, Math.min(height - 14, n.y + n.vy));
+        }
+      }
+
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      for (const l of links) {
+        const a = list[l.s], b = list[l.t];
+        const line = document.createElementNS(ns, 'line');
+        line.setAttribute('x1', a.x.toFixed(1));
+        line.setAttribute('y1', a.y.toFixed(1));
+        line.setAttribute('x2', b.x.toFixed(1));
+        line.setAttribute('y2', b.y.toFixed(1));
+        line.setAttribute('stroke', '#9fb3c8');
+        line.setAttribute('stroke-opacity', '0.65');
+        line.setAttribute('stroke-width', '1');
+        svg.appendChild(line);
+
+        const relData = graphRuntime.links.find((x) => x.source_node_id === a.node_id && x.target_node_id === b.node_id);
+        if (relData) {
+          const relText = document.createElementNS(ns, 'text');
+          relText.setAttribute('x', ((a.x + b.x) / 2).toFixed(1));
+          relText.setAttribute('y', ((a.y + b.y) / 2 - 2).toFixed(1));
+          relText.setAttribute('class', 'edge-label');
+          relText.textContent = shortText(relData.relationship_type || 'rel', 8);
+          svg.appendChild(relText);
+        }
+      }
+      for (const n of list) {
+        const g = document.createElementNS(ns, 'g');
+        const c = document.createElementNS(ns, 'circle');
+        c.setAttribute('cx', n.x.toFixed(1));
+        c.setAttribute('cy', n.y.toFixed(1));
+        const isBornRecently = (Date.now() - (n.bornAt || 0)) < 6000;
+        c.setAttribute('r', (n.is_recent || isBornRecently) ? '5.5' : '4.5');
+        c.setAttribute('fill', nodeColor(n.node_type, !!n.is_recent));
+        c.setAttribute('stroke', n.is_recent ? '#b42318' : '#ffffff');
+        c.setAttribute('stroke-width', n.is_recent ? '1.4' : '1');
+        const t = document.createElementNS(ns, 'title');
+        t.textContent = `${n.node_type} | ${n.name} | ${n.node_id}${n.is_recent ? ' | NEW' : ''}`;
+        c.appendChild(t);
+        g.appendChild(c);
+        const text = document.createElementNS(ns, 'text');
+        text.setAttribute('x', (n.x + 7).toFixed(1));
+        text.setAttribute('y', (n.y - 7).toFixed(1));
+        text.setAttribute('class', 'node-label');
+        text.textContent = shortText(n.name || n.node_id, 12);
+        g.appendChild(text);
+        svg.appendChild(g);
+      }
+
+      if (list.length === 0) {
+        graphRuntime.rafId = 0;
+        return;
+      }
+      graphRuntime.rafId = requestAnimationFrame(stepGraphFrame);
+    }
+
+    function renderGraphSvg(nodes, relationships) {
+      ingestGraphData(nodes, relationships);
+    }
+
+    function renderDetail(item) {
+      const d = item.detail || {};
+      const inputSample = (d.input_sample || []).map((x, i) => `<div class="detail-val">${i + 1}. ${esc(JSON.stringify(x, null, 0))}</div>`).join('');
+      const c = d.cleaning_output || {};
+      const g = d.graph_output || {};
+      const gate = d.gate_result || {};
+      const caseDetails = g.graph_case_details || [];
+      const nodeLines = caseDetails.flatMap((c, i) =>
+        (c.nodes || []).map((n) => `${i + 1}. [${c.source_id || '-'}] ${n.node_type} | ${n.name} | ${n.node_id}`)
+      );
+      const relLines = caseDetails.flatMap((c, i) =>
+        (c.relationships || []).map((r) => `${i + 1}. [${c.source_id || '-'}] ${r.relationship_type} | ${r.source_node_id} -> ${r.target_node_id}`)
+      );
+      const nodesText = nodeLines.length ? nodeLines.join('\n') : '无';
+      const relsText = relLines.length ? relLines.join('\n') : '无';
+      const failedCases = (gate.failed_cases || []).map((x, i) => `${i + 1}. ${JSON.stringify(x)}`).join('\n') || '无';
+
+      return `
+      <div class="detail-section">
+        <h4>1. 输入</h4>
+        <div class="detail-grid">
+          <div class="detail-key">case_name</div><div class="detail-val">${esc(d.case_name || item.case_name || '-')}</div>
+          <div class="detail-key">input_count</div><div class="detail-val">${esc(d.input_count ?? '-')}</div>
+          <div class="detail-key">input_sample</div><div class="detail-val">${inputSample || '-'}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>2. 清洗输出</h4>
+        <div class="detail-grid">
+          <div class="detail-key">completed</div><div class="detail-val">${esc(c.completed ?? '-')}</div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>3. 图谱输出</h4>
+        <div class="detail-grid">
+          <div class="detail-key">graph_completed</div><div class="detail-val">${esc(g.completed ?? '-')}</div>
+          <div class="detail-key">nodes_generated_total</div><div class="detail-val">${esc(g.graph_nodes_generated_total ?? g.graph_nodes_total ?? '-')}</div>
+          <div class="detail-key">relationships_generated_total</div><div class="detail-val">${esc(g.graph_relationships_generated_total ?? g.graph_relationships_total ?? '-')}</div>
+          <div class="detail-key">nodes_merged_total</div><div class="detail-val">${esc(g.graph_nodes_merged_total ?? '-')}</div>
+          <div class="detail-key">relationships_merged_total</div><div class="detail-val">${esc(g.graph_relationships_merged_total ?? '-')}</div>
+          <div class="detail-key">nodes</div><div class="detail-val"><pre class="detail-pre">${esc(nodesText)}</pre></div>
+          <div class="detail-key">relationships</div><div class="detail-val"><pre class="detail-pre">${esc(relsText)}</pre></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>4. 门禁结果</h4>
+        <div class="detail-grid">
+          <div class="detail-key">cleaning_gate</div><div class="detail-val">${boolChip(!!gate.cleaning_gate_pass)}</div>
+          <div class="detail-key">graph_gate</div><div class="detail-val">${boolChip(!!gate.graph_gate_pass)}</div>
+          <div class="detail-key">final_status</div><div class="detail-val">${esc(gate.final_status || item.status || '-')}</div>
+          <div class="detail-key">failed_cases</div><div class="detail-val"><pre class="detail-pre">${esc(failedCases)}</pre></div>
+        </div>
+      </div>`;
     }
 
     async function refresh() {
@@ -95,12 +634,35 @@
         const state = await statusResp.json();
         const detailsData = await detailsResp.json();
         const details = detailsData.address_details || [];
+        latestDetails = details.slice(-20).reverse();
+        if (!graphFilterBound) {
+          const lineFilter = document.getElementById('graphLineFilter');
+          const caseFilter = document.getElementById('graphCaseFilter');
+          const secFilter = document.getElementById('graphHighlightSeconds');
+          lineFilter.addEventListener('change', refresh);
+          caseFilter.addEventListener('change', refresh);
+          secFilter.addEventListener('change', refresh);
+          graphFilterBound = true;
+        }
+
+        const caseFilter = document.getElementById('graphCaseFilter');
+        const existing = caseFilter.value;
+        const caseNames = Array.from(new Set(details.map((x) => (x.detail?.case_name || x.case_name || '').trim()).filter(Boolean)));
+        caseFilter.innerHTML = `<option value="">全部</option>${caseNames.map((name) => `<option value="${esc(name)}">${esc(name)}</option>`).join('')}`;
+        if (existing && caseNames.includes(existing)) {
+          caseFilter.value = existing;
+        }
 
         document.getElementById('status').textContent = state.status || 'unknown';
         document.getElementById('processed').textContent = (state.metrics?.processed_count ?? 0).toString();
         document.getElementById('completed').textContent = (state.work_orders?.completed ?? 0).toString();
         document.getElementById('quality').textContent = `${Math.round((state.metrics?.quality_rate ?? 0) * 100)}%`;
         document.getElementById('tokens').textContent = (state.metrics?.total_tokens ?? 0).toFixed(2);
+        const cycle = state.run?.cycle ?? 0;
+        const processedInCycle = state.run?.processed_in_cycle ?? 0;
+        const perCycle = state.run?.cases_per_cycle ?? 0;
+        document.getElementById('cycle').textContent = cycle.toString();
+        document.getElementById('cycleProgress').textContent = `${processedInCycle}/${perCycle}`;
 
         const totalProcessed = state.metrics?.processed_count ?? 0;
         const line1 = state.production_lines?.line_address_cleaning || {};
@@ -112,11 +674,38 @@
         document.getElementById('line1-fill').style.width = `${pct(line1.completed_tasks ?? 0, totalProcessed || 1)}%`;
         document.getElementById('line2-fill').style.width = `${pct(line2.completed_tasks ?? 0, totalProcessed || 1)}%`;
 
-        const rows = details.slice(-20).reverse().map((d) => {
+        const graphLine = document.getElementById('graphLineFilter').value || '';
+        const graphCase = document.getElementById('graphCaseFilter').value || '';
+        const highlightSeconds = Math.max(1, parseInt(document.getElementById('graphHighlightSeconds').value || '30', 10));
+        const graphQuery = new URLSearchParams();
+        if (graphLine) graphQuery.set('line_id', graphLine);
+        if (graphCase) graphQuery.set('case_name', graphCase);
+        graphQuery.set('highlight_seconds', String(highlightSeconds));
+        const graphResp2 = await fetch(`/api/graph-data?${graphQuery.toString()}`, { cache: 'no-store' });
+        const graphData2 = await graphResp2.json();
+
+        const graphStats = graphData2.stats || {};
+        const graphNodes = graphData2.nodes || [];
+        const graphRels = graphData2.relationships || [];
+        document.getElementById('graph-meta').textContent =
+          `累计节点 ${graphStats.total_nodes ?? 0}（最近${highlightSeconds}s新增 ${graphStats.recent_nodes ?? 0}），累计关系 ${graphStats.total_relationships ?? 0}（最近${highlightSeconds}s新增 ${graphStats.recent_relationships ?? 0}）`;
+
+        ingestGraphData(graphNodes, graphRels, state.run?.last_reset_at || '');
+
+        const rows = latestDetails.map((d, idx) => {
           const t = d.timestamp ? new Date(d.timestamp).toLocaleTimeString() : '--';
-          return `<tr><td>${d.addr_id ?? '-'}</td><td>${d.raw_address ?? '-'}</td><td>${d.status ?? '-'}</td><td>${t}</td></tr>`;
+          return `<tr>
+            <td class="col-id">${d.addr_id ?? '-'}</td>
+            <td class="col-addr ellipsis" title="${esc(d.raw_address ?? '-')}">${esc(d.raw_address ?? '-')}</td>
+            <td class="col-line line-cell">${esc(d.line_owner ?? '-')}</td>
+            <td>${esc(d.status ?? '-')}</td>
+            <td>${t}</td>
+            <td>
+              <button class="detail-btn" onclick="showDetail(${idx})">查看</button>
+            </td>
+          </tr>`;
         }).join('');
-        document.getElementById('rows').innerHTML = rows || '<tr><td colspan="4">暂无数据</td></tr>';
+        document.getElementById('rows').innerHTML = rows || '<tr><td colspan="6">暂无数据</td></tr>';
 
         document.getElementById('updated').textContent = new Date().toLocaleTimeString();
       } catch (e) {

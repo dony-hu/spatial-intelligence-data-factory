@@ -1,0 +1,38 @@
+{
+  "changeset_id": "cs_801e2023715c",
+  "task_id": "task_001_fail_approval",
+  "env": "dev",
+  "operations": [
+    {
+      "op_id": "op_ddl_001",
+      "op_type": "DDL",
+      "payload": {
+        "sql": "CREATE TABLE IF NOT EXISTS dwd_address_governance_result (task_id TEXT, status TEXT, updated_at TEXT);",
+        "table_name": "dwd_address_governance_result"
+      },
+      "idempotency_key": "ddl-task_001_fail_approval-v1",
+      "dry_run_supported": true
+    },
+    {
+      "op_id": "op_dag_001",
+      "op_type": "DAG",
+      "payload": {
+        "dag_id": "agent_task_001_fail_approval",
+        "schedule": "@daily"
+      },
+      "idempotency_key": "dag-task_001_fail_approval-v1",
+      "dry_run_supported": true
+    }
+  ],
+  "rollback": {
+    "strategy": "sql_rollback",
+    "payload": {
+      "sql": "DROP TABLE IF EXISTS dwd_agent_task_result;"
+    }
+  },
+  "requires_approvals": [
+    "METRIC_DEFINITION",
+    "SECURITY",
+    "PROD_RELEASE"
+  ]
+}

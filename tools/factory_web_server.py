@@ -27,6 +27,14 @@ factory_state = {
         'total_tokens': 0.0,
         'quality_rate': 0.0,
         'processed_count': 0
+    },
+    'address_details': [],
+    'run': {
+        'cycle': 0,
+        'max_cycles': 0,
+        'cases_per_cycle': 0,
+        'processed_in_cycle': 0,
+        'last_reset_at': None
     }
 }
 
@@ -59,6 +67,16 @@ def get_work_orders():
 def get_metrics():
     """Get KPI metrics"""
     return jsonify(factory_state.get('metrics', {}))
+
+@app.route('/api/address-details')
+def get_address_details():
+    """Get recent address/case details for dashboard table."""
+    return jsonify({'address_details': factory_state.get('address_details', [])})
+
+@app.route('/api/run')
+def get_run_state():
+    """Get demo run metadata."""
+    return jsonify(factory_state.get('run', {}))
 
 if __name__ == '__main__':
     app.run(debug=False, host='127.0.0.1', port=5000, threaded=True)

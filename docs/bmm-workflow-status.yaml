@@ -1,12 +1,12 @@
 version: "6.0.0"
-last_updated: "2026-02-10"
+last_updated: "2026-02-12"
 project:
   name: "spatial-intelligence-data-factory"
   type: "other"
   level: 4
 
-current_phase: "planning"
-current_workflow: "prd"
+current_phase: "solutioning"
+current_workflow: "architecture"
 overall_status: "in_progress"
 
 phases:
@@ -27,24 +27,24 @@ phases:
         output: ""
 
   planning:
-    status: "in_progress"
+    status: "completed"
     workflows:
       prd:
         required: true
-        status: "in_progress"
-        output: "docs/prd-spatial-intelligence-data-factory-2026-02-10.md"
+        status: "completed"
+        output: "docs/prd-spatial-intelligence-data-factory-2026-02-10.md; docs/bmad-real-execution-engineering-plan-2026-02-12.md"
       tech-spec:
         required: false
         status: "not_started"
         output: ""
 
   solutioning:
-    status: "not_started"
+    status: "in_progress"
     workflows:
       architecture:
         required: true
-        status: "not_started"
-        output: ""
+        status: "in_progress"
+        output: "docs/architecture-real-execution-address-pipeline-2026-02-12.md"
 
   implementation:
     status: "not_started"
@@ -67,5 +67,5 @@ phases:
         output: ""
 
 recommendation:
-  next_workflow: "评审并完成 /prd"
-  reason: "已生成 PRD 骨架，下一步补齐 Epic 优先级、迭代排期与验收细节。"
+  next_workflow: "进入 /create-story 与 /dev-story，按 P0 顺序实施"
+  reason: "架构文档与 P0 story 已落地，下一步进入实施与验证。"

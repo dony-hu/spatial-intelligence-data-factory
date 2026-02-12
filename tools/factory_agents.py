@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timedelta
-import random
+import re
 
 from tools.factory_framework import (
     FactoryRole, ProcessStep, WorkOrderStatus, ProductionLineStatus,
@@ -447,13 +447,12 @@ class Worker(FactoryAgent):
         execution_id = generate_id('exec')
         start_time = datetime.now()
 
-        # Simulate task execution with realistic metrics
-        # Token consumption based on data complexity
+        # Token consumption based on input size
         data_str = str(input_data)
-        tokens_consumed = len(data_str) / 100.0  # Rough estimate
-        duration = random.uniform(0.5, 2.0)  # 30 seconds to 2 minutes
+        tokens_consumed = max(0.1, len(data_str) / 100.0)
+        duration = 0.5
 
-        # Simulate output
+        # Default output payload
         output_data = {
             'processed': True,
             'execution_id': execution_id,
@@ -464,14 +463,21 @@ class Worker(FactoryAgent):
         if process_step == ProcessStep.PARSING:
             output_data['parsed_fields'] = len(input_data)
         elif process_step == ProcessStep.STANDARDIZATION:
-            output_data['standardized'] = True
+            raw_address = str(input_data.get('raw') or input_data.get('address') or '').strip()
+            cleaning = self._clean_address(raw_address)
+            output_data.update(cleaning)
+            output_data['processed'] = cleaning.get('valid', False)
         elif process_step == ProcessStep.VALIDATION:
-            output_data['valid'] = True
-        elif process_step == ProcessStep.FUSION:
-            output_data['fused_entities'] = 1
+            valid = bool(input_data.get('standardized_address'))
+            output_data['valid'] = valid
+            output_data['processed'] = valid
+        elif process_step in (ProcessStep.EXTRACTION, ProcessStep.FUSION):
+            graph = self._build_graph_payload(input_data)
+            output_data.update(graph)
+            output_data['processed'] = graph.get('valid', False)
 
-        # Quality score with some variance
-        quality_score = random.uniform(0.85, 1.0)
+        quality_score = 0.95 if output_data.get('processed') else 0.3
+        status = WorkOrderStatus.COMPLETED if output_data.get('processed') else WorkOrderStatus.FAILED
 
         execution = TaskExecution(
             execution_id=execution_id,
@@ -480,7 +486,7 @@ class Worker(FactoryAgent):
             process_step=process_step,
             input_data=input_data,
             output_data=output_data,
-            status=WorkOrderStatus.COMPLETED,
+            status=status,
             token_consumed=tokens_consumed,
             duration_minutes=duration,
             quality_score=quality_score,
@@ -498,6 +504,207 @@ class Worker(FactoryAgent):
         })
 
         return execution
+
+    def _clean_address(self, raw_address: str) -> Dict[str, Any]:
+        """Parse/standardize Chinese address into contract fields."""
+        result = {
+            'valid': False,
+            'standardized_address': '',
+            'components': {
+                'city': '',
+                'district': '',
+                'road': '',
+                'community': '',
+                'house_number': '',
+                'unit': '',
+                'room': '',
+            },
+            'aliases': [],
+            'confidence': 0.0,
+        }
+        if not raw_address:
+            return result
+
+        address = raw_address.replace(' ', '')
+        if address.startswith('上海市'):
+            body = address[3:]
+        elif address.startswith('上海'):
+            body = address[2:]
+        else:
+            body = address
+
+        district_map = {
+            '浦东新区': '浦东新区', '浦东': '浦东新区',
+            '黄浦区': '黄浦区', '黄浦': '黄浦区',
+            '徐汇区': '徐汇区', '徐汇': '徐汇区',
+            '静安区': '静安区', '静安': '静安区',
+            '虹口区': '虹口区', '虹口': '虹口区',
+            '杨浦区': '杨浦区', '杨浦': '杨浦区',
+            '闵行区': '闵行区', '闵行': '闵行区',
+            '宝山区': '宝山区', '宝山': '宝山区',
+            '嘉定区': '嘉定区', '嘉定': '嘉定区',
+            '奉贤区': '奉贤区', '奉贤': '奉贤区',
+            '青浦区': '青浦区', '青浦': '青浦区',
+            '松江区': '松江区', '松江': '松江区',
+        }
+
+        district = ''
+        rest = body
+        for key in sorted(district_map.keys(), key=len, reverse=True):
+            if body.startswith(key):
+                district = district_map[key]
+                rest = body[len(key):]
+                break
+        if not district:
+            return result
+
+        room_match = re.search(r'(?P<room>\d+室)$', rest)
+        room = room_match.group('room') if room_match else ''
+        if room_match:
+            rest = rest[:room_match.start()]
+
+        unit_match = re.search(r'(?P<unit>\d+单元)$', rest)
+        unit = unit_match.group('unit') if unit_match else ''
+        if unit_match:
+            rest = rest[:unit_match.start()]
+
+        house_match = re.search(r'(?P<num>\d+)(号)?$', rest)
+        if not house_match:
+            return result
+        house = f"{house_match.group('num')}号"
+        prefix = rest[:house_match.start()].strip()
+        if not prefix:
+            return result
+
+        community = ''
+        road = prefix
+        community_match = re.search(r'(?P<community>.+?小区)', prefix)
+        if community_match:
+            community = community_match.group('community')
+            road_candidate = prefix[:community_match.start()].strip()
+            if road_candidate:
+                road = road_candidate
+            else:
+                road = '未知路段'
+
+        if not re.search(r'(路|街|大道|巷)$', road) and road != '未知路段':
+            road = f"{road}路"
+
+        standardized = f"上海市{district}{road}"
+        if community:
+            standardized += community
+        standardized += house
+        if unit:
+            standardized += unit
+        if room:
+            standardized += room
+        explicit_score = 0.95 if ('区' in body or '新区' in body) and ('号' in body) else 0.88
+
+        aliases = [raw_address]
+        if address != raw_address:
+            aliases.append(address)
+
+        return {
+            'valid': True,
+            'standardized_address': standardized,
+            'components': {
+                'city': '上海市',
+                'district': district,
+                'road': road,
+                'community': community,
+                'house_number': house,
+                'unit': unit,
+                'room': room,
+            },
+            'aliases': list(dict.fromkeys(aliases)),
+            'confidence': explicit_score,
+        }
+
+    def _build_graph_payload(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Build spatial hierarchy graph from cleaned address (address as properties, not node)."""
+        standardized = str(input_data.get('standardized_address', '')).strip()
+        components = input_data.get('components', {}) or {}
+        aliases = input_data.get('aliases', []) or []
+
+        city = str(components.get('city', '')).strip()
+        district = str(components.get('district', '')).strip()
+        road = str(components.get('road', '')).strip()
+        community = str(components.get('community', '')).strip()
+        house = str(components.get('house_number', '')).strip()
+        unit = str(components.get('unit', '')).strip()
+        room = str(components.get('room', '')).strip()
+
+        if not standardized or not all([city, district, road, house]):
+            return {'valid': False, 'nodes': [], 'relationships': []}
+
+        city_id = f"city:{city}"
+        district_id = f"district:{city}:{district}"
+        road_id = f"road:{city}:{district}:{road}"
+        building_id = f"building:{city}:{district}:{road}:{house}"
+        community_id = f"community:{city}:{district}:{road}:{community}" if community else ''
+        unit_id = f"unit:{city}:{district}:{road}:{house}:{unit}" if unit else ''
+        room_parent = unit if unit else house
+        room_id = f"room:{city}:{district}:{road}:{room_parent}:{room}" if room else ''
+
+        building_properties = {
+            'house_number': house,
+            'standardized_address': standardized,
+            'aliases': aliases,
+            'city': city,
+            'district': district,
+            'road': road,
+        }
+        if community:
+            building_properties['community'] = community
+        if unit:
+            building_properties['unit'] = unit
+        if room:
+            building_properties['room'] = room
+
+        nodes = [
+            {'node_id': city_id, 'type': 'city', 'name': city, 'properties': {}},
+            {'node_id': district_id, 'type': 'district', 'name': district, 'properties': {'city': city}},
+            {'node_id': road_id, 'type': 'road', 'name': road, 'properties': {'district': district}},
+            {'node_id': building_id, 'type': 'building', 'name': house, 'properties': building_properties},
+        ]
+        relationships = [
+            {'relationship_id': f"rel:{city_id}:{district_id}", 'source': city_id, 'target': district_id, 'type': 'contains', 'properties': {}},
+            {'relationship_id': f"rel:{district_id}:{road_id}", 'source': district_id, 'target': road_id, 'type': 'contains', 'properties': {}},
+        ]
+
+        if community:
+            nodes.append(
+                {'node_id': community_id, 'type': 'community', 'name': community, 'properties': {'road': road, 'district': district}}
+            )
+            relationships.append(
+                {'relationship_id': f"rel:{road_id}:{community_id}", 'source': road_id, 'target': community_id, 'type': 'contains', 'properties': {}}
+            )
+            relationships.append(
+                {'relationship_id': f"rel:{community_id}:{building_id}", 'source': community_id, 'target': building_id, 'type': 'contains', 'properties': {}}
+            )
+        else:
+            relationships.append(
+                {'relationship_id': f"rel:{road_id}:{building_id}", 'source': road_id, 'target': building_id, 'type': 'contains', 'properties': {}}
+            )
+
+        if unit:
+            nodes.append(
+                {'node_id': unit_id, 'type': 'unit', 'name': unit, 'properties': {'building': house}}
+            )
+            relationships.append(
+                {'relationship_id': f"rel:{building_id}:{unit_id}", 'source': building_id, 'target': unit_id, 'type': 'contains', 'properties': {}}
+            )
+
+        if room:
+            nodes.append(
+                {'node_id': room_id, 'type': 'room', 'name': room, 'properties': {'unit': unit, 'building': house}}
+            )
+            room_source = unit_id if unit else building_id
+            relationships.append(
+                {'relationship_id': f"rel:{room_source}:{room_id}", 'source': room_source, 'target': room_id, 'type': 'contains', 'properties': {}}
+            )
+
+        return {'valid': True, 'nodes': nodes, 'relationships': relationships}
 
     def execute(self, factory_state: FactoryState, context: Dict[str, Any]) -> Dict[str, Any]:
         """Main execution method"""

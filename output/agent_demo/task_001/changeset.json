@@ -1,0 +1,37 @@
+{
+  "changeset_id": "cs_145716f7b2d1",
+  "task_id": "task_001",
+  "env": "dev",
+  "operations": [
+    {
+      "op_id": "op_ddl_001",
+      "op_type": "DDL",
+      "payload": {
+        "sql": "CREATE TABLE IF NOT EXISTS dwd_agent_task_result (task_id TEXT, status TEXT, updated_at TEXT);"
+      },
+      "idempotency_key": "ddl-task_001-v1",
+      "dry_run_supported": true
+    },
+    {
+      "op_id": "op_dag_001",
+      "op_type": "DAG",
+      "payload": {
+        "dag_id": "agent_task_001",
+        "schedule": "@daily"
+      },
+      "idempotency_key": "dag-task_001-v1",
+      "dry_run_supported": true
+    }
+  ],
+  "rollback": {
+    "strategy": "sql_rollback",
+    "payload": {
+      "sql": "DROP TABLE IF EXISTS dwd_agent_task_result;"
+    }
+  },
+  "requires_approvals": [
+    "METRIC_DEFINITION",
+    "SECURITY",
+    "PROD_RELEASE"
+  ]
+}

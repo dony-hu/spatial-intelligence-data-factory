@@ -1,0 +1,21 @@
+{
+  "task_id": "task_001",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Execution Gate",
+      "status": "PASS",
+      "details": "EXECUTION"
+    },
+    {
+      "name": "Idempotency Gate",
+      "status": "PASS",
+      "details": "all operations include idempotency_key"
+    },
+    {
+      "name": "Budget Step Gate",
+      "status": "PASS",
+      "details": "used_steps=2, max_steps=10"
+    }
+  ]
+}

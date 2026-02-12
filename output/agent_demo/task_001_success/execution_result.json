@@ -1,0 +1,166 @@
+{
+  "status": "PASS",
+  "stage": "EXECUTION",
+  "gates": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Approval Gate",
+        "status": "PASS",
+        "details": "all approvals satisfied",
+        "missing": []
+      },
+      {
+        "name": "DDL Dry-run Gate",
+        "status": "PASS",
+        "details": "ddl dry-run passed",
+        "failures": []
+      },
+      {
+        "name": "Idempotency Gate",
+        "status": "PASS",
+        "details": "all operations have idempotency_key",
+        "missing_ops": []
+      },
+      {
+        "name": "Data Quality Gate",
+        "status": "PASS",
+        "details": "max_null_ratio=0.01, has_schema_drift=False"
+      }
+    ]
+  },
+  "profiling_report": {
+    "source_count": 2,
+    "sources": [
+      {
+        "source": "ods_police_events",
+        "record_count": 100,
+        "null_ratio": 0.01,
+        "schema_drift": false
+      },
+      {
+        "source": "ods_address_raw",
+        "record_count": 100,
+        "null_ratio": 0.01,
+        "schema_drift": false
+      }
+    ],
+    "quality_summary": {
+      "max_null_ratio": 0.01,
+      "has_schema_drift": false
+    }
+  },
+  "workflow_result": {
+    "workflow_id": "wf_e7f25984ee1c",
+    "requirement_id": "req_c0ae47452e9b",
+    "stages": {
+      "pipeline_setup": {
+        "cleaning_line": "地址清洗产线",
+        "graph_line": "地址-图谱产线"
+      },
+      "work_orders_created": {
+        "cleaning_orders": 2,
+        "graph_orders": 2,
+        "total_orders": 4
+      },
+      "approval_gates": {
+        "required": [
+          "kpi_frozen",
+          "compliance_approved",
+          "release_window_confirmed"
+        ],
+        "approved": [
+          "kpi_frozen",
+          "compliance_approved",
+          "release_window_confirmed"
+        ],
+        "missing": [],
+        "records": [
+          {
+            "gate": "kpi_frozen",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:15:18.101792"
+          },
+          {
+            "gate": "compliance_approved",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:15:18.101794"
+          },
+          {
+            "gate": "release_window_confirmed",
+            "approved": true,
+            "approver": "executor",
+            "note": "approved by adapter",
+            "approved_at": "2026-02-12T11:15:18.101795"
+          }
+        ]
+      },
+      "task_executions": {
+        "cleaning_completed": 2,
+        "graph_completed": 2,
+        "graph_nodes_total": 0,
+        "graph_relationships_total": 0
+      }
+    },
+    "timestamps": {
+      "started_at": "2026-02-12T11:15:18.103138",
+      "completed_at": "2026-02-12T11:15:18.151243"
+    },
+    "status": "completed"
+  },
+  "summary": {
+    "timestamp": "2026-02-12T11:15:18.151258",
+    "factory_name": "Agent-task_001_success",
+    "factory_status": "running",
+    "production_lines": {
+      "total": 2,
+      "running": 0,
+      "idle": 2
+    },
+    "work_orders": {
+      "total": 4,
+      "pending": 0,
+      "in_progress": 0,
+      "completed": 4
+    },
+    "metrics": {
+      "total_products_processed": 0,
+      "total_tasks_completed": 12,
+      "total_tasks_failed": 0,
+      "quality_rate": 1.0,
+      "total_tokens_consumed": 5.94,
+      "average_turnaround_minutes": 1.311602769021637,
+      "active_production_lines": 2,
+      "busy_workers": 0,
+      "last_updated": "2026-02-12T11:15:18.151257"
+    },
+    "cost_summary": {
+      "timestamp": "2026-02-12T11:15:18.151270",
+      "lines": {
+        "line_address_cleaning": {
+          "line_name": "地址清洗产线",
+          "total_tokens": 0.0,
+          "completed_tasks": 0,
+          "average_cost_per_item": 0.0,
+          "worker_count": 2,
+          "utilization": 0.0
+        },
+        "line_address_to_graph": {
+          "line_name": "地址-图谱产线",
+          "total_tokens": 0.0,
+          "completed_tasks": 0,
+          "average_cost_per_item": 0.0,
+          "worker_count": 2,
+          "utilization": 0.0
+        }
+      },
+      "total_tokens": 0.0,
+      "average_cost_per_item": 0.0
+    }
+  },
+  "executed_at": "2026-02-12T03:15:18.151280"
+}

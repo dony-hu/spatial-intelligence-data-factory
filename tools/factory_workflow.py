@@ -35,6 +35,8 @@ class FactoryWorkflow:
         self.factory_state = FactoryState(factory_name)
         self.db = FactoryDB(db_path)
         self.production_lines_initialized = False
+        self.graph_node_ids: set = set()
+        self.graph_relationship_ids: set = set()
         self.approval_status: Dict[str, bool] = {
             gate: False for gate in self.REQUIRED_APPROVAL_GATES
         }
@@ -267,37 +269,85 @@ class FactoryWorkflow:
                 workflow['error'] = f"Missing required approvals: {', '.join(missing_approvals)}"
                 return workflow
 
-            execution_results = {'cleaning': [], 'graph': []}
+            execution_results = {'cleaning': [], 'graph': [], 'failed_cases': []}
 
             for order_idx, (cleaning_order, graph_order) in enumerate(zip(cleaning_orders, graph_orders)):
                 input_item = requirement.input_data[order_idx]
 
                 # Execute cleaning pipeline
-                cleaned_address = self._execute_cleaning_pipeline(
+                cleaning_output = self._execute_cleaning_pipeline(
                     cleaning_order, cleaning_spec, input_item, requirement
                 )
                 execution_results['cleaning'].append({
                     'order_id': cleaning_order.work_order_id,
-                    'input': input_item.get('raw', ''),
-                    'output': cleaned_address
+                    'input': input_item.get('raw') or input_item.get('address', ''),
+                    'output': cleaning_output
                 })
 
+                if not cleaning_output.get('standardized_address'):
+                    source_id = input_item.get('id') or input_item.get('source') or input_item.get('raw') or input_item.get('address', '')
+                    execution_results['failed_cases'].append({
+                        'source_id': source_id,
+                        'stage': 'cleaning',
+                        'reason': 'CLEANING_INVALID_OUTPUT',
+                    })
+                    continue
+
                 # Execute graph generation pipeline
-                graph_nodes, graph_relationships = self._execute_graph_pipeline(
-                    graph_order, graph_spec, cleaned_address, requirement, input_item.get('id', '')
+                graph_nodes, graph_relationships, graph_gate, graph_metrics = self._execute_graph_pipeline(
+                    graph_order,
+                    graph_spec,
+                    cleaning_output,
+                    requirement,
+                    str(input_item.get('id') or input_item.get('source') or input_item.get('raw') or input_item.get('address', '')),
                 )
                 execution_results['graph'].append({
                     'order_id': graph_order.work_order_id,
+                    'source_id': str(input_item.get('id') or input_item.get('source') or input_item.get('raw') or input_item.get('address', '')),
                     'nodes_generated': len(graph_nodes),
-                    'relationships_generated': len(graph_relationships)
+                    'relationships_generated': len(graph_relationships),
+                    'nodes_merged': graph_metrics.get('nodes_merged', 0),
+                    'relationships_merged': graph_metrics.get('relationships_merged', 0),
+                    'nodes': graph_metrics.get('nodes', []),
+                    'relationships': graph_metrics.get('relationships', []),
+                    'gate_pass': graph_gate['pass'],
                 })
+                if not graph_gate['pass']:
+                    source_id = input_item.get('id') or input_item.get('source') or input_item.get('raw') or input_item.get('address', '')
+                    execution_results['failed_cases'].append({
+                        'source_id': source_id,
+                        'stage': 'graph',
+                        'reason': graph_gate['reason'],
+                    })
 
             workflow['stages']['task_executions'] = {
                 'cleaning_completed': len(execution_results['cleaning']),
                 'graph_completed': len(execution_results['graph']),
                 'graph_nodes_total': sum(r['nodes_generated'] for r in execution_results['graph']),
-                'graph_relationships_total': sum(r['relationships_generated'] for r in execution_results['graph'])
+                'graph_relationships_total': sum(r['relationships_generated'] for r in execution_results['graph']),
+                'graph_nodes_generated_total': sum(r['nodes_generated'] for r in execution_results['graph']),
+                'graph_relationships_generated_total': sum(r['relationships_generated'] for r in execution_results['graph']),
+                'graph_nodes_merged_total': sum(r['nodes_merged'] for r in execution_results['graph']),
+                'graph_relationships_merged_total': sum(r['relationships_merged'] for r in execution_results['graph']),
+                'graph_case_details': [
+                    {
+                        'source_id': r.get('source_id', ''),
+                        'nodes_generated': r.get('nodes_generated', 0),
+                        'relationships_generated': r.get('relationships_generated', 0),
+                        'nodes_merged': r.get('nodes_merged', 0),
+                        'relationships_merged': r.get('relationships_merged', 0),
+                        'nodes': r.get('nodes', []),
+                        'relationships': r.get('relationships', []),
+                    }
+                    for r in execution_results['graph']
+                ],
+                'failed_cases': execution_results['failed_cases'],
             }
+            if execution_results['failed_cases']:
+                workflow['status'] = 'failed'
+                workflow['error'] = 'One or more cases failed output gates'
+                workflow['timestamps']['completed_at'] = datetime.now().isoformat()
+                return workflow
 
         workflow['status'] = 'completed' if auto_execute else 'created'
         workflow['timestamps']['completed_at'] = datetime.now().isoformat()
@@ -310,17 +360,20 @@ class FactoryWorkflow:
         spec: ProcessSpec,
         input_item: Dict[str, Any],
         requirement: ProductRequirement
-    ) -> str:
-        """Execute address cleaning pipeline and return standardized address"""
+    ) -> Dict[str, Any]:
+        """Execute address cleaning pipeline and return structured cleaning output."""
         line = self.factory_state.get_production_line(order.assigned_line_id)
         if not line or not line.workers:
-            return ""
+            return {}
 
         worker = self.workers.get(line.workers[0].worker_id)
         if not worker:
-            return ""
+            return {}
 
-        cleaned_address = ""
+        self._mark_line_task_started(line)
+        cleaning_output: Dict[str, Any] = {}
+        order_tokens = 0.0
+        order_quality_scores: List[float] = []
         quality_threshold = requirement.sla_metrics.get('quality_threshold', 0.9)
 
         for step in spec.steps:
@@ -333,9 +386,16 @@ class FactoryWorkflow:
 
             self.factory_state.record_task_execution(execution)
             self.db.save_task_execution(execution)
+            order_tokens += float(execution.token_consumed or 0.0)
+            order_quality_scores.append(float(execution.quality_score or 0.0))
 
             if step == ProcessStep.STANDARDIZATION:
-                cleaned_address = execution.output_data.get('standardized_address', '')
+                cleaning_output = {
+                    'standardized_address': execution.output_data.get('standardized_address', ''),
+                    'components': execution.output_data.get('components', {}),
+                    'aliases': execution.output_data.get('aliases', []),
+                    'confidence': execution.output_data.get('confidence', 0.0),
+                }
 
             # Quality check
             check = self.inspector.execute(self.factory_state, {
@@ -347,63 +407,108 @@ class FactoryWorkflow:
             self.factory_state.record_quality_check(check)
             self.db.save_quality_check(check)
 
-        order.status = WorkOrderStatus.COMPLETED
-        order.completed_at = datetime.now()
-        self.db.save_work_order(order)
+        cleaning_ok = bool(cleaning_output.get('standardized_address')) and bool(cleaning_output.get('components'))
+        if cleaning_ok:
+            order.status = WorkOrderStatus.COMPLETED
+            order.completed_at = datetime.now()
+            self.db.save_work_order(order)
+        else:
+            order.status = WorkOrderStatus.FAILED
+            order.completed_at = datetime.now()
+            self.db.save_work_order(order)
+            self._mark_line_task_failed(
+                line=line,
+                tokens=order_tokens,
+                quality_score=(sum(order_quality_scores) / len(order_quality_scores)) if order_quality_scores else 0.0,
+            )
+            return {}
 
-        return cleaned_address
+        self._mark_line_task_completed(
+            line=line,
+            tokens=order_tokens,
+            quality_score=(sum(order_quality_scores) / len(order_quality_scores)) if order_quality_scores else 1.0,
+        )
+
+        return cleaning_output
 
     def _execute_graph_pipeline(
         self,
         order: WorkOrder,
         spec: ProcessSpec,
-        standardized_address: str,
+        cleaning_output: Dict[str, Any],
         requirement: ProductRequirement,
         source_address_id: str
     ) -> tuple:
         """Execute address-to-graph pipeline and return generated nodes and relationships"""
         line = self.factory_state.get_production_line(order.assigned_line_id)
         if not line or not line.workers:
-            return [], []
+            return [], [], {'pass': False, 'reason': 'LINE_NOT_READY'}, {
+                'nodes_merged': 0,
+                'relationships_merged': 0,
+                'nodes': [],
+                'relationships': [],
+            }
 
         worker = self.workers.get(line.workers[0].worker_id)
         if not worker:
-            return [], []
+            return [], [], {'pass': False, 'reason': 'WORKER_NOT_READY'}, {
+                'nodes_merged': 0,
+                'relationships_merged': 0,
+                'nodes': [],
+                'relationships': [],
+            }
 
+        self._mark_line_task_started(line)
         graph_nodes = []
         graph_relationships = []
+        merged_node_count = 0
+        merged_relationship_count = 0
+        order_tokens = 0.0
+        order_quality_scores: List[float] = []
         quality_threshold = requirement.sla_metrics.get('quality_threshold', 0.9)
 
         for step in spec.steps:
             execution = worker.execute(self.factory_state, {
                 'action': 'execute_task',
                 'work_order': order,
-                'input_data': {'standardized_address': standardized_address},
+                'input_data': cleaning_output,
                 'process_step': step
             })['execution']
 
             self.factory_state.record_task_execution(execution)
             self.db.save_task_execution(execution)
+            order_tokens += float(execution.token_consumed or 0.0)
+            order_quality_scores.append(float(execution.quality_score or 0.0))
 
-            if step == ProcessStep.EXTRACTION or step == ProcessStep.FUSION:
+            # 图谱实体只在 EXTRACTION 步骤入图，避免 EXTRACTION+FUSION 重复计数。
+            if step == ProcessStep.EXTRACTION:
                 output = execution.output_data
                 # Extract graph nodes from output
                 for node_data in output.get('nodes', []):
+                    node_id = str(node_data.get('node_id', '')).strip()
+                    if not node_id:
+                        continue
                     node = GraphNode(
-                        node_id=generate_id('node'),
+                        node_id=node_id,
                         node_type=node_data.get('type', 'location'),
                         name=node_data.get('name', ''),
                         properties=node_data.get('properties', {}),
                         source_address=source_address_id
                     )
                     graph_nodes.append(node)
-                    self.factory_state.add_graph_node(node)
-                    self.db.save_graph_node(node)
+                    if node.node_id not in self.graph_node_ids:
+                        self.graph_node_ids.add(node.node_id)
+                        merged_node_count += 1
+                        self.factory_state.add_graph_node(node)
+                        self.db.save_graph_node(node)
 
                 # Extract graph relationships from output
                 for rel_data in output.get('relationships', []):
+                    relationship_id = str(rel_data.get('relationship_id', '')).strip()
+                    if not relationship_id:
+                        continue
                     relationship = GraphRelationship(
-                        relationship_id=generate_id('rel'),
+                        relationship_id=relationship_id,
                         source_node_id=rel_data.get('source', ''),
                         target_node_id=rel_data.get('target', ''),
                         relationship_type=rel_data.get('type', 'related'),
@@ -411,8 +516,11 @@ class FactoryWorkflow:
                         source_address=source_address_id
                     )
                     graph_relationships.append(relationship)
-                    self.factory_state.add_graph_relationship(relationship)
-                    self.db.save_graph_relationship(relationship)
+                    if relationship.relationship_id not in self.graph_relationship_ids:
+                        self.graph_relationship_ids.add(relationship.relationship_id)
+                        merged_relationship_count += 1
+                        self.factory_state.add_graph_relationship(relationship)
+                        self.db.save_graph_relationship(relationship)
 
             # Quality check
             check = self.inspector.execute(self.factory_state, {
@@ -424,11 +532,78 @@ class FactoryWorkflow:
             self.factory_state.record_quality_check(check)
             self.db.save_quality_check(check)
 
-        order.status = WorkOrderStatus.COMPLETED
-        order.completed_at = datetime.now()
-        self.db.save_work_order(order)
+        graph_gate = {
+            'pass': len(graph_nodes) > 0 and len(graph_relationships) > 0,
+            'reason': 'ok' if len(graph_nodes) > 0 and len(graph_relationships) > 0 else 'GRAPH_EMPTY_OUTPUT',
+        }
+        if graph_gate['pass']:
+            order.status = WorkOrderStatus.COMPLETED
+            order.completed_at = datetime.now()
+            self.db.save_work_order(order)
+        else:
+            order.status = WorkOrderStatus.FAILED
+            order.completed_at = datetime.now()
+            self.db.save_work_order(order)
+            self._mark_line_task_failed(
+                line=line,
+                tokens=order_tokens,
+                quality_score=(sum(order_quality_scores) / len(order_quality_scores)) if order_quality_scores else 0.0,
+            )
+            return graph_nodes, graph_relationships, graph_gate, {
+                'nodes_merged': merged_node_count,
+                'relationships_merged': merged_relationship_count,
+                'nodes': [n.to_dict() for n in graph_nodes],
+                'relationships': [r.to_dict() for r in graph_relationships],
+            }
 
-        return graph_nodes, graph_relationships
+        self._mark_line_task_completed(
+            line=line,
+            tokens=order_tokens,
+            quality_score=(sum(order_quality_scores) / len(order_quality_scores)) if order_quality_scores else 1.0,
+        )
+
+        return graph_nodes, graph_relationships, graph_gate, {
+            'nodes_merged': merged_node_count,
+            'relationships_merged': merged_relationship_count,
+            'nodes': [n.to_dict() for n in graph_nodes],
+            'relationships': [r.to_dict() for r in graph_relationships],
+        }
+
+    def _mark_line_task_started(self, line: ProductionLine) -> None:
+        """Mark line as running for a work order execution."""
+        line.active_tasks += 1
+        line.status = ProductionLineStatus.RUNNING
+        self.db.save_production_line(line)
+
+    def _mark_line_task_completed(self, line: ProductionLine, tokens: float, quality_score: float) -> None:
+        """Persist line-level metrics after a work order completes."""
+        previous_completed = line.completed_tasks
+        line.active_tasks = max(0, line.active_tasks - 1)
+        line.completed_tasks += 1
+        line.total_tokens_consumed += float(tokens or 0.0)
+
+        if previous_completed <= 0:
+            line.average_quality_score = float(quality_score or 1.0)
+        else:
+            line.average_quality_score = (
+                (line.average_quality_score * previous_completed) + float(quality_score or 1.0)
+            ) / (previous_completed + 1)
+
+        if line.active_tasks == 0:
+            line.status = ProductionLineStatus.IDLE
+
+        self.db.save_production_line(line)
+
+    def _mark_line_task_failed(self, line: ProductionLine, tokens: float, quality_score: float) -> None:
+        """Persist line-level metrics when a work order fails output gates."""
+        line.active_tasks = max(0, line.active_tasks - 1)
+        line.failed_tasks += 1
+        line.total_tokens_consumed += float(tokens or 0.0)
+        if line.active_tasks == 0:
+            line.status = ProductionLineStatus.IDLE
+        if quality_score:
+            line.average_quality_score = min(line.average_quality_score, float(quality_score))
+        self.db.save_production_line(line)
 
     def get_factory_status(self) -> Dict[str, Any]:
         """Get current factory operational status"""

@@ -1,0 +1,21 @@
+{
+  "task_id": "task_001_fail_approval",
+  "tenant_id": "tenant_demo",
+  "goal": "完成地址数据的标准化建表与调度配置",
+  "context": {
+    "domain": "address_governance",
+    "data_sources": [
+      "ods_police_events",
+      "ods_address_raw"
+    ],
+    "target_platform": "airflow"
+  },
+  "constraints": {
+    "env": "dev",
+    "budget": {
+      "max_steps": 10,
+      "max_cost_usd": 5
+    },
+    "safety_level": "high"
+  }
+}
