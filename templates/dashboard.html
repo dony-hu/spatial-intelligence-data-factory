@@ -81,7 +81,9 @@
       width: 100%;
       height: 100%;
       display: block;
+      cursor: grab;
     }
+    .graph-svg.dragging { cursor: grabbing; }
     .node-label {
       font-size: 10px;
       fill: #102a43;
@@ -89,6 +91,14 @@
       stroke: #ffffff;
       stroke-width: 2px;
       pointer-events: none;
+    }
+    .new-node-pulse {
+      animation: nodePulse 1.2s ease-in-out infinite;
+    }
+    @keyframes nodePulse {
+      0% { r: 5.5; opacity: 1; }
+      50% { r: 7; opacity: 0.9; }
+      100% { r: 5.5; opacity: 1; }
     }
     .edge-label {
       font-size: 9px;
@@ -293,7 +303,7 @@
           <span><i class="legend-dot" style="background:#d46be0"></i>building</span>
           <span><i class="legend-dot" style="background:#8a5cff"></i>unit</span>
           <span><i class="legend-dot" style="background:#c15ce0"></i>room</span>
-          <span><i class="legend-dot" style="background:#f05252"></i>recent/new</span>
+          <span><i class="legend-dot" style="background:#f05252"></i>本轮新增（下个用例后复原）</span>
         </div>
       </div>
       <div class="line" id="recent-details-panel">
@@ -335,6 +345,12 @@
     let graphFilterBound = false;
     const graphRuntime = {
       nodes: new Map(),
+      recentFlashUntil: new Map(),
+      highlightedNodes: new Map(),
+      highlightRunId: 0,
+      lastProcessedCount: 0,
+      draggingNode: null,
+      interactionBound: false,
       links: [],
       rafId: 0,
       width: 520,
@@ -414,9 +430,60 @@
       if (s.length <= maxLen) return s;
       return `${s.slice(0, maxLen)}...`;
     }
+    function hashString(s) {
+      let h = 0;
+      const str = String(s || '');
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+      }
+      return Math.abs(h);
+    }
+    function applyNodeCollision(nodes, minDist = 18) {
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          if (!dist) {
+            dist = 0.01;
+            dx = 0.01;
+            dy = 0;
+          }
+          if (dist < minDist) {
+            const push = (minDist - dist) * 0.5;
+            const ux = dx / dist;
+            const uy = dy / dist;
+            a.x -= ux * push;
+            a.y -= uy * push;
+            b.x += ux * push;
+            b.y += uy * push;
+          }
+        }
+      }
+    }
+    function edgeEndpoints(a, b, radius = 6) {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+      const ux = dx / dist;
+      const uy = dy / dist;
+      return {
+        sx: a.x + ux * radius,
+        sy: a.y + uy * radius,
+        tx: b.x - ux * radius,
+        ty: b.y - uy * radius
+      };
+    }
 
     function resetGraphRuntime(resetKey) {
       graphRuntime.nodes.clear();
+      graphRuntime.recentFlashUntil.clear();
+      graphRuntime.highlightedNodes.clear();
+      graphRuntime.highlightRunId = 0;
+      graphRuntime.lastProcessedCount = 0;
+      graphRuntime.draggingNode = null;
       graphRuntime.links = [];
       if (graphRuntime.rafId) {
         cancelAnimationFrame(graphRuntime.rafId);
@@ -428,8 +495,91 @@
       const svg = document.getElementById('graphSvg');
       if (svg) while (svg.firstChild) svg.removeChild(svg.firstChild);
     }
+    function graphPointerToCanvas(evt, svg) {
+      const rect = svg.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / Math.max(1, rect.width)) * graphRuntime.width;
+      const y = ((evt.clientY - rect.top) / Math.max(1, rect.height)) * graphRuntime.height;
+      return {
+        x: Math.max(10, Math.min(graphRuntime.width - 10, x)),
+        y: Math.max(10, Math.min(graphRuntime.height - 10, y))
+      };
+    }
+    function beginNodeDrag(nodeId, evt) {
+      const svg = document.getElementById('graphSvg');
+      const node = graphRuntime.nodes.get(nodeId);
+      if (!svg || !node) return;
+      const p = graphPointerToCanvas(evt, svg);
+      graphRuntime.draggingNode = {
+        nodeId,
+        pointerId: evt.pointerId,
+        x: p.x,
+        y: p.y
+      };
+      node.x = p.x;
+      node.y = p.y;
+      node.vx = 0;
+      node.vy = 0;
+      svg.classList.add('dragging');
+      try { svg.setPointerCapture(evt.pointerId); } catch (_) {}
+      evt.preventDefault();
+    }
+    function onGraphPointerMove(evt) {
+      const dragging = graphRuntime.draggingNode;
+      if (!dragging) return;
+      if (dragging.pointerId !== undefined && evt.pointerId !== dragging.pointerId) return;
+      const svg = document.getElementById('graphSvg');
+      const p = graphPointerToCanvas(evt, svg);
+      dragging.x = p.x;
+      dragging.y = p.y;
+      const node = graphRuntime.nodes.get(dragging.nodeId);
+      if (node) {
+        node.x = p.x;
+        node.y = p.y;
+        node.vx = 0;
+        node.vy = 0;
+      }
+      evt.preventDefault();
+    }
+    function endNodeDrag(evt) {
+      const dragging = graphRuntime.draggingNode;
+      if (!dragging) return;
+      if (evt && dragging.pointerId !== undefined && evt.pointerId !== dragging.pointerId) return;
+      const svg = document.getElementById('graphSvg');
+      if (svg) {
+        svg.classList.remove('dragging');
+        try { svg.releasePointerCapture(dragging.pointerId); } catch (_) {}
+      }
+      graphRuntime.draggingNode = null;
+    }
+    function bindGraphInteraction() {
+      if (graphRuntime.interactionBound) return;
+      const svg = document.getElementById('graphSvg');
+      if (!svg) return;
+      svg.addEventListener('pointerdown', (evt) => {
+        const target = evt.target && evt.target.closest ? evt.target.closest('circle[data-node-id]') : null;
+        if (!target) return;
+        beginNodeDrag(target.dataset.nodeId, evt);
+      });
+      svg.addEventListener('pointermove', onGraphPointerMove);
+      svg.addEventListener('pointerup', endNodeDrag);
+      svg.addEventListener('pointercancel', endNodeDrag);
+      svg.addEventListener('pointerleave', (evt) => {
+        if (graphRuntime.draggingNode) endNodeDrag(evt);
+      });
+      graphRuntime.interactionBound = true;
+    }
+    function updateHighlightRun(processedCount) {
+      const count = Number(processedCount || 0);
+      if (!Number.isFinite(count)) return;
+      if (count > graphRuntime.lastProcessedCount) {
+        graphRuntime.highlightRunId = count;
+        graphRuntime.highlightedNodes.clear();
+      }
+      graphRuntime.lastProcessedCount = count;
+    }
 
     function ingestGraphData(nodes, relationships, resetKey = '') {
+      bindGraphInteraction();
       const key = String(resetKey || '');
       if (key && graphRuntime.lastResetKey && key !== graphRuntime.lastResetKey) {
         resetGraphRuntime(key);
@@ -453,8 +603,15 @@
             vy: 0,
             bornAt: Date.now()
           });
+          graphRuntime.recentFlashUntil.set(n.node_id, Date.now() + 8000);
+          if (n.is_recent) {
+            graphRuntime.highlightedNodes.set(n.node_id, graphRuntime.highlightRunId);
+          }
         } else {
           graphRuntime.nodes.set(n.node_id, { ...old, ...n });
+        }
+        if (n.is_recent) {
+          graphRuntime.recentFlashUntil.set(n.node_id, Date.now() + 8000);
         }
       }
       graphRuntime.links = (relationships || [])
@@ -511,26 +668,53 @@
           n.x = Math.max(14, Math.min(width - 14, n.x + n.vx));
           n.y = Math.max(14, Math.min(height - 14, n.y + n.vy));
         }
+        const dragging = graphRuntime.draggingNode;
+        if (dragging) {
+          const dn = graphRuntime.nodes.get(dragging.nodeId);
+          if (dn) {
+            dn.x = dragging.x;
+            dn.y = dragging.y;
+            dn.vx = 0;
+            dn.vy = 0;
+          }
+        }
+        applyNodeCollision(list, 18);
+        for (const n of list) {
+          n.x = Math.max(14, Math.min(width - 14, n.x));
+          n.y = Math.max(14, Math.min(height - 14, n.y));
+        }
       }
 
       while (svg.firstChild) svg.removeChild(svg.firstChild);
       for (const l of links) {
         const a = list[l.s], b = list[l.t];
-        const line = document.createElementNS(ns, 'line');
-        line.setAttribute('x1', a.x.toFixed(1));
-        line.setAttribute('y1', a.y.toFixed(1));
-        line.setAttribute('x2', b.x.toFixed(1));
-        line.setAttribute('y2', b.y.toFixed(1));
-        line.setAttribute('stroke', '#9fb3c8');
-        line.setAttribute('stroke-opacity', '0.65');
-        line.setAttribute('stroke-width', '1');
-        svg.appendChild(line);
-
+        const ep = edgeEndpoints(a, b, 6);
+        const mx = (ep.sx + ep.tx) / 2;
+        const my = (ep.sy + ep.ty) / 2;
+        const dx = ep.tx - ep.sx;
+        const dy = ep.ty - ep.sy;
+        const dist = Math.max(0.001, Math.sqrt(dx * dx + dy * dy));
+        const nx = -dy / dist;
+        const ny = dx / dist;
         const relData = graphRuntime.links.find((x) => x.source_node_id === a.node_id && x.target_node_id === b.node_id);
+        const curveSeed = relData ? `${relData.relationship_id}|${relData.relationship_type}` : `${a.node_id}|${b.node_id}`;
+        const curveSign = (hashString(curveSeed) % 3) - 1;
+        const curveOffset = curveSign * 10;
+        const cx = mx + nx * curveOffset;
+        const cy = my + ny * curveOffset;
+
+        const edgePath = document.createElementNS(ns, 'path');
+        edgePath.setAttribute('d', `M ${ep.sx.toFixed(1)} ${ep.sy.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${ep.tx.toFixed(1)} ${ep.ty.toFixed(1)}`);
+        edgePath.setAttribute('fill', 'none');
+        edgePath.setAttribute('stroke', '#9fb3c8');
+        edgePath.setAttribute('stroke-opacity', '0.65');
+        edgePath.setAttribute('stroke-width', '1');
+        svg.appendChild(edgePath);
+
         if (relData) {
           const relText = document.createElementNS(ns, 'text');
-          relText.setAttribute('x', ((a.x + b.x) / 2).toFixed(1));
-          relText.setAttribute('y', ((a.y + b.y) / 2 - 2).toFixed(1));
+          relText.setAttribute('x', cx.toFixed(1));
+          relText.setAttribute('y', (cy - 2).toFixed(1));
           relText.setAttribute('class', 'edge-label');
           relText.textContent = shortText(relData.relationship_type || 'rel', 8);
           svg.appendChild(relText);
@@ -539,15 +723,21 @@
       for (const n of list) {
         const g = document.createElementNS(ns, 'g');
         const c = document.createElementNS(ns, 'circle');
+        c.dataset.nodeId = n.node_id;
         c.setAttribute('cx', n.x.toFixed(1));
         c.setAttribute('cy', n.y.toFixed(1));
         const isBornRecently = (Date.now() - (n.bornAt || 0)) < 6000;
-        c.setAttribute('r', (n.is_recent || isBornRecently) ? '5.5' : '4.5');
-        c.setAttribute('fill', nodeColor(n.node_type, !!n.is_recent));
-        c.setAttribute('stroke', n.is_recent ? '#b42318' : '#ffffff');
-        c.setAttribute('stroke-width', n.is_recent ? '1.4' : '1');
+        const isRunHighlighted = graphRuntime.highlightedNodes.get(n.node_id) === graphRuntime.highlightRunId;
+        const isFlashingRecent = (graphRuntime.recentFlashUntil.get(n.node_id) || 0) > Date.now();
+        c.setAttribute('r', (isRunHighlighted || n.is_recent || isBornRecently || isFlashingRecent) ? '5.5' : '4.5');
+        c.setAttribute('fill', nodeColor(n.node_type, !!isRunHighlighted));
+        c.setAttribute('stroke', (isRunHighlighted || n.is_recent || isFlashingRecent) ? '#b42318' : '#ffffff');
+        c.setAttribute('stroke-width', (isRunHighlighted || n.is_recent || isFlashingRecent) ? '1.4' : '1');
+        if (isRunHighlighted || isFlashingRecent) {
+          c.classList.add('new-node-pulse');
+        }
         const t = document.createElementNS(ns, 'title');
-        t.textContent = `${n.node_type} | ${n.name} | ${n.node_id}${n.is_recent ? ' | NEW' : ''}`;
+        t.textContent = `${n.node_type} | ${n.name} | ${n.node_id}${(isRunHighlighted || n.is_recent || isFlashingRecent) ? ' | NEW' : ''}`;
         c.appendChild(t);
         g.appendChild(c);
         const text = document.createElementNS(ns, 'text');
@@ -661,6 +851,7 @@
         const cycle = state.run?.cycle ?? 0;
         const processedInCycle = state.run?.processed_in_cycle ?? 0;
         const perCycle = state.run?.cases_per_cycle ?? 0;
+        updateHighlightRun(state.metrics?.processed_count ?? 0);
         document.getElementById('cycle').textContent = cycle.toString();
         document.getElementById('cycleProgress').textContent = `${processedInCycle}/${perCycle}`;
 

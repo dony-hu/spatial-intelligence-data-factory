@@ -31,6 +31,32 @@ class OfflineAssetTests(unittest.TestCase):
         self.assertIn("const graphRuntime", html)
         self.assertIn("function ingestGraphData(", html)
 
+    def test_dashboard_has_new_node_highlight_behavior(self):
+        html = (PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
+        self.assertIn("recentFlashUntil", html)
+        self.assertIn("new-node-pulse", html)
+        self.assertIn("isFlashingRecent", html)
+        self.assertIn("updateHighlightRun(", html)
+        self.assertIn("highlightRunId", html)
+
+    def test_dashboard_graph_has_overlap_avoidance_layout(self):
+        html = (PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
+        self.assertIn("function applyNodeCollision(", html)
+        self.assertIn("function edgeEndpoints(", html)
+        self.assertIn("createElementNS(ns, 'path')", html)
+
+    def test_dashboard_legend_shows_run_based_new_node_highlight(self):
+        html = (PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
+        self.assertIn("本轮新增（下个用例后复原）", html)
+
+    def test_dashboard_graph_supports_node_drag(self):
+        html = (PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
+        self.assertIn("draggingNode", html)
+        self.assertIn("function bindGraphInteraction(", html)
+        self.assertIn("function beginNodeDrag(", html)
+        self.assertIn("function onGraphPointerMove(", html)
+        self.assertIn("function endNodeDrag(", html)
+
     def test_dashboard_graph_has_visible_node_and_edge_labels(self):
         html = (PROJECT_ROOT / "templates" / "dashboard.html").read_text(encoding="utf-8")
         self.assertIn("node-label", html)
