@@ -125,6 +125,10 @@ def run_continuous_demo(total_addresses: int = 10000, demo_iterations: int = 2):
         # 初始化工厂
         print("📋 Step 1: 初始化工厂系统和两条产线")
         workflow = FactoryWorkflow(factory_name=f"上海数据工厂 - 迭代 {iteration}", init_production_lines=True)
+        workflow.approve_all_required_gates(
+            approver="continuous-demo",
+            note="Auto approval for local demonstration"
+        )
         print("✓ 工厂系统和两条产线初始化完成\n")
 
         # 持续生成和处理数据

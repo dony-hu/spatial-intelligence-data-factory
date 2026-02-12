@@ -38,6 +38,10 @@ def demo_workflow(scenario_name: str = 'address_cleaning', auto_execute: bool = 
     # Initialize factory
     print_subsection("Step 1: Initializing Factory System")
     workflow = FactoryWorkflow(factory_name="Shanghai Data Factory")
+    workflow.approve_all_required_gates(
+        approver="demo-system",
+        note="Auto approval for local demonstration"
+    )
     print("✓ Factory system initialized")
     print(f"  Database: database/factory.db")
 
@@ -110,15 +114,26 @@ def demo_workflow(scenario_name: str = 'address_cleaning', auto_execute: bool = 
 
     # Work orders
     wo_created = wf['stages'].get('work_orders_created', {})
-    print(f"\n  Work Orders Created: {wo_created.get('count')}")
+    wo_count = wo_created.get('count', wo_created.get('total_orders', 0))
+    print(f"\n  Work Orders Created: {wo_count}")
 
     # Executions (if auto_execute)
     if auto_execute:
         executions = wf['stages'].get('task_executions', {})
+        cleaning_completed = executions.get('cleaning_completed', 0)
+        graph_completed = executions.get('graph_completed', 0)
+        total_executed = executions.get('count', cleaning_completed + graph_completed)
+        quality_passed = executions.get('quality_passed', 'N/A')
+        # Fallback to live metrics when workflow stage does not return token summary
+        total_tokens = executions.get('total_tokens')
+        if total_tokens is None:
+            summary = workflow.get_workflow_summary()
+            total_tokens = summary.get('metrics', {}).get('total_tokens_consumed', 0.0)
+
         print(f"\n  Task Executions:")
-        print(f"    Total Executed: {executions.get('count')}")
-        print(f"    Quality Passed: {executions.get('quality_passed')}")
-        print(f"    Total Tokens: {executions.get('total_tokens'):.2f}")
+        print(f"    Total Executed: {total_executed}")
+        print(f"    Quality Passed: {quality_passed}")
+        print(f"    Total Tokens: {float(total_tokens):.2f}")
 
     # Factory status
     print_subsection("Step 5: Factory Status Snapshot")
@@ -195,6 +210,10 @@ def demo_multi_workflow() -> None:
     print_section("Multi-Workflow Demonstration - Parallel Processing", 80)
 
     workflow = FactoryWorkflow(factory_name="Shanghai Data Factory")
+    workflow.approve_all_required_gates(
+        approver="demo-system",
+        note="Auto approval for local demonstration"
+    )
     scenarios = get_all_scenarios()
 
     print("\nRunning 3 parallel product requirements...\n")

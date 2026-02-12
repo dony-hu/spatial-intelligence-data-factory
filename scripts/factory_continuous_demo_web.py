@@ -97,6 +97,10 @@ def run_continuous_demo_web(total_addresses: int = 10000, demo_iterations: int =
             factory_name=f"上海数据工厂 - 迭代 {iteration}",
             init_production_lines=True
         )
+        workflow.approve_all_required_gates(
+            approver="continuous-web-demo",
+            note="Auto approval for local demonstration"
+        )
         print("✓ 工厂系统和两条产线初始化完成\n")
 
         # 更新Web服务状态

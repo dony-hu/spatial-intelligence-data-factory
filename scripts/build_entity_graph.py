@@ -329,6 +329,9 @@ def main():
 
         # Step 2: Connect to database
         adapter = SQLiteAdapter(db_path)
+        print("\nCleaning previous graph data for idempotent rebuild...")
+        adapter.clear_all_data()
+        print("✓ Previous data cleared")
 
         # Step 3: Load sample data
         num_addresses = load_sample_addresses(adapter)

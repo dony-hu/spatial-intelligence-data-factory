@@ -25,11 +25,20 @@ class FactoryWorkflow:
     # 两条固定产线ID
     ADDRESS_CLEANING_LINE_ID = "line_address_cleaning"
     ADDRESS_TO_GRAPH_LINE_ID = "line_address_to_graph"
+    REQUIRED_APPROVAL_GATES = (
+        "kpi_frozen",
+        "compliance_approved",
+        "release_window_confirmed",
+    )
 
     def __init__(self, factory_name: str = "Data Factory", db_path: str = "database/factory.db", init_production_lines: bool = True):
         self.factory_state = FactoryState(factory_name)
         self.db = FactoryDB(db_path)
         self.production_lines_initialized = False
+        self.approval_status: Dict[str, bool] = {
+            gate: False for gate in self.REQUIRED_APPROVAL_GATES
+        }
+        self.approval_records: List[Dict[str, Any]] = []
 
         # Initialize agents
         self.director = FactoryDirector()
@@ -41,6 +50,37 @@ class FactoryWorkflow:
         # Initialize fixed production lines if needed
         if init_production_lines:
             self._initialize_production_lines()
+
+    def approve_gate(self, gate_name: str, approver: str, note: str = "") -> Dict[str, Any]:
+        """Record manual approval for a required governance gate."""
+        if gate_name not in self.approval_status:
+            return {
+                "status": "rejected",
+                "error": f"Unknown approval gate: {gate_name}",
+                "allowed_gates": list(self.REQUIRED_APPROVAL_GATES),
+            }
+
+        self.approval_status[gate_name] = True
+        record = {
+            "gate": gate_name,
+            "approved": True,
+            "approver": approver,
+            "note": note,
+            "approved_at": datetime.now().isoformat(),
+        }
+        self.approval_records.append(record)
+        return {"status": "approved", "record": record}
+
+    def approve_all_required_gates(self, approver: str, note: str = "demo auto approval") -> List[Dict[str, Any]]:
+        """Convenience helper for demos/tests to satisfy required gates."""
+        return [
+            self.approve_gate(gate, approver=approver, note=note)
+            for gate in self.REQUIRED_APPROVAL_GATES
+        ]
+
+    def get_missing_approvals(self) -> List[str]:
+        """Return list of required gates still pending approval."""
+        return [gate for gate, approved in self.approval_status.items() if not approved]
 
     def _initialize_production_lines(self) -> None:
         """Initialize the two fixed production lines for the address-to-graph pipeline"""
@@ -214,6 +254,19 @@ class FactoryWorkflow:
 
         # Stage 2: Execute if auto_execute is True
         if auto_execute:
+            missing_approvals = self.get_missing_approvals()
+            workflow['stages']['approval_gates'] = {
+                'required': list(self.REQUIRED_APPROVAL_GATES),
+                'approved': [gate for gate, ok in self.approval_status.items() if ok],
+                'missing': missing_approvals,
+                'records': list(self.approval_records),
+            }
+            if missing_approvals:
+                workflow['status'] = 'pending_approval'
+                workflow['timestamps']['blocked_at'] = datetime.now().isoformat()
+                workflow['error'] = f"Missing required approvals: {', '.join(missing_approvals)}"
+                return workflow
+
             execution_results = {'cleaning': [], 'graph': []}
 
             for order_idx, (cleaning_order, graph_order) in enumerate(zip(cleaning_orders, graph_orders)):

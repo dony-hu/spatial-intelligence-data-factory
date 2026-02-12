@@ -1,0 +1,27 @@
+name: smoke-tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile core modules
+        run: |
+          python -m py_compile \
+            tools/factory_workflow.py \
+            tools/factory_agents.py \
+            tools/factory_framework.py \
+            tools/graph_visualizer.py \
+            tools/factory_simple_server.py \
+            scripts/factory_demo_workflow.py
+      - name: Run unit smoke tests
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py'

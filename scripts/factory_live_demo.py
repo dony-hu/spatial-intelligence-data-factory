@@ -205,6 +205,10 @@ def run_live_demo(total_addresses: int = 100):
         factory_name="上海数据工厂",
         init_production_lines=True
     )
+    workflow.approve_all_required_gates(
+        approver="live-demo",
+        note="Auto approval for local demonstration"
+    )
 
     # 初始化Web状态
     factory_state['factory_name'] = "上海数据工厂"
