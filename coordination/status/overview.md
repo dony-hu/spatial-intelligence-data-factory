@@ -21,7 +21,7 @@
 ## 当前阻塞
 
 - 无硬阻塞
-- 软阻塞：TC-06 等待单任务运行结果回传
+- 软阻塞：当前已跑通 quick_test，待补单条显式任务入口与失败回放
 
 ## 需决策事项
 
@@ -39,3 +39,4 @@
 - `workpackages/wp-address-topology-v1.0.1.json`
 - `workpackages/bundles/address-topology-v1.0.1/observability/line_observe.py`
 - `workpackages/bundles/address-topology-v1.0.1/observability/line_metrics.json`
+- `output/line_runs/quick_test_run_2026-02-14.md`
