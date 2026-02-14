@@ -21,4 +21,5 @@ tools/keys/
 # Local runtime artifacts
 output/line_runs/
 output/recovery_snapshot_*/
+output/factory_templates/
 database/tc06_line_execution.db
