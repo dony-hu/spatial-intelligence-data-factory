@@ -133,3 +133,24 @@ scripts/testdata/verify.sh geo_poi_smoke_p0
 - `docs/test-case-matrix.md`
 - `docs/architecture-alignment-spatial-intelligence-data-factory-2026-02-11.md`（含云上建设、专网迁移与 Qwen/GLM/腾讯混元适配选型）
 - `docs/cloud-bootstrap-runbook.md`（云上环境搭建执行手册）
+
+## Story 落地运行入口（2026-02）
+
+### 一键拉起三面板（工厂+两条产线）
+
+```bash
+/Users/huda/Code/worktrees/integration/scripts/panel_up_all.sh
+```
+
+默认地址：
+- 工厂工艺专家对话室：`http://127.0.0.1:8877`
+- 公安地址产线面板：`http://127.0.0.1:8787`
+- 城市治理产线面板：`http://127.0.0.1:8788`
+
+### 工厂脚本
+
+- `scripts/run_story.sh`：发布模板并启动工艺专家对话室（前台）
+- `scripts/clean_data.sh`：清理工厂测试/调试数据
+- `scripts/panel_up.sh`：后台拉起工艺专家对话室
+
+更多见：`docs/STORY-runtime-scripts.md` 与 `docs/STORY-alignment-check-2026-02-14.md`。
