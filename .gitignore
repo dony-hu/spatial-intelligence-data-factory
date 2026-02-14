@@ -17,3 +17,8 @@ infra/ansible/inventory.ini
 tools/bin/
 tools/venv/
 tools/keys/
+
+# Local runtime artifacts
+output/line_runs/
+output/recovery_snapshot_*/
+database/tc06_line_execution.db
