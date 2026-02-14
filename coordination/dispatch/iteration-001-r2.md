@@ -31,3 +31,13 @@
 - 工作包、观测包、产线结果三者版本一致
 - 每条线状态卡包含 Done/Next/Blocker/ETA
 - 不再出现跨线误改状态文件
+
+## R2 修正指令（立即生效）
+
+- 非 `Factory-Process` 线路禁止改动 `coordination/status/factory-process.md`
+- 各线路只允许更新各自状态文件：
+  - Factory-Process -> `factory-process.md`
+  - Factory-Tooling -> `factory-tooling.md`
+  - Factory-WorkPackage -> `factory-workpackage.md`
+  - Factory-Observability-Gen -> `factory-observability-gen.md`
+  - Line-Execution -> `line-execution.md`
