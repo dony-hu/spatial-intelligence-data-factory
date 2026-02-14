@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>工厂双产线执行面板</title>
+  <style>
+    body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; margin: 20px; background:#f3f7fb; color:#16324f; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    .card { background:#fff; border:1px solid #d7e4f2; border-radius:10px; padding:14px; margin-bottom:12px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    pre { white-space: pre-wrap; word-break: break-word; background:#f7fbff; border:1px solid #e2ecf7; border-radius:8px; padding:10px; max-height:360px; overflow:auto; }
+    button { background:#1f5a8f; color:#fff; border:none; border-radius:8px; padding:8px 10px; cursor:pointer; }
+    .meta { color:#4b6580; font-size:12px; }
+    ul { margin: 6px 0 0 20px; }
+    @media (max-width:900px){ .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>工厂项目 Story-5 面板（双产线结果回拉）</h2>
+      <p class="meta" id="summaryMeta">加载中...</p>
+      <button onclick="refreshAll()">刷新</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>产线 A: 公安地址治理</h3>
+        <div class="meta" id="aMeta"></div>
+        <pre id="aLatest"></pre>
+        <h4>历史文件</h4>
+        <ul id="aHistory"></ul>
+      </div>
+
+      <div class="card">
+        <h3>产线 B: 城市治理</h3>
+        <div class="meta" id="bMeta"></div>
+        <pre id="bLatest"></pre>
+        <h4>历史文件</h4>
+        <ul id="bHistory"></ul>
+      </div>
+    </div>
+  </div>
+
+<script>
+async function getJson(url){
+  const r = await fetch(url);
+  return r.json();
+}
+
+function renderHistory(el, history){
+  el.innerHTML = '';
+  history.forEach(h => {
+    const li = document.createElement('li');
+    li.textContent = `${h.name} (${h.type}) @ ${h.mtime}`;
+    el.appendChild(li);
+  });
+}
+
+async function refreshAll(){
+  const summary = await getJson('/api/summary');
+  document.getElementById('summaryMeta').textContent = `后台更新时间: ${summary.updated_at}`;
+
+  const aLatest = await getJson('/api/line/public_security_address/latest');
+  const aHistory = await getJson('/api/line/public_security_address/history');
+  document.getElementById('aMeta').textContent = `历史条数: ${aHistory.history.length}`;
+  document.getElementById('aLatest').textContent = JSON.stringify(aLatest.latest, null, 2);
+  renderHistory(document.getElementById('aHistory'), aHistory.history);
+
+  const bLatest = await getJson('/api/line/urban_governance/latest');
+  const bHistory = await getJson('/api/line/urban_governance/history');
+  document.getElementById('bMeta').textContent = `历史条数: ${bHistory.history.length}`;
+  document.getElementById('bLatest').textContent = JSON.stringify(bLatest.latest, null, 2);
+  renderHistory(document.getElementById('bHistory'), bHistory.history);
+}
+
+setInterval(refreshAll, 5000);
+refreshAll();
+</script>
+</body>
+</html>
