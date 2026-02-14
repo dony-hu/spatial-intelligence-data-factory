@@ -9,6 +9,17 @@ from typing import List, Dict, Any
 class StepIdentifier:
     """步骤识别器"""
 
+    STEP_ERROR_CODES = {
+        'INPUT_VALIDATION': 'INPUT_VALIDATION_FAILED',
+        'ADDRESS_NORMALIZATION': 'ADDRESS_NORMALIZATION_FAILED',
+        'ADDRESS_SEGMENTATION': 'ADDRESS_SEGMENTATION_FAILED',
+        'QUALITY_CHECK': 'QUALITY_CHECK_FAILED',
+        'OUTPUT_PERSIST': 'OUTPUT_PERSIST_FAILED',
+        'DATA_CLEANING': 'DATA_CLEANING_FAILED',
+        'DATA_MATCHING': 'DATA_MATCHING_FAILED',
+        'DATA_GENERATION': 'DATA_GENERATION_FAILED',
+    }
+
     # 步骤→工具映射
     STEP_DEFINITIONS = {
         'INPUT_VALIDATION': {
@@ -154,7 +165,8 @@ class StepIdentifier:
                         'description': step_def['description'],
                         'tool_name': step_def['tool_name'],
                         'tool_module': step_def['tool_module'],
-                        'parameters': step_def['parameters']
+                        'parameters': step_def['parameters'],
+                        'error_code': self._default_error_code(step_def['name']),
                     })
                     found_steps.add(step_key)
                     break
@@ -168,7 +180,8 @@ class StepIdentifier:
                     'description': '输入验证',
                     'tool_name': 'address_validator',
                     'tool_module': 'validators.py',
-                    'parameters': self.STEP_DEFINITIONS['INPUT_VALIDATION']['parameters']
+                    'parameters': self.STEP_DEFINITIONS['INPUT_VALIDATION']['parameters'],
+                    'error_code': self._default_error_code('INPUT_VALIDATION'),
                 },
                 {
                     'step_index': 2,
@@ -176,7 +189,8 @@ class StepIdentifier:
                     'description': '地址标准化',
                     'tool_name': 'address_normalizer',
                     'tool_module': 'normalizers.py',
-                    'parameters': self.STEP_DEFINITIONS['ADDRESS_NORMALIZATION']['parameters']
+                    'parameters': self.STEP_DEFINITIONS['ADDRESS_NORMALIZATION']['parameters'],
+                    'error_code': self._default_error_code('ADDRESS_NORMALIZATION'),
                 },
                 {
                     'step_index': 3,
@@ -184,7 +198,8 @@ class StepIdentifier:
                     'description': '质量评估',
                     'tool_name': 'quality_evaluator',
                     'tool_module': 'evaluators.py',
-                    'parameters': self.STEP_DEFINITIONS['QUALITY_CHECK']['parameters']
+                    'parameters': self.STEP_DEFINITIONS['QUALITY_CHECK']['parameters'],
+                    'error_code': self._default_error_code('QUALITY_CHECK'),
                 }
             ]
 
@@ -196,7 +211,14 @@ class StepIdentifier:
                 'description': '结果持久化',
                 'tool_name': 'db_persister',
                 'tool_module': 'persisters.py',
-                'parameters': self.STEP_DEFINITIONS['OUTPUT_PERSIST']['parameters']
+                'parameters': self.STEP_DEFINITIONS['OUTPUT_PERSIST']['parameters'],
+                'error_code': self._default_error_code('OUTPUT_PERSIST'),
             })
 
         return identified_steps
+
+    def _default_error_code(self, step_name: str) -> str:
+        """Return default normalized error code for a step."""
+        if step_name in self.STEP_ERROR_CODES:
+            return self.STEP_ERROR_CODES[step_name]
+        return f"{step_name}_FAILED"
