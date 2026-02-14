@@ -25,6 +25,7 @@ class CompileResult:
     process_spec: Dict[str, Any]
     tool_scripts: Dict[str, str]                    # 工具名 → 代码
     tool_metadata: List[Dict[str, Any]]             # 工具信息和缺失告警
+    observability_bundle: Dict[str, Any]            # 观测入口与指标文件
     validation_errors: List[str]
     validation_warnings: List[str]
     execution_readiness: str                        # "ready" | "partial" | "manual_required"
@@ -67,6 +68,7 @@ class ProcessCompiler:
         warnings = []
         tool_scripts = {}
         tool_metadata = []
+        observability_bundle = {}
 
         try:
             # 步骤1: 提取元数据
@@ -79,6 +81,8 @@ class ProcessCompiler:
             steps = self._identify_steps(draft_dict)
             if not steps:
                 errors.append("无法识别工艺步骤，请补充工艺描述")
+            for step in steps:
+                step.setdefault('error_code', f"{step.get('name', 'STEP')}_FAILED")
 
             # 步骤3: 生成工具脚本
             for step in steps:
@@ -117,17 +121,25 @@ class ProcessCompiler:
                         'recommendation': result.get('recommendation', '')
                     })
 
-            # 步骤4: 生成 ProcessSpec
+            # 步骤4: 生成观测代码包
+            observability_bundle = self.tool_generator.generate_observability_bundle(
+                process_code=process_code,
+                process_version="v1.0.0",
+                steps=steps,
+            )
+
+            # 步骤5: 生成 ProcessSpec
             process_spec = self._build_process_spec(
                 process_code=process_code,
                 process_name=process_name,
                 domain=domain,
                 metadata=metadata,
                 steps=steps,
-                tool_scripts=tool_scripts
+                tool_scripts=tool_scripts,
+                observability_bundle=observability_bundle,
             )
 
-            # 步骤5: 验证工艺
+            # 步骤6: 验证工艺
             validation_result = self.validator.validate(process_spec)
             errors.extend(validation_result['errors'])
             warnings.extend(validation_result['warnings'])
@@ -148,6 +160,7 @@ class ProcessCompiler:
                 process_spec=process_spec,
                 tool_scripts=tool_scripts,
                 tool_metadata=tool_metadata,
+                observability_bundle=observability_bundle,
                 validation_errors=errors,
                 validation_warnings=warnings,
                 execution_readiness=execution_readiness
@@ -162,6 +175,7 @@ class ProcessCompiler:
                 process_spec={},
                 tool_scripts={},
                 tool_metadata=[],
+                observability_bundle={},
                 validation_errors=[f"编译异常: {str(e)}"],
                 validation_warnings=[],
                 execution_readiness="manual_required"
@@ -181,7 +195,8 @@ class ProcessCompiler:
                            domain: str,
                            metadata: Dict[str, Any],
                            steps: List[Dict[str, Any]],
-                           tool_scripts: Dict[str, str]) -> Dict[str, Any]:
+                           tool_scripts: Dict[str, str],
+                           observability_bundle: Dict[str, Any]) -> Dict[str, Any]:
         """构建 ProcessSpec"""
 
         process_id = f"procdef_{uuid.uuid4().hex[:12]}"
@@ -222,6 +237,7 @@ class ProcessCompiler:
             # 工具清单
             "tools": list(tool_scripts.keys()),
             "tool_scripts": tool_scripts,
+            "observability_bundle": observability_bundle,
 
             # 其他
             "goal": metadata.get('goal', ''),

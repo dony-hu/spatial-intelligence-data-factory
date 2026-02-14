@@ -256,6 +256,7 @@ def _create_design_draft(
         "process_spec": compile_result.process_spec,
         "tool_scripts": compile_result.tool_scripts,
         "tool_metadata": compile_result.tool_metadata,
+        "observability_bundle": compile_result.observability_bundle,
         "execution_readiness": compile_result.execution_readiness,
         "validation_errors": compile_result.validation_errors,
         "validation_warnings": compile_result.validation_warnings,

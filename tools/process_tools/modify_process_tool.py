@@ -194,6 +194,8 @@ class ModifyProcessTool(BaseTool):
                         "process_spec": compilation_result.process_spec,
                         "tool_scripts": compilation_result.tool_scripts,
                         "tool_metadata": compilation_result.tool_metadata,
+                        "observability_bundle": compilation_result.observability_bundle,
+                        "execution_readiness": compilation_result.execution_readiness,
                         "validation_errors": compilation_result.validation_errors,
                         "validation_warnings": compilation_result.validation_warnings,
                     }
