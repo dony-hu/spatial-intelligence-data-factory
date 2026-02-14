@@ -1,0 +1,90 @@
+{
+  "workpackage_id": "wp-address-topology-v1.0.2",
+  "version": "1.0.2",
+  "factory_release": {
+    "process_version": "process-v1.0.2",
+    "tool_bundle_version": "tools-v1.0.2",
+    "engine_version": "engine-v1.0.2",
+    "released_at": "2026-02-14T11:40:00+08:00",
+    "published_by": "Factory-WorkPackage",
+    "published_at": "2026-02-14T11:40:00+08:00",
+    "rollback_version": "1.0.1",
+    "ticket_id": "TC-04-R1",
+    "change_reason": "TC-04恢复后发布v1.0.2，补齐下发元信息并对齐产线回传字段",
+    "dispatch_scope": "line-execution/address-topology",
+    "dispatch_status": "released"
+  },
+  "line_spec": {
+    "line_type": "address_to_topology",
+    "goal": "基于单条地址输入产出拓扑节点与关系",
+    "constraints": [
+      "产线不得修改工艺与工具内核",
+      "质量阈值>=0.95",
+      "失败需输出步骤级错误信息"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": ["raw_address"],
+    "properties": {
+      "raw_address": {"type": "string", "minLength": 3},
+      "task_id": {"type": "string"},
+      "trace_id": {"type": "string"}
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": ["standard_address", "topology_nodes", "topology_edges", "quality_score", "run_record"],
+    "properties": {
+      "standard_address": {"type": "string"},
+      "topology_nodes": {"type": "array"},
+      "topology_edges": {"type": "array"},
+      "quality_score": {"type": "number"},
+      "run_record": {
+        "type": "object",
+        "required": ["status", "duration_ms"],
+        "properties": {
+          "status": {"type": "string"},
+          "duration_ms": {"type": "number"},
+          "error_code": {"type": "string"}
+        }
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {"code": "parse", "name": "地址解析"},
+      {"code": "normalize", "name": "地址标准化"},
+      {"code": "validate", "name": "质量校验"},
+      {"code": "topology_build", "name": "拓扑构建"}
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "tools/address_governance.py::AddressParser",
+      "tools/address_governance.py::AddressStandardizer",
+      "tools/spatial_entity_graph.py::SpatialEntityGraph"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "tools/factory_workflow.py",
+    "mode": "single_record"
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "workpackages/bundles/address-topology-v1.0.2/observability/line_observe.py",
+      "workpackages/bundles/address-topology-v1.0.2/observability/line_metrics.json"
+    ]
+  },
+  "rollback": {
+    "from_version": "1.0.2",
+    "fallback_version": "1.0.1",
+    "instructions": [
+      "停止新任务注入",
+      "切换到 wp-address-topology-v1.0.1",
+      "重放失败队列并比对质量结果"
+    ]
+  }
+}

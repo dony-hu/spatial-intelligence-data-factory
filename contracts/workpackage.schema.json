@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workpackage.v1",
+  "title": "WorkPackageV1",
+  "type": "object",
+  "required": [
+    "workpackage_id",
+    "version",
+    "factory_release",
+    "line_spec",
+    "input_contract",
+    "output_contract",
+    "process_spec",
+    "tool_bundle",
+    "engine_bundle",
+    "observability_bundle",
+    "rollback"
+  ],
+  "properties": {
+    "workpackage_id": {"type": "string"},
+    "version": {"type": "string"},
+    "factory_release": {
+      "type": "object",
+      "required": ["process_version", "tool_bundle_version", "engine_version", "released_at"],
+      "properties": {
+        "process_version": {"type": "string"},
+        "tool_bundle_version": {"type": "string"},
+        "engine_version": {"type": "string"},
+        "released_at": {"type": "string"}
+      }
+    },
+    "line_spec": {
+      "type": "object",
+      "required": ["line_type", "goal"],
+      "properties": {
+        "line_type": {"type": "string"},
+        "goal": {"type": "string"},
+        "constraints": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "input_contract": {"type": "object"},
+    "output_contract": {"type": "object"},
+    "process_spec": {"type": "object"},
+    "tool_bundle": {"type": "object"},
+    "engine_bundle": {"type": "object"},
+    "observability_bundle": {
+      "type": "object",
+      "required": ["generator", "entrypoints"],
+      "properties": {
+        "generator": {"type": "string"},
+        "entrypoints": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["from_version", "fallback_version", "instructions"],
+      "properties": {
+        "from_version": {"type": "string"},
+        "fallback_version": {"type": "string"},
+        "instructions": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,46 @@
+{
+  "workpackage_id": "wp-address-topology-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-v1.0.0",
+    "tool_bundle_version": "tools-v1.0.0",
+    "engine_version": "engine-v1.0.0",
+    "released_at": "2026-02-14T00:00:00"
+  },
+  "line_spec": {
+    "line_type": "address_to_topology",
+    "goal": "按输入地址生产结构化拓扑数据",
+    "constraints": ["质量阈值>=0.95", "失败可追溯"]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": ["raw_address"]
+  },
+  "output_contract": {
+    "type": "object",
+    "required": ["standard_address", "topology_nodes", "topology_edges", "quality_score"]
+  },
+  "process_spec": {
+    "steps": ["parse", "normalize", "validate", "topology_build"]
+  },
+  "tool_bundle": {
+    "tools": ["address_parser", "address_standardizer", "graph_builder"]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "mode": "single_record"
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": ["line_observe.py", "line_metrics.json"]
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "0.9.0",
+    "instructions": [
+      "停止新任务注入",
+      "切换到fallback工作包",
+      "重放失败队列"
+    ]
+  }
+}
