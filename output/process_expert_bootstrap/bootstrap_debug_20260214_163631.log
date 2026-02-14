@@ -1,0 +1,84 @@
+[INFO] running in REAL LLM mode
+{
+  "status": "ok",
+  "run_id": "bootstrap_20260214_163631",
+  "cases_file": "/Users/huda/Code/worktrees/factory-address-verify/testdata/fixtures/address-line-quality-audit-cases-2026-02-14.json",
+  "rounds": [
+    {
+      "round": 1,
+      "stage": "design",
+      "score": 1.0,
+      "audit": {
+        "score": 1.0,
+        "checks": {
+          "status_ok": true,
+          "compile_success": true,
+          "has_process_spec": true,
+          "has_tool_scripts": true,
+          "doc_length_ok": true,
+          "contains_iteration_keywords": true,
+          "plan_steps_ok": true
+        },
+        "failed_checks": [],
+        "case_total": 15,
+        "tool_count": 3
+      },
+      "process_code": "PROC_TOOLPACK_BOOTSTRAP",
+      "draft_id": "draft_a6a64b0d80"
+    },
+    {
+      "round": 2,
+      "stage": "modify",
+      "score": 1.0,
+      "audit": {
+        "score": 1.0,
+        "checks": {
+          "status_ok": true,
+          "compile_success": true,
+          "has_process_spec": true,
+          "has_tool_scripts": true,
+          "doc_length_ok": true,
+          "contains_iteration_keywords": true,
+          "plan_steps_ok": true
+        },
+        "failed_checks": [],
+        "case_total": 15,
+        "tool_count": 4
+      },
+      "process_code": "PROC_TOOLPACK_BOOTSTRAP",
+      "draft_id": "draft_a26804d210"
+    },
+    {
+      "round": 3,
+      "stage": "modify",
+      "score": 1.0,
+      "audit": {
+        "score": 1.0,
+        "checks": {
+          "status_ok": true,
+          "compile_success": true,
+          "has_process_spec": true,
+          "has_tool_scripts": true,
+          "doc_length_ok": true,
+          "contains_iteration_keywords": true,
+          "plan_steps_ok": true
+        },
+        "failed_checks": [],
+        "case_total": 15,
+        "tool_count": 4
+      },
+      "process_code": "PROC_TOOLPACK_BOOTSTRAP",
+      "draft_id": "draft_b651e12bb0"
+    }
+  ],
+  "best_round": {
+    "round": 1,
+    "score": 1.0,
+    "draft_id": "draft_a6a64b0d80",
+    "process_code": "PROC_TOOLPACK_BOOTSTRAP"
+  },
+  "llm_interaction_count": 5,
+  "min_rounds": 3,
+  "max_rounds": 3,
+  "meets_threshold": true
+}

@@ -52,6 +52,7 @@ process_chat_sessions: Dict[str, List[Dict[str, str]]] = {}
 process_chat_pending_ops: Dict[str, Dict[str, Any]] = {}
 process_db_api = ProcessDBApi(runtime_store=runtime_store, process_design_drafts=process_design_drafts)
 schema_validator = DialogueSchemaValidator()  # Phase 1: Parameter validation
+WRITE_INTENTS = {"create_process", "create_version", "publish_draft"}
 
 # Phase 3: ToolRegistry and SessionState initialization
 registry_initialized = False
@@ -436,6 +437,9 @@ def _run_process_expert_chat_turn(session_id: str, user_message: str) -> Dict[st
     operation_scripts = _build_operation_scripts(intent, params, parsed)
     session_draft = runtime_store.get_latest_editable_draft_by_session(session_id)
 
+    if intent in WRITE_INTENTS:
+        execute = False
+
     if intent in {"design_process", "modify_process"}:
         if not execute:
             base_draft_id = str((session_draft or {}).get("draft_id") or "")
@@ -465,8 +469,7 @@ def _run_process_expert_chat_turn(session_id: str, user_message: str) -> Dict[st
             )
             tool_result = {"status": "ok", "intent": intent, "draft": tool_draft}
     else:
-        write_intents = {"create_process", "create_version", "publish_draft"}
-        if intent in write_intents and not execute:
+        if intent in WRITE_INTENTS and not execute:
             # Phase 1: Create structured confirmation record
             expires_at = (datetime.now() + timedelta(seconds=900)).isoformat()  # 15-minute expiry
             confirmation_id = runtime_store.create_confirmation_record(
@@ -493,7 +496,7 @@ def _run_process_expert_chat_turn(session_id: str, user_message: str) -> Dict[st
         else:
             tool_result = _execute_process_expert_intent(intent, params, session_id=session_id)
             update_session_from_tool_result(session_id, intent, tool_result)
-            if intent in write_intents:
+            if intent in WRITE_INTENTS:
                 process_chat_pending_ops.pop(session_id, None)
     assistant_message = str(parsed.get("assistant_reply") or "").strip()
     if not assistant_message:
@@ -503,6 +506,8 @@ def _run_process_expert_chat_turn(session_id: str, user_message: str) -> Dict[st
             assistant_message = f"已完成操作：{intent}"
         else:
             assistant_message = f"执行失败：{tool_result.get('error', 'unknown')}"
+    if intent in WRITE_INTENTS and tool_result.get("status") == "pending_confirmation":
+        assistant_message = "写操作已进入确认门禁，请调用确认接口后执行。"
     history.append({"role": "assistant", "content": assistant_message})
     runtime_store.append_process_chat_turn(
         session_id=session_id,

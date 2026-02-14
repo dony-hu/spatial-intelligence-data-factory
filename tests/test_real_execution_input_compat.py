@@ -1,4 +1,7 @@
 import sys
+import os
+import json
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -12,6 +15,51 @@ from testdata.factory_demo_scenarios import get_all_scenarios
 
 
 class RealExecutionInputCompatTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._old_toolpack = os.environ.get("FACTORY_ADDRESS_TOOLPACK_PATH")
+        cls._tmp_dir = tempfile.TemporaryDirectory()
+        cls._toolpack_path = Path(cls._tmp_dir.name) / "generated_toolpack.json"
+        cls._toolpack_path.write_text(
+            json.dumps(
+                {
+                    "version": "ut.generated.1",
+                    "cities": [
+                        {
+                            "name": "上海市",
+                            "aliases": ["上海"],
+                            "districts": [
+                                {"name": "黄浦区", "aliases": ["黄浦"]},
+                                {"name": "浦东新区", "aliases": ["浦东"]},
+                                {"name": "徐汇区", "aliases": ["徐汇"]},
+                                {"name": "静安区", "aliases": ["静安"]},
+                                {"name": "虹口区", "aliases": ["虹口"]},
+                                {"name": "杨浦区", "aliases": ["杨浦"]},
+                                {"name": "闵行区", "aliases": ["闵行"]},
+                                {"name": "宝山区", "aliases": ["宝山"]},
+                                {"name": "嘉定区", "aliases": ["嘉定"]},
+                                {"name": "奉贤区", "aliases": ["奉贤"]},
+                                {"name": "青浦区", "aliases": ["青浦"]},
+                                {"name": "松江区", "aliases": ["松江"]}
+                            ]
+                        }
+                    ]
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        os.environ["FACTORY_ADDRESS_TOOLPACK_PATH"] = str(cls._toolpack_path)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp_dir.cleanup()
+        if cls._old_toolpack is None:
+            os.environ.pop("FACTORY_ADDRESS_TOOLPACK_PATH", None)
+        else:
+            os.environ["FACTORY_ADDRESS_TOOLPACK_PATH"] = cls._old_toolpack
+
     def _dummy_order(self):
         spec = ProcessSpec(
             process_id="proc_ut",
@@ -37,6 +85,18 @@ class RealExecutionInputCompatTests(unittest.TestCase):
         execution = w.execute_task(order, {"address": "上海市黄浦区中山东一路10号"}, ProcessStep.STANDARDIZATION)
         self.assertTrue(execution.output_data.get("valid"))
         self.assertTrue(bool(execution.output_data.get("standardized_address")))
+
+    def test_standardization_without_toolpack_must_fail(self):
+        prev = os.environ.pop("FACTORY_ADDRESS_TOOLPACK_PATH", None)
+        try:
+            w = Worker("worker_ut_no_toolpack")
+            order = self._dummy_order()
+            execution = w.execute_task(order, {"address": "上海市黄浦区中山东一路10号"}, ProcessStep.STANDARDIZATION)
+            self.assertFalse(execution.output_data.get("valid"))
+            self.assertEqual(execution.output_data.get("error_code"), "MISSING_TOOLPACK")
+        finally:
+            if prev is not None:
+                os.environ["FACTORY_ADDRESS_TOOLPACK_PATH"] = prev
 
     def test_relationship_extraction_scenario_not_all_cleaning_fail(self):
         wf = FactoryWorkflow(factory_name="ut-factory-relationship")

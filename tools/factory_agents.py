@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timedelta
+import json
+import os
 import re
 
 from tools.factory_framework import (
@@ -436,6 +438,52 @@ class Worker(FactoryAgent):
         self.current_task = None
         self.total_tokens_consumed = 0.0
         self.tasks_completed = 0
+        self.address_toolpack = self._load_address_toolpack()
+
+    def _load_address_toolpack(self) -> Dict[str, Any]:
+        toolpack_path = str(os.getenv('FACTORY_ADDRESS_TOOLPACK_PATH') or '').strip()
+        if not toolpack_path:
+            return {}
+        try:
+            with open(toolpack_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            return {}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _build_city_alias_map(toolpack: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        cities = toolpack.get('cities') or []
+        alias_map: Dict[str, Dict[str, Any]] = {}
+        for city_item in cities:
+            if not isinstance(city_item, dict):
+                continue
+            city_name = str(city_item.get('name') or '').strip()
+            if not city_name:
+                continue
+            aliases = city_item.get('aliases') or []
+            normalized_aliases = [city_name] + [str(a).strip() for a in aliases if str(a).strip()]
+            for alias in normalized_aliases:
+                alias_map[alias] = city_item
+        return alias_map
+
+    @staticmethod
+    def _build_district_alias_map(city_item: Dict[str, Any]) -> Dict[str, str]:
+        districts = city_item.get('districts') or []
+        district_alias_map: Dict[str, str] = {}
+        for district_item in districts:
+            if not isinstance(district_item, dict):
+                continue
+            district_name = str(district_item.get('name') or '').strip()
+            if not district_name:
+                continue
+            aliases = district_item.get('aliases') or []
+            normalized_aliases = [district_name] + [str(a).strip() for a in aliases if str(a).strip()]
+            for alias in normalized_aliases:
+                district_alias_map[alias] = district_name
+        return district_alias_map
 
     def execute_task(
         self,
@@ -521,32 +569,32 @@ class Worker(FactoryAgent):
             },
             'aliases': [],
             'confidence': 0.0,
+            'error_code': '',
         }
         if not raw_address:
+            result['error_code'] = 'EMPTY_INPUT'
+            return result
+
+        if not self.address_toolpack:
+            result['error_code'] = 'MISSING_TOOLPACK'
             return result
 
         address = raw_address.replace(' ', '')
-        if address.startswith('上海市'):
-            body = address[3:]
-        elif address.startswith('上海'):
-            body = address[2:]
-        else:
-            body = address
 
-        district_map = {
-            '浦东新区': '浦东新区', '浦东': '浦东新区',
-            '黄浦区': '黄浦区', '黄浦': '黄浦区',
-            '徐汇区': '徐汇区', '徐汇': '徐汇区',
-            '静安区': '静安区', '静安': '静安区',
-            '虹口区': '虹口区', '虹口': '虹口区',
-            '杨浦区': '杨浦区', '杨浦': '杨浦区',
-            '闵行区': '闵行区', '闵行': '闵行区',
-            '宝山区': '宝山区', '宝山': '宝山区',
-            '嘉定区': '嘉定区', '嘉定': '嘉定区',
-            '奉贤区': '奉贤区', '奉贤': '奉贤区',
-            '青浦区': '青浦区', '青浦': '青浦区',
-            '松江区': '松江区', '松江': '松江区',
-        }
+        city_alias_map = self._build_city_alias_map(self.address_toolpack)
+        city = ''
+        body = ''
+        for alias in sorted(city_alias_map.keys(), key=len, reverse=True):
+            if address.startswith(alias):
+                city_item = city_alias_map[alias]
+                city = str(city_item.get('name') or '').strip()
+                body = address[len(alias):]
+                break
+        if not city:
+            result['error_code'] = 'UNKNOWN_CITY'
+            return result
+
+        district_map = self._build_district_alias_map(city_item)
 
         district = ''
         rest = body
@@ -556,6 +604,7 @@ class Worker(FactoryAgent):
                 rest = body[len(key):]
                 break
         if not district:
+            result['error_code'] = 'UNKNOWN_DISTRICT'
             return result
 
         room_match = re.search(r'(?P<room>\d+室)$', rest)
@@ -570,10 +619,12 @@ class Worker(FactoryAgent):
 
         house_match = re.search(r'(?P<num>\d+)(号)?$', rest)
         if not house_match:
+            result['error_code'] = 'MISSING_HOUSE_NUMBER'
             return result
         house = f"{house_match.group('num')}号"
         prefix = rest[:house_match.start()].strip()
         if not prefix:
+            result['error_code'] = 'MISSING_ROAD'
             return result
 
         community = ''
@@ -587,10 +638,7 @@ class Worker(FactoryAgent):
             else:
                 road = '未知路段'
 
-        if not re.search(r'(路|街|大道|巷)$', road) and road != '未知路段':
-            road = f"{road}路"
-
-        standardized = f"上海市{district}{road}"
+        standardized = f"{city}{district}{road}"
         if community:
             standardized += community
         standardized += house
@@ -608,7 +656,7 @@ class Worker(FactoryAgent):
             'valid': True,
             'standardized_address': standardized,
             'components': {
-                'city': '上海市',
+                'city': city,
                 'district': district,
                 'road': road,
                 'community': community,
@@ -618,6 +666,7 @@ class Worker(FactoryAgent):
             },
             'aliases': list(dict.fromkeys(aliases)),
             'confidence': explicit_score,
+            'error_code': '',
         }
 
     def _build_graph_payload(self, input_data: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,0 +1,174 @@
+{
+  "status": "ok",
+  "draft_id": "draft_0683991614",
+  "process_code": "PROC_TOOLPACK_BOOTSTRAP",
+  "process_name": "工具包生成工艺",
+  "base_process_id": "procdef_d39c28e29f14",
+  "change_request": "优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明",
+  "goal": "提升工艺文档质量与工具脚本完备度",
+  "plan": {
+    "auto_execute": false,
+    "max_duration_sec": 1200,
+    "quality_threshold": 0.9,
+    "priority": "1",
+    "steps": [
+      "地图API采样",
+      "LLM归并别名",
+      "工具包脚本生成",
+      "质量审计回放"
+    ]
+  },
+  "process_doc_markdown": "# 工艺流程文档：工具包生成工艺（修改版）\n\n- **process_code**: `PROC_TOOLPACK_BOOTSTRAP`\n- **change_request**: 优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明\n- **goal**: 提升工艺文档质量与工具脚本完备度\n- **auto_execute**: False\n\n## 修改步骤\n\n1. 地图API采样\n2. LLM归并别名\n3. 工具包脚本生成\n4. 质量审计回放\n\n## 配置信息\n\n| 配置项 | 值 |\n| ---- | ---- |\n| 执行优先级 | 1 |\n| 最大执行时长 | 1200s |\n| 质量阈值 | 0.9 |",
+  "created_at": "2026-02-14T18:01:51.595732",
+  "updated_at": "2026-02-14T18:01:51.595736",
+  "compilation": {
+    "success": true,
+    "process_code": "PROCTO_V1",
+    "process_spec": {
+      "process_id": "procdef_6264b7330a7c",
+      "process_code": "PROCTO_V1",
+      "process_name": "工具包生成",
+      "domain": "address_governance",
+      "version": "1.0.0",
+      "version_id": "procver_6ba190b9ca4e",
+      "status": "draft",
+      "created_at": "2026-02-14T18:01:51.596386",
+      "steps": [
+        {
+          "step_index": 1,
+          "name": "ADDRESS_NORMALIZATION",
+          "description": "地址标准化",
+          "tool_name": "address_normalizer",
+          "tool_module": "normalizers.py",
+          "parameters": {
+            "remove_spaces": true,
+            "remove_punctuation": true,
+            "simplified": true,
+            "lowercase": false
+          }
+        },
+        {
+          "step_index": 2,
+          "name": "ADDRESS_SEGMENTATION",
+          "description": "地址分词",
+          "tool_name": "address_segmenter",
+          "tool_module": "segmenters.py",
+          "parameters": {
+            "tokenizer": "jieba",
+            "remove_stop_words": true,
+            "return_positions": true
+          }
+        },
+        {
+          "step_index": 3,
+          "name": "QUALITY_CHECK",
+          "description": "质量评估",
+          "tool_name": "quality_evaluator",
+          "tool_module": "evaluators.py",
+          "parameters": {
+            "accuracy_threshold": 0.95,
+            "completeness_threshold": 0.9,
+            "consistency_threshold": 0.88
+          }
+        },
+        {
+          "step_index": 4,
+          "name": "DATA_GENERATION",
+          "description": "数据生成",
+          "tool_name": "data_generator",
+          "tool_module": "generators.py",
+          "parameters": {
+            "use_llm": true,
+            "model": "gpt-3.5",
+            "temperature": 0.7
+          }
+        },
+        {
+          "step_index": 5,
+          "name": "OUTPUT_PERSIST",
+          "description": "结果持久化",
+          "tool_name": "db_persister",
+          "tool_module": "persisters.py",
+          "parameters": {
+            "database": "sqlite",
+            "table_name": "process_results",
+            "batch_size": 1000
+          }
+        }
+      ],
+      "estimated_duration": 60,
+      "required_workers": 1,
+      "quality_rules": {
+        "accuracy_threshold": 0.9,
+        "completeness_threshold": 0.9,
+        "consistency_threshold": 0.9
+      },
+      "resource_requirements": {
+        "memory_gb": 2,
+        "timeout_sec": 600,
+        "retry_count": 3,
+        "batch_size": 1000
+      },
+      "tools": [
+        "address_normalizer",
+        "quality_evaluator",
+        "data_generator",
+        "db_persister"
+      ],
+      "tool_scripts": {
+        "address_normalizer": "\"\"\"\n地址规范化器 - 自动生成\nDomain: address_governance\n\"\"\"\n\ndef normalize_address(address: str, **config) -> Dict[str, str]:\n    \"\"\"规范化地址\"\"\"\n\n    original = address\n\n    # 去空格\n    if config.get('remove_spaces', True):\n        address = address.replace(' ', '').replace('\\u3000', '')\n\n    # 去标点\n    if config.get('remove_punctuation', True):\n        punctuation = '，。；：''\"\"（）【】{}、'\n        for p in punctuation:\n            address = address.replace(p, '')\n\n    # 繁简转换（简化版）\n    if config.get('simplified', True):\n        simplified_map = {'號': '号', '館': '馆', '國': '国'}\n        for trad, simp in simplified_map.items():\n            address = address.replace(trad, simp)\n\n    return {\n        'original': original,\n        'normalized': address,\n        'changed': original != address\n    }\n",
+        "quality_evaluator": "\"\"\"\n质量评估器 - 自动生成\nDomain: address_governance\n参数: {'accuracy_threshold': 0.95, 'completeness_threshold': 0.9, 'consistency_threshold': 0.88}\n\"\"\"\n\ndef evaluate_quality(output: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"\n    评估处理输出的质量\n\n    评估指标:\n    - accuracy: 准确率（0-1）\n    - completeness: 完整率（0-1）\n    - consistency: 一致性（0-1）\n    \"\"\"\n\n    accuracy = output.get('accuracy', 1.0)\n    completeness = output.get('completeness', 1.0)\n    consistency = output.get('consistency', 1.0)\n\n    # 加权评分\n    weights = config.get('weights', {'accuracy': 0.5, 'completeness': 0.3, 'consistency': 0.2})\n    overall_score = (\n        accuracy * weights['accuracy'] +\n        completeness * weights['completeness'] +\n        consistency * weights['consistency']\n    )\n\n    # 阈值检查\n    accuracy_threshold = config.get('accuracy_threshold', 0.95)\n    completeness_threshold = config.get('completeness_threshold', 0.9)\n    consistency_threshold = config.get('consistency_threshold', 0.88)\n\n    passed = (\n        accuracy >= accuracy_threshold and\n        completeness >= completeness_threshold and\n        consistency >= consistency_threshold\n    )\n\n    return {\n        'accuracy': accuracy,\n        'completeness': completeness,\n        'consistency': consistency,\n        'overall_score': overall_score,\n        'passed': passed,\n        'details': {\n            'accuracy_threshold': accuracy_threshold,\n            'completeness_threshold': completeness_threshold,\n            'consistency_threshold': consistency_threshold\n        }\n    }\n",
+        "data_generator": "\"\"\"\n数据生成器 - 自动生成\nDomain: address_governance\n参数: {'use_llm': True, 'model': 'gpt-3.5', 'temperature': 0.7}\n\"\"\"\n\nfrom typing import Dict, Any\n\n\ndef generate_data(input_payload: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"根据输入生成结构化数据。\n\n    说明：\n    - 默认返回规则生成结果\n    - 如接入外部 LLM，可在此函数中替换实现\n    \"\"\"\n\n    use_llm = bool(config.get(\"use_llm\", True))\n    model = str(config.get(\"model\", \"gpt-3.5\"))\n    temperature = float(config.get(\"temperature\", 0.7))\n\n    base = {\n        \"mode\": \"llm\" if use_llm else \"rule\",\n        \"model\": model,\n        \"temperature\": temperature,\n        \"input\": input_payload,\n    }\n\n    # 依赖外部推理服务：未配置时只返回能力状态，不伪造生成结果\n    base[\"generated\"] = {\n        \"status\": \"requires_external_generation_service\",\n        \"summary\": \"external generation service is required\",\n    }\n\n    return base\n",
+        "db_persister": "\"\"\"\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {'database': 'sqlite', 'table_name': 'process_results', 'batch_size': 1000}\n\"\"\"\n\nimport sqlite3\nimport json\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    \"\"\"数据库持久化器\"\"\"\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get('db_path', 'process_results.db')\n        self.table_name = config.get('table_name', 'process_results')\n        self.batch_size = config.get('batch_size', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:\n        \"\"\"\n        持久化数据到数据库\n\n        Args:\n            records: 数据记录列表\n\n        Returns:\n            {\n                'success': bool,\n                'inserted': int,\n                'failed': int,\n                'errors': list\n            }\n        \"\"\"\n\n        inserted = 0\n        failed = 0\n        errors = []\n\n        try:\n            conn = sqlite3.connect(self.db_path)\n            cursor = conn.cursor()\n\n            # 创建表（如果不存在）\n            self._create_table(cursor)\n\n            # 批量插入\n            for i in range(0, len(records), self.batch_size):\n                batch = records[i:i+self.batch_size]\n                try:\n                    for record in batch:\n                        self._insert_record(cursor, record)\n                    conn.commit()\n                    inserted += len(batch)\n                except Exception as e:\n                    errors.append(f'批次 {i//self.batch_size} 插入失败: {str(e)}')\n                    failed += len(batch)\n\n            conn.close()\n\n        except Exception as e:\n            errors.append(f'数据库操作错误: {str(e)}')\n            return {'success': False, 'inserted': 0, 'failed': len(records), 'errors': errors}\n\n        return {\n            'success': failed == 0,\n            'inserted': inserted,\n            'failed': failed,\n            'errors': errors\n        }\n\n    def _create_table(self, cursor):\n        \"\"\"创建表\"\"\"\n        create_sql = f\"\"\"\n            CREATE TABLE IF NOT EXISTS {self.table_name} (\n                id INTEGER PRIMARY KEY AUTOINCREMENT,\n                data TEXT NOT NULL,\n                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n            )\n        \"\"\"\n        cursor.execute(create_sql)\n\n    def _insert_record(self, cursor, record):\n        \"\"\"插入单条记录\"\"\"\n        data_json = json.dumps(record, ensure_ascii=False)\n        insert_sql = f\"INSERT INTO {self.table_name} (data) VALUES (?)\"\n        cursor.execute(insert_sql, (data_json,))\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -> Dict[str, Any]:\n    \"\"\"快速持久化函数\"\"\"\n    persister = DBPersister(**config)\n    return persister.persist(records)\n"
+      },
+      "goal": "提升工艺文档质量与工具脚本完备度",
+      "description": "请在已有工艺 PROC_TOOLPACK_BOOTSTRAP (工具包生成工艺) 基础上完成如下变更：优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明"
+    },
+    "tool_scripts": {
+      "address_normalizer": "\"\"\"\n地址规范化器 - 自动生成\nDomain: address_governance\n\"\"\"\n\ndef normalize_address(address: str, **config) -> Dict[str, str]:\n    \"\"\"规范化地址\"\"\"\n\n    original = address\n\n    # 去空格\n    if config.get('remove_spaces', True):\n        address = address.replace(' ', '').replace('\\u3000', '')\n\n    # 去标点\n    if config.get('remove_punctuation', True):\n        punctuation = '，。；：''\"\"（）【】{}、'\n        for p in punctuation:\n            address = address.replace(p, '')\n\n    # 繁简转换（简化版）\n    if config.get('simplified', True):\n        simplified_map = {'號': '号', '館': '馆', '國': '国'}\n        for trad, simp in simplified_map.items():\n            address = address.replace(trad, simp)\n\n    return {\n        'original': original,\n        'normalized': address,\n        'changed': original != address\n    }\n",
+      "quality_evaluator": "\"\"\"\n质量评估器 - 自动生成\nDomain: address_governance\n参数: {'accuracy_threshold': 0.95, 'completeness_threshold': 0.9, 'consistency_threshold': 0.88}\n\"\"\"\n\ndef evaluate_quality(output: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"\n    评估处理输出的质量\n\n    评估指标:\n    - accuracy: 准确率（0-1）\n    - completeness: 完整率（0-1）\n    - consistency: 一致性（0-1）\n    \"\"\"\n\n    accuracy = output.get('accuracy', 1.0)\n    completeness = output.get('completeness', 1.0)\n    consistency = output.get('consistency', 1.0)\n\n    # 加权评分\n    weights = config.get('weights', {'accuracy': 0.5, 'completeness': 0.3, 'consistency': 0.2})\n    overall_score = (\n        accuracy * weights['accuracy'] +\n        completeness * weights['completeness'] +\n        consistency * weights['consistency']\n    )\n\n    # 阈值检查\n    accuracy_threshold = config.get('accuracy_threshold', 0.95)\n    completeness_threshold = config.get('completeness_threshold', 0.9)\n    consistency_threshold = config.get('consistency_threshold', 0.88)\n\n    passed = (\n        accuracy >= accuracy_threshold and\n        completeness >= completeness_threshold and\n        consistency >= consistency_threshold\n    )\n\n    return {\n        'accuracy': accuracy,\n        'completeness': completeness,\n        'consistency': consistency,\n        'overall_score': overall_score,\n        'passed': passed,\n        'details': {\n            'accuracy_threshold': accuracy_threshold,\n            'completeness_threshold': completeness_threshold,\n            'consistency_threshold': consistency_threshold\n        }\n    }\n",
+      "data_generator": "\"\"\"\n数据生成器 - 自动生成\nDomain: address_governance\n参数: {'use_llm': True, 'model': 'gpt-3.5', 'temperature': 0.7}\n\"\"\"\n\nfrom typing import Dict, Any\n\n\ndef generate_data(input_payload: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"根据输入生成结构化数据。\n\n    说明：\n    - 默认返回规则生成结果\n    - 如接入外部 LLM，可在此函数中替换实现\n    \"\"\"\n\n    use_llm = bool(config.get(\"use_llm\", True))\n    model = str(config.get(\"model\", \"gpt-3.5\"))\n    temperature = float(config.get(\"temperature\", 0.7))\n\n    base = {\n        \"mode\": \"llm\" if use_llm else \"rule\",\n        \"model\": model,\n        \"temperature\": temperature,\n        \"input\": input_payload,\n    }\n\n    # 依赖外部推理服务：未配置时只返回能力状态，不伪造生成结果\n    base[\"generated\"] = {\n        \"status\": \"requires_external_generation_service\",\n        \"summary\": \"external generation service is required\",\n    }\n\n    return base\n",
+      "db_persister": "\"\"\"\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {'database': 'sqlite', 'table_name': 'process_results', 'batch_size': 1000}\n\"\"\"\n\nimport sqlite3\nimport json\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    \"\"\"数据库持久化器\"\"\"\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get('db_path', 'process_results.db')\n        self.table_name = config.get('table_name', 'process_results')\n        self.batch_size = config.get('batch_size', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:\n        \"\"\"\n        持久化数据到数据库\n\n        Args:\n            records: 数据记录列表\n\n        Returns:\n            {\n                'success': bool,\n                'inserted': int,\n                'failed': int,\n                'errors': list\n            }\n        \"\"\"\n\n        inserted = 0\n        failed = 0\n        errors = []\n\n        try:\n            conn = sqlite3.connect(self.db_path)\n            cursor = conn.cursor()\n\n            # 创建表（如果不存在）\n            self._create_table(cursor)\n\n            # 批量插入\n            for i in range(0, len(records), self.batch_size):\n                batch = records[i:i+self.batch_size]\n                try:\n                    for record in batch:\n                        self._insert_record(cursor, record)\n                    conn.commit()\n                    inserted += len(batch)\n                except Exception as e:\n                    errors.append(f'批次 {i//self.batch_size} 插入失败: {str(e)}')\n                    failed += len(batch)\n\n            conn.close()\n\n        except Exception as e:\n            errors.append(f'数据库操作错误: {str(e)}')\n            return {'success': False, 'inserted': 0, 'failed': len(records), 'errors': errors}\n\n        return {\n            'success': failed == 0,\n            'inserted': inserted,\n            'failed': failed,\n            'errors': errors\n        }\n\n    def _create_table(self, cursor):\n        \"\"\"创建表\"\"\"\n        create_sql = f\"\"\"\n            CREATE TABLE IF NOT EXISTS {self.table_name} (\n                id INTEGER PRIMARY KEY AUTOINCREMENT,\n                data TEXT NOT NULL,\n                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n            )\n        \"\"\"\n        cursor.execute(create_sql)\n\n    def _insert_record(self, cursor, record):\n        \"\"\"插入单条记录\"\"\"\n        data_json = json.dumps(record, ensure_ascii=False)\n        insert_sql = f\"INSERT INTO {self.table_name} (data) VALUES (?)\"\n        cursor.execute(insert_sql, (data_json,))\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -> Dict[str, Any]:\n    \"\"\"快速持久化函数\"\"\"\n    persister = DBPersister(**config)\n    return persister.persist(records)\n"
+    },
+    "tool_metadata": [
+      {
+        "tool_name": "address_normalizer",
+        "step": "ADDRESS_NORMALIZATION",
+        "status": "generated",
+        "file_path": "tools/generated_tools/normalizers/address_normalizer.py"
+      },
+      {
+        "tool_name": "address_segmenter",
+        "step": "ADDRESS_SEGMENTATION",
+        "status": "requires_external",
+        "required_libs": [
+          "jieba"
+        ],
+        "message": "分词工具需要外部库支持",
+        "solution": "\n分词工具需要以下库之一:\n\n1. jieba（推荐，纯Python实现）\n   pip install jieba\n\n2. LAC（百度NLP）\n   pip install pylac\n\n3. HanLP（哈工大）\n   pip install hanlp\n\n或者配置现有NLP服务:\n   API端点: http://nlp-service/segment\n   方法: POST\n   请求体: {{\"text\": \"地址文本\"}}\n   响应: {{\"tokens\": [...]}}\n"
+      },
+      {
+        "tool_name": "quality_evaluator",
+        "step": "QUALITY_CHECK",
+        "status": "generated",
+        "file_path": "tools/generated_tools/evaluators/quality_evaluator.py"
+      },
+      {
+        "tool_name": "data_generator",
+        "step": "DATA_GENERATION",
+        "status": "generated",
+        "file_path": "tools/generated_tools/generators/data_generator.py"
+      },
+      {
+        "tool_name": "db_persister",
+        "step": "OUTPUT_PERSIST",
+        "status": "generated",
+        "file_path": "tools/generated_tools/persisters/db_persister.py"
+      }
+    ],
+    "validation_errors": [],
+    "validation_warnings": [
+      "步骤 ADDRESS_SEGMENTATION 需要外部库: 分词工具需要外部库支持"
+    ]
+  }
+}

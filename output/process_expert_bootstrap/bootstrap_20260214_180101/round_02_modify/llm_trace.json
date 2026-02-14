@@ -1,0 +1,410 @@
+[
+  {
+    "timestamp": "2026-02-14T18:01:32.951191",
+    "event_type": "suggest_change_request",
+    "round_index": 2,
+    "input_audit": {
+      "score": 0.8181818181818182,
+      "checks": {
+        "status_ok": true,
+        "compile_success": true,
+        "has_process_spec": true,
+        "has_tool_scripts": true,
+        "doc_length_ok": true,
+        "contains_iteration_keywords": true,
+        "plan_steps_ok": true,
+        "story_authenticity_two_trusted_sources": true,
+        "story_standardized_completion_with_street": false,
+        "story_token_graph_chain_present": false,
+        "story_clear_conclusion": true
+      },
+      "failed_checks": [
+        "story_standardized_completion_with_street",
+        "story_token_graph_chain_present"
+      ],
+      "failed_check_analysis": [
+        {
+          "check": "story_standardized_completion_with_street",
+          "passed": false,
+          "reason": "标准化补齐证据不足，街道字段未明确补齐。",
+          "related_requirement": "R2_standardization_with_street",
+          "requirement_conclusion": "未明确",
+          "requirement_evidence": {
+            "component_hits": 1,
+            "has_street": false,
+            "standardization_confirmation": false
+          }
+        },
+        {
+          "check": "story_token_graph_chain_present",
+          "passed": false,
+          "reason": "分词拆解与图谱链路描述不足，未形成完整链条结论。",
+          "related_requirement": "R3_tokenization_graph_chain",
+          "requirement_conclusion": "未明确",
+          "requirement_evidence": {
+            "graph_hit_count": 2,
+            "graph_chain_confirmation": false
+          }
+        }
+      ],
+      "audit_gaps": [
+        {
+          "check": "story_standardized_completion_with_street",
+          "priority": "P2",
+          "goal": "修复审计失败项: story_standardized_completion_with_street",
+          "recommended_capabilities": [
+            "通用修复"
+          ],
+          "expected_evidence": [
+            "修复说明"
+          ]
+        },
+        {
+          "check": "story_token_graph_chain_present",
+          "priority": "P1",
+          "goal": "补全分词-图谱-链路过程",
+          "recommended_capabilities": [
+            "地址标准化",
+            "五级解析"
+          ],
+          "expected_evidence": [
+            "分词结果",
+            "链路说明"
+          ]
+        }
+      ],
+      "story_requirement_confirmations": [
+        {
+          "requirement_id": "R1_authenticity_two_trusted_interfaces",
+          "description": "真实性确认必须来自至少两个可信接口",
+          "passed": true,
+          "conclusion": "已明确",
+          "evidence": {
+            "hit_interface_ids": [
+              "address_aoi_keyword",
+              "address_level_judge",
+              "address_real_check",
+              "address_resolve_l5",
+              "address_standardize",
+              "address_type_identify"
+            ],
+            "auth_confirmation": true
+          }
+        },
+        {
+          "requirement_id": "R2_standardization_with_street",
+          "description": "标准化补齐结果必须包含街道",
+          "passed": false,
+          "conclusion": "未明确",
+          "evidence": {
+            "component_hits": 1,
+            "has_street": false,
+            "standardization_confirmation": false
+          }
+        },
+        {
+          "requirement_id": "R3_tokenization_graph_chain",
+          "description": "必须包含地址标准化分词拆解并形成图谱链",
+          "passed": false,
+          "conclusion": "未明确",
+          "evidence": {
+            "graph_hit_count": 2,
+            "graph_chain_confirmation": false
+          }
+        }
+      ],
+      "case_total": 16,
+      "tool_count": 5,
+      "story_rule_enabled": true,
+      "trusted_source_config_count": 6,
+      "trusted_interface_capabilities": {
+        "坐标解析": [
+          {
+            "source_id": "amap_place_text",
+            "interface_id": "default",
+            "interface_name": "高德地图地点检索"
+          },
+          {
+            "source_id": "baidu_geocoding_v3",
+            "interface_id": "default",
+            "interface_name": "百度地图地理编码"
+          },
+          {
+            "source_id": "tencent_place_v1",
+            "interface_id": "default",
+            "interface_name": "腾讯位置服务地点搜索"
+          },
+          {
+            "source_id": "tianditu_geocoder",
+            "interface_id": "default",
+            "interface_name": "天地图地理编码"
+          }
+        ],
+        "位置检索": [
+          {
+            "source_id": "amap_place_text",
+            "interface_id": "default",
+            "interface_name": "高德地图地点检索"
+          },
+          {
+            "source_id": "baidu_geocoding_v3",
+            "interface_id": "default",
+            "interface_name": "百度地图地理编码"
+          },
+          {
+            "source_id": "tencent_place_v1",
+            "interface_id": "default",
+            "interface_name": "腾讯位置服务地点搜索"
+          },
+          {
+            "source_id": "tianditu_geocoder",
+            "interface_id": "default",
+            "interface_name": "天地图地理编码"
+          }
+        ],
+        "地址完备度评估": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_level_judge",
+            "interface_name": "地址级别判断"
+          }
+        ],
+        "冲突检测": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_level_judge",
+            "interface_name": "地址级别判断"
+          }
+        ],
+        "真实性校验": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_real_check",
+            "interface_name": "地址真实性校验"
+          }
+        ],
+        "结论判定": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_real_check",
+            "interface_name": "地址真实性校验"
+          }
+        ],
+        "地址类型识别": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_type_identify",
+            "interface_name": "地址类型识别"
+          }
+        ],
+        "画像分类": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_type_identify",
+            "interface_name": "地址类型识别"
+          }
+        ],
+        "五级解析": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_resolve_l5",
+            "interface_name": "五级地址解析"
+          }
+        ],
+        "行政区划解析": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_resolve_l5",
+            "interface_name": "五级地址解析"
+          }
+        ],
+        "地址标准化": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_standardize",
+            "interface_name": "地址标准化"
+          }
+        ],
+        "结构化拆解": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_standardize",
+            "interface_name": "地址标准化"
+          }
+        ],
+        "AOI提取": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_aoi_keyword",
+            "interface_name": "地址AOI聚合"
+          }
+        ],
+        "地标聚合": [
+          {
+            "source_id": "fengtu",
+            "interface_id": "address_aoi_keyword",
+            "interface_name": "地址AOI聚合"
+          }
+        ],
+        "地址核实": [
+          {
+            "source_id": "gov_open_data_address",
+            "interface_id": "default",
+            "interface_name": "政府开放数据地址接口"
+          }
+        ]
+      },
+      "suggested_interface_plan": {
+        "selected_interface_count": 2,
+        "selected_interfaces": [
+          {
+            "capability": "地址标准化",
+            "source_id": "fengtu",
+            "interface_id": "address_standardize",
+            "interface_name": "地址标准化",
+            "target_gap": "story_token_graph_chain_present"
+          },
+          {
+            "capability": "五级解析",
+            "source_id": "fengtu",
+            "interface_id": "address_resolve_l5",
+            "interface_name": "五级地址解析",
+            "target_gap": "story_token_graph_chain_present"
+          }
+        ]
+      },
+      "evidence_checklist_template": [
+        {
+          "check": "story_standardized_completion_with_street",
+          "goal": "修复审计失败项: story_standardized_completion_with_street",
+          "expected_evidence": [
+            "修复说明"
+          ],
+          "recommended_interfaces": [],
+          "required_output_sections": [
+            "证据清单",
+            "结论段",
+            "未决风险段"
+          ]
+        },
+        {
+          "check": "story_token_graph_chain_present",
+          "goal": "补全分词-图谱-链路过程",
+          "expected_evidence": [
+            "分词结果",
+            "链路说明"
+          ],
+          "recommended_interfaces": [
+            "fengtu/address_standardize",
+            "fengtu/address_resolve_l5"
+          ],
+          "required_output_sections": [
+            "证据清单",
+            "结论段",
+            "未决风险段"
+          ]
+        }
+      ]
+    },
+    "input_audit_gaps": [
+      {
+        "check": "story_standardized_completion_with_street",
+        "priority": "P2",
+        "goal": "修复审计失败项: story_standardized_completion_with_street",
+        "recommended_capabilities": [
+          "通用修复"
+        ],
+        "expected_evidence": [
+          "修复说明"
+        ]
+      },
+      {
+        "check": "story_token_graph_chain_present",
+        "priority": "P1",
+        "goal": "补全分词-图谱-链路过程",
+        "recommended_capabilities": [
+          "地址标准化",
+          "五级解析"
+        ],
+        "expected_evidence": [
+          "分词结果",
+          "链路说明"
+        ]
+      }
+    ],
+    "input_suggested_interface_plan": {
+      "selected_interface_count": 2,
+      "selected_interfaces": [
+        {
+          "capability": "地址标准化",
+          "source_id": "fengtu",
+          "interface_id": "address_standardize",
+          "interface_name": "地址标准化",
+          "target_gap": "story_token_graph_chain_present"
+        },
+        {
+          "capability": "五级解析",
+          "source_id": "fengtu",
+          "interface_id": "address_resolve_l5",
+          "interface_name": "五级地址解析",
+          "target_gap": "story_token_graph_chain_present"
+        }
+      ]
+    },
+    "input_evidence_checklist_template": [
+      {
+        "check": "story_standardized_completion_with_street",
+        "goal": "修复审计失败项: story_standardized_completion_with_street",
+        "expected_evidence": [
+          "修复说明"
+        ],
+        "recommended_interfaces": [],
+        "required_output_sections": [
+          "证据清单",
+          "结论段",
+          "未决风险段"
+        ]
+      },
+      {
+        "check": "story_token_graph_chain_present",
+        "goal": "补全分词-图谱-链路过程",
+        "expected_evidence": [
+          "分词结果",
+          "链路说明"
+        ],
+        "recommended_interfaces": [
+          "fengtu/address_standardize",
+          "fengtu/address_resolve_l5"
+        ],
+        "required_output_sections": [
+          "证据清单",
+          "结论段",
+          "未决风险段"
+        ]
+      }
+    ],
+    "input_process_code": "PROC_TOOLPACK_BOOTSTRAP",
+    "llm_prompt": "你是工艺迭代器。请根据审计失败项输出一句简洁的change_request。\n要求: 结合可信数据源接口能力，优先修复P0/P1缺口，并明确证据清单与结论段。\n轮次: 2\n审计: {\"score\": 0.8181818181818182, \"checks\": {\"status_ok\": true, \"compile_success\": true, \"has_process_spec\": true, \"has_tool_scripts\": true, \"doc_length_ok\": true, \"contains_iteration_keywords\": true, \"plan_steps_ok\": true, \"story_authenticity_two_trusted_sources\": true, \"story_standardized_completion_with_street\": false, \"story_token_graph_chain_present\": false, \"story_clear_conclusion\": true}, \"failed_checks\": [\"story_standardized_completion_with_street\", \"story_token_graph_chain_present\"], \"failed_check_analysis\": [{\"check\": \"story_standardized_completion_with_street\", \"passed\": false, \"reason\": \"标准化补齐证据不足，街道字段未明确补齐。\", \"related_requirement\": \"R2_standardization_with_street\", \"requirement_conclusion\": \"未明确\", \"requirement_evidence\": {\"component_hits\": 1, \"has_street\": false, \"standardization_confirmation\": false}}, {\"check\": \"story_token_graph_chain_present\", \"passed\": false, \"reason\": \"分词拆解与图谱链路描述不足，未形成完整链条结论。\", \"related_requirement\": \"R3_tokenization_graph_chain\", \"requirement_conclusion\": \"未明确\", \"requirement_evidence\": {\"graph_hit_count\": 2, \"graph_chain_confirmation\": false}}], \"audit_gaps\": [{\"check\": \"story_standardized_completion_with_street\", \"priority\": \"P2\", \"goal\": \"修复审计失败项: story_standardized_completion_with_street\", \"recommended_capabilities\": [\"通用修复\"], \"expected_evidence\": [\"修复说明\"]}, {\"check\": \"story_token_graph_chain_present\", \"priority\": \"P1\", \"goal\": \"补全分词-图谱-链路过程\", \"recommended_capabilities\": [\"地址标准化\", \"五级解析\"], \"expected_evidence\": [\"分词结果\", \"链路说明\"]}], \"story_requirement_confirmations\": [{\"requirement_id\": \"R1_authenticity_two_trusted_interfaces\", \"description\": \"真实性确认必须来自至少两个可信接口\", \"passed\": true, \"conclusion\": \"已明确\", \"evidence\": {\"hit_interface_ids\": [\"address_aoi_keyword\", \"address_level_judge\", \"address_real_check\", \"address_resolve_l5\", \"address_standardize\", \"address_type_identify\"], \"auth_confirmation\": true}}, {\"requirement_id\": \"R2_standardization_with_street\", \"description\": \"标准化补齐结果必须包含街道\", \"passed\": false, \"conclusion\": \"未明确\", \"evidence\": {\"component_hits\": 1, \"has_street\": false, \"standardization_confirmation\": false}}, {\"requirement_id\": \"R3_tokenization_graph_chain\", \"description\": \"必须包含地址标准化分词拆解并形成图谱链\", \"passed\": false, \"conclusion\": \"未明确\", \"evidence\": {\"graph_hit_count\": 2, \"graph_chain_confirmation\": false}}], \"case_total\": 16, \"tool_count\": 5, \"story_rule_enabled\": true, \"trusted_source_config_count\": 6, \"trusted_interface_capabilities\": {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}, \"suggested_interface_plan\": {\"selected_interface_count\": 2, \"selected_interfaces\": [{\"capability\": \"地址标准化\", \"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\", \"target_gap\": \"story_token_graph_chain_present\"}, {\"capability\": \"五级解析\", \"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\", \"target_gap\": \"story_token_graph_chain_present\"}]}, \"evidence_checklist_template\": [{\"check\": \"story_standardized_completion_with_street\", \"goal\": \"修复审计失败项: story_standardized_completion_with_street\", \"expected_evidence\": [\"修复说明\"], \"recommended_interfaces\": [], \"required_output_sections\": [\"证据清单\", \"结论段\", \"未决风险段\"]}, {\"check\": \"story_token_graph_chain_present\", \"goal\": \"补全分词-图谱-链路过程\", \"expected_evidence\": [\"分词结果\", \"链路说明\"], \"recommended_interfaces\": [\"fengtu/address_standardize\", \"fengtu/address_resolve_l5\"], \"required_output_sections\": [\"证据清单\", \"结论段\", \"未决风险段\"]}]}\n结构化缺口: [{\"check\": \"story_standardized_completion_with_street\", \"priority\": \"P2\", \"goal\": \"修复审计失败项: story_standardized_completion_with_street\", \"recommended_capabilities\": [\"通用修复\"], \"expected_evidence\": [\"修复说明\"]}, {\"check\": \"story_token_graph_chain_present\", \"priority\": \"P1\", \"goal\": \"补全分词-图谱-链路过程\", \"recommended_capabilities\": [\"地址标准化\", \"五级解析\"], \"expected_evidence\": [\"分词结果\", \"链路说明\"]}]\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n建议接口组合: {\"selected_interface_count\": 2, \"selected_interfaces\": [{\"capability\": \"地址标准化\", \"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\", \"target_gap\": \"story_token_graph_chain_present\"}, {\"capability\": \"五级解析\", \"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\", \"target_gap\": \"story_token_graph_chain_present\"}]}\n证据清单模板: [{\"check\": \"story_standardized_completion_with_street\", \"goal\": \"修复审计失败项: story_standardized_completion_with_street\", \"expected_evidence\": [\"修复说明\"], \"recommended_interfaces\": [], \"required_output_sections\": [\"证据清单\", \"结论段\", \"未决风险段\"]}, {\"check\": \"story_token_graph_chain_present\", \"goal\": \"补全分词-图谱-链路过程\", \"expected_evidence\": [\"分词结果\", \"链路说明\"], \"recommended_interfaces\": [\"fengtu/address_standardize\", \"fengtu/address_resolve_l5\"], \"required_output_sections\": [\"证据清单\", \"结论段\", \"未决风险段\"]}]\n上一轮工艺摘要: process_code=PROC_TOOLPACK_BOOTSTRAP",
+    "llm_answer": "```json\n{\n    \"round\": 2,\n    \"change_request\": \"优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明\",\n    \"evidence_checklist\": [\n        {\n            \"failed_check_item\": \"story_token_graph_chain_present\",\n            \"required_evidence\": [\"地址分词结果\", \"地址图谱链路说明\"],\n            \"used_trusted_interfaces\": [\"fengtu/address_standardize\", \"fengtu/address_resolve_l5\"]\n        },\n        {\n            \"failed_check_item\": \"story_standardized_completion_with_street\",\n            \"required_evidence\": [\"修复说明\"],\n            \"used_trusted_interfaces\": [\"通用修复\"]\n        }\n    ],\n    \"final_conclusion\": \"本次修复已完成两项审计失败项的合规整改，story_token_graph_chain_present补全了地址分词-图谱完整链路，story_standardized_completion_with_street明确补齐了标准化地址的街道字段\"\n}\n```",
+    "change_request": "优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明"
+  },
+  {
+    "timestamp": "2026-02-14T18:01:51.595701",
+    "event_type": "generate_plan",
+    "input_requirement": "请在已有工艺 PROC_TOOLPACK_BOOTSTRAP (工具包生成工艺) 基础上完成如下变更：优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明",
+    "llm_prompt": "你是工艺Agent的规划器。请输出JSON计划字段: auto_execute,max_duration,quality_threshold,priority,steps。\n历史轮次: [{\"role\": \"user\", \"content\": \"请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\\n用例总量: 16\\n优先级分布: {\\\"P0\\\": 5, \\\"P1\\\": 6, \\\"P2\\\": 5}\\n类别分布: {\\\"mainline_verified_exists\\\": 1, \\\"mainline_verified_not_exists\\\": 1, \\\"mainline_unverifiable_online\\\": 1, \\\"source_conflict_alias\\\": 1, \\\"same_entity_multi_alias\\\": 1, \\\"internet_verification_trainable\\\": 1, \\\"internet_verification_disagreement\\\": 1, \\\"dirty_text_noise\\\": 1, \\\"missing_core_component\\\": 1, \\\"cross_city_mismatch\\\": 1, \\\"write_gate_enforcement\\\": 1, \\\"text_credibility_low\\\": 1, \\\"coord_confidence_low\\\": 1, \\\"new_source_onboarding\\\": 1, \\\"story_truth_completion_graph\\\": 1, \\\"output_contract_completeness\\\": 1}\\n期望核实状态分布: {\\\"VERIFIED_EXISTS\\\": 5, \\\"VERIFIED_NOT_EXISTS\\\": 1, \\\"UNVERIFIABLE_ONLINE\\\": 7}\\n可信接口能力索引: {\\\"坐标解析\\\": [{\\\"source_id\\\": \\\"amap_place_text\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"高德地图地点检索\\\"}, {\\\"source_id\\\": \\\"baidu_geocoding_v3\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"百度地图地理编码\\\"}, {\\\"source_id\\\": \\\"tencent_place_v1\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"腾讯位置服务地点搜索\\\"}, {\\\"source_id\\\": \\\"tianditu_geocoder\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"天地图地理编码\\\"}], \\\"位置检索\\\": [{\\\"source_id\\\": \\\"amap_place_text\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"高德地图地点检索\\\"}, {\\\"source_id\\\": \\\"baidu_geocoding_v3\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"百度地图地理编码\\\"}, {\\\"source_id\\\": \\\"tencent_place_v1\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"腾讯位置服务地点搜索\\\"}, {\\\"source_id\\\": \\\"tianditu_geocoder\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"天地图地理编码\\\"}], \\\"地址完备度评估\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_level_judge\\\", \\\"interface_name\\\": \\\"地址级别判断\\\"}], \\\"冲突检测\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_level_judge\\\", \\\"interface_name\\\": \\\"地址级别判断\\\"}], \\\"真实性校验\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_real_check\\\", \\\"interface_name\\\": \\\"地址真实性校验\\\"}], \\\"结论判定\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_real_check\\\", \\\"interface_name\\\": \\\"地址真实性校验\\\"}], \\\"地址类型识别\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_type_identify\\\", \\\"interface_name\\\": \\\"地址类型识别\\\"}], \\\"画像分类\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_type_identify\\\", \\\"interface_name\\\": \\\"地址类型识别\\\"}], \\\"五级解析\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_resolve_l5\\\", \\\"interface_name\\\": \\\"五级地址解析\\\"}], \\\"行政区划解析\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_resolve_l5\\\", \\\"interface_name\\\": \\\"五级地址解析\\\"}], \\\"地址标准化\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_standardize\\\", \\\"interface_name\\\": \\\"地址标准化\\\"}], \\\"结构化拆解\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_standardize\\\", \\\"interface_name\\\": \\\"地址标准化\\\"}], \\\"AOI提取\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_aoi_keyword\\\", \\\"interface_name\\\": \\\"地址AOI聚合\\\"}], \\\"地标聚合\\\": [{\\\"source_id\\\": \\\"fengtu\\\", \\\"interface_id\\\": \\\"address_aoi_keyword\\\", \\\"interface_name\\\": \\\"地址AOI聚合\\\"}], \\\"地址核实\\\": [{\\\"source_id\\\": \\\"gov_open_data_address\\\", \\\"interface_id\\\": \\\"default\\\", \\\"interface_name\\\": \\\"政府开放数据地址接口\\\"}]}\\n工艺输出必须包含: 证据清单、结论段、未决风险段。\"}, {\"role\": \"assistant\", \"content\": \"```json\\n{\\n    \\\"auto_execute\\\": true,\\n    \\\"max_duration\\\": 360,\\n    \\\"quality_threshold\\\": 0.95,\\n    \\\"priority\\\": \\\"high\\\",\\n    \\\"steps\\\": [\\n        {\\n            \\\"step_id\\\": 1,\\n            \\\"step_name\\\": \\\"任务初始化与资源加载\\\",\\n            \\\"description\\\": \\\"根据输入的16个目标用例、优先级分布、类别分布与可信接口能力索引，完成任务队列初始化，按P0>P1>P2优先级排序任务，加载所有配置的可信接口元数据\\\",\\n            \\\"input\\\": \\\"16个目标用例、优先级分布配置、类别分布规则、可信接口能力索引表\\\",\\n            \\\"output\\\": \\\"优先级排序后的任务队列、可信接口调用配置池\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 2,\\n            \\\"step_name\\\": \\\"可信数据源能力编排\\\",\\n            \\\"description\\\": \\\"针对每个用例的类别与校验需求，自动匹配对应可信接口，生成专属的数据源调用链路，例如地址核实类调用政府开放数据地址接口，坐标解析类调用高德/百度地图接口\\\",\\n            \\\"input\\\": \\\"优先级排序后的任务队列、可信接口能力索引表\\\",\\n            \\\"output\\\": \\\"每个用例对应的可信数据源调用编排方案\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 3,\\n            \\\"step_name\\\": \\\"地图API采样与证据采集\\\",\\n            \\\"description\\\": \\\"按照编排好的链路调用地图/地址类可信接口，采集原始证据数据，包括坐标信息、地址文本、校验结果等，生成原始证据清单\\\",\\n            \\\"input\\\": \\\"每个用例的数据源调用编排方案\\\",\\n            \\\"output\\\": \\\"单用例原始证据集、全局原始证据清单\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 4,\\n            \\\"step_name\\\": \\\"LLM归并与证据清洗\\\",\\n            \\\"description\\\": \\\"使用大模型对多源采集的证据进行归并、去重、标准化，解决别名冲突、文本噪声、实体歧义等问题，生成结构化的可信证据集\\\",\\n            \\\"input\\\": \\\"全局原始证据清单、LLM归并规则配置\\\",\\n            \\\"output\\\": \\\"结构化可信证据集、清洗后证据清单\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 5,\\n            \\\"step_name\\\": \\\"多维度校验与冲突处理\\\",\\n            \\\"description\\\": \\\"调用fengtu系列接口完成冲突检测、真实性校验、地址级别判断，处理source_conflict_alias、same_entity_multi_alias、internet_verification_disagreement等异常类别用例\\\",\\n            \\\"input\\\": \\\"结构化可信证据集、异常用例类别规则\\\",\\n            \\\"output\\\": \\\"校验通过的证据集、异常用例处理记录\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 6,\\n            \\\"step_name\\\": \\\"审计回放与迭代改进\\\",\\n            \\\"description\\\": \\\"记录每个用例的采集、归并、校验全流程审计日志，针对未通过校验或置信度较低的用例，重新调用接口采样或调整LLM归并规则，完成迭代优化\\\",\\n            \\\"input\\\": \\\"校验通过的证据集、异常用例处理记录、审计日志模板\\\",\\n            \\\"output\\\": \\\"迭代优化后的证据集、完整审计日志\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 7,\\n            \\\"step_name\\\": \\\"结论生成与证据固化\\\",\\n            \\\"description\\\": \\\"调用结论判定接口，结合结构化证据生成标准化结论段，固化完整的证据清单（包含数据源调用记录、采集时间、结果可信度等元数据）\\\",\\n            \\\"input\\\": \\\"迭代优化后的证据集、结论判定接口配置\\\",\\n            \\\"output\\\": \\\"单用例结论段、单用例证据清单\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 8,\\n            \\\"step_name\\\": \\\"未决风险识别与标注\\\",\\n            \\\"description\\\": \\\"基于用例类别与校验结果，识别未决风险（如UNVERIFIABLE_ONLINE类用例、坐标置信度低、地址可信度低等场景），生成标准化未决风险段，说明风险类型、影响范围与处置建议\\\",\\n            \\\"input\\\": \\\"迭代优化后的证据集、用例类别分布、校验结果\\\",\\n            \\\"output\\\": \\\"单用例未决风险段、全局未决风险汇总\\\"\\n        },\\n        {\\n            \\\"step_id\\\": 9,\\n            \\\"step_name\\\": \\\"结果聚合与输出\\\",\\n            \\\"description\\\": \\\"将所有用例的证据清单、结论段、未决风险段进行聚合，按照期望核实状态分布要求整理输出，生成最终的工具包输出文件\\\",\\n            \\\"input\\\": \\\"所有单用例的证据清单、结论段、未决风险段、期望核实状态分布\\\",\\n            \\\"output\\\": \\\"完整工具包输出文件（含全局证据清单、总结论、总未决风险）\\\"\\n        }\\n    ]\\n}\\n```\"}, {\"role\": \"user\", \"content\": \"请在已有工艺 PROC_TOOLPACK_BOOTSTRAP (工具包生成工艺) 基础上完成如下变更：优先修复P1级审计失败项story_token_graph_chain_present：调用可信接口fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）生成地址分词结果与图谱链路说明；同步修复P2级失败项story_standardized_completion_with_street，通过通用修复补齐标准化地址中的街道字段并提供修复说明\"}]",
+    "llm_answer": "```json\n{\n    \"auto_execute\": true,\n    \"max_duration\": 390,\n    \"quality_threshold\": 0.95,\n    \"priority\": \"high\",\n    \"steps\": [\n        {\n            \"step_id\": 1,\n            \"step_name\": \"任务初始化与资源加载\",\n            \"description\": \"根据输入的16个目标用例、优先级分布、类别分布、可信接口能力索引以及待修复的P1/P2失败项列表，完成任务队列初始化，按P0>P1>P2优先级排序任务，加载所有配置的可信接口元数据\",\n            \"input\": \"16个目标用例、优先级分布配置、类别分布规则、可信接口能力索引表、待修复失败项列表（story_token_graph_chain_present、story_standardized_completion_with_street）\",\n            \"output\": \"优先级排序后的任务队列、可信接口调用配置池、待修复失败项台账\"\n        },\n        {\n            \"step_id\": 2,\n            \"step_name\": \"可信数据源能力编排\",\n            \"description\": \"针对每个用例的类别与校验需求，自动匹配对应可信接口，生成专属的数据源调用链路；优先为P1级story_token_graph_chain_present用例匹配fengtu/address_standardize（地址标准化）、fengtu/address_resolve_l5（五级地址解析）接口，生成地址分词与图谱链路调用方案；为P2级story_standardized_completion_with_street用例配置通用街道补全数据源调用规则\",\n            \"input\": \"优先级排序后的任务队列、可信接口能力索引表、待修复失败项台账\",\n            \"output\": \"每个用例对应的可信数据源调用编排方案、专项修复接口调用配置\"\n        },\n        {\n            \"step_id\": 3,\n            \"step_name\": \"地图API采样与证据采集\",\n            \"description\": \"按照编排好的链路调用地图/地址类可信接口，采集原始证据数据，包括坐标信息、地址文本、校验结果等，生成原始证据清单；针对P1级story_token_graph_chain_present用例，额外调用指定fengtu接口采集地址分词结果与图谱链路数据；针对P2级story_standardized_completion_with_street用例，调用地图接口采集候选街道补全数据\",\n            \"input\": \"每个用例的数据源调用编排方案、专项修复接口调用配置\",\n            \"output\": \"单用例原始证据集、全局原始证据清单、专项修复原始采集数据\"\n        },\n        {\n            \"step_id\": 4,\n            \"step_name\": \"LLM归并与证据清洗\",\n            \"description\": \"使用大模型对多源采集的证据进行归并、去重、标准化，解决别名冲突、文本噪声、实体歧义等问题，生成结构化的可信证据集；针对P2级story_standardized_completion_with_street用例，初步校验地址字段完整性，标记缺失街道的用例\",\n            \"input\": \"全局原始证据清单、LLM归并规则配置、专项修复原始采集数据\",\n            \"output\": \"结构化可信证据集、清洗后证据清单、缺失街道用例标记列表\"\n        },\n        {\n            \"step_id\": 5,\n            \"step_name\": \"多维度校验与冲突处理\",\n            \"description\": \"调用fengtu系列接口完成冲突检测、真实性校验、地址级别判断，处理source_conflict_alias、same_entity_multi_alias、internet_verification_disagreement等异常类别用例\",\n            \"input\": \"结构化可信证据集、异常用例类别规则、缺失街道用例标记列表\",\n            \"output\": \"校验通过的证据集、异常用例处理记录、待补全街道用例清单\"\n        },\n        {\n            \"step_id\": 6,\n            \"step_name\": \"审计回放与迭代改进\",\n            \"description\": \"记录每个用例的采集、归并、校验全流程审计日志；优先定位并修复P1级story_token_graph_chain_present失败项：重新调用fengtu/address_standardize和address_resolve_l5接口，生成标准化地址分词结果与图谱链路说明并替换原有异常数据；随后处理P2级story_standardized_completion_with_street失败项：通过通用修复逻辑（结合行政区划数据、LLM推理补全缺失街道字段），并生成标准化修复说明文档；针对未通过校验或置信度较低的用例，重新调用接口采样或调整LLM归并规则，完成迭代优化\",\n            \"input\": \"校验通过的证据集、异常用例处理记录、审计日志模板、待补全街道用例清单\",\n            \"output\": \"迭代优化后的证据集、完整审计日志、专项修复记录文档\"\n        },\n        {\n            \"step_id\": 7,\n            \"step_name\": \"结论生成与证据固化\",\n            \"description\": \"调用结论判定接口，结合结构化证据生成标准化结论段，固化完整的证据清单（包含数据源调用记录、采集时间、结果可信度、修复记录等元数据）；将P1/P2修复项的分词结果、图谱链路、街道补全说明及修复记录纳入证据清单\",\n            \"input\": \"迭代优化后的证据集、结论判定接口配置、专项修复记录文档\",\n            \"output\": \"单用例结论段、单用例证据清单\"\n        },\n        {\n            \"",
+    "normalized_plan": {
+      "auto_execute": false,
+      "max_duration_sec": 1200,
+      "quality_threshold": 0.9,
+      "priority": "1",
+      "steps": [
+        "地图API采样",
+        "LLM归并别名",
+        "工具包脚本生成",
+        "质量审计回放"
+      ]
+    }
+  }
+]

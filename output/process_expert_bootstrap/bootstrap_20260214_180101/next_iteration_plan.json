@@ -1,0 +1,6 @@
+{
+  "needed": true,
+  "reason": "当前审计未达阈值，需继续迭代",
+  "suggested_change_request": "优先修复P0级缺口：1. 调用fengtu/address_real_check、fengtu/address_standardize、fengtu/address_aoi_keyword可信接口完成双源地址交叉验证，生成跨源比对结果、冲突说明、最终判定；2. 补充明确结论段及判定依据；3. 修复P2级街道字段标准化缺口并提供修复说明，完整输出审计要求的证据清单与结论段",
+  "suggested_rerun_command": "python scripts/run_process_expert_bootstrap.py --cases-file testdata/fixtures/address-line-quality-audit-cases-2026-02-14.json --output-dir output/process_expert_bootstrap --max-rounds 3 --min-rounds 2 --score-threshold 0.99"
+}

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import os
+import json
+import urllib.request
+import urllib.error
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -46,34 +49,167 @@ class VerificationSource:
         raise NotImplementedError
 
 
-class GovernmentPublicWebSource(VerificationSource):
-    name = "government_public_web"
-    source_type = "web"
+class AuthoritativeRegistrySource(VerificationSource):
+    name = "authoritative_registry"
+    source_type = "authority_api"
+
+    def __init__(self) -> None:
+        self.endpoint = os.getenv("AUTH_REGISTRY_API_URL", "").strip()
+        self.token = os.getenv("AUTH_REGISTRY_API_TOKEN", "").strip()
+
+    def is_enabled(self, input_item: Dict[str, Any]) -> bool:
+        return True
+
+    def required_missing_item(self) -> Optional[str]:
+        if not self.endpoint:
+            return "AUTH_REGISTRY_API_URL"
+        return None
 
     def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
-        text = f"{input_item.get('raw', '')} {cleaning_output.get('standardized_address', '')}".strip()
-        if "不存在" in text or "已拆除" in text or "注销" in text:
-            return VerificationSignal(
-                source_name=self.name,
-                source_type=self.source_type,
-                verdict="NOT_FOUND",
-                score=0.9,
-                summary="政府公开信息未命中有效实体，判定为不存在风险高。",
-            )
-        if "无法核实" in text:
+        standardized_address = str(cleaning_output.get("standardized_address") or "")
+        if not self.endpoint:
             return VerificationSignal(
                 source_name=self.name,
                 source_type=self.source_type,
                 verdict="UNKNOWN",
                 score=0.2,
-                summary="政府公开信息无明确结论。",
+                summary="权威地址库端点未配置。",
             )
+
+        payload = {
+            "raw_address": str(input_item.get("raw") or input_item.get("raw_address") or ""),
+            "standardized_address": standardized_address,
+            "entity_name": entity_name,
+        }
+        body = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+
+        req = urllib.request.Request(self.endpoint, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                parsed = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore") if hasattr(exc, "read") else str(exc)
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"权威地址库调用失败 HTTP {exc.code}: {detail[:120]}",
+            )
+        except Exception as exc:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"权威地址库调用异常: {exc}",
+            )
+
+        verdict_raw = str(parsed.get("verdict") or "").upper()
+        score = float(parsed.get("score") or 0.0)
+        summary = str(parsed.get("summary") or "权威地址库返回结果")
+
+        if verdict_raw in {"FOUND", "EXISTS", "VERIFIED_EXISTS"}:
+            verdict = "FOUND"
+            score = score or 0.93
+        elif verdict_raw in {"NOT_FOUND", "NOT_EXISTS", "VERIFIED_NOT_EXISTS"}:
+            verdict = "NOT_FOUND"
+            score = score or 0.93
+        else:
+            verdict = "UNKNOWN"
+            score = score or 0.3
+
         return VerificationSignal(
             source_name=self.name,
             source_type=self.source_type,
-            verdict="FOUND",
-            score=0.82,
-            summary=f"政府公开信息命中候选实体：{entity_name or '未知实体'}。",
+            verdict=verdict,
+            score=max(0.0, min(1.0, score)),
+            summary=summary,
+        )
+
+
+class GovernmentPublicWebSource(VerificationSource):
+    name = "government_public_web"
+    source_type = "web"
+
+    def __init__(self) -> None:
+        self.endpoint = os.getenv("GOV_PUBLIC_WEB_API_URL", "").strip()
+        self.token = os.getenv("GOV_PUBLIC_WEB_API_TOKEN", "").strip()
+
+    def is_enabled(self, input_item: Dict[str, Any]) -> bool:
+        return True
+
+    def required_missing_item(self) -> Optional[str]:
+        if not self.endpoint:
+            return "GOV_PUBLIC_WEB_API_URL"
+        return None
+
+    def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
+        standardized_address = str(cleaning_output.get("standardized_address") or "")
+        if not self.endpoint:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary="政府公开信息端点未配置。",
+            )
+
+        payload = {
+            "raw_address": str(input_item.get("raw") or input_item.get("raw_address") or ""),
+            "standardized_address": standardized_address,
+            "entity_name": entity_name,
+        }
+        body = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+
+        req = urllib.request.Request(self.endpoint, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                parsed = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore") if hasattr(exc, "read") else str(exc)
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"政府公开信息调用失败 HTTP {exc.code}: {detail[:120]}",
+            )
+        except Exception as exc:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"政府公开信息调用异常: {exc}",
+            )
+
+        verdict_raw = str(parsed.get("verdict") or "").upper()
+        score = float(parsed.get("score") or 0.0)
+        summary = str(parsed.get("summary") or "政府公开信息返回结果")
+
+        if verdict_raw in {"FOUND", "EXISTS", "VERIFIED_EXISTS"}:
+            verdict = "FOUND"
+            score = score or 0.85
+        elif verdict_raw in {"NOT_FOUND", "NOT_EXISTS", "VERIFIED_NOT_EXISTS"}:
+            verdict = "NOT_FOUND"
+            score = score or 0.85
+        else:
+            verdict = "UNKNOWN"
+            score = score or 0.3
+
+        return VerificationSignal(
+            source_name=self.name,
+            source_type=self.source_type,
+            verdict=verdict,
+            score=max(0.0, min(1.0, score)),
+            summary=summary,
         )
 
 
@@ -81,40 +217,81 @@ class MapServiceSource(VerificationSource):
     name = "map_service"
     source_type = "map_api"
 
+    def __init__(self) -> None:
+        self.endpoint = os.getenv("MAP_SERVICE_API_URL", "").strip()
+        self.key = os.getenv("MAP_SERVICE_API_KEY", "").strip()
+
     def is_enabled(self, input_item: Dict[str, Any]) -> bool:
-        key = os.getenv("MAP_SERVICE_API_KEY", "").strip()
-        return bool(input_item.get("require_map")) or bool(key)
+        return True
 
     def required_missing_item(self) -> Optional[str]:
-        key = os.getenv("MAP_SERVICE_API_KEY", "").strip()
-        if key:
-            return None
-        return "MAP_SERVICE_API_KEY"
+        if not self.endpoint:
+            return "MAP_SERVICE_API_URL"
+        return None
 
     def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
-        text = f"{input_item.get('raw', '')} {cleaning_output.get('standardized_address', '')}".strip()
-        if "不存在" in text:
-            return VerificationSignal(
-                source_name=self.name,
-                source_type=self.source_type,
-                verdict="NOT_FOUND",
-                score=0.92,
-                summary="地图服务未检索到可用 POI/地址点位。",
-            )
-        if "无法核实" in text:
+        standardized_address = str(cleaning_output.get("standardized_address") or "")
+        if not self.endpoint:
             return VerificationSignal(
                 source_name=self.name,
                 source_type=self.source_type,
                 verdict="UNKNOWN",
-                score=0.25,
-                summary="地图服务返回候选不足，无法收敛。",
+                score=0.2,
+                summary="地图服务端点未配置。",
             )
+
+        payload = {
+            "raw_address": str(input_item.get("raw") or input_item.get("raw_address") or ""),
+            "standardized_address": standardized_address,
+            "entity_name": entity_name,
+        }
+        body = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.key:
+            headers["Authorization"] = f"Bearer {self.key}"
+
+        req = urllib.request.Request(self.endpoint, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                parsed = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore") if hasattr(exc, "read") else str(exc)
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"地图服务调用失败 HTTP {exc.code}: {detail[:120]}",
+            )
+        except Exception as exc:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"地图服务调用异常: {exc}",
+            )
+
+        verdict_raw = str(parsed.get("verdict") or "").upper()
+        score = float(parsed.get("score") or 0.0)
+        summary = str(parsed.get("summary") or "地图服务返回结果")
+
+        if verdict_raw in {"FOUND", "EXISTS", "VERIFIED_EXISTS"}:
+            verdict = "FOUND"
+            score = score or 0.88
+        elif verdict_raw in {"NOT_FOUND", "NOT_EXISTS", "VERIFIED_NOT_EXISTS"}:
+            verdict = "NOT_FOUND"
+            score = score or 0.88
+        else:
+            verdict = "UNKNOWN"
+            score = score or 0.3
+
         return VerificationSignal(
             source_name=self.name,
             source_type=self.source_type,
-            verdict="FOUND",
-            score=0.88,
-            summary=f"地图服务命中候选实体：{entity_name or '未知实体'}。",
+            verdict=verdict,
+            score=max(0.0, min(1.0, score)),
+            summary=summary,
         )
 
 
@@ -123,6 +300,7 @@ class AddressVerificationOrchestrator:
 
     def __init__(self) -> None:
         self.sources: List[VerificationSource] = [
+            AuthoritativeRegistrySource(),
             GovernmentPublicWebSource(),
             MapServiceSource(),
         ]
@@ -174,9 +352,9 @@ class AddressVerificationOrchestrator:
                         "impact_scope": "address_verification",
                         "priority": "high",
                         "what_needed": missing_item,
-                        "why_needed": "地图核实能力无法执行，影响线上核实收敛率。",
+                        "why_needed": "外部核实能力无法执行，影响线上核实收敛率。",
                         "expected_gain": "提升核实覆盖率并降低不可核实比例。",
-                        "fallback_if_missing": "降级到公开网页来源并进入不可核实池。",
+                        "fallback_if_missing": "进入不可核实池并等待能力补齐后重试。",
                     }
                 )
                 continue

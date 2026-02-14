@@ -1,0 +1,9 @@
+{
+  "provider": "openai_compatible",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-4o-mini",
+  "api_key": "<SET_ME_OR_USE_ENV_LLM_API_KEY>",
+  "timeout_sec": 60,
+  "temperature": 0.2,
+  "max_tokens": 1200
+}

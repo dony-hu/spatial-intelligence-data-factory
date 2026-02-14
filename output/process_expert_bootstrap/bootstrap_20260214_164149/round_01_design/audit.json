@@ -1,0 +1,15 @@
+{
+  "score": 1.0,
+  "checks": {
+    "status_ok": true,
+    "compile_success": true,
+    "has_process_spec": true,
+    "has_tool_scripts": true,
+    "doc_length_ok": true,
+    "contains_iteration_keywords": true,
+    "plan_steps_ok": true
+  },
+  "failed_checks": [],
+  "case_total": 15,
+  "tool_count": 3
+}

@@ -1,0 +1,187 @@
+{
+  "score": 0.8181818181818182,
+  "checks": {
+    "status_ok": true,
+    "compile_success": true,
+    "has_process_spec": true,
+    "has_tool_scripts": true,
+    "doc_length_ok": true,
+    "contains_iteration_keywords": true,
+    "plan_steps_ok": true,
+    "story_authenticity_two_trusted_sources": true,
+    "story_standardized_completion_with_street": false,
+    "story_token_graph_chain_present": false,
+    "story_clear_conclusion": true
+  },
+  "failed_checks": [
+    "story_standardized_completion_with_street",
+    "story_token_graph_chain_present"
+  ],
+  "audit_gaps": [
+    {
+      "check": "story_standardized_completion_with_street",
+      "priority": "P2",
+      "goal": "修复审计失败项: story_standardized_completion_with_street",
+      "recommended_capabilities": [
+        "通用修复"
+      ],
+      "expected_evidence": [
+        "修复说明"
+      ]
+    },
+    {
+      "check": "story_token_graph_chain_present",
+      "priority": "P1",
+      "goal": "补全分词-图谱-链路过程",
+      "recommended_capabilities": [
+        "地址标准化",
+        "五级解析"
+      ],
+      "expected_evidence": [
+        "分词结果",
+        "链路说明"
+      ]
+    }
+  ],
+  "case_total": 16,
+  "tool_count": 5,
+  "story_rule_enabled": true,
+  "trusted_source_config_count": 6,
+  "trusted_interface_capabilities": {
+    "坐标解析": [
+      {
+        "source_id": "amap_place_text",
+        "interface_id": "default",
+        "interface_name": "高德地图地点检索"
+      },
+      {
+        "source_id": "baidu_geocoding_v3",
+        "interface_id": "default",
+        "interface_name": "百度地图地理编码"
+      },
+      {
+        "source_id": "tencent_place_v1",
+        "interface_id": "default",
+        "interface_name": "腾讯位置服务地点搜索"
+      },
+      {
+        "source_id": "tianditu_geocoder",
+        "interface_id": "default",
+        "interface_name": "天地图地理编码"
+      }
+    ],
+    "位置检索": [
+      {
+        "source_id": "amap_place_text",
+        "interface_id": "default",
+        "interface_name": "高德地图地点检索"
+      },
+      {
+        "source_id": "baidu_geocoding_v3",
+        "interface_id": "default",
+        "interface_name": "百度地图地理编码"
+      },
+      {
+        "source_id": "tencent_place_v1",
+        "interface_id": "default",
+        "interface_name": "腾讯位置服务地点搜索"
+      },
+      {
+        "source_id": "tianditu_geocoder",
+        "interface_id": "default",
+        "interface_name": "天地图地理编码"
+      }
+    ],
+    "地址完备度评估": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "interface_name": "地址级别判断"
+      }
+    ],
+    "冲突检测": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "interface_name": "地址级别判断"
+      }
+    ],
+    "真实性校验": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "interface_name": "地址真实性校验"
+      }
+    ],
+    "结论判定": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "interface_name": "地址真实性校验"
+      }
+    ],
+    "地址类型识别": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "interface_name": "地址类型识别"
+      }
+    ],
+    "画像分类": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "interface_name": "地址类型识别"
+      }
+    ],
+    "五级解析": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "interface_name": "五级地址解析"
+      }
+    ],
+    "行政区划解析": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "interface_name": "五级地址解析"
+      }
+    ],
+    "地址标准化": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "interface_name": "地址标准化"
+      }
+    ],
+    "结构化拆解": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "interface_name": "地址标准化"
+      }
+    ],
+    "AOI提取": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "interface_name": "地址AOI聚合"
+      }
+    ],
+    "地标聚合": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "interface_name": "地址AOI聚合"
+      }
+    ],
+    "地址核实": [
+      {
+        "source_id": "gov_open_data_address",
+        "interface_id": "default",
+        "interface_name": "政府开放数据地址接口"
+      }
+    ]
+  }
+}

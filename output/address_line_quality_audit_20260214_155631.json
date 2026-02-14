@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "run_id": "address_audit_20260214_155532",
+    "base_url": "http://127.0.0.1:8081",
+    "cases_file": "/Users/huda/Code/worktrees/factory-address-verify/testdata/fixtures/address-line-quality-audit-cases-2026-02-14.json",
+    "started_at": "2026-02-14T15:55:32.607840",
+    "finished_at": "2026-02-14T15:56:31.051290"
+  },
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "by_priority": {
+      "P0": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "case_id": "P0-MAIN-001",
+      "priority": "P0",
+      "http_status": 200,
+      "status": "ok",
+      "draft_id": "draft_0e982be175",
+      "process_code": "PROC_A17FFA",
+      "compile_success": true,
+      "execution_readiness": "ready",
+      "has_process_spec": true,
+      "has_tool_scripts": true,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "pass": true,
+      "fail_reason": "",
+      "error": null,
+      "elapsed_ms": 20752
+    },
+    {
+      "case_id": "P0-MAIN-002",
+      "priority": "P0",
+      "http_status": 200,
+      "status": "ok",
+      "draft_id": "draft_bf130d22a4",
+      "process_code": "PROC_BFB63F",
+      "compile_success": true,
+      "execution_readiness": "ready",
+      "has_process_spec": true,
+      "has_tool_scripts": true,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "pass": true,
+      "fail_reason": "",
+      "error": null,
+      "elapsed_ms": 21497
+    },
+    {
+      "case_id": "P0-MAIN-003",
+      "priority": "P0",
+      "http_status": 200,
+      "status": "ok",
+      "draft_id": "draft_35543e6cc1",
+      "process_code": "PROC_838EC7",
+      "compile_success": true,
+      "execution_readiness": "ready",
+      "has_process_spec": true,
+      "has_tool_scripts": true,
+      "validation_errors": [],
+      "validation_warnings": [],
+      "pass": true,
+      "fail_reason": "",
+      "error": null,
+      "elapsed_ms": 16193
+    }
+  ]
+}

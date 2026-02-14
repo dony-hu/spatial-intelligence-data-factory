@@ -89,6 +89,15 @@ fixtures:
     tables: 7
     records: 19
 
+  address-line-quality-audit-cases:
+    file: fixtures/address-line-quality-audit-cases-2026-02-14.json
+    version: 2026.02.14.1
+    size_bytes: 0
+    region: Shanghai
+    purpose: Quality-audit-driven address pipeline iteration and capability-gap regression
+    tables: 0
+    records: 15
+
 contracts:
   address-governance:
     file: contracts/governance-workflow.openapi.yaml

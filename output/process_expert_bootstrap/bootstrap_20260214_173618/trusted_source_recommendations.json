@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    {
+      "source_name": "Google Maps Geocoding API",
+      "provider": "Google",
+      "reason": "当前可信数据源仅覆盖国内地理编码服务，补充该接口可支持跨境地址解析与验证，覆盖海外业务场景，解决跨区域地址治理覆盖不足的问题",
+      "trust_level": "high",
+      "suggested_base_url": "https://maps.googleapis.com/maps/api/geocode/json"
+    },
+    {
+      "source_name": "阿里云地图地理编码服务",
+      "provider": "AlibabaCloud",
+      "reason": "补充国内主流云厂商的地理编码数据源，丰富国内服务矩阵，降低对单一地图厂商的依赖，提升地址验证的服务冗余性",
+      "trust_level": "high",
+      "suggested_base_url": "https://geocode.aliyun.com/geocode/geo"
+    },
+    {
+      "source_name": "国家政务服务平台地址核验接口",
+      "provider": "NationalGovernmentService",
+      "reason": "国家级政务数据源，具备最高级别的地址权威性，可用于核心地址场景的合规校验，替代现有模拟的政府开放数据接口，实现真实政务级地址验证",
+      "trust_level": "government",
+      "suggested_base_url": "https://gjzwfw.www.gov.cn/openapi/address/verify"
+    },
+    {
+      "source_name": "OpenStreetMap Nominatim 官方地理编码服务",
+      "provider": "OpenStreetMapFoundation",
+      "reason": "开源免费的全球地理编码服务，覆盖小众地址解析场景，作为非商业性补充数据源，适配非盈利或低成本地址验证需求",
+      "trust_level": "medium",
+      "suggested_base_url": "https://nominatim.openstreetmap.org/search"
+    },
+    {
+      "source_name": "民政部行政区划地址校验接口",
+      "provider": "MinistryOfCivilAffairs",
+      "reason": "基于官方行政区划数据校验地址的层级合法性，解决当前案例中的跨城市不匹配、地址层级错误等问题，提升地址治理的合规性",
+      "trust_level": "government",
+      "suggested_base_url": "https://www.mca.gov.cn/api/division/check"
+    }
+  ],
+  "raw_answer": "{\"recommendations\": [\n    {\n        \"source_name\": \"Google Maps Geocoding API\",\n        \"provider\": \"Google\",\n        \"reason\": \"当前可信数据源仅覆盖国内地理编码服务，补充该接口可支持跨境地址解析与验证，覆盖海外业务场景，解决跨区域地址治理覆盖不足的问题\",\n        \"trust_level\": \"high\",\n        \"suggested_base_url\": \"https://maps.googleapis.com/maps/api/geocode/json\"\n    },\n    {\n        \"source_name\": \"阿里云地图地理编码服务\",\n        \"provider\": \"AlibabaCloud\",\n        \"reason\": \"补充国内主流云厂商的地理编码数据源，丰富国内服务矩阵，降低对单一地图厂商的依赖，提升地址验证的服务冗余性\",\n        \"trust_level\": \"high\",\n        \"suggested_base_url\": \"https://geocode.aliyun.com/geocode/geo\"\n    },\n    {\n        \"source_name\": \"国家政务服务平台地址核验接口\",\n        \"provider\": \"NationalGovernmentService\",\n        \"reason\": \"国家级政务数据源，具备最高级别的地址权威性，可用于核心地址场景的合规校验，替代现有模拟的政府开放数据接口，实现真实政务级地址验证\",\n        \"trust_level\": \"government\",\n        \"suggested_base_url\": \"https://gjzwfw.www.gov.cn/openapi/address/verify\"\n    },\n    {\n        \"source_name\": \"OpenStreetMap Nominatim 官方地理编码服务\",\n        \"provider\": \"OpenStreetMapFoundation\",\n        \"reason\": \"开源免费的全球地理编码服务，覆盖小众地址解析场景，作为非商业性补充数据源，适配非盈利或低成本地址验证需求\",\n        \"trust_level\": \"medium\",\n        \"suggested_base_url\": \"https://nominatim.openstreetmap.org/search\"\n    },\n    {\n        \"source_name\": \"民政部行政区划地址校验接口\",\n        \"provider\": \"MinistryOfCivilAffairs\",\n        \"reason\": \"基于官方行政区划数据校验地址的层级合法性，解决当前案例中的跨城市不匹配、地址层级错误等问题，提升地址治理的合规性\",\n        \"trust_level\": \"government\",\n        \"suggested_base_url\": \"https://www.mca.gov.cn/api/division/check\"\n    }\n]}"
+}

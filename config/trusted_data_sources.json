@@ -1,0 +1,254 @@
+{
+  "version": "2026-02-14",
+  "description": "工厂系统可信数据源配置（地址真实性核实）",
+  "trusted_sources": [
+    {
+      "source_id": "amap_place_text",
+      "name": "高德地图地点检索",
+      "provider": "Amap",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "high",
+      "aliases": ["高德", "高德地图", "amap", "gaode", "map_provider_a"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      }
+    },
+    {
+      "source_id": "baidu_geocoding_v3",
+      "name": "百度地图地理编码",
+      "provider": "BaiduMap",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "high",
+      "aliases": ["百度", "百度地图", "baidu", "bmap"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      }
+    },
+    {
+      "source_id": "tencent_place_v1",
+      "name": "腾讯位置服务地点搜索",
+      "provider": "TencentLBS",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "high",
+      "aliases": ["腾讯", "腾讯地图", "qqmap", "tencent", "lbs"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      }
+    },
+    {
+      "source_id": "tianditu_geocoder",
+      "name": "天地图地理编码",
+      "provider": "Tianditu",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "government",
+      "aliases": ["天地图", "tianditu", "tdt"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      }
+    },
+    {
+      "source_id": "fengtu",
+      "name": "Fengtu Nominatim",
+      "provider": "Fengtu",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "high",
+      "aliases": ["丰图", "FT", "Feng"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      },
+      "trusted_interfaces": [
+        {
+          "interface_id": "address_level_judge",
+          "name": "地址级别判断",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/209",
+          "base_url": "https://gis-apis.sf-express.com/iad/api",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_TEST2",
+          "headers": {},
+          "ak_in": "query",
+          "request_template": {
+            "query": {
+              "ak": "0748238c55024ea88a61815232a53714",
+              "address": "{address}"
+            }
+          }
+        },
+        {
+          "interface_id": "address_real_check",
+          "name": "地址真实性校验",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/182",
+          "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_TEST2",
+          "headers": {
+            "ak": "0748238c55024ea88a61815232a53714"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "query": {
+              "address": "{address}",
+              "province": "{province}",
+              "city": "{city}",
+              "county": "{county}"
+            }
+          }
+        },
+        {
+          "interface_id": "address_type_identify",
+          "name": "地址类型识别",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/173",
+          "base_url": "https://gis-apis.sf-express.com/atype/api",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_TEST",
+          "headers": {},
+          "ak_in": "query",
+          "request_template": {
+            "query": {
+              "ak": "a0ece06a144a42228cd074e527a4f14f",
+              "address": "{address}",
+              "citycode": "{citycode}",
+              "opt": "aoi"
+            }
+          }
+        },
+        {
+          "interface_id": "address_resolve_l5",
+          "name": "五级地址解析",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/183",
+          "base_url": "https://gis-apis.sf-express.com/opquery/addressResolve",
+          "method": "POST",
+          "api_key_env": "FENGTU_AK_TEST2",
+          "headers": {
+            "ak": "0748238c55024ea88a61815232a53714"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "body": {
+              "address": "{address}",
+              "province": "{province}",
+              "city": "{city}",
+              "county": "{county}",
+              "town": "{town}"
+            }
+          }
+        },
+        {
+          "interface_id": "address_standardize",
+          "name": "地址标准化",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/184",
+          "base_url": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+          "method": "POST",
+          "api_key_env": "FENGTU_AK_TEST",
+          "headers": {
+            "ak": "a0ece06a144a42228cd074e527a4f14f"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "body": {
+              "address": "{address}",
+              "full": 1
+            }
+          }
+        },
+        {
+          "interface_id": "address_aoi_keyword",
+          "name": "地址AOI聚合",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/185",
+          "base_url": "https://gis-apis.sf-express.com/opquery/keyword",
+          "method": "POST",
+          "api_key_env": "FENGTU_AK_TEST",
+          "headers": {
+            "ak": "a0ece06a144a42228cd074e527a4f14f"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "body": {
+              "address": "{address}",
+              "province": "{province}",
+              "city": "{city}",
+              "county": "{county}",
+              "company": "{company}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "source_id": "gov_open_data_address",
+      "name": "政府开放数据地址接口",
+      "provider": "GovernmentOpenData",
+      "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+      "trust_level": "government",
+      "aliases": ["政府", "政务", "government", "open_data", "government_open_data_api"],
+      "requires_api_key": true,
+      "request": {
+        "api_key_env": "FENGTU_AK_TEST",
+        "method": "GET",
+        "headers": {
+          "ak": "a0ece06a144a42228cd074e527a4f14f"
+        },
+        "query_template": {
+          "address": "{address}",
+          "city": "{city}",
+          "cc": 1
+        }
+      },
+      "note": "模拟阶段统一走丰图地理编码接口"
+    }
+  ],
+  "llm_recommendation": {
+    "enabled": true,
+    "auto_append": false,
+    "instruction": "请基于当前业务域和地区补充可能的可信地址核实数据源，输出JSON数组。"
+  }
+}

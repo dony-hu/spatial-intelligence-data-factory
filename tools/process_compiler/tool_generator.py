@@ -5,7 +5,7 @@ ToolGenerator - 为工艺步骤生成执行工具脚本
 import os
 from typing import Dict, Any
 
-from .tool_templates import validators, normalizers, segmenters, evaluators, persisters
+from .tool_templates import validators, normalizers, segmenters, evaluators, persisters, generators
 
 
 class ToolGenerator:
@@ -20,6 +20,7 @@ class ToolGenerator:
         'OUTPUT_PERSIST': ('persisters', persisters.generate_db_persister),
         'DATA_CLEANING': ('cleaners', validators.generate_data_cleaner),  # 复用
         'DATA_MATCHING': ('matchers', normalizers.generate_data_matcher),  # 复用
+        'DATA_GENERATION': ('generators', generators.generate_data_generator),
     }
 
     def __init__(self):
