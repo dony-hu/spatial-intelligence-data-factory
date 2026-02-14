@@ -21,7 +21,7 @@
 ## 当前阻塞
 
 - 无硬阻塞
-- 软阻塞：TC-06 等待 TC-04 的 WorkPackage v1.0.1 产出
+- 软阻塞：TC-06 等待单任务运行结果回传
 
 ## 需决策事项
 
@@ -33,3 +33,9 @@
 - 完成 `工厂需求 -> WorkPackage -> 产线单任务执行观测` 的最小闭环
 - 工厂端先交付：工艺迭代留痕、工具版本留痕、工作包编译、观测代码生成
 - 产线端后交付：基于新工作包运行单条地址到拓扑任务并输出结果
+
+## 本轮已产出
+
+- `workpackages/wp-address-topology-v1.0.1.json`
+- `workpackages/bundles/address-topology-v1.0.1/observability/line_observe.py`
+- `workpackages/bundles/address-topology-v1.0.1/observability/line_metrics.json`
