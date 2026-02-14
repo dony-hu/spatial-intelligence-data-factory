@@ -7,7 +7,7 @@ import json
 from typing import Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import math
 
 
@@ -293,7 +293,7 @@ class SpatialEntityGraph:
             "node_types": node_type_counts,
             "relationship_types": rel_type_counts,
             "region": self.region,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
     def to_json(self) -> Dict:
@@ -301,7 +301,7 @@ class SpatialEntityGraph:
         return {
             "metadata": {
                 "region": self.region,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "statistics": self.get_graph_stats()
             },
             "nodes": [node.to_dict() for node in self.nodes.values()],

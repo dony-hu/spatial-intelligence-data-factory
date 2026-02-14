@@ -5,7 +5,7 @@ Implements address standardization, entity mapping, and data fusion
 
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import re
 from enum import Enum
@@ -417,7 +417,7 @@ class AddressGovernanceSystem:
             "entity_mapping": entity_mapping,
             "quality_score": quality_score,
             "processing_region": self.region,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def _assess_quality(self, parsed: ParsedAddress,

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List
 
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
@@ -49,7 +49,7 @@ class ExecutorAdapter:
             "profiling_report": profiling_report,
             "workflow_result": wf_result,
             "summary": workflow.get_workflow_summary(),
-            "executed_at": datetime.utcnow().isoformat(),
+            "executed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def _generate_dag_artifact(self, task_spec: Dict, changeset: Dict) -> None:
