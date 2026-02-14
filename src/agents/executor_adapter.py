@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
+from tools.address_verification import AddressVerificationOrchestrator, UNVERIFIABLE_ONLINE
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
 from tools.factory_workflow import FactoryWorkflow
 from src.evaluation.gates import run_minimum_gates
@@ -17,6 +18,10 @@ class ExecutorAdapter:
         "PROD_RELEASE": "release_window_confirmed",
         "COST_BUDGET": "kpi_frozen",
     }
+
+    def __init__(self, runtime_store: Optional[Any] = None):
+        self.runtime_store = runtime_store
+        self.verifier = AddressVerificationOrchestrator(runtime_store=runtime_store)
 
     def execute(self, task_spec: Dict, changeset: Dict, approvals: List[str]) -> Dict:
         profiling_report = ProfilingTool().run(task_spec)
@@ -37,9 +42,16 @@ class ExecutorAdapter:
             if gate:
                 workflow.approve_gate(gate, approver="executor", note="approved by adapter")
 
-        requirement = self._build_requirement(task_spec)
+        task_run_id = str((task_spec.get("context") or {}).get("task_run_id") or "")
+        requirement = self._build_requirement(task_spec, task_run_id=task_run_id)
         workflow.submit_product_requirement(requirement)
         wf_result = workflow.create_production_workflow(requirement, auto_execute=True)
+        verification_bundle = self._run_address_verification(workflow_result=wf_result, task_run_id=task_run_id)
+        task_exec = wf_result.setdefault("stages", {}).setdefault("task_executions", {})
+        task_exec["verification_summary"] = verification_bundle["summary"]
+        task_exec["verification_case_details"] = verification_bundle["results"]
+        task_exec["unverifiable_online_list"] = verification_bundle["unverifiable_online_list"]
+        task_exec["strategy_patch"] = verification_bundle["strategy_patch"]
 
         ok = wf_result.get("status") == "completed"
         return {
@@ -48,6 +60,7 @@ class ExecutorAdapter:
             "gates": gate_report,
             "profiling_report": profiling_report,
             "workflow_result": wf_result,
+            "verification_summary": verification_bundle["summary"],
             "summary": workflow.get_workflow_summary(),
             "executed_at": datetime.utcnow().isoformat(),
         }
@@ -64,13 +77,21 @@ class ExecutorAdapter:
             )
             break
 
-    def _build_requirement(self, task_spec: Dict) -> ProductRequirement:
+    def _build_requirement(self, task_spec: Dict, task_run_id: str = "") -> ProductRequirement:
         context = task_spec.get("context", {})
         constraints = task_spec.get("constraints", {})
         data_sources = context.get("data_sources", [])
-        input_data = [{"id": i + 1, "raw": f"from:{src}", "source": src} for i, src in enumerate(data_sources)]
+        input_data = [
+            {
+                "id": i + 1,
+                "raw": f"from:{src}",
+                "source": src,
+                "task_run_id": task_run_id,
+            }
+            for i, src in enumerate(data_sources)
+        ]
         if not input_data:
-            input_data = [{"id": 1, "raw": "default input", "source": "default"}]
+            input_data = [{"id": 1, "raw": "default input", "source": "default", "task_run_id": task_run_id}]
 
         domain = (context.get("domain") or "").lower()
         product_type = ProductType.ADDRESS_TO_GRAPH if "address" in domain else ProductType.DATA_VALIDATION
@@ -88,3 +109,60 @@ class ExecutorAdapter:
             },
             priority=1,
         )
+
+    def _run_address_verification(self, workflow_result: Dict, task_run_id: str) -> Dict[str, Any]:
+        task_exec = ((workflow_result.get("stages") or {}).get("task_executions") or {})
+        cleaning_items = task_exec.get("cleaning_case_details", []) or []
+        results: List[Dict[str, Any]] = []
+        unverifiable_online_list: List[Dict[str, Any]] = []
+        found_count = 0
+
+        for item in cleaning_items:
+            source_id = str(item.get("source_id") or item.get("order_id") or "")
+            input_item = dict(item.get("input_item") or {})
+            input_item["task_run_id"] = task_run_id
+            cleaning_output = dict(item.get("output") or {})
+            if not cleaning_output.get("standardized_address"):
+                continue
+            verification = self.verifier.verify(
+                record_id=source_id or "unknown",
+                input_item=input_item,
+                cleaning_output=cleaning_output,
+                policy_overrides={},
+            )
+            results.append(verification)
+            if verification.get("verification_status") == UNVERIFIABLE_ONLINE:
+                unverifiable_online_list.append(
+                    verification.get("unverifiable_item")
+                    or {
+                        "record_id": source_id,
+                        "failed_reason_codes": verification.get("reason_codes", []),
+                    }
+                )
+            elif verification.get("verification_status") == "VERIFIED_EXISTS":
+                found_count += 1
+
+        total = len(results)
+        unverifiable_count = len(unverifiable_online_list)
+        summary = {
+            "verified_total": total,
+            "verified_exists": found_count,
+            "unverifiable_online_count": unverifiable_count,
+            "task_run_id": task_run_id,
+        }
+        strategy_patch: List[Dict[str, Any]] = []
+        if unverifiable_count > 0:
+            strategy_patch.append(
+                {
+                    "action": "expand_public_source_coverage",
+                    "params": {"expand_public_source_coverage": True},
+                    "reason": "UNVERIFIABLE_ONLINE_EXISTS",
+                    "target": "address_verification",
+                }
+            )
+        return {
+            "results": results,
+            "unverifiable_online_list": unverifiable_online_list,
+            "summary": summary,
+            "strategy_patch": strategy_patch,
+        }

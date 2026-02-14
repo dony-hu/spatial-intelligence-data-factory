@@ -1,13 +1,37 @@
 # 子线状态：工厂-工艺迭代
 
-- 进度：15%
+- 进度：86%
 - Done：
   - TC-02 已启动，目标与边界已冻结
   - 已确认迭代链路：需求 -> 草案 -> 编译 -> 发布
+  - 本轮已完成 TC-02 任务卡状态回写与多工作树对齐
+  - 已在 `agent_server` 接入迭代事件落库（`create_version`/`publish_draft`）
+  - 已在 `agent_runtime_store` 增加迭代事件查询接口（含版本/原因/时间）
+  - 已完成首轮联调样例：新增 `tests/test_process_iteration_events.py` 并通过（2/2）
+  - 已落地 Router 决策策略（风险/成本/复杂度），并在 workflow 输出中附带 `router_decision`
+  - 已新增专家元数据接口：`/api/v1/agents/specialists`（能力/版本/健康状态）
+  - 已接入路由门禁（`max_steps`/成本/超时）并输出阻断原因码
+  - 已新增 `templates/process_console.html` 并接入路由决策/专家元数据/API 调用审计展示
+  - 已打通 `task_run_id` 在 orchestrator -> executor -> verification 的上下文透传
+  - 已补充 `publish_draft` 迭代事件回归测试（`tests/test_process_iteration_events.py`）
+  - 已将迭代事件查询（`create_version`/`publish_draft`）接入 `process_console` 同屏展示
+  - 已在 `process_console` 接入草案列表/详情查询/发布操作入口（发布后自动刷新迭代事件）
+  - 已在控制台接入草案版本历史与版本对比视图（`/api/v1/draft/{draft_id}/history|compare`）
+  - 已补充发布审计字段透出（operator/source/published_at/latency_ms）
+  - 已将 confirmation 关联进发布审计（`confirmation_id`/`confirmer_user_id`），覆盖 confirmation API 与会话确认路径
+  - 已新增确认流与操作审计查询接口：`/api/v1/confirmations`、`/api/v1/operation-audits`
+  - 已在控制台新增“确认单列表/操作审计列表”面板用于回放查询
+  - 已在控制台新增确认执行/拒绝入口（`/api/v1/confirmation/respond`）并联动刷新审计
+  - 已支持确认批量处理（`/api/v1/confirmation/batch`）与过期清理（`/api/v1/confirmation/cleanup-expired`）
+  - 已新增控制平面应用层服务（`src/control_plane/services.py`），发布/确认/审计路径统一走 service 编排
+  - 已将 pending confirmation 创建下沉到 `ConfirmationWorkflowService.create_pending_confirmation`
+  - 已清理 `AgentServerHandler` 中重复确认执行业务方法，确认入口改为 service 驱动
 - Next：
-  - 在 `agent_server` 中补齐迭代事件写入字段（版本/原因/时间）
-  - 在 `agent_runtime_store` 增加对应查询输出
+  - 将 write intent 的直接执行与事件记录逻辑继续下沉到 service（收口 chat 分支）
 - Blocker：无
-- ETA：2026-02-14 晚间完成首轮可观测事件落库
+- ETA：2026-02-15 18:00（本地时间）补齐发布链路回归与控制台扩展
 - Artifacts：
   - `coordination/status/factory-process.md`
+  - `tools/agent_server.py`
+  - `database/agent_runtime_store.py`
+  - `tests/test_process_iteration_events.py`

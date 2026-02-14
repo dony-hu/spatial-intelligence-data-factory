@@ -1,0 +1,8 @@
+{
+  "defaults": {
+    "max_steps": 10,
+    "max_cost_usd": 5.0,
+    "max_duration_sec": 900,
+    "cost_per_1k_tokens_usd": 0.01
+  }
+}
