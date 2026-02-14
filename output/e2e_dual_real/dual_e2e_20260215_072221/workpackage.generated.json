@@ -1,0 +1,32 @@
+{
+  "workpackage_name": "可信地图接口驱动的地址核验与标准化落库工作包",
+  "process_goal": "通过调用给定的可信地图地理信息接口，完成待治理地址的标准化处理、行政五级解析、真实性校验、级别判定、类型识别及AOI聚合，最终生成规范可信的地址治理数据集并完成落库，全面提升地址数据的准确性、规范性与可用性",
+  "interface_sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_real_check",
+    "address_level_judge",
+    "address_type_identify",
+    "address_aoi_keyword"
+  ],
+  "governance_steps": [
+    "接收待治理的原始地址、关联企业名称（可选）等输入数据源",
+    "调用address_standardize接口，传入原始地址参数，获取标准化后的规范地址文本",
+    "调用address_resolve_l5接口，传入标准化地址及初步行政区域参数，解析得到省、市、县、镇五级行政区域层级数据",
+    "调用address_real_check接口，传入标准化地址与解析出的行政区域参数，校验地址的真实性并返回校验结果",
+    "调用address_level_judge接口，传入校验通过的地址，判定地址的详细级别",
+    "调用address_type_identify接口，传入标准化地址与解析获取的城市编码，识别地址所属类型",
+    "调用address_aoi_keyword接口，传入标准化地址、行政区域参数及关联企业信息，聚合获取地址对应的AOI关键词",
+    "整合所有接口返回的地址治理数据，生成包含原始地址、标准化地址、行政层级、校验结果、地址级别、类型及AOI关键词的完整数据集",
+    "将整合后的地址治理数据集落库存储，完成本次地址治理工作流程"
+  ],
+  "output_contract": {
+    "raw_id": "addr_gov_202405200001",
+    "canon_text": "广东省深圳市南山区粤海街道科技园深南大道1000号顺丰大厦",
+    "confidence": 0.97,
+    "evidence": "包含address_standardize接口返回的标准化地址结果、address_resolve_l5接口返回的五级行政层级数据、address_real_check接口返回的真实性校验通过凭证、address_level_judge接口返回的街道级地址级别判定结果、address_type_identify接口返回的商业办公地址类型识别结果、address_aoi_keyword接口返回的科技园AOI聚合关键词"
+  },
+  "created_at": "2026-02-15T07:22:34.436211",
+  "trusted_source": "fengtu",
+  "executor_generation_mode": "template_from_llm_interface_sequence"
+}

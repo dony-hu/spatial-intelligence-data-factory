@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict
+from scripts._mode_guard import ensure_demo_allowed
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "trusted_data_sources.json"
@@ -27,6 +28,7 @@ def _fill_template(value: Any, context: Dict[str, Any]) -> Any:
 
 
 def main() -> int:
+    ensure_demo_allowed("scripts/simulate_trusted_sources_with_fengtu.py")
     cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     trusted_sources = list(cfg.get("trusted_sources") or [])
 

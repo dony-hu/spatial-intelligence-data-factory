@@ -1,0 +1,32 @@
+{
+  "run_dir": "/Users/huda/Code/worktrees/factory-address-verify/output/e2e_dual_real/dual_e2e_20260215_073727",
+  "angle_1_human_llm_workpackage": {
+    "requirement": "生成可执行的地址治理工作包，使用可信地图接口链路完成地址核验并落库",
+    "workpackage_path": "/Users/huda/Code/worktrees/factory-address-verify/output/e2e_dual_real/dual_e2e_20260215_073727/workpackage.generated.json",
+    "executor_script_path": "/Users/huda/Code/worktrees/factory-address-verify/output/e2e_dual_real/dual_e2e_20260215_073727/workpackage_executor.py",
+    "interface_sequence": [
+      "address_standardize",
+      "address_resolve_l5",
+      "address_real_check",
+      "address_type_identify",
+      "address_aoi_keyword",
+      "address_level_judge"
+    ],
+    "human_decision": {
+      "reviewer": "factory-user",
+      "decision": "approve",
+      "note": "工作包通过人工评审，允许产线执行",
+      "reviewed_at": "2026-02-15T07:37:42.452202"
+    }
+  },
+  "angle_2_production_execution_and_pg": {
+    "task_id": "task_dual_20260215_073744",
+    "cases_count": 3,
+    "execution_output_path": "/Users/huda/Code/worktrees/factory-address-verify/output/e2e_dual_real/dual_e2e_20260215_073727/workpackage_execution_output.json",
+    "pg_summary": {
+      "task_status": "REVIEWED",
+      "raw_count": 3,
+      "canonical_count": 3
+    }
+  }
+}

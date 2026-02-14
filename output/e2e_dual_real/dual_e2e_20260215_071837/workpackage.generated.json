@@ -1,0 +1,29 @@
+{
+  "workpackage_name": "可信地图接口联动地址核验落库工作包",
+  "process_goal": "通过调用给定的6个可信地图地理信息接口，完成待治理地址的标准化、行政解析、级别判定、真实性校验、类型识别及AOI聚合，最终生成规范的地址治理结果并完成数据落库存储",
+  "interface_sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_level_judge",
+    "address_real_check",
+    "address_type_identify",
+    "address_aoi_keyword"
+  ],
+  "governance_steps": [
+    "步骤1：接收待治理的原始地址数据，提取原始地址文本，调用address_standardize接口，传入原始地址参数，获取标准化后的完整地址文本",
+    "步骤2：调用address_resolve_l5接口，传入标准化后的地址及可选的省市区镇初始参数，解析得到省、市、区、镇四级地址层级及城市编码信息",
+    "步骤3：调用address_level_judge接口，传入标准化后的地址，获取该地址的行政级别判定结果",
+    "步骤4：调用address_real_check接口，传入标准化地址、解析得到的省/市/区参数，完成地址真实性校验，获取核验结果",
+    "步骤5：调用address_type_identify接口，传入标准化地址、解析得到的citycode参数，指定opt为aoi，识别当前地址的类型",
+    "步骤6：调用address_aoi_keyword接口，传入标准化地址、解析得到的省市区参数及关联企业信息，完成地址AOI区域聚合，获取关联兴趣点信息",
+    "步骤7：整合所有接口返回的治理数据，绑定原始地址ID，生成符合落库规范的地址治理数据集，完成数据落库存储"
+  ],
+  "output_contract": {
+    "raw_id": "raw_addr_202405200001",
+    "canon_text": "广东省深圳市南山区粤海街道科技园科技路1号",
+    "confidence": 0.93,
+    "evidence": "包含address_standardize接口返回的标准化地址结果、address_resolve_l5接口解析的省市区镇及citycode数据、address_level_judge的地址级别判定结果、address_real_check的真实性核验凭证、address_type_identify识别的地址类型结果、address_aoi_keyword聚合的AOI区域信息"
+  },
+  "created_at": "2026-02-15T07:18:55.115441",
+  "trusted_source": "fengtu"
+}

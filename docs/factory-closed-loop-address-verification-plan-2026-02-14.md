@@ -1,5 +1,10 @@
 # 工厂现状 vs 目标闭环：推进清单（地址真实核实能力）
 
+> 更新说明（2026-02-14）：本文件保留历史推进脉络。最新地址治理方案已升级为“目标态分阶段路线（非仅MVP）”，请优先参考：
+>
+> - `docs/address-governance-postgres-openhands-design-2026-02-14.md`
+> - `docs/address-governance-postgres-openhands-implementation-plan-2026-02-14.md`
+
 ## 目标约束
 - 工艺方案必须由**工艺专家Agent + LLM**自动生成。
 - Coding Agent 不直接实现产线业务逻辑。

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
+from scripts._mode_guard import ensure_demo_allowed
 
 ADDR = "深圳市南山区前海顺丰总部大厦"
 AK_TEST = "a0ece06a144a42228cd074e527a4f14f"
@@ -28,6 +29,7 @@ def call(name: str, url: str, method: str = "GET", headers: dict | None = None, 
 
 
 def main() -> int:
+    ensure_demo_allowed("scripts/probe_209_173.py")
     call(
         "209/header/full",
         "https://gis-apis.sf-express.com/iad/api",

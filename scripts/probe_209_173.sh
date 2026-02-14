@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${ALLOW_DEMO_SCRIPTS:-0}" != "1" ]]; then
+  echo "[blocked] scripts/probe_209_173.sh 已默认禁用（probe/mock流程）"
+  echo "如需强制运行请设置: ALLOW_DEMO_SCRIPTS=1"
+  echo "建议使用真实最小链路: ./scripts/run_governance_e2e_minimal.sh"
+  exit 2
+fi
+
 AK_TEST2='0748238c55024ea88a61815232a53714'
 AK_TEST='a0ece06a144a42228cd074e527a4f14f'
 

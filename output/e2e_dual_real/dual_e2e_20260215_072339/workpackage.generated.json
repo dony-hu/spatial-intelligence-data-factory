@@ -1,0 +1,78 @@
+{
+  "workpackage_name": "可信地图接口驱动的地址核验与标准化落库工作包",
+  "process_goal": "通过调用指定可信地图GIS接口链路，完成原始地址的标准化转换、五级地址解析、真实性校验、级别判定、类型识别及AOI聚合，最终生成规范可信的地址治理数据集并完成落库，保障地址数据的准确性、规范性与业务可用性",
+  "interface_sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_real_check",
+    "address_level_judge",
+    "address_type_identify",
+    "address_aoi_keyword"
+  ],
+  "governance_steps": [
+    "接收待治理的原始地址、关联企业信息及初始元数据，创建地址治理任务上下文",
+    "调用address_standardize接口，传入原始地址参数，完成原始地址的标准化清洗与格式转换，生成标准地址文本",
+    "调用address_resolve_l5接口，传入标准化后的地址，解析提取省、市、区、镇、村五级行政区域层级明细",
+    "基于标准化地址与解析得到的行政区域参数，调用address_real_check接口完成地址真实性核验，获取校验通过状态与核验详情",
+    "调用address_level_judge接口，传入标准化地址，判定当前地址的详细级别（如省级、区县级、街道级、门牌号级等）",
+    "结合标准化地址与解析得到的城市编码，调用address_type_identify接口识别地址所属的功能类型（如住宅、商业楼宇、企业园区等）",
+    "传入标准化地址、行政区域参数及关联企业信息，调用address_aoi_keyword接口完成地址AOI聚合关键词提取",
+    "整合所有接口返回的治理数据，生成标准化地址治理数据集，将原始地址、标准地址、校验结果、层级信息等核心数据落库存储"
+  ],
+  "output_contract": {
+    "raw_id": "raw_addr_20240520_0001",
+    "canon_text": "北京市朝阳区建国门外大街1号",
+    "confidence": 0.94,
+    "evidence": {
+      "standardize_response": {
+        "code": 200,
+        "data": {
+          "std_addr": "北京市朝阳区建国门外大街1号"
+        }
+      },
+      "resolve_l5_response": {
+        "code": 200,
+        "data": {
+          "province": "北京市",
+          "city": "北京市",
+          "county": "朝阳区",
+          "town": "建国门外街道",
+          "village": ""
+        }
+      },
+      "real_check_response": {
+        "code": 200,
+        "data": {
+          "is_real": true,
+          "check_detail": "地址匹配度98%"
+        }
+      },
+      "level_judge_response": {
+        "code": 200,
+        "data": {
+          "level": "门牌号级",
+          "level_score": 95
+        }
+      },
+      "type_identify_response": {
+        "code": 200,
+        "data": {
+          "addr_type": "商业楼宇",
+          "type_confidence": 0.92
+        }
+      },
+      "aoi_keyword_response": {
+        "code": 200,
+        "data": {
+          "aoi_list": [
+            "建国门外SOHO",
+            "国贸中心"
+          ]
+        }
+      }
+    }
+  },
+  "created_at": "2026-02-15T07:23:57.811459",
+  "trusted_source": "fengtu",
+  "executor_generation_mode": "template_from_llm_interface_sequence"
+}

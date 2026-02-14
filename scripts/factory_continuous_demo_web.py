@@ -22,6 +22,7 @@ from testdata.factory_demo_scenarios import get_all_scenarios
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
 from tools.factory_simple_server import start_server, factory_state, register_action_handlers
 from tools.factory_workflow import FactoryWorkflow
+from scripts._mode_guard import ensure_demo_allowed
 
 
 SHANGHAI_STREETS = [
@@ -444,6 +445,7 @@ def run_worker(args: argparse.Namespace, stop_event: threading.Event) -> None:
 
 
 def main() -> None:
+    ensure_demo_allowed("scripts/factory_continuous_demo_web.py")
     parser = argparse.ArgumentParser(description="后台持续执行用例并驱动实时看板")
     parser.add_argument("--host", default="127.0.0.1", help="Dashboard host")
     parser.add_argument("--port", type=int, default=5000, help="Dashboard port")

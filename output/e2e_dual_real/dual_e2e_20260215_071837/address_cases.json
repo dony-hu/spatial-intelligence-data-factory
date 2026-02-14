@@ -1,0 +1,64 @@
+{
+  "records": [
+    {
+      "raw_id": "dual-V-L1-001",
+      "raw_text": "黄浦区中山东一路1号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    },
+    {
+      "raw_id": "dual-V-L1-002",
+      "raw_text": "浦东新区世纪大道100号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    },
+    {
+      "raw_id": "dual-V-L1-003",
+      "raw_text": "徐汇区淮海中路88号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    },
+    {
+      "raw_id": "dual-V-L2-001",
+      "raw_text": "上海市静安区南京西路500号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    },
+    {
+      "raw_id": "dual-V-L2-002",
+      "raw_text": "上海市虹口区四川北路1200号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    },
+    {
+      "raw_id": "dual-V-L2-003",
+      "raw_text": "上海市杨浦区五角场路88号",
+      "province": "广东省",
+      "city": "深圳市",
+      "county": "南山区",
+      "town": "南山街道",
+      "citycode": "755",
+      "company": "顺丰"
+    }
+  ]
+}

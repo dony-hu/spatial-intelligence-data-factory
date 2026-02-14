@@ -15,6 +15,7 @@ sys.path.insert(0, str(project_root))
 
 from tools.factory_workflow import FactoryWorkflow
 from testdata.factory_demo_scenarios import get_all_scenarios
+from scripts._mode_guard import ensure_demo_allowed
 
 
 def print_section(title: str, width: int = 80) -> None:
@@ -252,6 +253,7 @@ def demo_multi_workflow() -> None:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Factory Demonstration Workflow")
+        ensure_demo_allowed("scripts/factory_demo_workflow.py")
     parser.add_argument(
         '--scenario',
         choices=['address_cleaning', 'entity_fusion', 'relationship_extraction', 'quick_test'],

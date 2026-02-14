@@ -1,0 +1,14 @@
+{
+  "ruleset_id": "default",
+  "thresholds": {
+    "t_high": 0.85,
+    "t_low": 0.6
+  },
+  "weights": {
+    "field": 0.6,
+    "candidate": 0.4
+  },
+  "switches": {
+    "enable_fuzzy_dedup": true
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "workpackage_name": "可信地图接口地址核验与标准化落库工作包",
+  "process_goal": "通过调用给定的可信地图GIS接口，完成待治理地址的标准化、结构化解析、真实性校验、类型识别、AOI聚合及级别判断，最终将全量治理结果落库存储，实现地址数据的可信化、规范化治理",
+  "interface_sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_real_check",
+    "address_type_identify",
+    "address_aoi_keyword",
+    "address_level_judge"
+  ],
+  "governance_steps": [
+    "接收待治理的原始地址数据集，获取每条地址的唯一标识raw_id及原始地址内容",
+    "调用address_standardize接口，传入原始地址，获取标准化后的规范地址文本",
+    "调用address_resolve_l5接口，传入标准化地址及关联行政区划参数，完成五级地址解析，提取省、市、县、镇、城市编码等结构化行政区划信息",
+    "调用address_real_check接口，传入标准化地址及解析得到的省、市、县参数，完成地址真实性校验，获取校验通过状态及详细结果",
+    "调用address_type_identify接口，传入标准化地址及解析得到的citycode参数，完成地址类型识别，获取地址所属的功能类型标签",
+    "调用address_aoi_keyword接口，传入标准化地址、行政区划参数及关联企业信息，完成AOI聚合关键词提取与聚合区域识别",
+    "调用address_level_judge接口，传入标准化地址及配置的AK参数，完成地址级别判断，获取地址的精度等级",
+    "整合所有接口返回的结构化数据，生成包含原始标识、标准化地址、置信度、全量校验证据的治理结果，将数据落库至地址治理专用数据库"
+  ],
+  "output_contract": {
+    "raw_id": "raw_addr_202405200001",
+    "canon_text": "北京市朝阳区建国门外大街1号国贸大厦A座",
+    "confidence": 0.94,
+    "evidence": {
+      "standardize_result": "{\"code\":200,\"data\":{\"std_addr\":\"北京市朝阳区建国门外大街1号国贸大厦A座\"}}",
+      "resolve_result": "{\"code\":200,\"data\":{\"province\":\"北京市\",\"city\":\"北京市\",\"county\":\"朝阳区\",\"town\":\"建国门外街道\"}}",
+      "real_check_result": "{\"code\":200,\"data\":{\"is_real\":true,\"check_detail\":\"地址真实有效\"}}",
+      "type_identify_result": "{\"code\":200,\"data\":{\"addr_type\":\"commercial_building\"}}",
+      "aoi_keyword_result": "{\"code\":200,\"data\":{\"aoi_name\":\"国贸商圈\",\"keywords\":[\"国贸大厦\",\"建国门外大街\"]}}",
+      "level_judge_result": "{\"code\":200,\"data\":{\"addr_level\":\"district_level\",\"confidence\":0.94}}"
+    }
+  },
+  "created_at": "2026-02-15T07:37:42.451240",
+  "trusted_source": "fengtu",
+  "executor_generation_mode": "template_from_llm_interface_sequence"
+}

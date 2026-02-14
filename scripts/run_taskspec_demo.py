@@ -13,6 +13,7 @@ from src.runtime.orchestrator import Orchestrator
 from src.agents.planner_adapter import PlannerAdapter
 from src.agents.executor_adapter import ExecutorAdapter
 from src.agents.evaluator_adapter import EvaluatorAdapter
+from scripts._mode_guard import ensure_demo_allowed
 
 
 def save_json(path: Path, data: dict) -> None:
@@ -21,6 +22,7 @@ def save_json(path: Path, data: dict) -> None:
 
 
 def main() -> int:
+    ensure_demo_allowed("scripts/run_taskspec_demo.py")
     parser = argparse.ArgumentParser(description="Run TaskSpec e2e demo")
     parser.add_argument(
         "--mode",

@@ -1,0 +1,38 @@
+{
+  "workpackage_name": "可信地图接口驱动的地址核验与标准化落库工作包",
+  "process_goal": "通过调用给定的可信地图GIS接口序列，完成待治理地址的标准化、真实性校验、层级判断、类型识别及AOI聚合，最终生成规范可信的地址治理结果并完成数据落库，保障地址信息的准确性、规范性与可用性",
+  "interface_sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_real_check",
+    "address_level_judge",
+    "address_type_identify",
+    "address_aoi_keyword"
+  ],
+  "governance_steps": [
+    "接收待治理的原始地址及关联业务参数（如所属企业、城市编码等）",
+    "调用address_standardize接口，传入原始地址参数，生成标准化的完整地址文本",
+    "调用address_resolve_l5接口，传入标准化地址及初步解析的省市区参数，拆分获取省、市、县、镇五级行政区划详细信息",
+    "调用address_real_check接口，传入标准化地址、解析得到的省/市/县参数，校验地址的真实有效性",
+    "调用address_level_judge接口，传入标准化地址，判断该地址对应的行政级别",
+    "调用address_type_identify接口，传入标准化地址及解析得到的城市编码，识别地址的功能类型",
+    "调用address_aoi_keyword接口，传入标准化地址、行政区划参数及关联企业信息，聚合地址对应的AOI关键词",
+    "整合所有接口返回的治理数据，生成标准化地址治理报告，完成地址数据落库"
+  ],
+  "output_contract": {
+    "raw_id": "raw_addr_202405200001",
+    "canon_text": "北京市海淀区中关村大街1号",
+    "confidence": 0.96,
+    "evidence": {
+      "address_standardize_response": {},
+      "address_resolve_l5_response": {},
+      "address_real_check_response": {},
+      "address_level_judge_response": {},
+      "address_type_identify_response": {},
+      "address_aoi_keyword_response": {}
+    }
+  },
+  "created_at": "2026-02-15T07:46:05.680741",
+  "trusted_source": "fengtu",
+  "executor_generation_mode": "template_from_llm_interface_sequence"
+}
