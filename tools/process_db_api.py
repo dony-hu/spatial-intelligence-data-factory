@@ -80,6 +80,9 @@ class ProcessDBApi:
             return {"status": "error", "error": "缺少 process_definition_id/code 或 version", "intent": "create_version"}
         goal = str(params.get("goal") or "对话式创建版本").strip()
         publish = bool(params.get("publish", True))
+        tool_bundle_version = str(params.get("tool_bundle_version") or "bundle-default@1.0.0").strip()
+        engine_version = str(params.get("engine_version") or "factory-engine@1.0.0").strip()
+        engine_compatibility = params.get("engine_compatibility") if isinstance(params.get("engine_compatibility"), dict) else None
         item = self.runtime_store.create_process_version(
             process_definition_id=process_definition_id,
             version=version,
@@ -87,6 +90,9 @@ class ProcessDBApi:
             steps=params.get("steps") or _default_process_steps(),
             publish=publish,
             created_by="process_expert",
+            tool_bundle_version=tool_bundle_version,
+            engine_version=engine_version,
+            engine_compatibility=engine_compatibility,
         )
         return {"status": "ok", "intent": "create_version", "process_version": item}
 
@@ -118,6 +124,13 @@ class ProcessDBApi:
             steps=_default_process_steps(),
             publish=True,
             created_by="process_expert",
+            tool_bundle_version=str(params.get("tool_bundle_version") or "bundle-default@1.0.0"),
+            engine_version=str(params.get("engine_version") or "factory-engine@1.0.0"),
+            engine_compatibility=(
+                params.get("engine_compatibility")
+                if isinstance(params.get("engine_compatibility"), dict)
+                else None
+            ),
         )
         return {
             "status": "ok",

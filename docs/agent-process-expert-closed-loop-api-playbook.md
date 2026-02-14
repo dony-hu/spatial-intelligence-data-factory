@@ -1,4 +1,6 @@
-# Process Expert Agent 闭环 API 操作手册
+# Process Expert Agent 半自动（人工+LLM）API 操作手册
+
+> 架构决策更新（2026-02-14）：停止“工艺Agent自举多轮自动迭代升级”，统一采用“LLM生成草案 + 人工评审决策 + 写操作确认门禁”的半自动模式。
 
 ## 0. 前置条件
 - 已安装 Python 3.9+
@@ -50,23 +52,23 @@ curl -sS -X POST http://127.0.0.1:8081/api/v1/process/expert/chat \
 - `compilation.tool_scripts`
 - `compilation.execution_readiness`
 
-## 3. 触发发布请求（先挂起确认）
+## 3. 触发发布建议（人工评审阶段）
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8081/api/v1/process/expert/chat \
   -H 'Content-Type: application/json' \
   -d '{
     "action":"chat",
-    "session_id":"session_closed_loop_001",
-    "message":"发布草案 draft_id=<替换成实际draft_id>"
+    "session_id":"session_human_loop_001",
+    "message":"请评估发布草案 draft_id=<替换成实际draft_id> 的风险并给出建议，不要直接执行写操作"
   }'
 ```
 
 期望返回：
-- `tool_result.status = pending_confirmation`
-- `tool_result.confirmation_id`
+- 方案建议、风险说明、人工决策提示
+- 如进入写操作，返回 `tool_result.status = pending_confirmation` 与 `tool_result.confirmation_id`
 
-## 4. 显式确认写操作
+## 4. 人工确认后再执行写操作
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8081/api/v1/confirmation/respond \
@@ -106,3 +108,21 @@ curl -sS -X POST http://127.0.0.1:8081/api/v1/process/expert/chat \
 - `LLM model is missing`：未配置 `LLM_MODEL` 或 config.model
 - `LLM api_key is missing`：未配置 `LLM_API_KEY` 或 config.api_key
 - `pending_confirmation` 一直未执行：未调用 `/api/v1/confirmation/respond`
+- 发送了无效 action：请使用 `action=design` 或 `action=chat`
+
+## 6. 推荐脚本入口（半自动）
+
+```bash
+cd /Users/huda/Code/worktrees/factory-address-verify
+
+# 第一步：生成LLM草案 + 人工决策模板
+/Users/huda/Code/.venv/bin/python scripts/run_process_expert_human_loop.py \
+  --requirement "请根据测试用例设计真实地址核实工艺草案" \
+  --output-dir output/process_expert_human_loop
+
+# 第二步：人工编辑 run_dir/human_decision_template.json 后，作为 decision-file 回放增量修改
+/Users/huda/Code/.venv/bin/python scripts/run_process_expert_human_loop.py \
+  --requirement "请根据测试用例设计真实地址核实工艺草案" \
+  --decision-file <上一步run_dir>/human_decision_template.json \
+  --output-dir output/process_expert_human_loop
+```

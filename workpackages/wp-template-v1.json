@@ -5,7 +5,10 @@
     "process_version": "process-v1.0.0",
     "tool_bundle_version": "tools-v1.0.0",
     "engine_version": "engine-v1.0.0",
-    "released_at": "2026-02-14T00:00:00"
+    "released_at": "2026-02-14T00:00:00",
+    "released_by": "factory-release-bot",
+    "rollback_target_version": "0.9.0",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#release_event_id"
   },
   "line_spec": {
     "line_type": "address_to_topology",
@@ -33,6 +36,11 @@
   "observability_bundle": {
     "generator": "factory_observability_generator",
     "entrypoints": ["line_observe.py", "line_metrics.json"]
+  },
+  "line_feedback_contract": {
+    "required_fields": ["status", "failure_queue_snapshot_ref", "replay_result_ref"],
+    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
   },
   "rollback": {
     "from_version": "1.0.0",

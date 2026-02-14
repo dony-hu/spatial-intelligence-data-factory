@@ -23,8 +23,9 @@ if [[ -z "$DRAFT_ID" ]]; then
   exit 0
 fi
 
-echo "[3/4] Ask to publish draft (will likely return pending_confirmation)"
-PUBLISH_REQ=$(jq -cn --arg msg "发布草案 draft_id=${DRAFT_ID}" --arg sid "session_closed_loop_$(date +%s)" '{action:"chat", session_id:$sid, message:$msg}')
+echo "[3/4] Ask for publish plan (human decision required)"
+SESSION_ID="session_human_loop_$(date +%s)"
+PUBLISH_REQ=$(jq -cn --arg msg "请给出发布草案 draft_id=${DRAFT_ID} 的风险评估与发布建议，先不要执行写操作" --arg sid "$SESSION_ID" '{action:"chat", session_id:$sid, message:$msg}')
 PUBLISH_RESP=$(curl -sS -X POST "${BASE_URL}/api/v1/process/expert/chat" \
   -H "Content-Type: application/json" \
   -d "$PUBLISH_REQ")
@@ -33,15 +34,11 @@ echo "$PUBLISH_RESP" | jq .
 
 CONFIRM_ID=$(echo "$PUBLISH_RESP" | jq -r '.tool_result.confirmation_id // empty')
 if [[ -z "$CONFIRM_ID" ]]; then
-  echo "[INFO] no confirmation required or no confirmation_id returned."
+  echo "[INFO] 未进入写操作门禁，流程结束（符合人工主导模式）。"
   exit 0
 fi
 
-echo "[4/4] Confirm write operation: ${CONFIRM_ID}"
-CONFIRM_RESP=$(curl -sS -X POST "${BASE_URL}/api/v1/confirmation/respond" \
-  -H "Content-Type: application/json" \
-  -d "$(jq -cn --arg cid "$CONFIRM_ID" '{confirmation_id:$cid, response:"confirm"}')")
-
-echo "$CONFIRM_RESP" | jq .
-
-echo "[DONE] Closed-loop flow finished."
+echo "[4/4] Human action required"
+echo "[MANUAL] 如确认发布，请人工执行："
+echo "curl -sS -X POST ${BASE_URL}/api/v1/confirmation/respond -H 'Content-Type: application/json' -d '{\"confirmation_id\":\"${CONFIRM_ID}\",\"response\":\"confirm\"}' | jq ."
+echo "[DONE] Semi-auto flow finished (LLM辅助+人工决策)."

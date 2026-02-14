@@ -1,12 +1,12 @@
 version: "6.0.0"
-last_updated: "2026-02-12"
+last_updated: "2026-02-14"
 project:
   name: "spatial-intelligence-data-factory"
   type: "other"
   level: 4
 
-current_phase: "solutioning"
-current_workflow: "architecture"
+current_phase: "implementation"
+current_workflow: "dev-story"
 overall_status: "in_progress"
 
 phases:
@@ -39,33 +39,33 @@ phases:
         output: ""
 
   solutioning:
-    status: "in_progress"
+    status: "completed"
     workflows:
       architecture:
         required: true
-        status: "in_progress"
+        status: "completed"
         output: "docs/architecture-real-execution-address-pipeline-2026-02-12.md"
 
   implementation:
-    status: "not_started"
+    status: "in_progress"
     workflows:
       sprint-planning:
         required: true
-        status: "not_started"
-        output: ""
+        status: "completed"
+        output: "docs/bmad-real-execution-engineering-plan-2026-02-12.md; docs/week2-backlog-2026-02-14.md; docs/evaluation-samples-expansion-plan-2026-02-14.md"
       create-story:
         required: true
-        status: "not_started"
-        output: ""
+        status: "in_progress"
+        output: "docs/stories/RE1-S1-真实地址清洗输出.md; docs/stories/RE2-S1-真实图谱节点关系输出.md; docs/stories/RE2-S3-图谱门禁与失败语义.md; docs/stories/RE3-S1-状态机业务语义修正.md; docs/stories/RE3-S2-证据链结构化摘要.md; docs/stories/RE5-S2-quick-test集成验收.md"
       dev-story:
         required: true
-        status: "not_started"
-        output: ""
+        status: "in_progress"
+        output: "coordination/status/factory-process.md; coordination/status/factory-tooling.md; coordination/status/factory-workpackage.md; coordination/status/factory-observability-gen.md; coordination/status/line-execution.md"
       code-review:
         required: true
         status: "not_started"
         output: ""
 
 recommendation:
-  next_workflow: "进入 /create-story 与 /dev-story，按 P0 顺序实施"
-  reason: "架构文档与 P0 story 已落地，下一步进入实施与验证。"
+  next_workflow: "进入 /code-review 与 CI 门禁回归，收敛 P1 收尾项"
+  reason: "P0 主链路开发已进入在制状态，下一步应进行系统性审查与回归阻断配置。"

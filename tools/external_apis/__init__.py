@@ -6,7 +6,6 @@ import hashlib
 import json
 import logging
 import time
-import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
@@ -150,22 +149,14 @@ class ExternalAPIClient(ABC):
     def _log_call(self, request: Dict[str, Any], response: Optional[Dict[str, Any]], status: str, error_type: Optional[APIErrorType], latency: int):
         """Insert into api_call_log table."""
         try:
-            with self.runtime_store.get_db() as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """INSERT INTO api_call_log
-                       (call_id, api_name, request_json, response_json, error_type, latency_ms, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))""",
-                    (
-                        f"{self.api_name}_{uuid.uuid4().hex[:12]}",
-                        self.api_name,
-                        json.dumps(request, ensure_ascii=False),
-                        json.dumps(response or {}, ensure_ascii=False),
-                        error_type.value if error_type else None,
-                        latency,
-                    ),
-                )
-                conn.commit()
+            self.runtime_store.log_api_call(
+                api_name=self.api_name,
+                request_json=json.dumps(request, ensure_ascii=False),
+                response_json=json.dumps(response or {}, ensure_ascii=False),
+                error_type=error_type.value if error_type else None,
+                latency_ms=latency,
+                task_run_id=str(request.get("task_run_id") or "") or None,
+            )
         except Exception as e:
             self.logger.warning(f"Call logging failed: {e}")
 

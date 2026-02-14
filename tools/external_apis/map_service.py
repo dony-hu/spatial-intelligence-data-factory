@@ -20,14 +20,22 @@ class MapServiceClient(ExternalAPIClient):
 
     def __init__(self, runtime_store, config=None):
         super().__init__(runtime_store, config)
-        self.api_key = os.getenv("AMAP_API_KEY", "").strip()
+        self.api_key = (
+            os.getenv("AMAP_API_KEY", "").strip()
+            or os.getenv("MAP_SERVICE_API_KEY", "").strip()
+        )
         self.endpoint = (
             config.get("endpoint", "https://restapi.amap.com/v3/geocode/geo")
             if config
             else "https://restapi.amap.com/v3/geocode/geo"
         )
 
-    def verify_address(self, standardized_address: str, components: Dict[str, str]) -> Dict[str, Any]:
+    def verify_address(
+        self,
+        standardized_address: str,
+        components: Dict[str, str],
+        task_run_id: str = "",
+    ) -> Dict[str, Any]:
         """Verify standardized address using Amap API.
 
         Args:
@@ -48,6 +56,7 @@ class MapServiceClient(ExternalAPIClient):
             "address": standardized_address,
             "city": components.get("city", ""),
             "key": self.api_key,
+            "task_run_id": task_run_id,
         }
 
         success, response, error = self.call(request)

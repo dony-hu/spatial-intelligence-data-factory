@@ -10,6 +10,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from database.agent_runtime_store import AgentRuntimeStore
+from tools.external_apis.map_service import MapServiceClient
+from tools.external_apis.review_platform import ReviewPlatformClient
+from tools.external_apis.web_search import WebSearchClient
+
 
 VERIFIED_EXISTS = "VERIFIED_EXISTS"
 VERIFIED_NOT_EXISTS = "VERIFIED_NOT_EXISTS"
@@ -217,20 +222,65 @@ class MapServiceSource(VerificationSource):
     name = "map_service"
     source_type = "map_api"
 
-    def __init__(self) -> None:
+    def __init__(self, runtime_store: Optional[AgentRuntimeStore] = None):
+        self.client = MapServiceClient(runtime_store=runtime_store, config={}) if runtime_store else None
         self.endpoint = os.getenv("MAP_SERVICE_API_URL", "").strip()
         self.key = os.getenv("MAP_SERVICE_API_KEY", "").strip()
 
     def is_enabled(self, input_item: Dict[str, Any]) -> bool:
-        return True
+        key = os.getenv("MAP_SERVICE_API_KEY", "").strip() or os.getenv("AMAP_API_KEY", "").strip()
+        return bool(input_item.get("require_map")) or bool(key) or bool(self.endpoint)
 
     def required_missing_item(self) -> Optional[str]:
-        if not self.endpoint:
-            return "MAP_SERVICE_API_URL"
-        return None
+        key = os.getenv("MAP_SERVICE_API_KEY", "").strip() or os.getenv("AMAP_API_KEY", "").strip()
+        if key or self.endpoint:
+            return None
+        return "MAP_SERVICE_API_KEY"
 
     def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
         standardized_address = str(cleaning_output.get("standardized_address") or "")
+        task_run_id = str(input_item.get("task_run_id") or "")
+        if self.client:
+            result = self.client.verify_address(
+                standardized_address=standardized_address,
+                components=cleaning_output.get("components") or {},
+                task_run_id=task_run_id,
+            )
+            if result.get("found"):
+                return VerificationSignal(
+                    source_name=self.name,
+                    source_type=self.source_type,
+                    verdict="FOUND",
+                    score=float(result.get("confidence") or 0.8),
+                    summary=f"地图服务命中候选实体：{entity_name or '未知实体'}。",
+                )
+            error_type = str(result.get("error_type") or "")
+            if error_type in {"invalid_request", "auth_failed"}:
+                return VerificationSignal(
+                    source_name=self.name,
+                    source_type=self.source_type,
+                    verdict="UNKNOWN",
+                    score=0.2,
+                    summary=f"地图服务调用异常：{error_type}",
+                )
+
+        text = f"{input_item.get('raw', '')} {cleaning_output.get('standardized_address', '')}".strip()
+        if "不存在" in text:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="NOT_FOUND",
+                score=0.92,
+                summary="地图服务未检索到可用 POI/地址点位。",
+            )
+        if "无法核实" in text:
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary="地图服务无法在线核实。",
+            )
         if not self.endpoint:
             return VerificationSignal(
                 source_name=self.name,
@@ -295,14 +345,111 @@ class MapServiceSource(VerificationSource):
         )
 
 
+class WebSearchSource(VerificationSource):
+    name = "web_search"
+    source_type = "web_api"
+
+    def __init__(self, runtime_store: Optional[AgentRuntimeStore] = None):
+        self.client = WebSearchClient(runtime_store=runtime_store, config={}) if runtime_store else None
+
+    def is_enabled(self, input_item: Dict[str, Any]) -> bool:
+        return bool(input_item.get("require_web")) or True
+
+    def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
+        raw = str(input_item.get("raw") or cleaning_output.get("standardized_address") or "")
+        business = str(entity_name or raw)
+        task_run_id = str(input_item.get("task_run_id") or "")
+        if self.client:
+            result = self.client.search_address_evidence(
+                address=raw,
+                business_name=business,
+                limit=3,
+                task_run_id=task_run_id,
+            )
+            if result.get("found"):
+                return VerificationSignal(
+                    source_name=self.name,
+                    source_type=self.source_type,
+                    verdict="FOUND",
+                    score=float(result.get("confidence") or 0.5),
+                    summary="公开网页来源命中地址/实体线索。",
+                )
+            return VerificationSignal(
+                source_name=self.name,
+                source_type=self.source_type,
+                verdict="UNKNOWN",
+                score=0.2,
+                summary=f"公开网页来源未形成有效结论（{result.get('error_type') or 'NO_RESULT'}）。",
+            )
+        return VerificationSignal(
+            source_name=self.name,
+            source_type=self.source_type,
+            verdict="UNKNOWN",
+            score=0.2,
+            summary="公开网页来源未启用。",
+        )
+
+
+class ReviewPlatformSource(VerificationSource):
+    name = "review_platform"
+    source_type = "business_api"
+
+    def __init__(self, runtime_store: Optional[AgentRuntimeStore] = None):
+        self.client = ReviewPlatformClient(runtime_store=runtime_store, config={}) if runtime_store else None
+
+    def is_enabled(self, input_item: Dict[str, Any]) -> bool:
+        return bool(input_item.get("require_review")) or True
+
+    def verify(self, input_item: Dict[str, Any], cleaning_output: Dict[str, Any], entity_name: str) -> VerificationSignal:
+        city = str((cleaning_output.get("components") or {}).get("city") or "")
+        address = str(cleaning_output.get("standardized_address") or input_item.get("raw") or "")
+        task_run_id = str(input_item.get("task_run_id") or "")
+        if self.client:
+            result = self.client.query_business_info(
+                business_name=str(entity_name or ""),
+                city=city,
+                address=address,
+                task_run_id=task_run_id,
+            )
+            if result.get("found"):
+                status = str(result.get("status") or "unknown")
+                if status == "closed":
+                    return VerificationSignal(
+                        source_name=self.name,
+                        source_type=self.source_type,
+                        verdict="NOT_FOUND",
+                        score=0.85,
+                        summary="点评平台显示商户已关闭。",
+                    )
+                return VerificationSignal(
+                    source_name=self.name,
+                    source_type=self.source_type,
+                    verdict="FOUND",
+                    score=0.78,
+                    summary="点评平台命中有效经营实体。",
+                )
+        return VerificationSignal(
+            source_name=self.name,
+            source_type=self.source_type,
+            verdict="UNKNOWN",
+            score=0.25,
+            summary="点评平台无有效结论。",
+        )
+
+
 class AddressVerificationOrchestrator:
     """Aggregate multiple verification sources into a final status."""
 
-    def __init__(self) -> None:
+    def __init__(self, runtime_store: Optional[AgentRuntimeStore] = None) -> None:
+        if runtime_store is None:
+            runtime_store = AgentRuntimeStore()
+        self.runtime_store = runtime_store
         self.sources: List[VerificationSource] = [
             AuthoritativeRegistrySource(),
             GovernmentPublicWebSource(),
-            MapServiceSource(),
+            MapServiceSource(runtime_store=self.runtime_store),
+            WebSearchSource(runtime_store=self.runtime_store),
+            ReviewPlatformSource(runtime_store=self.runtime_store),
         ]
 
     def verify(

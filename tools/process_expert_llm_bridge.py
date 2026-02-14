@@ -6,7 +6,20 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from tools.agent_cli import load_config, parse_plan_from_answer, run_requirement_query
-from tools.process_expert_bootstrap import ProcessExpertLLMBridge
+
+
+class ProcessExpertLLMBridge:
+    def generate_plan(self, requirement: str) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def suggest_change_request(self, round_index: int, audit: Dict[str, Any], last_result: Dict[str, Any]) -> str:
+        raise NotImplementedError
+
+    def pop_trace_events(self) -> List[Dict[str, Any]]:
+        return []
+
+    def recommend_trusted_sources(self, trusted_sources_config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        return {"recommendations": []}
 
 
 class RealProcessExpertLLMBridge(ProcessExpertLLMBridge):

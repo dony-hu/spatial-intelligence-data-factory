@@ -79,6 +79,7 @@ class ProcessCompiler:
             steps = self._identify_steps(draft_dict)
             if not steps:
                 errors.append("无法识别工艺步骤，请补充工艺描述")
+            steps = self._annotate_step_error_codes(steps)
 
             # 步骤3: 生成工具脚本
             for step in steps:
@@ -127,6 +128,29 @@ class ProcessCompiler:
                 tool_scripts=tool_scripts
             )
 
+            # 步骤4.1: 自动生成观测代码与指标定义
+            observability = self.tool_generator.generate_observability_bundle(
+                process_code=process_code,
+                process_version=process_spec.get("version", "1.0.0"),
+                steps=steps,
+                domain=domain,
+            )
+            if observability.get("status") == "generated":
+                process_spec["observability_bundle"] = {
+                    "generator": "process_compiler.tool_generator",
+                    "bundle_id": observability.get("bundle_id"),
+                    "entrypoints": observability.get("entrypoints", []),
+                    "step_error_codes": observability.get("step_error_codes", {}),
+                }
+                tool_metadata.append({
+                    "tool_name": "line_observability_bundle",
+                    "step": "OBSERVABILITY",
+                    "status": "generated",
+                    "entrypoints": observability.get("entrypoints", []),
+                })
+            else:
+                warnings.append(f"观测代码生成未完成: {observability.get('message', 'unknown')}")
+
             # 步骤5: 验证工艺
             validation_result = self.validator.validate(process_spec)
             errors.extend(validation_result['errors'])
@@ -174,6 +198,18 @@ class ProcessCompiler:
     def _identify_steps(self, draft_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
         """识别工艺步骤"""
         return self.step_identifier.identify(draft_dict)
+
+    @staticmethod
+    def _annotate_step_error_codes(steps: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Attach standardized step-level error code metadata."""
+        annotated: List[Dict[str, Any]] = []
+        for step in steps or []:
+            item = dict(step)
+            step_name = str(item.get("name") or "UNKNOWN").upper()
+            item["error_code"] = f"STEP_{step_name}_FAIL"
+            item["error_message"] = f"{item.get('description') or step_name} 执行失败"
+            annotated.append(item)
+        return annotated
 
     def _build_process_spec(self,
                            process_code: str,
