@@ -18,6 +18,7 @@ sys.path.insert(0, str(project_root))
 from tools.factory_workflow import FactoryWorkflow
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
 from tools.factory_simple_server import start_server, factory_state
+from scripts._mode_guard import ensure_demo_allowed
 
 # 简单的中文分词函数
 def chinese_word_segment(address: str) -> list:
@@ -335,6 +336,7 @@ def run_live_demo(total_addresses: int = 100):
 
 def main():
     """主函数"""
+    ensure_demo_allowed("scripts/factory_live_demo.py")
     import argparse
 
     parser = argparse.ArgumentParser(description="Factory Live Demo")

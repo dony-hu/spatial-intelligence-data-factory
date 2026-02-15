@@ -1,0 +1,93 @@
+{
+  "workpackage_id": "wp-public-security-address-v0.2.0",
+  "version": "0.2.0",
+  "factory_release": {
+    "process_version": "process-v0.2.0",
+    "tool_bundle_version": "tools-v0.2.0",
+    "engine_version": "engine-v1.0.x",
+    "released_at": "<AUTO_GENERATED>",
+    "released_by": "factory-workpackage-line",
+    "rollback_target_version": "0.1.x",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-public-security-address-v0.2.0"
+  },
+  "line_spec": {
+    "line_type": "public_security_address_governance",
+    "goal": "基于真实地址核实能力输出公安地址治理结果与证据链",
+    "constraints": [
+      "产线不得绕过工厂发布工包直接改工艺",
+      "所有写操作必须经 pending_confirmation 门禁",
+      "真实核验源不可用时必须降级为 UNVERIFIABLE_ONLINE"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": ["raw_address"],
+    "properties": {
+      "raw_address": {"type": "string", "minLength": 3},
+      "trace_id": {"type": "string"}
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "normalized_address",
+      "verification_status",
+      "confidence",
+      "evidence_pack",
+      "quality_score"
+    ],
+    "properties": {
+      "normalized_address": {"type": "string"},
+      "verification_status": {
+        "type": "string",
+        "enum": ["VERIFIED_EXISTS", "VERIFIED_NOT_EXISTS", "UNVERIFIABLE_ONLINE"]
+      },
+      "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+      "evidence_pack": {"type": "array", "items": {"type": "object"}},
+      "reason_codes": {"type": "array", "items": {"type": "string"}},
+      "quality_score": {"type": "number", "minimum": 0, "maximum": 1},
+      "degraded": {"type": "boolean"}
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {"code": "parse", "name": "地址解析"},
+      {"code": "normalize", "name": "地址标准化"},
+      {"code": "verify_online", "name": "在线真实核实"},
+      {"code": "adjudicate", "name": "冲突仲裁"},
+      {"code": "quality", "name": "质量评估"}
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "tools/address_governance.py::AddressParser",
+      "tools/address_verification.py::AddressVerificationOrchestrator"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "tools/agent_server.py",
+    "mode": "single_record"
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "workpackages/bundles/public-security-address-v0.2.0/observability/line_observe.py",
+      "workpackages/bundles/public-security-address-v0.2.0/observability/line_metrics.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": ["status", "reason_codes", "evidence_pack"],
+    "failure_queue_snapshot_ref": "sqlite://database/agent_runtime.db#failure_queue",
+    "replay_result_ref": "sqlite://database/agent_runtime.db#replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.2.0",
+    "fallback_version": "0.1.x",
+    "instructions": [
+      "停止新任务注入",
+      "切换到上一稳定工包",
+      "重放失败队列并比对核实状态"
+    ]
+  }
+}

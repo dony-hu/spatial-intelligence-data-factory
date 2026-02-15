@@ -1,0 +1,338 @@
+{
+  "source_count": 6,
+  "interface_count": 11,
+  "sources": [
+    {
+      "source_id": "amap_place_text",
+      "source_name": "高德地图地点检索",
+      "provider": "Amap",
+      "interfaces": [
+        {
+          "source_id": "amap_place_text",
+          "source_name": "高德地图地点检索",
+          "provider": "Amap",
+          "interface_id": "default",
+          "interface_name": "高德地图地点检索",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "ak_in": "header",
+          "capability_tags": [
+            "坐标解析",
+            "位置检索"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "baidu_geocoding_v3",
+      "source_name": "百度地图地理编码",
+      "provider": "BaiduMap",
+      "interfaces": [
+        {
+          "source_id": "baidu_geocoding_v3",
+          "source_name": "百度地图地理编码",
+          "provider": "BaiduMap",
+          "interface_id": "default",
+          "interface_name": "百度地图地理编码",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "ak_in": "header",
+          "capability_tags": [
+            "坐标解析",
+            "位置检索"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "tencent_place_v1",
+      "source_name": "腾讯位置服务地点搜索",
+      "provider": "TencentLBS",
+      "interfaces": [
+        {
+          "source_id": "tencent_place_v1",
+          "source_name": "腾讯位置服务地点搜索",
+          "provider": "TencentLBS",
+          "interface_id": "default",
+          "interface_name": "腾讯位置服务地点搜索",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "ak_in": "header",
+          "capability_tags": [
+            "坐标解析",
+            "位置检索"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "tianditu_geocoder",
+      "source_name": "天地图地理编码",
+      "provider": "Tianditu",
+      "interfaces": [
+        {
+          "source_id": "tianditu_geocoder",
+          "source_name": "天地图地理编码",
+          "provider": "Tianditu",
+          "interface_id": "default",
+          "interface_name": "天地图地理编码",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "ak_in": "header",
+          "capability_tags": [
+            "坐标解析",
+            "位置检索"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "provider": "Fengtu",
+      "interfaces": [
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_level_judge",
+          "interface_name": "地址级别判断",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/iad/api",
+          "ak_in": "query",
+          "capability_tags": [
+            "地址完备度评估",
+            "冲突检测"
+          ]
+        },
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_real_check",
+          "interface_name": "地址真实性校验",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+          "ak_in": "header",
+          "capability_tags": [
+            "真实性校验",
+            "结论判定"
+          ]
+        },
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_type_identify",
+          "interface_name": "地址类型识别",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/atype/api",
+          "ak_in": "query",
+          "capability_tags": [
+            "地址类型识别",
+            "画像分类"
+          ]
+        },
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_resolve_l5",
+          "interface_name": "五级地址解析",
+          "method": "POST",
+          "base_url": "https://gis-apis.sf-express.com/opquery/addressResolve",
+          "ak_in": "header",
+          "capability_tags": [
+            "五级解析",
+            "行政区划解析"
+          ]
+        },
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_standardize",
+          "interface_name": "地址标准化",
+          "method": "POST",
+          "base_url": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+          "ak_in": "header",
+          "capability_tags": [
+            "地址标准化",
+            "结构化拆解"
+          ]
+        },
+        {
+          "source_id": "fengtu",
+          "source_name": "Fengtu Nominatim",
+          "provider": "Fengtu",
+          "interface_id": "address_aoi_keyword",
+          "interface_name": "地址AOI聚合",
+          "method": "POST",
+          "base_url": "https://gis-apis.sf-express.com/opquery/keyword",
+          "ak_in": "header",
+          "capability_tags": [
+            "AOI提取",
+            "地标聚合"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "gov_open_data_address",
+      "source_name": "政府开放数据地址接口",
+      "provider": "GovernmentOpenData",
+      "interfaces": [
+        {
+          "source_id": "gov_open_data_address",
+          "source_name": "政府开放数据地址接口",
+          "provider": "GovernmentOpenData",
+          "interface_id": "default",
+          "interface_name": "政府开放数据地址接口",
+          "method": "GET",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "ak_in": "header",
+          "capability_tags": [
+            "地址核实"
+          ]
+        }
+      ]
+    }
+  ],
+  "capability_index": {
+    "坐标解析": [
+      {
+        "source_id": "amap_place_text",
+        "interface_id": "default",
+        "interface_name": "高德地图地点检索"
+      },
+      {
+        "source_id": "baidu_geocoding_v3",
+        "interface_id": "default",
+        "interface_name": "百度地图地理编码"
+      },
+      {
+        "source_id": "tencent_place_v1",
+        "interface_id": "default",
+        "interface_name": "腾讯位置服务地点搜索"
+      },
+      {
+        "source_id": "tianditu_geocoder",
+        "interface_id": "default",
+        "interface_name": "天地图地理编码"
+      }
+    ],
+    "位置检索": [
+      {
+        "source_id": "amap_place_text",
+        "interface_id": "default",
+        "interface_name": "高德地图地点检索"
+      },
+      {
+        "source_id": "baidu_geocoding_v3",
+        "interface_id": "default",
+        "interface_name": "百度地图地理编码"
+      },
+      {
+        "source_id": "tencent_place_v1",
+        "interface_id": "default",
+        "interface_name": "腾讯位置服务地点搜索"
+      },
+      {
+        "source_id": "tianditu_geocoder",
+        "interface_id": "default",
+        "interface_name": "天地图地理编码"
+      }
+    ],
+    "地址完备度评估": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "interface_name": "地址级别判断"
+      }
+    ],
+    "冲突检测": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "interface_name": "地址级别判断"
+      }
+    ],
+    "真实性校验": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "interface_name": "地址真实性校验"
+      }
+    ],
+    "结论判定": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "interface_name": "地址真实性校验"
+      }
+    ],
+    "地址类型识别": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "interface_name": "地址类型识别"
+      }
+    ],
+    "画像分类": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "interface_name": "地址类型识别"
+      }
+    ],
+    "五级解析": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "interface_name": "五级地址解析"
+      }
+    ],
+    "行政区划解析": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "interface_name": "五级地址解析"
+      }
+    ],
+    "地址标准化": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "interface_name": "地址标准化"
+      }
+    ],
+    "结构化拆解": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "interface_name": "地址标准化"
+      }
+    ],
+    "AOI提取": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "interface_name": "地址AOI聚合"
+      }
+    ],
+    "地标聚合": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "interface_name": "地址AOI聚合"
+      }
+    ],
+    "地址核实": [
+      {
+        "source_id": "gov_open_data_address",
+        "interface_id": "default",
+        "interface_name": "政府开放数据地址接口"
+      }
+    ]
+  }
+}

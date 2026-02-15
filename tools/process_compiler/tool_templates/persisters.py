@@ -82,7 +82,7 @@ class DBPersister:
     def _create_table(self, cursor):
         """创建表"""
         create_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
+            CREATE TABLE IF NOT EXISTS {{self.table_name}} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 data TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -93,7 +93,7 @@ class DBPersister:
     def _insert_record(self, cursor, record):
         """插入单条记录"""
         data_json = json.dumps(record, ensure_ascii=False)
-        insert_sql = f"INSERT INTO {self.table_name} (data) VALUES (?)"
+        insert_sql = f"INSERT INTO {{self.table_name}} (data) VALUES (?)"
         cursor.execute(insert_sql, (data_json,))
 
 

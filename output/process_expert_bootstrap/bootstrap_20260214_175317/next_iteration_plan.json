@@ -1,0 +1,6 @@
+{
+  "needed": true,
+  "reason": "当前审计未达阈值，需继续迭代",
+  "suggested_change_request": "```json",
+  "suggested_rerun_command": "python scripts/run_process_expert_bootstrap.py --cases-file testdata/fixtures/address-line-quality-audit-cases-2026-02-14.json --output-dir output/process_expert_bootstrap --max-rounds 4 --min-rounds 3 --score-threshold 0.82"
+}

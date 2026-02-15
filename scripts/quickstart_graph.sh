@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [[ "${ALLOW_DEMO_SCRIPTS:-0}" != "1" ]]; then
+    echo "[blocked] scripts/quickstart_graph.sh 已默认禁用（sample/mock流程）"
+    echo "如需强制运行请设置: ALLOW_DEMO_SCRIPTS=1"
+    echo "建议使用真实最小链路: ./scripts/run_governance_e2e_minimal.sh"
+    exit 2
+fi
+
 # Spatial Entity Relationship Graph - Quick Start
 # Builds and visualizes address data structure as entity relationship graph
 

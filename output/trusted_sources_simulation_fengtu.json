@@ -1,0 +1,515 @@
+{
+  "config_path": "/Users/huda/Code/worktrees/factory-address-verify/config/trusted_data_sources.json",
+  "total": 11,
+  "pass_count": 7,
+  "results": [
+    {
+      "source_id": "amap_place_text",
+      "source_name": "高德地图地点检索",
+      "interface_id": "default",
+      "interface_name": "default",
+      "doc_url": null,
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "city": "深圳市",
+          "cc": 1
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "message": "ok",
+          "result": {
+            "src": "gis-service-all-geoMulti-tcp",
+            "type": "POI",
+            "precision": 2,
+            "xcoord": 113.888883,
+            "ycoord": 22.5005058,
+            "adcode": "440305",
+            "adname": [
+              "广东省",
+              "深圳市",
+              "南山区"
+            ],
+            "confidence": 94,
+            "source": "geo_440300_20251211",
+            "cp": 1,
+            "standardization": "广东省深圳市南山区南山街道兴海大道3076号顺丰总部大厦",
+            "time": 9,
+            "match_level": 9,
+            "city_adcode": "440300",
+            "geo_source": "NONE",
+            "src_level": 13,
+            "src_level_desc": "aoi级",
+            "geo_level": "GL_POI",
+            "geo_level_desc": "aoi级",
+            "match_filter": "2",
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "poitype": "2",
+            "mark": "ok",
+            "mark_desc": "A03_aoi级坐标可信",
+            "cp_score": -1.0,
+            "poi_count": 1,
+            "standar_flag": "1",
+            "standar_word": "顺丰总部大厦",
+            "maxDistance": -1,
+            "uid": "806CA0E6630048148D0457D59D019396"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "baidu_geocoding_v3",
+      "source_name": "百度地图地理编码",
+      "interface_id": "default",
+      "interface_name": "default",
+      "doc_url": null,
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "city": "深圳市",
+          "cc": 1
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "message": "ok",
+          "result": {
+            "src": "gis-service-all-geoMulti-tcp",
+            "type": "POI",
+            "precision": 2,
+            "xcoord": 113.888883,
+            "ycoord": 22.5005058,
+            "adcode": "440305",
+            "adname": [
+              "广东省",
+              "深圳市",
+              "南山区"
+            ],
+            "confidence": 94,
+            "source": "geo_440300_20251211",
+            "cp": 1,
+            "standardization": "广东省深圳市南山区南山街道兴海大道3076号顺丰总部大厦",
+            "time": 9,
+            "match_level": 9,
+            "city_adcode": "440300",
+            "geo_source": "NONE",
+            "src_level": 13,
+            "src_level_desc": "aoi级",
+            "geo_level": "GL_POI",
+            "geo_level_desc": "aoi级",
+            "match_filter": "2",
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "poitype": "2",
+            "mark": "ok",
+            "mark_desc": "A03_aoi级坐标可信",
+            "cp_score": -1.0,
+            "poi_count": 1,
+            "standar_flag": "1",
+            "standar_word": "顺丰总部大厦",
+            "maxDistance": -1,
+            "uid": "806CA0E6630048148D0457D59D019396"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "tencent_place_v1",
+      "source_name": "腾讯位置服务地点搜索",
+      "interface_id": "default",
+      "interface_name": "default",
+      "doc_url": null,
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "city": "深圳市",
+          "cc": 1
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "message": "ok",
+          "result": {
+            "src": "gis-service-all-geoMulti-tcp",
+            "type": "POI",
+            "precision": 2,
+            "xcoord": 113.888883,
+            "ycoord": 22.5005058,
+            "adcode": "440305",
+            "adname": [
+              "广东省",
+              "深圳市",
+              "南山区"
+            ],
+            "confidence": 94,
+            "source": "geo_440300_20251211",
+            "cp": 1,
+            "standardization": "广东省深圳市南山区南山街道兴海大道3076号顺丰总部大厦",
+            "time": 8,
+            "match_level": 9,
+            "city_adcode": "440300",
+            "geo_source": "NONE",
+            "src_level": 13,
+            "src_level_desc": "aoi级",
+            "geo_level": "GL_POI",
+            "geo_level_desc": "aoi级",
+            "match_filter": "2",
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "poitype": "2",
+            "mark": "ok",
+            "mark_desc": "A03_aoi级坐标可信",
+            "cp_score": -1.0,
+            "poi_count": 1,
+            "standar_flag": "1",
+            "standar_word": "顺丰总部大厦",
+            "maxDistance": -1,
+            "uid": "806CA0E6630048148D0457D59D019396"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "tianditu_geocoder",
+      "source_name": "天地图地理编码",
+      "interface_id": "default",
+      "interface_name": "default",
+      "doc_url": null,
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "city": "深圳市",
+          "cc": 1
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "message": "ok",
+          "result": {
+            "src": "gis-service-all-geoMulti-tcp",
+            "type": "POI",
+            "precision": 2,
+            "xcoord": 113.888883,
+            "ycoord": 22.5005058,
+            "adcode": "440305",
+            "adname": [
+              "广东省",
+              "深圳市",
+              "南山区"
+            ],
+            "confidence": 94,
+            "source": "geo_440300_20251211",
+            "cp": 1,
+            "standardization": "广东省深圳市南山区南山街道兴海大道3076号顺丰总部大厦",
+            "time": 7,
+            "match_level": 9,
+            "city_adcode": "440300",
+            "geo_source": "NONE",
+            "src_level": 13,
+            "src_level_desc": "aoi级",
+            "geo_level": "GL_POI",
+            "geo_level_desc": "aoi级",
+            "match_filter": "2",
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "poitype": "2",
+            "mark": "ok",
+            "mark_desc": "A03_aoi级坐标可信",
+            "cp_score": -1.0,
+            "poi_count": 1,
+            "standar_flag": "1",
+            "standar_word": "顺丰总部大厦",
+            "maxDistance": -1,
+            "uid": "806CA0E6630048148D0457D59D019396"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_level_judge",
+      "interface_name": "地址级别判断",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/209",
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/iad/api",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "province": "广东省",
+          "city": "深圳市",
+          "county": "南山区",
+          "town": "南山街道"
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "error": "HTTP Error 403: Forbidden",
+      "pass": false
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_real_check",
+      "interface_name": "地址真实性校验",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/182",
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "province": "广东省",
+          "city": "深圳市",
+          "county": "南山区"
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "error": "HTTP Error 403: Forbidden",
+      "pass": false
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_type_identify",
+      "interface_name": "地址类型识别",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/173",
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/atype/api",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "citycode": "755",
+          "opt": "aoi"
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 1,
+          "result": {
+            "err": -106,
+            "msg": "params error"
+          }
+        }
+      },
+      "pass": false
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_resolve_l5",
+      "interface_name": "五级地址解析",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/183",
+      "request": {
+        "method": "POST",
+        "base_url": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "query": {},
+        "body": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "province": "广东省",
+          "city": "深圳市",
+          "county": "南山区",
+          "town": "南山街道"
+        },
+        "headers": {
+          "ak": "***MASKED***",
+          "Content-Type": "application/json"
+        }
+      },
+      "error": "HTTP Error 403: Forbidden",
+      "pass": false
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_standardize",
+      "interface_name": "地址标准化",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/184",
+      "request": {
+        "method": "POST",
+        "base_url": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "query": {},
+        "body": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "full": 1
+        },
+        "headers": {
+          "ak": "***MASKED***",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "result": {
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "province": "广东省",
+            "city": "深圳市",
+            "county": "南山区",
+            "town": "南山街道",
+            "community": "前海",
+            "road": "兴海大道",
+            "road_no": "3076号",
+            "aoi": "顺丰总部大厦",
+            "address": "广东省深圳市南山区南山街道前海兴海大道3076号顺丰总部大厦",
+            "full_address": "广东省深圳市南山区南山街道前海兴海大道3076号顺丰总部大厦",
+            "descs": "省市补充|乡镇街道补充|道路门牌补充",
+            "match_descs": "AOI级匹配"
+          },
+          "reqId": "0003872026021417124628023473"
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "fengtu",
+      "source_name": "Fengtu Nominatim",
+      "interface_id": "address_aoi_keyword",
+      "interface_name": "地址AOI聚合",
+      "doc_url": "https://lbs.sfmap.com.cn/developDoc/185",
+      "request": {
+        "method": "POST",
+        "base_url": "https://gis-apis.sf-express.com/opquery/keyword",
+        "query": {},
+        "body": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "province": "广东省",
+          "city": "深圳市",
+          "county": "南山区",
+          "company": "顺丰"
+        },
+        "headers": {
+          "ak": "***MASKED***",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "result": {
+            "keyword": "顺丰总部",
+            "extAoiId": "CPEU2E54O02U5688P508S5WSDFF6VDT8",
+            "query": {
+              "address": "深圳市南山区前海顺丰总部大厦",
+              "province": "广东省",
+              "city": "深圳市",
+              "county": "南山区",
+              "company": "顺丰"
+            }
+          },
+          "reqId": "0004032026021417124638823265"
+        }
+      },
+      "pass": true
+    },
+    {
+      "source_id": "gov_open_data_address",
+      "source_name": "政府开放数据地址接口",
+      "interface_id": "default",
+      "interface_name": "default",
+      "doc_url": null,
+      "request": {
+        "method": "GET",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "query": {
+          "address": "深圳市南山区前海顺丰总部大厦",
+          "city": "深圳市",
+          "cc": 1
+        },
+        "body": null,
+        "headers": {
+          "ak": "***MASKED***"
+        }
+      },
+      "response": {
+        "http_status": 200,
+        "body": {
+          "status": 0,
+          "message": "ok",
+          "result": {
+            "src": "gis-service-all-geoMulti-tcp",
+            "type": "POI",
+            "precision": 2,
+            "xcoord": 113.888883,
+            "ycoord": 22.5005058,
+            "adcode": "440305",
+            "adname": [
+              "广东省",
+              "深圳市",
+              "南山区"
+            ],
+            "confidence": 94,
+            "source": "geo_440300_20251211",
+            "cp": 1,
+            "standardization": "广东省深圳市南山区南山街道兴海大道3076号顺丰总部大厦",
+            "time": 8,
+            "match_level": 9,
+            "city_adcode": "440300",
+            "geo_source": "NONE",
+            "src_level": 13,
+            "src_level_desc": "aoi级",
+            "geo_level": "GL_POI",
+            "geo_level_desc": "aoi级",
+            "match_filter": "2",
+            "src_address": "深圳市南山区前海顺丰总部大厦",
+            "poitype": "2",
+            "mark": "ok",
+            "mark_desc": "A03_aoi级坐标可信",
+            "cp_score": -1.0,
+            "poi_count": 1,
+            "standar_flag": "1",
+            "standar_word": "顺丰总部大厦",
+            "maxDistance": -1,
+            "uid": "806CA0E6630048148D0457D59D019396"
+          }
+        }
+      },
+      "pass": true
+    }
+  ]
+}

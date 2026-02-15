@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AddressOutput",
+  "type": "object",
+  "required": ["task_id", "status", "results"],
+  "properties": {
+    "task_id": {"type": "string"},
+    "status": {"type": "string"},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw_id", "canon_text", "confidence", "strategy", "evidence"],
+        "properties": {
+          "raw_id": {"type": "string"},
+          "canon_text": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "strategy": {"type": "string"},
+          "evidence": {
+            "type": "object",
+            "required": ["items"],
+            "properties": {
+              "items": {"type": "array"}
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

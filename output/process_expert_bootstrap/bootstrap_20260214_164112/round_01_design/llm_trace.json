@@ -1,0 +1,21 @@
+[
+  {
+    "timestamp": "2026-02-14T16:41:25.276163",
+    "event_type": "generate_plan",
+    "input_requirement": "请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n用例总量: 15\n优先级分布: {\"P0\": 4, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 4, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}",
+    "llm_prompt": "你是工艺Agent的规划器。请输出JSON计划字段: auto_execute,max_duration,quality_threshold,priority,steps。\n历史轮次: [{\"role\": \"user\", \"content\": \"请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\\n用例总量: 15\\n优先级分布: {\\\"P0\\\": 4, \\\"P1\\\": 6, \\\"P2\\\": 5}\\n类别分布: {\\\"mainline_verified_exists\\\": 1, \\\"mainline_verified_not_exists\\\": 1, \\\"mainline_unverifiable_online\\\": 1, \\\"source_conflict_alias\\\": 1, \\\"same_entity_multi_alias\\\": 1, \\\"internet_verification_trainable\\\": 1, \\\"internet_verification_disagreement\\\": 1, \\\"dirty_text_noise\\\": 1, \\\"missing_core_component\\\": 1, \\\"cross_city_mismatch\\\": 1, \\\"write_gate_enforcement\\\": 1, \\\"text_credibility_low\\\": 1, \\\"coord_confidence_low\\\": 1, \\\"new_source_onboarding\\\": 1, \\\"output_contract_completeness\\\": 1}\\n期望核实状态分布: {\\\"VERIFIED_EXISTS\\\": 4, \\\"VERIFIED_NOT_EXISTS\\\": 1, \\\"UNVERIFIABLE_ONLINE\\\": 7}\"}]",
+    "llm_answer": "```json\n{\n    \"auto_execute\": true,\n    \"max_duration\": 7200,\n    \"quality_threshold\": 0.95,\n    \"priority\": \"P0_PRIORITIZED\",\n    \"steps\": [\n        {\n            \"step_id\": 1,\n            \"step_name\": \"元数据加载与资源初始化\",\n            \"step_desc\": \"加载15条用例的元数据（匹配给定的优先级/类别/期望核实状态分布），初始化地图API采样客户端、LLM归并服务、审计回放模块与迭代改进引擎，优先为P0级用例预留计算资源\"\n        },\n        {\n            \"step_id\": 2,\n            \"step_name\": \"分级地图API采样执行\",\n            \"step_desc\": \"按照P0(4)→P1(6)→P2(5)的顺序遍历用例，调用地图API获取实体坐标、关联文本等原始采样数据，按给定类别分布匹配任务类型并存储临时采样数据集\"\n        },\n        {\n            \"step_id\": 3,\n            \"step_name\": \"LLM驱动实体归并清洗\",\n            \"step_desc\": \"优先处理P0级用例的归并任务，调用LLM完成实体别名消歧、冲突整合、文本降噪，生成中间归并实体库并标记每条数据的归属类别与核实状态\"\n        },\n        {\n            \"step_id\": 4,\n            \"step_name\": \"全链路审计与日志回放\",\n            \"step_desc\": \"对照期望核实状态分布校验归并后的数据，检查实体匹配度、文本可信度、坐标置信度等指标，生成审计报告并支持全流程日志回溯，标记异常用例\"\n        },\n        {\n            \"step_id\": 5,\n            \"step_name\": \"迭代优化与异常修复\",\n            \"step_desc\": \"提取审计标记的异常用例，重新触发采样与归并流程，针对冲突类别优化LLM提示词与采样参数，循环迭代直到合格用例占比达标\"\n        },\n        {\n            \"step_id\": 6,\n            \"step_name\": \"最终校验与工具包输出\",\n            \"step_desc\": \"校验最终数据集的分布匹配度，生成包含采样脚本、归并规则、审计日志与迭代记录的可复用工具包，完成全流程输出\"\n        }\n    ]\n}\n```",
+    "normalized_plan": {
+      "auto_execute": true,
+      "max_duration_sec": 7200,
+      "quality_threshold": 0.95,
+      "priority": "normal",
+      "steps": [
+        "地图API采样",
+        "LLM归并别名",
+        "工具包脚本生成",
+        "质量审计回放"
+      ]
+    }
+  }
+]

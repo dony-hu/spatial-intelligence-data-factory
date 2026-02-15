@@ -21,6 +21,7 @@ sys.path.insert(0, str(project_root))
 from tools.factory_workflow import FactoryWorkflow
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
 from tools.factory_dashboard import FactoryDashboard
+from scripts._mode_guard import ensure_demo_allowed
 
 
 # 上海地区的地址样本
@@ -294,6 +295,7 @@ def run_continuous_demo(total_addresses: int = 10000, demo_iterations: int = 2):
 
 def main():
     """主函数"""
+    ensure_demo_allowed("scripts/factory_continuous_demo.py")
     import argparse
 
     parser = argparse.ArgumentParser(description="Factory Continuous Demo")

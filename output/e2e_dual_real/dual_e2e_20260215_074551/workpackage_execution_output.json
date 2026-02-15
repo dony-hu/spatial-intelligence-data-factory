@@ -1,0 +1,120 @@
+{
+  "results": [
+    {
+      "raw_id": "dual-V-L1-001",
+      "canon_text": "黄浦区中山东一路1号",
+      "confidence": 1.0,
+      "strategy": "trusted_interface_chain",
+      "evidence": {
+        "items": [
+          {
+            "interface_id": "address_standardize",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 0,
+                "result": {
+                  "src_address": "{address}"
+                },
+                "reqId": "0003542026021507460596057786"
+              }
+            }
+          },
+          {
+            "interface_id": "address_resolve_l5",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 1,
+                "result": {
+                  "err": 3001,
+                  "msg": "地址查询不到相关信息"
+                },
+                "reqId": "0003742026021507460608357604"
+              }
+            }
+          },
+          {
+            "interface_id": "address_real_check",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 0,
+                "result": {
+                  "query": {
+                    "address": "{address}",
+                    "province": "{province}",
+                    "city": "{city}",
+                    "county": "{county}"
+                  },
+                  "addressTrue": "存疑"
+                },
+                "reqId": "0004482026021507460640557802"
+              }
+            }
+          },
+          {
+            "interface_id": "address_level_judge",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 1,
+                "result": {
+                  "err": 1,
+                  "msg": "地址详细判定失败"
+                }
+              }
+            }
+          },
+          {
+            "interface_id": "address_type_identify",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 1,
+                "result": {
+                  "err": 1,
+                  "msg": "cityCode输入非法"
+                }
+              }
+            }
+          },
+          {
+            "interface_id": "address_aoi_keyword",
+            "ok": true,
+            "result": {
+              "ok": true,
+              "http_status": 200,
+              "body": {
+                "status": 1,
+                "result": {
+                  "err": 3001,
+                  "msg": "地址查询不到相关信息"
+                },
+                "reqId": "0003602026021507460673457861"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "sequence": [
+    "address_standardize",
+    "address_resolve_l5",
+    "address_real_check",
+    "address_level_judge",
+    "address_type_identify",
+    "address_aoi_keyword"
+  ]
+}

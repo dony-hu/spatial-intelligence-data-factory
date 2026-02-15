@@ -1,0 +1,24 @@
+{
+  "score": 0.7272727272727273,
+  "checks": {
+    "status_ok": true,
+    "compile_success": true,
+    "has_process_spec": true,
+    "has_tool_scripts": true,
+    "doc_length_ok": true,
+    "contains_iteration_keywords": true,
+    "plan_steps_ok": true,
+    "story_authenticity_two_trusted_sources": false,
+    "story_standardized_completion_with_street": false,
+    "story_token_graph_chain_present": false,
+    "story_clear_conclusion": true
+  },
+  "failed_checks": [
+    "story_authenticity_two_trusted_sources",
+    "story_standardized_completion_with_street",
+    "story_token_graph_chain_present"
+  ],
+  "case_total": 16,
+  "tool_count": 3,
+  "story_rule_enabled": true
+}

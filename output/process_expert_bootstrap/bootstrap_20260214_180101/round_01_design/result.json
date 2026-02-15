@@ -1,0 +1,202 @@
+{
+  "status": "ok",
+  "draft_id": "draft_9e080402a7",
+  "process_code": "PROC_TOOLPACK_BOOTSTRAP",
+  "process_name": "工具包生成工艺",
+  "domain": "verification",
+  "requirement": "请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\n用例总量: 16\n优先级分布: {\"P0\": 5, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"story_truth_completion_graph\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 5, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n工艺输出必须包含: 证据清单、结论段、未决风险段。",
+  "goal": "请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\n用例总量: 16\n优先级分布: {\"P0\": 5, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"story_truth_completion_graph\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 5, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n工艺输出必须包含: 证据清单、结论段、未决风险段。",
+  "plan": {
+    "auto_execute": true,
+    "max_duration_sec": 360,
+    "quality_threshold": 0.95,
+    "priority": "1",
+    "steps": [
+      "地图API采样",
+      "LLM归并别名",
+      "工具包脚本生成",
+      "质量审计回放"
+    ]
+  },
+  "process_doc_markdown": "# 工艺流程文档：工具包生成工艺\n\n- **process_code**: `PROC_TOOLPACK_BOOTSTRAP`\n- **requirement**: 请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\n用例总量: 16\n优先级分布: {\"P0\": 5, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"story_truth_completion_graph\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 5, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n工艺输出必须包含: 证据清单、结论段、未决风险段。\n- **goal**: \n- **auto_execute**: True\n- **max_duration_sec**: 360\n- **quality_threshold**: 0.95\n\n## 步骤\n\n1. 地图API采样\n2. LLM归并别名\n3. 工具包脚本生成\n4. 质量审计回放\n\n## 配置信息\n\n| 配置项 | 值 |\n| ---- | ---- |\n| 执行优先级 | 1 |\n| 最大执行时长 | 360s |\n| 质量阈值 | 0.95 |",
+  "created_at": "2026-02-14T18:01:23.596321",
+  "updated_at": "2026-02-14T18:01:23.596428",
+  "draft_status": "editable",
+  "compilation": {
+    "success": true,
+    "process_code": "PROCTO_V1",
+    "process_spec": {
+      "process_id": "procdef_9c5cbbb95082",
+      "process_code": "PROCTO_V1",
+      "process_name": "工具包生成",
+      "domain": "address_governance",
+      "version": "1.0.0",
+      "version_id": "procver_07911a16936c",
+      "status": "draft",
+      "created_at": "2026-02-14T18:01:23.605958",
+      "steps": [
+        {
+          "step_index": 1,
+          "name": "INPUT_VALIDATION",
+          "description": "输入验证",
+          "tool_name": "address_validator",
+          "tool_module": "validators.py",
+          "parameters": {
+            "max_length": 200,
+            "required_fields": [
+              "address"
+            ],
+            "allowed_formats": [
+              "standard",
+              "simplified"
+            ]
+          }
+        },
+        {
+          "step_index": 2,
+          "name": "ADDRESS_NORMALIZATION",
+          "description": "地址标准化",
+          "tool_name": "address_normalizer",
+          "tool_module": "normalizers.py",
+          "parameters": {
+            "remove_spaces": true,
+            "remove_punctuation": true,
+            "simplified": true,
+            "lowercase": false
+          }
+        },
+        {
+          "step_index": 3,
+          "name": "ADDRESS_SEGMENTATION",
+          "description": "地址分词",
+          "tool_name": "address_segmenter",
+          "tool_module": "segmenters.py",
+          "parameters": {
+            "tokenizer": "jieba",
+            "remove_stop_words": true,
+            "return_positions": true
+          }
+        },
+        {
+          "step_index": 4,
+          "name": "QUALITY_CHECK",
+          "description": "质量评估",
+          "tool_name": "quality_evaluator",
+          "tool_module": "evaluators.py",
+          "parameters": {
+            "accuracy_threshold": 0.95,
+            "completeness_threshold": 0.9,
+            "consistency_threshold": 0.88
+          }
+        },
+        {
+          "step_index": 5,
+          "name": "DATA_GENERATION",
+          "description": "数据生成",
+          "tool_name": "data_generator",
+          "tool_module": "generators.py",
+          "parameters": {
+            "use_llm": true,
+            "model": "gpt-3.5",
+            "temperature": 0.7
+          }
+        },
+        {
+          "step_index": 6,
+          "name": "OUTPUT_PERSIST",
+          "description": "结果持久化",
+          "tool_name": "db_persister",
+          "tool_module": "persisters.py",
+          "parameters": {
+            "database": "sqlite",
+            "table_name": "process_results",
+            "batch_size": 1000
+          }
+        }
+      ],
+      "estimated_duration": 60,
+      "required_workers": 1,
+      "quality_rules": {
+        "accuracy_threshold": 0.9,
+        "completeness_threshold": 0.9,
+        "consistency_threshold": 0.9
+      },
+      "resource_requirements": {
+        "memory_gb": 2,
+        "timeout_sec": 600,
+        "retry_count": 3,
+        "batch_size": 1000
+      },
+      "tools": [
+        "address_validator",
+        "address_normalizer",
+        "quality_evaluator",
+        "data_generator",
+        "db_persister"
+      ],
+      "tool_scripts": {
+        "address_validator": "\"\"\"\n地址验证器 - 自动生成\nDomain: address_governance\n参数: {'max_length': 200, 'required_fields': ['address'], 'allowed_formats': ['standard', 'simplified']}\n\"\"\"\n\nimport re\nfrom typing import Dict, List\n\n\nclass AddressValidator:\n    \"\"\"地址验证器\"\"\"\n\n    def __init__(self, **config):\n        self.max_length = config.get('max_length', 200)\n        self.required_fields = config.get('required_fields', ['address'])\n        self.allowed_formats = config.get('allowed_formats', ['standard'])\n\n    def validate(self, data: Dict[str, str]) -> Dict[str, Any]:\n        \"\"\"验证地址数据\"\"\"\n\n        errors = []\n        warnings = []\n\n        # 检查必填字段\n        for field in self.required_fields:\n            if field not in data or not data[field]:\n                errors.append(f'缺少必填字段: {field}')\n\n        if errors:\n            return {'valid': False, 'errors': errors, 'score': 0.0}\n\n        address = data.get('address', '').strip()\n\n        # 长度检查\n        if len(address) > self.max_length:\n            errors.append(f'地址长度 {len(address)} 超过限制 {self.max_length}')\n\n        if len(address) < 2:\n            errors.append('地址过短（最少2字符）')\n\n        # 字符检查\n        cn_chars = sum(1 for c in address if ord(c) >= 0x4e00 and ord(c) <= 0x9fff)\n        if cn_chars == 0:\n            warnings.append('地址中没有中文字符')\n\n        # 数字检查\n        has_numbers = any(c.isdigit() for c in address)\n        if not has_numbers:\n            warnings.append('地址中没有数字')\n\n        return {\n            'valid': len(errors) == 0,\n            'errors': errors,\n            'warnings': warnings,\n            'address': address,\n            'score': 1.0 - len(errors) * 0.5,\n            'metadata': {\n                'length': len(address),\n                'chinese_chars': cn_chars,\n                'has_numbers': has_numbers\n            }\n        }\n\n\ndef validate_address(address: str, **config) -> Dict[str, Any]:\n    \"\"\"快速验证函数\"\"\"\n    validator = AddressValidator(**config)\n    return validator.validate({'address': address})\n\n\nif __name__ == '__main__':\n    validator = AddressValidator()\n\n    test_cases = [\n        '北京市朝阳区建国门外大街1号',\n        '上海市浦东新区张江高科技园区科苑路88号',\n        '',\n        'Test Address'\n    ]\n\n    for addr in test_cases:\n        result = validate_address(addr)\n        print(f'{addr[:30]:30} → {result[\"valid\"]} ({result[\"score\"]:.2f}/1.0)')\n",
+        "address_normalizer": "\"\"\"\n地址规范化器 - 自动生成\nDomain: address_governance\n\"\"\"\n\ndef normalize_address(address: str, **config) -> Dict[str, str]:\n    \"\"\"规范化地址\"\"\"\n\n    original = address\n\n    # 去空格\n    if config.get('remove_spaces', True):\n        address = address.replace(' ', '').replace('\\u3000', '')\n\n    # 去标点\n    if config.get('remove_punctuation', True):\n        punctuation = '，。；：''\"\"（）【】{}、'\n        for p in punctuation:\n            address = address.replace(p, '')\n\n    # 繁简转换（简化版）\n    if config.get('simplified', True):\n        simplified_map = {'號': '号', '館': '馆', '國': '国'}\n        for trad, simp in simplified_map.items():\n            address = address.replace(trad, simp)\n\n    return {\n        'original': original,\n        'normalized': address,\n        'changed': original != address\n    }\n",
+        "quality_evaluator": "\"\"\"\n质量评估器 - 自动生成\nDomain: address_governance\n参数: {'accuracy_threshold': 0.95, 'completeness_threshold': 0.9, 'consistency_threshold': 0.88}\n\"\"\"\n\ndef evaluate_quality(output: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"\n    评估处理输出的质量\n\n    评估指标:\n    - accuracy: 准确率（0-1）\n    - completeness: 完整率（0-1）\n    - consistency: 一致性（0-1）\n    \"\"\"\n\n    accuracy = output.get('accuracy', 1.0)\n    completeness = output.get('completeness', 1.0)\n    consistency = output.get('consistency', 1.0)\n\n    # 加权评分\n    weights = config.get('weights', {'accuracy': 0.5, 'completeness': 0.3, 'consistency': 0.2})\n    overall_score = (\n        accuracy * weights['accuracy'] +\n        completeness * weights['completeness'] +\n        consistency * weights['consistency']\n    )\n\n    # 阈值检查\n    accuracy_threshold = config.get('accuracy_threshold', 0.95)\n    completeness_threshold = config.get('completeness_threshold', 0.9)\n    consistency_threshold = config.get('consistency_threshold', 0.88)\n\n    passed = (\n        accuracy >= accuracy_threshold and\n        completeness >= completeness_threshold and\n        consistency >= consistency_threshold\n    )\n\n    return {\n        'accuracy': accuracy,\n        'completeness': completeness,\n        'consistency': consistency,\n        'overall_score': overall_score,\n        'passed': passed,\n        'details': {\n            'accuracy_threshold': accuracy_threshold,\n            'completeness_threshold': completeness_threshold,\n            'consistency_threshold': consistency_threshold\n        }\n    }\n",
+        "data_generator": "\"\"\"\n数据生成器 - 自动生成\nDomain: address_governance\n参数: {'use_llm': True, 'model': 'gpt-3.5', 'temperature': 0.7}\n\"\"\"\n\nfrom typing import Dict, Any\n\n\ndef generate_data(input_payload: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"根据输入生成结构化数据。\n\n    说明：\n    - 默认返回规则生成结果\n    - 如接入外部 LLM，可在此函数中替换实现\n    \"\"\"\n\n    use_llm = bool(config.get(\"use_llm\", True))\n    model = str(config.get(\"model\", \"gpt-3.5\"))\n    temperature = float(config.get(\"temperature\", 0.7))\n\n    base = {\n        \"mode\": \"llm\" if use_llm else \"rule\",\n        \"model\": model,\n        \"temperature\": temperature,\n        \"input\": input_payload,\n    }\n\n    # 依赖外部推理服务：未配置时只返回能力状态，不伪造生成结果\n    base[\"generated\"] = {\n        \"status\": \"requires_external_generation_service\",\n        \"summary\": \"external generation service is required\",\n    }\n\n    return base\n",
+        "db_persister": "\"\"\"\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {'database': 'sqlite', 'table_name': 'process_results', 'batch_size': 1000}\n\"\"\"\n\nimport sqlite3\nimport json\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    \"\"\"数据库持久化器\"\"\"\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get('db_path', 'process_results.db')\n        self.table_name = config.get('table_name', 'process_results')\n        self.batch_size = config.get('batch_size', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:\n        \"\"\"\n        持久化数据到数据库\n\n        Args:\n            records: 数据记录列表\n\n        Returns:\n            {\n                'success': bool,\n                'inserted': int,\n                'failed': int,\n                'errors': list\n            }\n        \"\"\"\n\n        inserted = 0\n        failed = 0\n        errors = []\n\n        try:\n            conn = sqlite3.connect(self.db_path)\n            cursor = conn.cursor()\n\n            # 创建表（如果不存在）\n            self._create_table(cursor)\n\n            # 批量插入\n            for i in range(0, len(records), self.batch_size):\n                batch = records[i:i+self.batch_size]\n                try:\n                    for record in batch:\n                        self._insert_record(cursor, record)\n                    conn.commit()\n                    inserted += len(batch)\n                except Exception as e:\n                    errors.append(f'批次 {i//self.batch_size} 插入失败: {str(e)}')\n                    failed += len(batch)\n\n            conn.close()\n\n        except Exception as e:\n            errors.append(f'数据库操作错误: {str(e)}')\n            return {'success': False, 'inserted': 0, 'failed': len(records), 'errors': errors}\n\n        return {\n            'success': failed == 0,\n            'inserted': inserted,\n            'failed': failed,\n            'errors': errors\n        }\n\n    def _create_table(self, cursor):\n        \"\"\"创建表\"\"\"\n        create_sql = f\"\"\"\n            CREATE TABLE IF NOT EXISTS {self.table_name} (\n                id INTEGER PRIMARY KEY AUTOINCREMENT,\n                data TEXT NOT NULL,\n                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n            )\n        \"\"\"\n        cursor.execute(create_sql)\n\n    def _insert_record(self, cursor, record):\n        \"\"\"插入单条记录\"\"\"\n        data_json = json.dumps(record, ensure_ascii=False)\n        insert_sql = f\"INSERT INTO {self.table_name} (data) VALUES (?)\"\n        cursor.execute(insert_sql, (data_json,))\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -> Dict[str, Any]:\n    \"\"\"快速持久化函数\"\"\"\n    persister = DBPersister(**config)\n    return persister.persist(records)\n"
+      },
+      "goal": "请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\n用例总量: 16\n优先级分布: {\"P0\": 5, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"story_truth_completion_graph\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 5, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n工艺输出必须包含: 证据清单、结论段、未决风险段。",
+      "description": "请设计工具包生成工艺，要求支持地图API采样、LLM归并、审计回放、迭代改进。\n请在工艺中显式体现可信数据源能力编排、证据采集、结论输出与未决风险。\n用例总量: 16\n优先级分布: {\"P0\": 5, \"P1\": 6, \"P2\": 5}\n类别分布: {\"mainline_verified_exists\": 1, \"mainline_verified_not_exists\": 1, \"mainline_unverifiable_online\": 1, \"source_conflict_alias\": 1, \"same_entity_multi_alias\": 1, \"internet_verification_trainable\": 1, \"internet_verification_disagreement\": 1, \"dirty_text_noise\": 1, \"missing_core_component\": 1, \"cross_city_mismatch\": 1, \"write_gate_enforcement\": 1, \"text_credibility_low\": 1, \"coord_confidence_low\": 1, \"new_source_onboarding\": 1, \"story_truth_completion_graph\": 1, \"output_contract_completeness\": 1}\n期望核实状态分布: {\"VERIFIED_EXISTS\": 5, \"VERIFIED_NOT_EXISTS\": 1, \"UNVERIFIABLE_ONLINE\": 7}\n可信接口能力索引: {\"坐标解析\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"位置检索\": [{\"source_id\": \"amap_place_text\", \"interface_id\": \"default\", \"interface_name\": \"高德地图地点检索\"}, {\"source_id\": \"baidu_geocoding_v3\", \"interface_id\": \"default\", \"interface_name\": \"百度地图地理编码\"}, {\"source_id\": \"tencent_place_v1\", \"interface_id\": \"default\", \"interface_name\": \"腾讯位置服务地点搜索\"}, {\"source_id\": \"tianditu_geocoder\", \"interface_id\": \"default\", \"interface_name\": \"天地图地理编码\"}], \"地址完备度评估\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"冲突检测\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_level_judge\", \"interface_name\": \"地址级别判断\"}], \"真实性校验\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"结论判定\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_real_check\", \"interface_name\": \"地址真实性校验\"}], \"地址类型识别\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"画像分类\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_type_identify\", \"interface_name\": \"地址类型识别\"}], \"五级解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"行政区划解析\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_resolve_l5\", \"interface_name\": \"五级地址解析\"}], \"地址标准化\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"结构化拆解\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_standardize\", \"interface_name\": \"地址标准化\"}], \"AOI提取\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地标聚合\": [{\"source_id\": \"fengtu\", \"interface_id\": \"address_aoi_keyword\", \"interface_name\": \"地址AOI聚合\"}], \"地址核实\": [{\"source_id\": \"gov_open_data_address\", \"interface_id\": \"default\", \"interface_name\": \"政府开放数据地址接口\"}]}\n工艺输出必须包含: 证据清单、结论段、未决风险段。"
+    },
+    "tool_scripts": {
+      "address_validator": "\"\"\"\n地址验证器 - 自动生成\nDomain: address_governance\n参数: {'max_length': 200, 'required_fields': ['address'], 'allowed_formats': ['standard', 'simplified']}\n\"\"\"\n\nimport re\nfrom typing import Dict, List\n\n\nclass AddressValidator:\n    \"\"\"地址验证器\"\"\"\n\n    def __init__(self, **config):\n        self.max_length = config.get('max_length', 200)\n        self.required_fields = config.get('required_fields', ['address'])\n        self.allowed_formats = config.get('allowed_formats', ['standard'])\n\n    def validate(self, data: Dict[str, str]) -> Dict[str, Any]:\n        \"\"\"验证地址数据\"\"\"\n\n        errors = []\n        warnings = []\n\n        # 检查必填字段\n        for field in self.required_fields:\n            if field not in data or not data[field]:\n                errors.append(f'缺少必填字段: {field}')\n\n        if errors:\n            return {'valid': False, 'errors': errors, 'score': 0.0}\n\n        address = data.get('address', '').strip()\n\n        # 长度检查\n        if len(address) > self.max_length:\n            errors.append(f'地址长度 {len(address)} 超过限制 {self.max_length}')\n\n        if len(address) < 2:\n            errors.append('地址过短（最少2字符）')\n\n        # 字符检查\n        cn_chars = sum(1 for c in address if ord(c) >= 0x4e00 and ord(c) <= 0x9fff)\n        if cn_chars == 0:\n            warnings.append('地址中没有中文字符')\n\n        # 数字检查\n        has_numbers = any(c.isdigit() for c in address)\n        if not has_numbers:\n            warnings.append('地址中没有数字')\n\n        return {\n            'valid': len(errors) == 0,\n            'errors': errors,\n            'warnings': warnings,\n            'address': address,\n            'score': 1.0 - len(errors) * 0.5,\n            'metadata': {\n                'length': len(address),\n                'chinese_chars': cn_chars,\n                'has_numbers': has_numbers\n            }\n        }\n\n\ndef validate_address(address: str, **config) -> Dict[str, Any]:\n    \"\"\"快速验证函数\"\"\"\n    validator = AddressValidator(**config)\n    return validator.validate({'address': address})\n\n\nif __name__ == '__main__':\n    validator = AddressValidator()\n\n    test_cases = [\n        '北京市朝阳区建国门外大街1号',\n        '上海市浦东新区张江高科技园区科苑路88号',\n        '',\n        'Test Address'\n    ]\n\n    for addr in test_cases:\n        result = validate_address(addr)\n        print(f'{addr[:30]:30} → {result[\"valid\"]} ({result[\"score\"]:.2f}/1.0)')\n",
+      "address_normalizer": "\"\"\"\n地址规范化器 - 自动生成\nDomain: address_governance\n\"\"\"\n\ndef normalize_address(address: str, **config) -> Dict[str, str]:\n    \"\"\"规范化地址\"\"\"\n\n    original = address\n\n    # 去空格\n    if config.get('remove_spaces', True):\n        address = address.replace(' ', '').replace('\\u3000', '')\n\n    # 去标点\n    if config.get('remove_punctuation', True):\n        punctuation = '，。；：''\"\"（）【】{}、'\n        for p in punctuation:\n            address = address.replace(p, '')\n\n    # 繁简转换（简化版）\n    if config.get('simplified', True):\n        simplified_map = {'號': '号', '館': '馆', '國': '国'}\n        for trad, simp in simplified_map.items():\n            address = address.replace(trad, simp)\n\n    return {\n        'original': original,\n        'normalized': address,\n        'changed': original != address\n    }\n",
+      "quality_evaluator": "\"\"\"\n质量评估器 - 自动生成\nDomain: address_governance\n参数: {'accuracy_threshold': 0.95, 'completeness_threshold': 0.9, 'consistency_threshold': 0.88}\n\"\"\"\n\ndef evaluate_quality(output: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"\n    评估处理输出的质量\n\n    评估指标:\n    - accuracy: 准确率（0-1）\n    - completeness: 完整率（0-1）\n    - consistency: 一致性（0-1）\n    \"\"\"\n\n    accuracy = output.get('accuracy', 1.0)\n    completeness = output.get('completeness', 1.0)\n    consistency = output.get('consistency', 1.0)\n\n    # 加权评分\n    weights = config.get('weights', {'accuracy': 0.5, 'completeness': 0.3, 'consistency': 0.2})\n    overall_score = (\n        accuracy * weights['accuracy'] +\n        completeness * weights['completeness'] +\n        consistency * weights['consistency']\n    )\n\n    # 阈值检查\n    accuracy_threshold = config.get('accuracy_threshold', 0.95)\n    completeness_threshold = config.get('completeness_threshold', 0.9)\n    consistency_threshold = config.get('consistency_threshold', 0.88)\n\n    passed = (\n        accuracy >= accuracy_threshold and\n        completeness >= completeness_threshold and\n        consistency >= consistency_threshold\n    )\n\n    return {\n        'accuracy': accuracy,\n        'completeness': completeness,\n        'consistency': consistency,\n        'overall_score': overall_score,\n        'passed': passed,\n        'details': {\n            'accuracy_threshold': accuracy_threshold,\n            'completeness_threshold': completeness_threshold,\n            'consistency_threshold': consistency_threshold\n        }\n    }\n",
+      "data_generator": "\"\"\"\n数据生成器 - 自动生成\nDomain: address_governance\n参数: {'use_llm': True, 'model': 'gpt-3.5', 'temperature': 0.7}\n\"\"\"\n\nfrom typing import Dict, Any\n\n\ndef generate_data(input_payload: Dict[str, Any], **config) -> Dict[str, Any]:\n    \"\"\"根据输入生成结构化数据。\n\n    说明：\n    - 默认返回规则生成结果\n    - 如接入外部 LLM，可在此函数中替换实现\n    \"\"\"\n\n    use_llm = bool(config.get(\"use_llm\", True))\n    model = str(config.get(\"model\", \"gpt-3.5\"))\n    temperature = float(config.get(\"temperature\", 0.7))\n\n    base = {\n        \"mode\": \"llm\" if use_llm else \"rule\",\n        \"model\": model,\n        \"temperature\": temperature,\n        \"input\": input_payload,\n    }\n\n    # 依赖外部推理服务：未配置时只返回能力状态，不伪造生成结果\n    base[\"generated\"] = {\n        \"status\": \"requires_external_generation_service\",\n        \"summary\": \"external generation service is required\",\n    }\n\n    return base\n",
+      "db_persister": "\"\"\"\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {'database': 'sqlite', 'table_name': 'process_results', 'batch_size': 1000}\n\"\"\"\n\nimport sqlite3\nimport json\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    \"\"\"数据库持久化器\"\"\"\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get('db_path', 'process_results.db')\n        self.table_name = config.get('table_name', 'process_results')\n        self.batch_size = config.get('batch_size', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:\n        \"\"\"\n        持久化数据到数据库\n\n        Args:\n            records: 数据记录列表\n\n        Returns:\n            {\n                'success': bool,\n                'inserted': int,\n                'failed': int,\n                'errors': list\n            }\n        \"\"\"\n\n        inserted = 0\n        failed = 0\n        errors = []\n\n        try:\n            conn = sqlite3.connect(self.db_path)\n            cursor = conn.cursor()\n\n            # 创建表（如果不存在）\n            self._create_table(cursor)\n\n            # 批量插入\n            for i in range(0, len(records), self.batch_size):\n                batch = records[i:i+self.batch_size]\n                try:\n                    for record in batch:\n                        self._insert_record(cursor, record)\n                    conn.commit()\n                    inserted += len(batch)\n                except Exception as e:\n                    errors.append(f'批次 {i//self.batch_size} 插入失败: {str(e)}')\n                    failed += len(batch)\n\n            conn.close()\n\n        except Exception as e:\n            errors.append(f'数据库操作错误: {str(e)}')\n            return {'success': False, 'inserted': 0, 'failed': len(records), 'errors': errors}\n\n        return {\n            'success': failed == 0,\n            'inserted': inserted,\n            'failed': failed,\n            'errors': errors\n        }\n\n    def _create_table(self, cursor):\n        \"\"\"创建表\"\"\"\n        create_sql = f\"\"\"\n            CREATE TABLE IF NOT EXISTS {self.table_name} (\n                id INTEGER PRIMARY KEY AUTOINCREMENT,\n                data TEXT NOT NULL,\n                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n            )\n        \"\"\"\n        cursor.execute(create_sql)\n\n    def _insert_record(self, cursor, record):\n        \"\"\"插入单条记录\"\"\"\n        data_json = json.dumps(record, ensure_ascii=False)\n        insert_sql = f\"INSERT INTO {self.table_name} (data) VALUES (?)\"\n        cursor.execute(insert_sql, (data_json,))\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -> Dict[str, Any]:\n    \"\"\"快速持久化函数\"\"\"\n    persister = DBPersister(**config)\n    return persister.persist(records)\n"
+    },
+    "tool_metadata": [
+      {
+        "tool_name": "address_validator",
+        "step": "INPUT_VALIDATION",
+        "status": "generated",
+        "file_path": "tools/generated_tools/validators/address_validator.py"
+      },
+      {
+        "tool_name": "address_normalizer",
+        "step": "ADDRESS_NORMALIZATION",
+        "status": "generated",
+        "file_path": "tools/generated_tools/normalizers/address_normalizer.py"
+      },
+      {
+        "tool_name": "address_segmenter",
+        "step": "ADDRESS_SEGMENTATION",
+        "status": "requires_external",
+        "required_libs": [
+          "jieba"
+        ],
+        "message": "分词工具需要外部库支持",
+        "solution": "\n分词工具需要以下库之一:\n\n1. jieba（推荐，纯Python实现）\n   pip install jieba\n\n2. LAC（百度NLP）\n   pip install pylac\n\n3. HanLP（哈工大）\n   pip install hanlp\n\n或者配置现有NLP服务:\n   API端点: http://nlp-service/segment\n   方法: POST\n   请求体: {{\"text\": \"地址文本\"}}\n   响应: {{\"tokens\": [...]}}\n"
+      },
+      {
+        "tool_name": "quality_evaluator",
+        "step": "QUALITY_CHECK",
+        "status": "generated",
+        "file_path": "tools/generated_tools/evaluators/quality_evaluator.py"
+      },
+      {
+        "tool_name": "data_generator",
+        "step": "DATA_GENERATION",
+        "status": "generated",
+        "file_path": "tools/generated_tools/generators/data_generator.py"
+      },
+      {
+        "tool_name": "db_persister",
+        "step": "OUTPUT_PERSIST",
+        "status": "generated",
+        "file_path": "tools/generated_tools/persisters/db_persister.py"
+      }
+    ],
+    "execution_readiness": "partial",
+    "validation_errors": [],
+    "validation_warnings": [
+      "步骤 ADDRESS_SEGMENTATION 需要外部库: 分词工具需要外部库支持"
+    ]
+  }
+}
