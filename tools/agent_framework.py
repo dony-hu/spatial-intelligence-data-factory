@@ -6,7 +6,7 @@ Provides base classes and interfaces for the 9-core Agent architecture
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import uuid
 from abc import ABC, abstractmethod
@@ -104,7 +104,7 @@ class BaseAgent(ABC):
     def _log_audit_trail(self, context: AgentContext, result: AgentExecutionResult):
         """Log execution for audit trail"""
         audit_record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent": self.agent_type.value,
             "execution_id": context.execution_id,
             "region": context.region,

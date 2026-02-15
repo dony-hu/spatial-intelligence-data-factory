@@ -1,0 +1,11 @@
+# Spatial Intelligence Data Factory - Python Dependencies
+# Core web framework
+flask>=2.0.0
+flask-cors>=3.0.0
+
+# Data validation
+jsonschema>=4.0.0
+
+# Testing (optional, for development)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0

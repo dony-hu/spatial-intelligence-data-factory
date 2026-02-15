@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Dict, List
 
 from tools.address_verification import AddressVerificationOrchestrator, UNVERIFIABLE_ONLINE
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
@@ -62,7 +62,7 @@ class ExecutorAdapter:
             "workflow_result": wf_result,
             "verification_summary": verification_bundle["summary"],
             "summary": workflow.get_workflow_summary(),
-            "executed_at": datetime.utcnow().isoformat(),
+            "executed_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def _generate_dag_artifact(self, task_spec: Dict, changeset: Dict) -> None:

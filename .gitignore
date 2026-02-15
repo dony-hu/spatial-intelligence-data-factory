@@ -3,6 +3,21 @@ testdata/cache/
 testdata/downloads/
 testdata/tmp/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # Terraform local state and per-env vars (do not commit)
 **/.terraform/
 **/*.tfstate
