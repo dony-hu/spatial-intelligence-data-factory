@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Process Console</title>
+  <style>
+    body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; margin: 20px; background: #f4f8fc; color: #11324d; }
+    .wrap { max-width: 1180px; margin: 0 auto; }
+    .card { background: #fff; border: 1px solid #d5e3f1; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    input, select, button { border: 1px solid #c4d8ea; border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+    button { background: #1f5a8f; color: #fff; border: none; cursor: pointer; }
+    pre { white-space: pre-wrap; word-break: break-word; background: #f7fbff; border: 1px solid #deebf8; border-radius: 8px; padding: 10px; max-height: 350px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    th, td { text-align: left; border-bottom: 1px solid #e2edf8; padding: 6px; vertical-align: top; }
+    .meta { color: #4a647c; font-size: 12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>流程编排控制台</h2>
+      <p class="meta">页面: <code>/process-console</code></p>
+      <div class="row">
+        <input id="requirement" style="min-width: 260px" value="执行地址治理流程并产出图谱结果" />
+        <select id="safetyLevel">
+          <option value="medium">safety: medium</option>
+          <option value="high">safety: high</option>
+          <option value="low">safety: low</option>
+        </select>
+        <input id="maxCost" type="number" step="0.1" value="5" />
+        <input id="maxSteps" type="number" value="3" />
+        <button onclick="startWorkflow()">启动执行</button>
+      </div>
+      <p class="meta" id="runMeta">尚未执行</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>路由决策</h3>
+        <button onclick="loadRouterDecision()">刷新</button>
+        <pre id="routerDecision">{}</pre>
+      </div>
+      <div class="card">
+        <h3>专家元数据</h3>
+        <button onclick="loadSpecialists()">刷新</button>
+        <pre id="specialists">[]</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>外部 API 调用日志</h3>
+      <div class="row">
+        <input id="taskRunId" placeholder="task_run_id" style="min-width: 220px" />
+        <input id="apiName" placeholder="api_name (可空)" />
+        <input id="apiLimit" type="number" value="50" />
+        <button onclick="loadApiCalls()">查询</button>
+      </div>
+      <div id="apiCallsMeta" class="meta"></div>
+      <table>
+        <thead><tr><th>time</th><th>api</th><th>latency_ms</th><th>error_type</th><th>task_run_id</th></tr></thead>
+        <tbody id="apiCallsRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>版本发布链路（迭代事件）</h3>
+      <div class="row">
+        <select id="processDefinitionId" style="min-width: 260px"></select>
+        <select id="iterationTriggerType">
+          <option value="">trigger: all</option>
+          <option value="create_version">trigger: create_version</option>
+          <option value="publish_draft">trigger: publish_draft</option>
+        </select>
+        <input id="iterationLimit" type="number" value="50" />
+        <button onclick="loadIterationEvents()">查询</button>
+      </div>
+      <div id="iterationMeta" class="meta"></div>
+      <table>
+        <thead><tr><th>time</th><th>trigger</th><th>from</th><th>to</th><th>reason</th></tr></thead>
+        <tbody id="iterationRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>草案详情与发布</h3>
+      <div class="row">
+        <select id="draftStatus">
+          <option value="">status: all</option>
+          <option value="editable">status: editable</option>
+          <option value="published">status: published</option>
+        </select>
+        <input id="draftLimit" type="number" value="30" />
+        <button onclick="loadDrafts()">刷新草案</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <select id="draftIdSelect" style="min-width: 320px"></select>
+        <input id="draftIdInput" placeholder="draft_id（可手填）" style="min-width: 260px" />
+        <button onclick="loadDraftDetail()">查看详情</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="publishReason" placeholder="发布原因" style="min-width: 380px" value="process console publish" />
+        <input id="publishOperator" placeholder="operator" value="process_console_user" />
+        <button onclick="publishDraft()">发布草案</button>
+      </div>
+      <div id="draftMeta" class="meta"></div>
+      <pre id="draftDetail">{}</pre>
+      <div class="row" style="margin-top:8px">
+        <input id="compareV1" type="number" value="1" />
+        <input id="compareV2" type="number" value="2" />
+        <button onclick="compareDraftVersions()">对比版本</button>
+      </div>
+      <div id="draftHistoryMeta" class="meta"></div>
+      <table>
+        <thead><tr><th>version</th><th>time</th><th>summary</th></tr></thead>
+        <tbody id="draftHistoryRows"></tbody>
+      </table>
+      <pre id="draftCompare">{}</pre>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>确认单列表</h3>
+        <div class="row">
+          <select id="confirmationStatus">
+            <option value="">status: all</option>
+            <option value="pending">status: pending</option>
+            <option value="confirmed">status: confirmed</option>
+            <option value="rejected">status: rejected</option>
+          </select>
+          <input id="confirmationOpType" placeholder="operation_type" />
+          <button onclick="loadConfirmations()">查询</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="confirmationIdInput" placeholder="confirmation_id" style="min-width: 260px" />
+          <input id="confirmationIdsBatchInput" placeholder="batch confirmation_ids, 逗号分隔" style="min-width: 320px" />
+          <input id="confirmerUserIdInput" placeholder="confirmer_user_id" value="process_console_user" />
+          <button onclick="confirmOperation()">确认执行</button>
+          <button onclick="rejectOperation()">拒绝执行</button>
+          <button onclick="confirmBatch()">批量确认</button>
+          <button onclick="rejectBatch()">批量拒绝</button>
+          <button onclick="cleanupExpiredConfirmations()">清理过期</button>
+        </div>
+        <div id="confirmationMeta" class="meta"></div>
+        <pre id="confirmationList">[]</pre>
+      </div>
+      <div class="card">
+        <h3>操作审计列表</h3>
+        <div class="row">
+          <input id="auditOpType" placeholder="operation_type" value="publish_draft" />
+          <input id="auditStatus" placeholder="operation_status" />
+          <button onclick="loadOperationAudits()">查询</button>
+        </div>
+        <div id="auditMeta" class="meta"></div>
+        <pre id="auditList">[]</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>最新工作流结果</h3>
+      <pre id="workflowResult">{}</pre>
+    </div>
+  </div>
+
+  <script>
+    async function getJson(url) {
+      const response = await fetch(url);
+      return response.json();
+    }
+
+    async function postJson(url, body) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return response.json();
+    }
+
+    function safeText(v) {
+      return typeof v === "string" ? v : JSON.stringify(v);
+    }
+
+    async function startWorkflow() {
+      const requirement = document.getElementById("requirement").value.trim();
+      const safetyLevel = document.getElementById("safetyLevel").value;
+      const maxCost = Number(document.getElementById("maxCost").value || 5);
+      const maxSteps = Number(document.getElementById("maxSteps").value || 3);
+      const payload = {
+        requirement,
+        context: {
+          domain: "address_governance",
+          data_sources: ["ods_address_raw", "dim_geo_base"],
+        },
+        constraints: {
+          env: "dev",
+          safety_level: safetyLevel,
+          max_duration_sec: 300,
+          budget: { max_cost_usd: maxCost, max_steps: maxSteps },
+        },
+        max_rounds: maxSteps,
+      };
+      const result = await postJson("/api/v1/workflow/start", payload);
+      document.getElementById("workflowResult").textContent = JSON.stringify(result, null, 2);
+      const taskRunId = result.task_run_id || "";
+      document.getElementById("taskRunId").value = taskRunId;
+      document.getElementById("runMeta").textContent = `workflow_id=${result.workflow_id || "-"} task_run_id=${taskRunId || "-"} status=${result.orchestrator_status || result.status || "-"}`;
+      await Promise.all([loadRouterDecision(), loadSpecialists(), loadApiCalls(), loadIterationEvents()]);
+    }
+
+    async function loadRouterDecision() {
+      const requirement = encodeURIComponent(document.getElementById("requirement").value.trim());
+      const safetyLevel = encodeURIComponent(document.getElementById("safetyLevel").value);
+      const maxCost = encodeURIComponent(document.getElementById("maxCost").value || "5");
+      const maxSteps = encodeURIComponent(document.getElementById("maxSteps").value || "3");
+      const url = `/api/v1/router/decision?requirement=${requirement}&safety_level=${safetyLevel}&max_cost_usd=${maxCost}&max_steps=${maxSteps}`;
+      const data = await getJson(url);
+      document.getElementById("routerDecision").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadSpecialists() {
+      const data = await getJson("/api/v1/agents/specialists");
+      document.getElementById("specialists").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadApiCalls() {
+      const taskRunId = encodeURIComponent(document.getElementById("taskRunId").value.trim());
+      const apiName = encodeURIComponent(document.getElementById("apiName").value.trim());
+      const limit = encodeURIComponent(document.getElementById("apiLimit").value || "50");
+      const data = await getJson(`/api/v1/external-api/calls?task_run_id=${taskRunId}&api_name=${apiName}&limit=${limit}`);
+      const items = data.items || [];
+      document.getElementById("apiCallsMeta").textContent = `total=${items.length}`;
+      const rows = document.getElementById("apiCallsRows");
+      rows.innerHTML = "";
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${safeText(item.called_at || "")}</td><td>${safeText(item.api_name || "")}</td><td>${safeText(item.latency_ms || "")}</td><td>${safeText(item.error_type || "")}</td><td>${safeText(item.task_run_id || "")}</td>`;
+        rows.appendChild(tr);
+      });
+    }
+
+    async function loadProcessDefinitions() {
+      const data = await getJson("/api/v1/process/definitions");
+      const items = data.items || [];
+      const sel = document.getElementById("processDefinitionId");
+      sel.innerHTML = "";
+      items.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = `${item.code} (${item.id})`;
+        sel.appendChild(opt);
+      });
+      if (!items.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "无可用流程定义";
+        sel.appendChild(opt);
+      }
+    }
+
+    async function loadIterationEvents() {
+      const processDefinitionId = encodeURIComponent(document.getElementById("processDefinitionId").value || "");
+      const triggerType = encodeURIComponent(document.getElementById("iterationTriggerType").value || "");
+      const limit = encodeURIComponent(document.getElementById("iterationLimit").value || "50");
+      if (!processDefinitionId) {
+        document.getElementById("iterationMeta").textContent = "请选择流程定义";
+        document.getElementById("iterationRows").innerHTML = "";
+        return;
+      }
+      let url = `/api/v1/process/iterations?process_definition_id=${processDefinitionId}&limit=${limit}`;
+      if (triggerType) {
+        url += `&trigger_type=${triggerType}`;
+      }
+      const data = await getJson(url);
+      const items = data.items || [];
+      let publishCount = 0;
+      let createVersionCount = 0;
+      items.forEach((item) => {
+        if ((item.trigger_type || "") === "publish_draft") {
+          publishCount += 1;
+        }
+        if ((item.trigger_type || "") === "create_version") {
+          createVersionCount += 1;
+        }
+      });
+      document.getElementById("iterationMeta").textContent = `total=${items.length} create_version=${createVersionCount} publish_draft=${publishCount}`;
+      const rows = document.getElementById("iterationRows");
+      rows.innerHTML = "";
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${safeText(item.created_at || "")}</td><td>${safeText(item.trigger_type || "")}</td><td>${safeText(item.from_version || "")}</td><td>${safeText(item.to_version || "")}</td><td>${safeText(item.reason || "")}</td>`;
+        rows.appendChild(tr);
+      });
+    }
+
+    function resolveDraftId() {
+      const manual = (document.getElementById("draftIdInput").value || "").trim();
+      if (manual) {
+        return manual;
+      }
+      return document.getElementById("draftIdSelect").value || "";
+    }
+
+    async function loadDrafts() {
+      const status = encodeURIComponent(document.getElementById("draftStatus").value || "");
+      const limit = encodeURIComponent(document.getElementById("draftLimit").value || "30");
+      const data = await getJson(`/api/v1/process/drafts?status=${status}&limit=${limit}`);
+      const items = data.items || [];
+      const sel = document.getElementById("draftIdSelect");
+      sel.innerHTML = "";
+      items.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.draft_id || "";
+        opt.textContent = `${item.draft_id || ""} (${item.status || ""}) ${item.process_code || ""}`;
+        sel.appendChild(opt);
+      });
+      if (!items.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "无草案";
+        sel.appendChild(opt);
+      }
+      document.getElementById("draftMeta").textContent = `draft_total=${items.length}`;
+    }
+
+    async function loadDraftDetail() {
+      const draftId = resolveDraftId();
+      if (!draftId) {
+        document.getElementById("draftMeta").textContent = "请先选择或输入 draft_id";
+        return;
+      }
+      const data = await getJson(`/api/v1/process/draft?draft_id=${encodeURIComponent(draftId)}`);
+      if (data.status !== "ok") {
+        document.getElementById("draftMeta").textContent = `查询失败: ${data.error || "unknown"}`;
+        document.getElementById("draftDetail").textContent = JSON.stringify(data, null, 2);
+        return;
+      }
+      document.getElementById("draftMeta").textContent = `draft_id=${draftId} status=${(data.draft || {}).status || ""}`;
+      document.getElementById("draftDetail").textContent = JSON.stringify(data.draft || {}, null, 2);
+      await loadDraftHistory();
+    }
+
+    async function publishDraft() {
+      const draftId = resolveDraftId();
+      if (!draftId) {
+        document.getElementById("draftMeta").textContent = "请先选择或输入 draft_id";
+        return;
+      }
+      const reason = (document.getElementById("publishReason").value || "").trim();
+      const operator = (document.getElementById("publishOperator").value || "").trim();
+      const payload = { action: "publish_draft", draft_id: draftId, reason, operator, source: "process_console" };
+      const data = await postJson("/api/v1/process/expert/chat", payload);
+      document.getElementById("draftDetail").textContent = JSON.stringify(data, null, 2);
+      const audit = data.publish_audit || {};
+      document.getElementById("draftMeta").textContent = `publish_result=${data.status || "unknown"} draft_id=${draftId} operator=${audit.operator || "-"} source=${audit.source || "-"} confirmation_id=${audit.confirmation_id || "-"} confirmer_user_id=${audit.confirmer_user_id || "-"} latency_ms=${audit.latency_ms || "-"}`;
+      await Promise.all([loadDrafts(), loadDraftDetail(), loadIterationEvents(), loadDraftHistory()]);
+    }
+
+    async function loadDraftHistory() {
+      const draftId = resolveDraftId();
+      if (!draftId) {
+        document.getElementById("draftHistoryMeta").textContent = "请先选择或输入 draft_id";
+        document.getElementById("draftHistoryRows").innerHTML = "";
+        return;
+      }
+      const data = await getJson(`/api/v1/draft/${encodeURIComponent(draftId)}/history`);
+      const items = data.versions || [];
+      document.getElementById("draftHistoryMeta").textContent = `history_total=${items.length}`;
+      const rows = document.getElementById("draftHistoryRows");
+      rows.innerHTML = "";
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${safeText(item.version_sequence || "")}</td><td>${safeText(item.created_at || "")}</td><td>${safeText(item.change_summary || "")}</td>`;
+        rows.appendChild(tr);
+      });
+    }
+
+    async function compareDraftVersions() {
+      const draftId = resolveDraftId();
+      if (!draftId) {
+        document.getElementById("draftCompare").textContent = JSON.stringify({ status: "error", error: "draft_id 不能为空" }, null, 2);
+        return;
+      }
+      const v1 = encodeURIComponent(document.getElementById("compareV1").value || "1");
+      const v2 = encodeURIComponent(document.getElementById("compareV2").value || "2");
+      const data = await getJson(`/api/v1/draft/${encodeURIComponent(draftId)}/compare?v1=${v1}&v2=${v2}`);
+      document.getElementById("draftCompare").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadConfirmations() {
+      const status = encodeURIComponent(document.getElementById("confirmationStatus").value || "");
+      const operationType = encodeURIComponent(document.getElementById("confirmationOpType").value || "");
+      const data = await getJson(`/api/v1/confirmations?status=${status}&operation_type=${operationType}&limit=30`);
+      const items = data.items || [];
+      document.getElementById("confirmationMeta").textContent = `total=${items.length}`;
+      document.getElementById("confirmationList").textContent = JSON.stringify(items, null, 2);
+      if (items.length > 0 && !document.getElementById("confirmationIdInput").value.trim()) {
+        document.getElementById("confirmationIdInput").value = items[0].confirmation_id || "";
+      }
+    }
+
+    async function loadOperationAudits() {
+      const operationType = encodeURIComponent(document.getElementById("auditOpType").value || "");
+      const operationStatus = encodeURIComponent(document.getElementById("auditStatus").value || "");
+      const data = await getJson(`/api/v1/operation-audits?operation_type=${operationType}&operation_status=${operationStatus}&limit=30`);
+      const items = data.items || [];
+      document.getElementById("auditMeta").textContent = `total=${items.length}`;
+      document.getElementById("auditList").textContent = JSON.stringify(items, null, 2);
+    }
+
+    async function respondConfirmation(responseType) {
+      const confirmationId = (document.getElementById("confirmationIdInput").value || "").trim();
+      const confirmerUserId = (document.getElementById("confirmerUserIdInput").value || "").trim();
+      if (!confirmationId) {
+        document.getElementById("confirmationMeta").textContent = "请先输入 confirmation_id";
+        return;
+      }
+      const payload = {
+        confirmation_id: confirmationId,
+        response: responseType,
+        confirmer_user_id: confirmerUserId || "process_console_user",
+      };
+      const data = await postJson("/api/v1/confirmation/respond", payload);
+      document.getElementById("confirmationMeta").textContent = `response=${responseType} status=${data.status || "unknown"} confirmation_id=${confirmationId}`;
+      document.getElementById("confirmationList").textContent = JSON.stringify(data, null, 2);
+      await Promise.all([loadConfirmations(), loadOperationAudits()]);
+    }
+
+    async function confirmOperation() {
+      await respondConfirmation("confirm");
+    }
+
+    async function rejectOperation() {
+      await respondConfirmation("reject");
+    }
+
+    function parseBatchIds() {
+      const raw = (document.getElementById("confirmationIdsBatchInput").value || "").trim();
+      return raw.split(",").map(x => x.trim()).filter(Boolean);
+    }
+
+    async function respondConfirmationBatch(responseType) {
+      const ids = parseBatchIds();
+      const confirmerUserId = (document.getElementById("confirmerUserIdInput").value || "").trim();
+      if (!ids.length) {
+        document.getElementById("confirmationMeta").textContent = "请先输入 batch confirmation_ids";
+        return;
+      }
+      const data = await postJson("/api/v1/confirmation/batch", {
+        confirmation_ids: ids,
+        response: responseType,
+        confirmer_user_id: confirmerUserId || "process_console_user",
+      });
+      document.getElementById("confirmationMeta").textContent = `batch response=${responseType} requested=${data.requested || 0} succeeded=${data.succeeded || 0} failed=${data.failed || 0}`;
+      document.getElementById("confirmationList").textContent = JSON.stringify(data, null, 2);
+      await Promise.all([loadConfirmations(), loadOperationAudits()]);
+    }
+
+    async function confirmBatch() {
+      await respondConfirmationBatch("confirm");
+    }
+
+    async function rejectBatch() {
+      await respondConfirmationBatch("reject");
+    }
+
+    async function cleanupExpiredConfirmations() {
+      const data = await postJson("/api/v1/confirmation/cleanup-expired", {});
+      document.getElementById("confirmationMeta").textContent = `cleanup expired affected=${data.affected || 0}`;
+      await Promise.all([loadConfirmations(), loadOperationAudits()]);
+    }
+
+    async function bootstrap() {
+      await Promise.all([
+        loadRouterDecision(),
+        loadSpecialists(),
+        loadProcessDefinitions(),
+        loadDrafts(),
+        loadConfirmations(),
+        loadOperationAudits(),
+      ]);
+      await loadIterationEvents();
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

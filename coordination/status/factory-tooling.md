@@ -1,17 +1,31 @@
 # 子线状态：工厂-工具与执行引擎
 
-- 进度：40%
+- 进度：84%
 - Done：
-  - TC-03 已完成首版“工具/引擎版本基线与兼容矩阵”产物：`coordination/status/tooling-engine-version-matrix.md`
-  - 已建立并固化最小兼容字段规范：`engine_version`、`toolchain_version`、`compat_matrix`
-  - 已完成版本关联落表（最小可用）：`process_version=process-v1.0.1` ↔ `tool_bundle_version=tools-v1.0.1` ↔ `engine_version=engine-v1.0.1` ↔ `workpackage_version=1.0.1`
-  - 已补充运行验证引用：`output/line_runs/quick_test_run_2026-02-14.md`
+  - TC-03 已启动，工具/引擎版本留痕目标已确认
+  - 已在 `process_version` 增加工具包版本字段：`tool_bundle_version`
+  - 已在 `process_version` 增加引擎兼容字段：`engine_version` / `engine_compatibility_json`
+  - 已完成旧库兼容迁移：初始化自动补列
+  - 已在 `create_version` 流程打通字段透传与查询输出
+  - 已接入外部工具首批真实调用与降级能力：`map_service` / `web_search` / `review_platform`
+  - 已新增外部调用日志查询接口：`/api/v1/external-api/calls`
+  - 已在外部调用日志写入 `task_run_id` 透传能力（支持按任务回放查询）
+  - 已在 `ExecutorAdapter` 接入 `AddressVerificationOrchestrator`，并回填 `unverifiable_online_list/strategy_patch`
+  - 已将 `task_run_id` 注入核验请求，形成调用审计可追踪闭环
+  - 已将 Router/Gate 阈值中心化到 `settings/router_gates.json`，支持环境变量覆盖（`FACTORY_GATE_*`）
+  - 已补充阈值配置文档：`docs/router-gate-config-2026-02-14.md`
+  - 已新增操作审计存储与查询框架：`operation_audit`（写入/过滤查询）
+  - 已补充 confirmation 列表查询能力（支持按状态/类型/会话过滤）
+  - 已补充 confirmation 批量状态更新与过期清理能力（存储层+API）
+  - 已引入控制平面服务层：`OperationAuditService` / `PublishService` / `ConfirmationWorkflowService`
+  - 已新增控制平面服务层测试：`tests/test_control_plane_services.py`
 - Next：
-  - 在执行结果产物中统一输出 `engine_version`、`toolchain_version`、`compat_matrix`
-  - 将兼容字段接入 demo 运行链路（`scripts/factory_demo_workflow.py` 输出侧）
-  - 增加一条不兼容场景样例，验证矩阵拦截行为
+  - 在前端/接口文档补充字段说明与示例
+  - 将剩余确认/发布业务逻辑继续从 `agent_server` 下沉到 service 层
 - Blocker：无
-- ETA：2026-02-14 21:00（本地时间）完成执行结果字段落地
+- ETA：2026-02-15 18:00（本地时间）完成字段文档化与阈值配置草案
 - Artifacts：
   - `coordination/status/factory-tooling.md`
-  - `coordination/status/tooling-engine-version-matrix.md`
+  - `database/agent_runtime_store.py`
+  - `tools/process_db_api.py`
+  - `tools/dialogue_schema_validation.py`

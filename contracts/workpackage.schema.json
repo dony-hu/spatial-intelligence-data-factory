@@ -26,7 +26,10 @@
         "process_version": {"type": "string"},
         "tool_bundle_version": {"type": "string"},
         "engine_version": {"type": "string"},
-        "released_at": {"type": "string"}
+        "released_at": {"type": "string"},
+        "released_by": {"type": "string"},
+        "rollback_target_version": {"type": "string"},
+        "runtime_record_ref": {"type": "string"}
       }
     },
     "line_spec": {
@@ -49,6 +52,14 @@
       "properties": {
         "generator": {"type": "string"},
         "entrypoints": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "line_feedback_contract": {
+      "type": "object",
+      "properties": {
+        "required_fields": {"type": "array", "items": {"type": "string"}},
+        "failure_queue_snapshot_ref": {"type": "string"},
+        "replay_result_ref": {"type": "string"}
       }
     },
     "rollback": {

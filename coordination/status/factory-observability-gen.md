@@ -1,19 +1,23 @@
-# Factory-Observability-Gen 任务卡
+# 子线状态：工厂-产线观测代码生成
 
-- 任务卡：`TC-05`（产线观测代码生成）
-- 轮次：`2026-02-14`
+- 进度：90%
 - Done：
-  - 已在 `tools/process_compiler/tool_generator.py` 接入观测自动生成：编译时自动产出 `line_observe.py` 与 `line_metrics.json`。
-  - 已在 `tools/process_compiler/step_identifier.py` 为步骤补齐标准 `error_code` 字段，并同步写入观测指标文件 `step_error_codes`。
-  - 已在 `tools/process_compiler/compiler.py` 串联 `observability_bundle` 回传，并写入 `process_spec.observability_bundle`。
-  - 已在 `tools/agent_server.py`、`tools/process_tools/design_process_tool.py`、`tools/process_tools/modify_process_tool.py` 透出 `observability_bundle`。
-  - 已新增测试 `tests/test_process_compiler_observability.py`，并通过 `python3 -m unittest tests.test_process_compiler_observability tests.test_workflow_line_metrics`。
+  - TC-05 已启动
+  - L3 约束已冻结：观测代码由工厂生成并随工作包下发
+  - 已生成首版观测入口并随工作包下发
+  - 已在 `process_compiler/tool_generator` 接入自动生成观测包（`line_observe.py` + `line_metrics.json`）
+  - 已增加步骤级标准错误码字段（`STEP_<STEP_NAME>_FAIL`）并写入观测产物
+  - 已在 `process_compiler/compiler` 接入自动触发观测包生成并写入 `process_spec.observability_bundle`
+  - 已新增回归测试：`tests/test_process_compiler_observability.py`（1/1 通过）
 - Next：
-  - 将自动生成的观测包挂接到正式 `wp-*.json` 发布流，替换示例包中的静态路径配置。
-  - 补充失败路径回放用例，校验 `line_observe.py` 在 `status != PASS` 时输出错误码。
+  - 将观测包入口与 `workpackage` 编译链直接打通（按版本号自动引用）
+  - 补 `step_error_rate` 指标在运行时采集逻辑
 - Blocker：无
-- ETA：`2026-02-14` 18:30 前完成发布流挂接与失败路径回放用例
+- ETA：2026-02-15 14:00（本地时间）完成运行时指标采集对接
 - Artifacts：
   - `observability/l3/line_observability_spec.md`
   - `workpackages/bundles/address-topology-v1.0.1/observability/line_observe.py`
   - `workpackages/bundles/address-topology-v1.0.1/observability/line_metrics.json`
+  - `tools/process_compiler/tool_generator.py`
+  - `tools/process_compiler/compiler.py`
+  - `tests/test_process_compiler_observability.py`

@@ -71,6 +71,9 @@ class AgentRuntimeStore:
                     output_contract_json TEXT,
                     quality_policy_json TEXT,
                     iteration_policy_json TEXT,
+                    tool_bundle_version TEXT,
+                    engine_version TEXT,
+                    engine_compatibility_json TEXT,
                     created_by TEXT,
                     created_at TEXT NOT NULL,
                     UNIQUE(process_definition_id, version),
@@ -78,6 +81,7 @@ class AgentRuntimeStore:
                 )
                 """
             )
+            self._ensure_process_version_columns(cur)
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS process_step (
@@ -181,7 +185,9 @@ class AgentRuntimeStore:
                     id TEXT PRIMARY KEY,
                     process_definition_id TEXT NOT NULL,
                     from_version_id TEXT,
+                    from_version TEXT,
                     to_version_id TEXT,
+                    to_version TEXT,
                     trigger_type TEXT NOT NULL,
                     strategy_patch_json TEXT,
                     reason TEXT,
@@ -189,6 +195,7 @@ class AgentRuntimeStore:
                 )
                 """
             )
+            self._ensure_iteration_event_columns(cur)
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS process_draft (
@@ -386,13 +393,73 @@ class AgentRuntimeStore:
                 )
                 """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS operation_audit (
+                    audit_id TEXT PRIMARY KEY,
+                    operation_type TEXT NOT NULL,
+                    operation_id TEXT,
+                    operation_status TEXT NOT NULL,
+                    actor TEXT,
+                    source TEXT,
+                    confirmation_id TEXT,
+                    confirmer_user_id TEXT,
+                    session_id TEXT,
+                    draft_id TEXT,
+                    process_definition_id TEXT,
+                    process_version_id TEXT,
+                    task_run_id TEXT,
+                    error_code TEXT,
+                    detail_json TEXT,
+                    created_at TEXT NOT NULL
+                )
+                """
+            )
 
             # Create indices for new tables
             cur.execute("CREATE INDEX IF NOT EXISTS idx_confirmation_session_id ON confirmation_record(session_id)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_confirmation_status_created_at "
+                "ON confirmation_record(confirmation_status, created_at)"
+            )
             cur.execute("CREATE INDEX IF NOT EXISTS idx_parsing_event_session_id ON parsing_event(session_id)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_draft_version_history_draft_id ON draft_version_history(draft_id)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_external_api_cache_api_name ON external_api_cache(api_name)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_api_call_log_api_name ON api_call_log(api_name)")
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_operation_audit_type_created_at "
+                "ON operation_audit(operation_type, created_at)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_operation_audit_confirmation "
+                "ON operation_audit(confirmation_id)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS idx_process_iteration_event_process_id "
+                "ON process_iteration_event(process_definition_id, created_at)"
+            )
+
+    @staticmethod
+    def _ensure_iteration_event_columns(cur: sqlite3.Cursor) -> None:
+        """Backfill columns for older databases created before iteration event extension."""
+        cur.execute("PRAGMA table_info(process_iteration_event)")
+        columns = {str(row[1]) for row in cur.fetchall()}
+        if "from_version" not in columns:
+            cur.execute("ALTER TABLE process_iteration_event ADD COLUMN from_version TEXT")
+        if "to_version" not in columns:
+            cur.execute("ALTER TABLE process_iteration_event ADD COLUMN to_version TEXT")
+
+    @staticmethod
+    def _ensure_process_version_columns(cur: sqlite3.Cursor) -> None:
+        """Backfill process_version columns for tooling/engine compatibility metadata."""
+        cur.execute("PRAGMA table_info(process_version)")
+        columns = {str(row[1]) for row in cur.fetchall()}
+        if "tool_bundle_version" not in columns:
+            cur.execute("ALTER TABLE process_version ADD COLUMN tool_bundle_version TEXT")
+        if "engine_version" not in columns:
+            cur.execute("ALTER TABLE process_version ADD COLUMN engine_version TEXT")
+        if "engine_compatibility_json" not in columns:
+            cur.execute("ALTER TABLE process_version ADD COLUMN engine_compatibility_json TEXT")
 
     def seed_default_processes(self) -> None:
         """Seed default process definitions if absent."""
@@ -464,8 +531,9 @@ class AgentRuntimeStore:
                 """
                 INSERT INTO process_version
                 (id, process_definition_id, version, status, goal, input_contract_json, output_contract_json,
-                 quality_policy_json, iteration_policy_json, created_by, created_at)
-                VALUES (?, ?, '1.0.0', 'released', ?, ?, ?, ?, ?, ?, ?)
+                 quality_policy_json, iteration_policy_json, tool_bundle_version, engine_version,
+                 engine_compatibility_json, created_by, created_at)
+                VALUES (?, ?, '1.0.0', 'released', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     version_id,
@@ -475,6 +543,9 @@ class AgentRuntimeStore:
                     json.dumps({"type": "object", "required": ["records"]}, ensure_ascii=False),
                     json.dumps({"quality_threshold": 0.9}, ensure_ascii=False),
                     json.dumps({"max_rounds": 3, "stop_on_no_gain": True}, ensure_ascii=False),
+                    "bundle-default@1.0.0",
+                    "factory-engine@1.0.0",
+                    json.dumps({"min_engine_version": "1.0.0", "max_engine_version": "1.x"}, ensure_ascii=False),
                     "process_expert",
                     now,
                 ),
@@ -527,7 +598,8 @@ class AgentRuntimeStore:
             cur.execute(
                 """
                 SELECT pd.id AS process_definition_id, pd.code, pd.name, pd.domain,
-                       pv.id AS process_version_id, pv.version, pv.goal, pv.status
+                       pv.id AS process_version_id, pv.version, pv.goal, pv.status,
+                       pv.tool_bundle_version, pv.engine_version, pv.engine_compatibility_json
                 FROM process_definition pd
                 JOIN process_version pv ON pv.id = pd.current_version_id
                 WHERE pd.code = ? AND pd.status = 'active' AND pv.status = 'released'
@@ -535,7 +607,11 @@ class AgentRuntimeStore:
                 (process_code,),
             )
             row = cur.fetchone()
-            return dict(row) if row else None
+            if not row:
+                return None
+            item = dict(row)
+            item["engine_compatibility"] = json.loads(item.get("engine_compatibility_json") or "{}")
+            return item
 
     def list_process_definitions(self) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -573,6 +649,9 @@ class AgentRuntimeStore:
         steps: List[Dict[str, Any]],
         publish: bool = False,
         created_by: str = "process_expert",
+        tool_bundle_version: str = "bundle-default@1.0.0",
+        engine_version: str = "factory-engine@1.0.0",
+        engine_compatibility: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         version_id = f"procver_{uuid.uuid4().hex[:12]}"
         now = _now_iso()
@@ -583,8 +662,9 @@ class AgentRuntimeStore:
                 """
                 INSERT INTO process_version
                 (id, process_definition_id, version, status, goal, input_contract_json, output_contract_json,
-                 quality_policy_json, iteration_policy_json, created_by, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 quality_policy_json, iteration_policy_json, tool_bundle_version, engine_version,
+                 engine_compatibility_json, created_by, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     version_id,
@@ -596,6 +676,13 @@ class AgentRuntimeStore:
                     json.dumps({"type": "object", "required": ["records"]}, ensure_ascii=False),
                     json.dumps({"quality_threshold": 0.9}, ensure_ascii=False),
                     json.dumps({"max_rounds": 3}, ensure_ascii=False),
+                    tool_bundle_version,
+                    engine_version,
+                    json.dumps(
+                        engine_compatibility
+                        or {"min_engine_version": "1.0.0", "max_engine_version": "1.x"},
+                        ensure_ascii=False,
+                    ),
                     created_by,
                     now,
                 ),
@@ -635,13 +722,17 @@ class AgentRuntimeStore:
             cur.execute(
                 """
                 SELECT id, process_definition_id, version, status, goal, created_by, created_at
+                     , tool_bundle_version, engine_version, engine_compatibility_json
                 FROM process_version
                 WHERE process_definition_id = ?
                 ORDER BY created_at DESC
                 """,
                 (process_definition_id,),
             )
-            return [dict(r) for r in cur.fetchall()]
+            items = [dict(r) for r in cur.fetchall()]
+            for item in items:
+                item["engine_compatibility"] = json.loads(item.get("engine_compatibility_json") or "{}")
+            return items
 
     def list_tasks_by_process_definition(self, process_definition_id: str) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -838,6 +929,79 @@ class AgentRuntimeStore:
             result["outputs"] = [dict(r) for r in cur.fetchall()]
             return result
 
+    def record_process_iteration_event(
+        self,
+        process_definition_id: str,
+        trigger_type: str,
+        reason: str = "",
+        from_version_id: Optional[str] = None,
+        from_version: Optional[str] = None,
+        to_version_id: Optional[str] = None,
+        to_version: Optional[str] = None,
+        strategy_patch: Optional[Any] = None,
+        created_at: Optional[str] = None,
+    ) -> str:
+        """Persist one process iteration event for traceability."""
+        event_id = f"iter_{uuid.uuid4().hex[:12]}"
+        payload = strategy_patch
+        if payload is None:
+            payload = {}
+        if not isinstance(payload, (dict, list)):
+            payload = {"raw": str(payload)}
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO process_iteration_event
+                (id, process_definition_id, from_version_id, from_version, to_version_id, to_version,
+                 trigger_type, strategy_patch_json, reason, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event_id,
+                    process_definition_id,
+                    from_version_id,
+                    from_version,
+                    to_version_id,
+                    to_version,
+                    trigger_type,
+                    json.dumps(payload, ensure_ascii=False),
+                    reason,
+                    created_at or _now_iso(),
+                ),
+            )
+        return event_id
+
+    def list_process_iteration_events(
+        self,
+        process_definition_id: str,
+        limit: int = 100,
+        trigger_type: str = "",
+    ) -> List[Dict[str, Any]]:
+        """List iteration events by process definition, newest first."""
+        query = (
+            "SELECT id, process_definition_id, from_version_id, from_version, to_version_id, to_version, "
+            "trigger_type, strategy_patch_json, reason, created_at "
+            "FROM process_iteration_event WHERE process_definition_id = ?"
+        )
+        params: List[Any] = [process_definition_id]
+        if trigger_type:
+            query += " AND trigger_type = ?"
+            params.append(trigger_type)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(max(1, int(limit)))
+
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+        items: List[Dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["strategy_patch"] = json.loads(item.get("strategy_patch_json") or "{}")
+            items.append(item)
+        return items
+
     def upsert_process_draft(
         self,
         draft_id: str,
@@ -923,6 +1087,33 @@ class AgentRuntimeStore:
             result = dict(row)
             result["plan"] = json.loads(result.get("plan_json") or "{}")
             return result
+
+    def list_process_drafts(self, status: str = "", limit: int = 50) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            if status:
+                cur.execute(
+                    """
+                    SELECT * FROM process_draft
+                    WHERE status = ?
+                    ORDER BY updated_at DESC
+                    LIMIT ?
+                    """,
+                    (status, int(limit)),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT * FROM process_draft
+                    ORDER BY updated_at DESC
+                    LIMIT ?
+                    """,
+                    (int(limit),),
+                )
+            items = [dict(r) for r in cur.fetchall()]
+            for item in items:
+                item["plan"] = json.loads(item.get("plan_json") or "{}")
+            return items
 
     def get_latest_editable_draft_by_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -1022,6 +1213,37 @@ class AgentRuntimeStore:
             result["operation_params"] = json.loads(result.get("operation_params_json") or "{}")
             return result
 
+    def list_confirmation_records(
+        self,
+        confirmation_status: str = "",
+        operation_type: str = "",
+        session_id: str = "",
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM confirmation_record WHERE 1=1"
+        params: List[Any] = []
+        if confirmation_status:
+            query += " AND confirmation_status = ?"
+            params.append(confirmation_status)
+        if operation_type:
+            query += " AND operation_type = ?"
+            params.append(operation_type)
+        if session_id:
+            query += " AND session_id = ?"
+            params.append(session_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(max(1, int(limit)))
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+        items: List[Dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["operation_params"] = json.loads(item.get("operation_params_json") or "{}")
+            items.append(item)
+        return items
+
     def update_confirmation_status(
         self, confirmation_id: str, status: str, confirmer_user_id: Optional[str] = None
     ) -> None:
@@ -1036,6 +1258,48 @@ class AgentRuntimeStore:
                 """,
                 (status, _now_iso() if status != "pending" else None, confirmer_user_id, confirmation_id),
             )
+
+    def bulk_update_confirmation_status(
+        self,
+        confirmation_ids: List[str],
+        status: str,
+        confirmer_user_id: Optional[str] = None,
+    ) -> int:
+        """Bulk update confirmation status. Returns affected row count."""
+        ids = [str(x).strip() for x in confirmation_ids if str(x).strip()]
+        if not ids:
+            return 0
+        placeholders = ",".join(["?"] * len(ids))
+        params: List[Any] = [status, _now_iso() if status != "pending" else None, confirmer_user_id]
+        params.extend(ids)
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                f"""
+                UPDATE confirmation_record
+                SET confirmation_status = ?, confirmed_at = ?, confirmer_user_id = ?
+                WHERE confirmation_id IN ({placeholders})
+                """,
+                tuple(params),
+            )
+            return int(cur.rowcount or 0)
+
+    def expire_pending_confirmations(self) -> int:
+        """Expire pending confirmations whose expires_at is before now."""
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE confirmation_record
+                SET confirmation_status = 'expired', confirmed_at = ?, confirmer_user_id = COALESCE(confirmer_user_id, 'system_expirer')
+                WHERE confirmation_status = 'pending'
+                  AND expires_at IS NOT NULL
+                  AND expires_at != ''
+                  AND expires_at < ?
+                """,
+                (_now_iso(), _now_iso()),
+            )
+            return int(cur.rowcount or 0)
 
     # ===== Phase 1: Dialogue parsing schema validation =====
 
@@ -1171,6 +1435,122 @@ class AgentRuntimeStore:
                 (call_id, api_name, request_json, response_json, error_type, latency_ms, _now_iso(), task_run_id),
             )
         return call_id
+
+    def list_api_call_logs(
+        self,
+        task_run_id: str = "",
+        api_name: str = "",
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Query external API call logs with optional filters."""
+        query = (
+            "SELECT call_id, api_name, request_json, response_json, status_code, error_type, "
+            "error_detail, latency_ms, created_at, task_run_id "
+            "FROM api_call_log WHERE 1=1"
+        )
+        params: List[Any] = []
+        if task_run_id:
+            query += " AND task_run_id = ?"
+            params.append(task_run_id)
+        if api_name:
+            query += " AND api_name = ?"
+            params.append(api_name)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(max(1, int(limit)))
+
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+    def log_operation_audit(
+        self,
+        operation_type: str,
+        operation_status: str,
+        operation_id: str = "",
+        actor: str = "",
+        source: str = "",
+        confirmation_id: str = "",
+        confirmer_user_id: str = "",
+        session_id: str = "",
+        draft_id: str = "",
+        process_definition_id: str = "",
+        process_version_id: str = "",
+        task_run_id: str = "",
+        error_code: str = "",
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        audit_id = f"audit_{uuid.uuid4().hex[:12]}"
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO operation_audit
+                (audit_id, operation_type, operation_id, operation_status, actor, source,
+                 confirmation_id, confirmer_user_id, session_id, draft_id, process_definition_id,
+                 process_version_id, task_run_id, error_code, detail_json, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    audit_id,
+                    operation_type,
+                    operation_id,
+                    operation_status,
+                    actor,
+                    source,
+                    confirmation_id or None,
+                    confirmer_user_id or None,
+                    session_id or None,
+                    draft_id or None,
+                    process_definition_id or None,
+                    process_version_id or None,
+                    task_run_id or None,
+                    error_code or None,
+                    json.dumps(detail or {}, ensure_ascii=False),
+                    _now_iso(),
+                ),
+            )
+        return audit_id
+
+    def list_operation_audits(
+        self,
+        operation_type: str = "",
+        operation_status: str = "",
+        confirmation_id: str = "",
+        draft_id: str = "",
+        session_id: str = "",
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM operation_audit WHERE 1=1"
+        params: List[Any] = []
+        if operation_type:
+            query += " AND operation_type = ?"
+            params.append(operation_type)
+        if operation_status:
+            query += " AND operation_status = ?"
+            params.append(operation_status)
+        if confirmation_id:
+            query += " AND confirmation_id = ?"
+            params.append(confirmation_id)
+        if draft_id:
+            query += " AND draft_id = ?"
+            params.append(draft_id)
+        if session_id:
+            query += " AND session_id = ?"
+            params.append(session_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(max(1, int(limit)))
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+        items: List[Dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["detail"] = json.loads(item.get("detail_json") or "{}")
+            items.append(item)
+        return items
 
     def get_db(self):
         """Get a database connection context manager."""

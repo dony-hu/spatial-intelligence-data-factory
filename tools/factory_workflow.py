@@ -258,17 +258,24 @@ class FactoryWorkflow:
                 input_item = requirement.input_data[order_idx]
 
                 # Execute cleaning pipeline
+                source_id = str(
+                    input_item.get('id')
+                    or input_item.get('source')
+                    or input_item.get('raw')
+                    or input_item.get('address', '')
+                )
                 cleaning_output = self._execute_cleaning_pipeline(
                     cleaning_order, cleaning_spec, input_item, requirement
                 )
                 execution_results['cleaning'].append({
                     'order_id': cleaning_order.work_order_id,
+                    'source_id': source_id,
                     'input': input_item.get('raw') or input_item.get('address', ''),
+                    'input_item': dict(input_item),
                     'output': cleaning_output
                 })
 
                 if not cleaning_output.get('standardized_address'):
-                    source_id = input_item.get('id') or input_item.get('source') or input_item.get('raw') or input_item.get('address', '')
                     execution_results['failed_cases'].append({
                         'source_id': source_id,
                         'stage': 'cleaning',
@@ -312,6 +319,7 @@ class FactoryWorkflow:
                 'graph_relationships_generated_total': sum(r['relationships_generated'] for r in execution_results['graph']),
                 'graph_nodes_merged_total': sum(r['nodes_merged'] for r in execution_results['graph']),
                 'graph_relationships_merged_total': sum(r['relationships_merged'] for r in execution_results['graph']),
+                'cleaning_case_details': execution_results['cleaning'],
                 'graph_case_details': [
                     {
                         'source_id': r.get('source_id', ''),

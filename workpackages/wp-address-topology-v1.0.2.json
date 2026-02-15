@@ -5,22 +5,19 @@
     "process_version": "process-v1.0.2",
     "tool_bundle_version": "tools-v1.0.2",
     "engine_version": "engine-v1.0.2",
-    "released_at": "2026-02-14T11:40:00+08:00",
-    "published_by": "Factory-WorkPackage",
-    "published_at": "2026-02-14T11:40:00+08:00",
-    "rollback_version": "1.0.1",
-    "ticket_id": "TC-04-R1",
-    "change_reason": "TC-04恢复后发布v1.0.2，补齐下发元信息并对齐产线回传字段",
-    "dispatch_scope": "line-execution/address-topology",
-    "dispatch_status": "released"
+    "released_at": "2026-02-14T14:50:00",
+    "released_by": "factory-workpackage-line",
+    "rollback_target_version": "1.0.1",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-address-topology-v1.0.2"
   },
   "line_spec": {
     "line_type": "address_to_topology",
-    "goal": "基于单条地址输入产出拓扑节点与关系",
+    "goal": "基于单条地址输入产出拓扑节点与关系，并回传失败回放证据",
     "constraints": [
       "产线不得修改工艺与工具内核",
       "质量阈值>=0.95",
-      "失败需输出步骤级错误信息"
+      "失败需输出步骤级错误信息",
+      "失败队列与回放结果必须可追溯"
     ]
   },
   "input_contract": {
@@ -28,27 +25,20 @@
     "required": ["raw_address"],
     "properties": {
       "raw_address": {"type": "string", "minLength": 3},
-      "task_id": {"type": "string"},
-      "trace_id": {"type": "string"}
+      "task_id": {"type": "string"}
     }
   },
   "output_contract": {
     "type": "object",
-    "required": ["standard_address", "topology_nodes", "topology_edges", "quality_score", "run_record"],
+    "required": ["standard_address", "topology_nodes", "topology_edges", "quality_score"],
     "properties": {
       "standard_address": {"type": "string"},
       "topology_nodes": {"type": "array"},
       "topology_edges": {"type": "array"},
       "quality_score": {"type": "number"},
-      "run_record": {
-        "type": "object",
-        "required": ["status", "duration_ms"],
-        "properties": {
-          "status": {"type": "string"},
-          "duration_ms": {"type": "number"},
-          "error_code": {"type": "string"}
-        }
-      }
+      "execution_trace_id": {"type": "string"},
+      "failure_queue_snapshot_ref": {"type": "string"},
+      "replay_result_ref": {"type": "string"}
     }
   },
   "process_spec": {
@@ -69,14 +59,23 @@
   "engine_bundle": {
     "runtime": "factory_engine",
     "entrypoint": "tools/factory_workflow.py",
-    "mode": "single_record"
+    "mode": "single_record",
+    "compatibility": {
+      "min_engine_version": "1.0.0",
+      "max_engine_version": "1.1.x"
+    }
   },
   "observability_bundle": {
     "generator": "factory_observability_generator",
     "entrypoints": [
-      "workpackages/bundles/address-topology-v1.0.2/observability/line_observe.py",
-      "workpackages/bundles/address-topology-v1.0.2/observability/line_metrics.json"
+      "workpackages/bundles/address-topology-v1.0.1/observability/line_observe.py",
+      "workpackages/bundles/address-topology-v1.0.1/observability/line_metrics.json"
     ]
+  },
+  "line_feedback_contract": {
+    "required_fields": ["status", "failure_queue_snapshot_ref", "replay_result_ref"],
+    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
   },
   "rollback": {
     "from_version": "1.0.2",

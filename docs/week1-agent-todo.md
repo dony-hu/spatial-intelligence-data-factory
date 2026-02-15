@@ -31,8 +31,10 @@
 ## P2（可顺延）
 
 1. [x] 输出 `docs/week1-acceptance-report.md`。
-2. [ ] 整理 W2 backlog（多 Agent 路由与真实工具接入）。
-3. [ ] 增加更多评测样例（性能、成本、回归）。
+2. [x] 整理 W2 backlog（多 Agent 路由与真实工具接入）。  
+   - 产出：`docs/week2-backlog-2026-02-14.md`
+3. [x] 增加更多评测样例（性能、成本、回归）。  
+   - 产出：`docs/evaluation-samples-expansion-plan-2026-02-14.md`
 
 ---
 

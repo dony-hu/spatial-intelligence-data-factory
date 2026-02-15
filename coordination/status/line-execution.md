@@ -7,9 +7,12 @@
   - 已完成回归测试：`tests/test_tc06_line_execution.py`（3/3 通过）
   - 已完成执行验证：单条成功样本 1 条、失败样本 1 条、失败回放 1 轮
   - 5 分钟自治循环已后台启动（PID：`55688`）
+  - 已恢复误放主文件到正式路径：`scripts/line_execution_tc06.py` / `tests/test_tc06_line_execution.py`
+  - 已回收并确认自治循环产物：`output/line_runs/tc06_autoloop_2026-02-14_114205_627732.json`
+  - 已追加失败回放验证：`output/line_runs/tc06_failure_replay_2026-02-14_144421_573175.json`
 - Next：
-  - 观察自治循环结束并回收 `tc06_autoloop` 产物
-  - 将失败队列快照与回放结果回传工厂迭代线
+  - 将 `failed_replay_queue.json` 与最新 replay 产物接入 `process_iterations` 回传记录
+  - 在工作包回传字段中固定 `failure_queue_snapshot_ref` / `replay_result_ref` 的引用格式
 - Blocker：
   - 无
-- ETA：2026-02-14 11:47（今日）完成 5 分钟自治循环并固化回放产物
+- ETA：2026-02-15 15:00（本地时间）完成产线回传与工厂迭代线闭环

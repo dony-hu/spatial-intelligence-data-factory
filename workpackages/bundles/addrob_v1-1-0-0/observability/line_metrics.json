@@ -1,0 +1,35 @@
+{
+  "metrics": [
+    "task_total",
+    "task_success",
+    "task_failed",
+    "quality_pass_rate",
+    "avg_task_latency_ms",
+    "step_error_rate"
+  ],
+  "owner": "factory",
+  "version": "1.0.0",
+  "domain": "address_governance",
+  "step_error_codes": {
+    "INPUT_VALIDATION": {
+      "error_code": "STEP_INPUT_VALIDATION_FAIL",
+      "error_message": "输入验证 执行失败"
+    },
+    "ADDRESS_NORMALIZATION": {
+      "error_code": "STEP_ADDRESS_NORMALIZATION_FAIL",
+      "error_message": "地址标准化 执行失败"
+    },
+    "QUALITY_CHECK": {
+      "error_code": "STEP_QUALITY_CHECK_FAIL",
+      "error_message": "质量评估 执行失败"
+    },
+    "OUTPUT_PERSIST": {
+      "error_code": "STEP_OUTPUT_PERSIST_FAIL",
+      "error_message": "结果持久化 执行失败"
+    },
+    "DATA_GENERATION": {
+      "error_code": "STEP_DATA_GENERATION_FAIL",
+      "error_message": "数据生成 执行失败"
+    }
+  }
+}
