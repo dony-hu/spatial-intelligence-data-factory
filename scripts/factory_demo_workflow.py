@@ -252,8 +252,8 @@ def demo_multi_workflow() -> None:
 
 def main():
     """Main entry point"""
+    ensure_demo_allowed("scripts/factory_demo_workflow.py")
     parser = argparse.ArgumentParser(description="Factory Demonstration Workflow")
-        ensure_demo_allowed("scripts/factory_demo_workflow.py")
     parser.add_argument(
         '--scenario',
         choices=['address_cleaning', 'entity_fusion', 'relationship_extraction', 'quick_test'],

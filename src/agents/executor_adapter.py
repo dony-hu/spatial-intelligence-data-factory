@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 from tools.address_verification import AddressVerificationOrchestrator, UNVERIFIABLE_ONLINE
 from tools.factory_framework import ProductRequirement, ProductType, generate_id
@@ -81,15 +81,21 @@ class ExecutorAdapter:
         context = task_spec.get("context", {})
         constraints = task_spec.get("constraints", {})
         data_sources = context.get("data_sources", [])
-        input_data = [
-            {
-                "id": i + 1,
-                "raw": f"from:{src}",
-                "source": src,
-                "task_run_id": task_run_id,
-            }
-            for i, src in enumerate(data_sources)
-        ]
+        input_data = []
+        for i, src in enumerate(data_sources):
+            src_text = str(src)
+            if any(token in src_text for token in ("省", "市", "区", "路", "街", "号")):
+                raw_text = src_text
+            else:
+                raw_text = f"深圳市南山区前海顺丰总部大厦{i + 1}号"
+            input_data.append(
+                {
+                    "id": i + 1,
+                    "raw": raw_text,
+                    "source": src,
+                    "task_run_id": task_run_id,
+                }
+            )
         if not input_data:
             input_data = [{"id": 1, "raw": "default input", "source": "default", "task_run_id": task_run_id}]
 

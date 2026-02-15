@@ -45,5 +45,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_*.py'
       - name: Run e2e TaskSpec smoke
+        env:
+          ALLOW_DEMO_SCRIPTS: "1"
         run: |
           python scripts/run_taskspec_demo.py --mode success
