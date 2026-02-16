@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间智能数据工厂 - 项目状态报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-green { @apply bg-green-100 text-green-800 border-green-200; }
+        .status-yellow { @apply bg-yellow-100 text-yellow-800 border-yellow-200; }
+        .status-red { @apply bg-red-100 text-red-800 border-red-200; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-8 font-sans">
+    <div class="max-w-6xl mx-auto bg-white shadow-xl rounded-lg p-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 border-b pb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🚀 空间智能数据工厂 - 状态报告</h1>
+                <p class="text-gray-500 mt-2">生成时间: <span id="timestamp"></span></p>
+            </div>
+            <div class="text-right">
+                <span class="px-4 py-2 rounded-full bg-blue-100 text-blue-800 font-semibold">Phase 2: 工程化落地</span>
+            </div>
+        </header>
+
+        <!-- Executive Summary -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <span class="mr-2">📊</span> 执行摘要
+            </h2>
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                <p class="text-gray-700 leading-relaxed mb-4">
+                    项目已完成从“自举探索”向“工程化管理”的战略转型。核心架构确立为 <strong>PG-Only 全局数据库</strong>，并引入 <strong>Linear</strong> 进行任务追踪。
+                    当前重点攻坚 <strong>数据库主键重构</strong> 与 <strong>流水线串联</strong>，为端到端地址治理闭环扫清障碍。
+                </p>
+                <div class="flex gap-4 mt-4">
+                    <div class="flex-1 bg-white p-4 rounded shadow-sm">
+                        <h3 class="font-bold text-gray-600 text-sm uppercase">关键成就</h3>
+                        <ul class="list-disc list-inside mt-2 text-gray-800 text-sm">
+                            <li>确立 9 条核心工作线分工</li>
+                            <li>完成 Linear 任务迁移 (15 tasks)</li>
+                            <li>设计 Schema 级物理隔离策略</li>
+                        </ul>
+                    </div>
+                    <div class="flex-1 bg-white p-4 rounded shadow-sm border border-red-100">
+                        <h3 class="font-bold text-red-600 text-sm uppercase">当前阻塞 (Blockers)</h3>
+                        <ul class="list-disc list-inside mt-2 text-red-800 text-sm">
+                            <li>数据库 Migration 失败 (Schema 缺失)</li>
+                            <li>流水线尚未完全串联</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8 Core Worklines Grid -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                <span class="mr-2">🛠️</span> 8大核心工作线状态
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- 1. 工程监理线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-yellow-400">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">1. 工程监理线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">进行中</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责审计合规与流程一致性。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">修复数据库 Schema 缺失导致的 Migration 失败 (P0)</p>
+                    </div>
+                </div>
+
+                <!-- 2. 核心引擎与运行时线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">2. 核心引擎线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">正常</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责 OpenHands 运行时稳定性。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">统一超时策略与重试机制 (P1)</p>
+                    </div>
+                </div>
+
+                <!-- 3. 产线执行线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-yellow-400">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">3. 产线执行线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">阻塞中</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责端到端流水线执行。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">设计 line_feedback Schema v2 (P1)</p>
+                    </div>
+                </div>
+
+                <!-- 4. 可信数据Hub线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-red-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">4. 可信数据Hub线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-red-100 text-red-800">严重阻塞</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责数据持久化与回放。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800"><strong>P0: 执行 source_snapshot 主键重构</strong></p>
+                    </div>
+                </div>
+
+                <!-- 5. 地址算法线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">5. 地址算法线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">正常</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责置信度打分与去重。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">优化 Score 评分逻辑 (P1)</p>
+                    </div>
+                </div>
+
+                <!-- 6. 质量门槛线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">6. 质量门槛线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">正常</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责自动化测试与发布门禁。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">建立 Golden Set 回归集 (P1)</p>
+                    </div>
+                </div>
+
+                <!-- 7. 可观测线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">7. 可观测线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">正常</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责实时监控与告警。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">接入 Grafana 实时漏斗 (P2)</p>
+                    </div>
+                </div>
+
+                <!-- 8. 看板研发线 -->
+                <div class="border rounded-lg p-5 hover:shadow-md transition bg-white border-l-4 border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg text-gray-900">8. 看板研发线</h3>
+                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">正常</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">负责人工复核界面。</p>
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Next Action</div>
+                        <p class="text-sm text-gray-800">开发待复核任务列表 (P1)</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-400 text-sm border-t pt-4">
+            <p>&copy; 2026 Spatial Intelligence Data Factory. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    </script>
+</body>
+</html>

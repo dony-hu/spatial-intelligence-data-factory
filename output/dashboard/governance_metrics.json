@@ -1,0 +1,622 @@
+{
+  "generated_at": "2026-02-16T15:16:40.527669+00:00",
+  "test_execution": {
+    "status": "passed",
+    "passed": 4,
+    "failed": 0,
+    "duration_sec": 73.331078,
+    "output_tail": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.14, pytest-8.4.2, pluggy-1.6.0 -- /Users/huda/Code/spatial-intelligence-data-factory/.venv/bin/python3\ncachedir: .pytest_cache\nrootdir: /Users/huda/Code/spatial-intelligence-data-factory\nplugins: anyio-4.12.1\ncollecting ... collected 4 items\n\ntests/e2e/test_address_governance_full_cycle.py::test_happy_path_clean_address PASSED [ 25%]\ntests/e2e/test_address_governance_full_cycle.py::test_manual_review_flow PASSED [ 50%]\ntests/e2e/test_address_governance_full_cycle.py::test_edge_case_malformed_input PASSED [ 75%]\ntests/e2e/test_address_governance_full_cycle.py::test_concurrent_batch_submissions PASSED [100%]\n\n========================= 4 passed in 73.02s (0:01:13) =========================\n",
+    "executed_at": "2026-02-16T15:16:40.513949+00:00"
+  },
+  "governance_data": {
+    "status": "connected",
+    "counts": {
+      "addr_raw": 7,
+      "addr_canonical": 7,
+      "successful_tasks": 4
+    },
+    "samples": [
+      {
+        "raw_text": "上海市浦东新区世纪大道100号",
+        "canon_text": "上海市上海市浦东新区世纪大道100号",
+        "confidence": 0.979,
+        "strategy": "rule_only"
+      },
+      {
+        "raw_text": "上海市浦东新区世纪大道100号",
+        "canon_text": "上海市浦东新区世纪大道100号",
+        "confidence": 0.5,
+        "strategy": "human_required"
+      },
+      {
+        "raw_text": "上海市浦东新区世纪大道100号",
+        "canon_text": "上海市上海市浦东新区世纪大道100号",
+        "confidence": 0.979,
+        "strategy": "rule_only"
+      },
+      {
+        "raw_text": "上海市浦东新区世纪大道100号",
+        "canon_text": "上海市浦东新区世纪大道100号",
+        "confidence": 0.97,
+        "strategy": "检测到本次任务存在两条重复的地址记录，首先执行重复数据去重操作，随后将原始未拆分的地址文本按照中国行政区划与街道门牌号规则拆分为标准地址字段，完成地址规范化治理"
+      },
+      {
+        "raw_text": "上海市浦东新区世纪大道100号",
+        "canon_text": "上海市上海市浦东新区世纪大道100号",
+        "confidence": 0.979,
+        "strategy": "rule_only"
+      }
+    ],
+    "tables": {
+      "task_batch": {
+        "addr_batch": [
+          {
+            "batch_id": "task_e1851f3b0da9",
+            "batch_name": "test_batch_clean_bca1f15f",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:58:22",
+            "updated_at": "2026-02-16 14:58:22"
+          },
+          {
+            "batch_id": "task_321ad429f427",
+            "batch_name": "test_batch_low_confidence_4d84752b",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:58:35",
+            "updated_at": "2026-02-16 14:58:35"
+          },
+          {
+            "batch_id": "task_317ed15e80aa",
+            "batch_name": "test_batch_malformed_bf6cd7e4",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:58:59",
+            "updated_at": "2026-02-16 14:58:59"
+          },
+          {
+            "batch_id": "task_6a3045428f95",
+            "batch_name": "test_batch_clean_b3684894",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:59:09",
+            "updated_at": "2026-02-16 14:59:09"
+          },
+          {
+            "batch_id": "task_f543ea3d969e",
+            "batch_name": "test_batch_clean_6bbd9a6a",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:59:09",
+            "updated_at": "2026-02-16 14:59:09"
+          },
+          {
+            "batch_id": "task_04a8771940b4",
+            "batch_name": "test_batch_clean_fc841fc4",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 14:59:09",
+            "updated_at": "2026-02-16 14:59:09"
+          },
+          {
+            "batch_id": "task_53676daf0647",
+            "batch_name": "test_batch_clean_769d1254",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:00:29",
+            "updated_at": "2026-02-16 15:00:29"
+          },
+          {
+            "batch_id": "task_dfece3a9b27e",
+            "batch_name": "test_batch_low_confidence_2f287042",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:00:45",
+            "updated_at": "2026-02-16 15:00:45"
+          },
+          {
+            "batch_id": "task_3d015b2b3ec5",
+            "batch_name": "test_batch_malformed_ae52d1d9",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:01:04",
+            "updated_at": "2026-02-16 15:01:04"
+          },
+          {
+            "batch_id": "task_29476121bf6a",
+            "batch_name": "test_batch_clean_e22d9933",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:01:12",
+            "updated_at": "2026-02-16 15:01:12"
+          },
+          {
+            "batch_id": "task_9cc8778143b4",
+            "batch_name": "test_batch_clean_97491119",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:01:12",
+            "updated_at": "2026-02-16 15:01:12"
+          },
+          {
+            "batch_id": "task_a0d39507fd4f",
+            "batch_name": "test_batch_clean_fc71b000",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:01:12",
+            "updated_at": "2026-02-16 15:01:12"
+          },
+          {
+            "batch_id": "task_af881003ecff",
+            "batch_name": "test_batch_clean_f6b1eaa7",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:22",
+            "updated_at": "2026-02-16 15:13:22"
+          },
+          {
+            "batch_id": "task_e7fb6d6d30e6",
+            "batch_name": "test_batch_low_confidence_4867f5fc",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:31",
+            "updated_at": "2026-02-16 15:13:31"
+          },
+          {
+            "batch_id": "task_458474d61938",
+            "batch_name": "test_batch_malformed_dfe8c7c0",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:49",
+            "updated_at": "2026-02-16 15:13:49"
+          },
+          {
+            "batch_id": "task_0e34a73d76f6",
+            "batch_name": "test_batch_clean_57853dac",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:58",
+            "updated_at": "2026-02-16 15:13:58"
+          },
+          {
+            "batch_id": "task_7cdff72f2947",
+            "batch_name": "test_batch_clean_8477f2a0",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:58",
+            "updated_at": "2026-02-16 15:13:58"
+          },
+          {
+            "batch_id": "task_c0275feafc0b",
+            "batch_name": "test_batch_clean_60f7296f",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:13:58",
+            "updated_at": "2026-02-16 15:13:58"
+          },
+          {
+            "batch_id": "task_96ab53292a92",
+            "batch_name": "test_batch_clean_34b2031a",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:15:27",
+            "updated_at": "2026-02-16 15:15:27"
+          },
+          {
+            "batch_id": "task_9a6b71d92fee",
+            "batch_name": "test_batch_low_confidence_c7c5f954",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:15:42",
+            "updated_at": "2026-02-16 15:15:42"
+          },
+          {
+            "batch_id": "task_0eead9498b10",
+            "batch_name": "test_batch_malformed_89f30a58",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:15:56",
+            "updated_at": "2026-02-16 15:15:56"
+          },
+          {
+            "batch_id": "task_b64520ec9b30",
+            "batch_name": "test_batch_clean_e8cb2c52",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:04"
+          },
+          {
+            "batch_id": "task_e4adabc213d0",
+            "batch_name": "test_batch_clean_4485fdf9",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:04"
+          },
+          {
+            "batch_id": "task_5c687dd43be7",
+            "batch_name": "test_batch_clean_33ab69a9",
+            "source": null,
+            "status": "PENDING",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:04"
+          }
+        ],
+        "addr_task_run": [
+          {
+            "task_id": "task_0eead9498b10",
+            "batch_id": "task_0eead9498b10",
+            "status": "SUCCEEDED",
+            "retry_count": 0,
+            "error_code": null,
+            "error_message": "created",
+            "trace_id": null,
+            "agent_run_id": null,
+            "runtime": "pending",
+            "created_at": "2026-02-16 15:15:56",
+            "updated_at": "2026-02-16 15:16:03",
+            "finished_at": "2026-02-16 15:16:03"
+          },
+          {
+            "task_id": "task_b64520ec9b30",
+            "batch_id": "task_b64520ec9b30",
+            "status": "SUCCEEDED",
+            "retry_count": 0,
+            "error_code": null,
+            "error_message": "created",
+            "trace_id": null,
+            "agent_run_id": null,
+            "runtime": "pending",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:12",
+            "finished_at": "2026-02-16 15:16:12"
+          },
+          {
+            "task_id": "task_e4adabc213d0",
+            "batch_id": "task_e4adabc213d0",
+            "status": "SUCCEEDED",
+            "retry_count": 0,
+            "error_code": null,
+            "error_message": "created",
+            "trace_id": null,
+            "agent_run_id": null,
+            "runtime": "pending",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:27",
+            "finished_at": "2026-02-16 15:16:27"
+          },
+          {
+            "task_id": "task_5c687dd43be7",
+            "batch_id": "task_5c687dd43be7",
+            "status": "SUCCEEDED",
+            "retry_count": 0,
+            "error_code": null,
+            "error_message": "created",
+            "trace_id": null,
+            "agent_run_id": null,
+            "runtime": "pending",
+            "created_at": "2026-02-16 15:16:04",
+            "updated_at": "2026-02-16 15:16:40",
+            "finished_at": "2026-02-16 15:16:40"
+          }
+        ]
+      },
+      "data_governance": {
+        "addr_raw": [
+          {
+            "raw_id": "eacd63bc-8836-40fd-8dfa-01ee0cc0bd53",
+            "batch_id": "task_0eead9498b10",
+            "raw_text": "   UNKNOWN_ADDRESS_#$@#   ",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_eacd63bc-8836-40fd-8dfa-01ee0cc0bd53",
+            "ingested_at": "2026-02-16 15:16:03"
+          },
+          {
+            "raw_id": "3cb9da59-e41f-4460-b272-fd54b19bee9b",
+            "batch_id": "task_b64520ec9b30",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_3cb9da59-e41f-4460-b272-fd54b19bee9b",
+            "ingested_at": "2026-02-16 15:16:12"
+          },
+          {
+            "raw_id": "a1af0b3a-bc4f-4b8f-accf-9061ae9c2d1c",
+            "batch_id": "task_b64520ec9b30",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_a1af0b3a-bc4f-4b8f-accf-9061ae9c2d1c",
+            "ingested_at": "2026-02-16 15:16:12"
+          },
+          {
+            "raw_id": "4ccc632b-1dcc-4c96-b8e7-acd8de8a371b",
+            "batch_id": "task_e4adabc213d0",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_4ccc632b-1dcc-4c96-b8e7-acd8de8a371b",
+            "ingested_at": "2026-02-16 15:16:27"
+          },
+          {
+            "raw_id": "4debf986-632d-47f6-97eb-004f6809b661",
+            "batch_id": "task_e4adabc213d0",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_4debf986-632d-47f6-97eb-004f6809b661",
+            "ingested_at": "2026-02-16 15:16:27"
+          },
+          {
+            "raw_id": "224a5e65-dcb7-4531-915b-af8651291dd0",
+            "batch_id": "task_5c687dd43be7",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_224a5e65-dcb7-4531-915b-af8651291dd0",
+            "ingested_at": "2026-02-16 15:16:40"
+          },
+          {
+            "raw_id": "2e24cfaf-7204-446b-88fe-6a1614b034ff",
+            "batch_id": "task_5c687dd43be7",
+            "raw_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "detail": null,
+            "raw_hash": "rawhash_2e24cfaf-7204-446b-88fe-6a1614b034ff",
+            "ingested_at": "2026-02-16 15:16:40"
+          }
+        ],
+        "addr_canonical": [
+          {
+            "canonical_id": "canon_eacd63bc-8836-40fd-8dfa-01ee0cc0bd53",
+            "raw_id": "eacd63bc-8836-40fd-8dfa-01ee0cc0bd53",
+            "canon_text": "UNKNOWN_ADDRESS_#$@#",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.0,
+            "strategy": "human_required",
+            "evidence": "{\"items\": [{\"step\": \"normalize\", \"value\": \"UNKNOWN_ADDRESS_#$@#\"}, {\"step\": \"parse\", \"fields\": []}, {\"step\": \"candidate_count\", \"count\": 1}, {\"step\": \"ruleset\", \"value\": \"default\"}, {\"runtime\": \"openhands\", \"message\": \"llm_call_success\", \"ruleset\": \"default\", \"model\": \"doubao-seed-2-0-mini-260215\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:03",
+            "updated_at": "2026-02-16 15:16:03"
+          },
+          {
+            "canonical_id": "canon_3cb9da59-e41f-4460-b272-fd54b19bee9b",
+            "raw_id": "3cb9da59-e41f-4460-b272-fd54b19bee9b",
+            "canon_text": "上海市上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.979,
+            "strategy": "rule_only",
+            "evidence": "{\"items\": [{\"step\": \"normalize\", \"value\": \"上海市上海市浦东新区世纪大道100号\"}, {\"step\": \"parse\", \"fields\": [\"province\", \"city\", \"district\", \"road\", \"house_no\"]}, {\"step\": \"candidate_count\", \"count\": 2}, {\"step\": \"ruleset\", \"value\": \"default\"}, {\"runtime\": \"openhands\", \"message\": \"llm_call_success\", \"ruleset\": \"default\", \"model\": \"doubao-seed-2-0-mini-260215\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:12",
+            "updated_at": "2026-02-16 15:16:12"
+          },
+          {
+            "canonical_id": "canon_a1af0b3a-bc4f-4b8f-accf-9061ae9c2d1c",
+            "raw_id": "a1af0b3a-bc4f-4b8f-accf-9061ae9c2d1c",
+            "canon_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.98,
+            "strategy": "存在两条完全重复的地址记录，需执行去重治理，保留标准规范的地址条目以消除数据冗余，且该地址格式符合国内书写规范无需调整层级",
+            "evidence": "{\"items\": [{\"runtime\": \"openhands\", \"message\": \"llm_call_success\", \"ruleset\": \"default\", \"model\": \"doubao-seed-2-0-mini-260215\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:12",
+            "updated_at": "2026-02-16 15:16:12"
+          },
+          {
+            "canonical_id": "canon_4ccc632b-1dcc-4c96-b8e7-acd8de8a371b",
+            "raw_id": "4ccc632b-1dcc-4c96-b8e7-acd8de8a371b",
+            "canon_text": "上海市上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.979,
+            "strategy": "rule_only",
+            "evidence": "{\"items\": [{\"step\": \"normalize\", \"value\": \"上海市上海市浦东新区世纪大道100号\"}, {\"step\": \"parse\", \"fields\": [\"province\", \"city\", \"district\", \"road\", \"house_no\"]}, {\"step\": \"candidate_count\", \"count\": 2}, {\"step\": \"ruleset\", \"value\": \"default\"}, {\"runtime\": \"openhands\", \"message\": \"llm_call_success\", \"ruleset\": \"default\", \"model\": \"doubao-seed-2-0-mini-260215\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:27",
+            "updated_at": "2026-02-16 15:16:27"
+          },
+          {
+            "canonical_id": "canon_4debf986-632d-47f6-97eb-004f6809b661",
+            "raw_id": "4debf986-632d-47f6-97eb-004f6809b661",
+            "canon_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.97,
+            "strategy": "检测到本次任务存在两条重复的地址记录，首先执行重复数据去重操作，随后将原始未拆分的地址文本按照中国行政区划与街道门牌号规则拆分为标准地址字段，完成地址规范化治理",
+            "evidence": "{\"items\": [{\"runtime\": \"openhands\", \"message\": \"llm_call_success\", \"ruleset\": \"default\", \"model\": \"doubao-seed-2-0-mini-260215\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:27",
+            "updated_at": "2026-02-16 15:16:27"
+          },
+          {
+            "canonical_id": "canon_224a5e65-dcb7-4531-915b-af8651291dd0",
+            "raw_id": "224a5e65-dcb7-4531-915b-af8651291dd0",
+            "canon_text": "上海市上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.979,
+            "strategy": "rule_only",
+            "evidence": "{\"items\": [{\"step\": \"normalize\", \"value\": \"上海市上海市浦东新区世纪大道100号\"}, {\"step\": \"parse\", \"fields\": [\"province\", \"city\", \"district\", \"road\", \"house_no\"]}, {\"step\": \"candidate_count\", \"count\": 2}, {\"step\": \"ruleset\", \"value\": \"default\"}, {\"runtime\": \"openhands\", \"message\": \"llm_call_fallback\", \"reason\": \"ValueError\", \"ruleset\": \"default\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:40",
+            "updated_at": "2026-02-16 15:16:40"
+          },
+          {
+            "canonical_id": "canon_2e24cfaf-7204-446b-88fe-6a1614b034ff",
+            "raw_id": "2e24cfaf-7204-446b-88fe-6a1614b034ff",
+            "canon_text": "上海市浦东新区世纪大道100号",
+            "province": null,
+            "city": null,
+            "district": null,
+            "street": null,
+            "road": null,
+            "house_no": null,
+            "building": null,
+            "unit_no": null,
+            "room_no": null,
+            "confidence": 0.5,
+            "strategy": "human_required",
+            "evidence": "{\"items\": [{\"runtime\": \"openhands\", \"message\": \"llm_call_fallback\", \"reason\": \"ValueError\", \"ruleset\": \"default\"}]}",
+            "ruleset_version": "default",
+            "trace_id": null,
+            "agent_run_id": null,
+            "created_at": "2026-02-16 15:16:40",
+            "updated_at": "2026-02-16 15:16:40"
+          }
+        ],
+        "addr_review": []
+      },
+      "rules_changes": {
+        "addr_ruleset": [
+          {
+            "ruleset_id": "rule-pg-fcb7395a",
+            "version": "v1",
+            "is_active": 1,
+            "config_json": "{\"thresholds\": {\"t_high\": 0.83, \"t_low\": 0.59}}",
+            "created_by": null,
+            "created_at": "2026-02-16 14:57:26",
+            "updated_at": "2026-02-16 14:57:26"
+          }
+        ],
+        "addr_change_request": [
+          {
+            "change_id": "chg_01b15228ea23",
+            "from_ruleset_id": "default",
+            "to_ruleset_id": "rule-pg-fcb7395a",
+            "baseline_task_id": "baseline-fcb7395a",
+            "candidate_task_id": "candidate-fcb7395a",
+            "diff_json": "{\"thresholds\": {\"t_high\": 0.83, \"t_low\": 0.59}}",
+            "scorecard_json": "{\"delta\": {\"auto_pass_rate\": 0.02}}",
+            "recommendation": "accept",
+            "status": "approved",
+            "approved_by": "admin-reviewer",
+            "approved_at": "2026-02-16T14:57:26.046540+00:00",
+            "review_comment": "approved for rollout",
+            "evidence_bullets": "[\"auto pass up\", \"human required stable\", \"quality gate stable\"]",
+            "created_at": "2026-02-16 14:57:26",
+            "updated_at": "2026-02-16 14:57:26"
+          }
+        ]
+      },
+      "audit_logs": {
+        "addr_audit_event": [
+          {
+            "event_id": "evt_7b813df1405e",
+            "event_type": "change_request_created",
+            "caller": "system",
+            "payload": "{\"change_id\": \"chg_01b15228ea23\", \"from_ruleset_id\": \"default\", \"to_ruleset_id\": \"rule-pg-fcb7395a\", \"task_run_id\": \"candidate-fcb7395a\", \"recommendation\": \"accept\", \"reason\": \"change_request_submitted\"}",
+            "related_change_id": "chg_01b15228ea23",
+            "created_at": "2026-02-16 14:57:26"
+          },
+          {
+            "event_id": "evt_44644e8f4fd9",
+            "event_type": "ruleset_activation_blocked",
+            "caller": "admin",
+            "payload": "{\"ruleset_id\": \"rule-pg-fcb7395a\", \"change_id\": \"chg_01b15228ea23\", \"task_run_id\": \"candidate-fcb7395a\", \"reason\": null, \"gate_reason\": \"approval_not_ready\", \"gate_code\": \"APPROVAL_PENDING\"}",
+            "related_change_id": "chg_01b15228ea23",
+            "created_at": "2026-02-16 14:57:26"
+          },
+          {
+            "event_id": "evt_25a3ec78265a",
+            "event_type": "approval_changed",
+            "caller": "admin-reviewer",
+            "payload": "{\"change_id\": \"chg_01b15228ea23\", \"status\": \"approved\", \"task_run_id\": \"candidate-fcb7395a\", \"comment\": \"approved for rollout\", \"reason\": \"approved for rollout\"}",
+            "related_change_id": "chg_01b15228ea23",
+            "created_at": "2026-02-16 14:57:26"
+          },
+          {
+            "event_id": "evt_463ceeafd776",
+            "event_type": "ruleset_activated",
+            "caller": "admin",
+            "payload": "{\"ruleset_id\": \"rule-pg-fcb7395a\", \"change_id\": \"chg_01b15228ea23\", \"task_run_id\": \"candidate-fcb7395a\", \"reason\": \"integration-promotion\"}",
+            "related_change_id": "chg_01b15228ea23",
+            "created_at": "2026-02-16 14:57:26"
+          }
+        ],
+        "api_audit_log": [],
+        "agent_execution_log": []
+      }
+    }
+  }
+}

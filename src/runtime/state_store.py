@@ -5,44 +5,7 @@ from typing import Any, Dict, Optional
 
 
 class SQLiteStateStore:
-    """Task state store (PostgreSQL-only)."""
-
-    def __init__(self, db_path: str = "database/agent_runtime.db"):
-        self.database_url = str(os.getenv("DATABASE_URL") or "")
-        if not self.database_url.startswith("postgresql"):
-            raise RuntimeError("DATABASE_URL must be postgresql://... in PG-only mode")
-        self._init_schema()
-
-    @contextmanager
-    def _conn(self):
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
-
-        raw_conn = psycopg2.connect(self.database_url)
-        with raw_conn.cursor() as cur:
-            cur.execute("CREATE SCHEMA IF NOT EXISTS control_plane")
-            cur.execute("SET search_path TO control_plane, public")
-        conn = _CompatConnection(raw_conn, cursor_factory=RealDictCursor)
-        try:
-            yield conn
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
-
-    def _init_schema(self) -> None:
-        with self._conn() as conn:
-            conn.cursor().execute(
-                """
-                CREATE TABLE IF NOT EXISTS task_state (
-                    task_id TEXT PRIMARY KEY,
-                    state TEXT NOT NULL,
-                    payload_json TEXT NOT NULL,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-                """
+    # SQLiteStateStore class and its methods have been removed.
             )
 
     def upsert(self, task_id: str, state: str, payload: Dict[str, Any]) -> None:

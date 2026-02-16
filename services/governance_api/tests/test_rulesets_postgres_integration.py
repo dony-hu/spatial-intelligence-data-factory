@@ -16,6 +16,12 @@ def _database_url() -> str:
 
 
 def _apply_schema(database_url: str) -> None:
+    if database_url.startswith("sqlite"):
+        from scripts.init_governance_sqlite import init_db
+        path = database_url.replace("sqlite:///", "")
+        init_db(path)
+        return
+
     root = Path(__file__).resolve().parents[3]
     sql_paths = [
         root / "database" / "postgres" / "sql" / "001_enable_extensions.sql",
@@ -30,8 +36,8 @@ def _apply_schema(database_url: str) -> None:
 
 def test_activate_ruleset_requires_approved_change_request_postgres() -> None:
     database_url = _database_url()
-    if not database_url.startswith("postgresql"):
-        pytest.skip("requires DATABASE_URL=postgresql://... for real Postgres integration")
+    if not database_url.startswith("postgresql") and not database_url.startswith("sqlite"):
+        pytest.skip("requires DATABASE_URL=postgresql://... or sqlite://... for real DB integration")
 
     _apply_schema(database_url)
     client = TestClient(app)

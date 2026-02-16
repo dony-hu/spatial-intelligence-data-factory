@@ -158,7 +158,7 @@ class MetaDbPersister:
                     VALUES
                     (:namespace_id, :snapshot_id, :source_id, :version_tag, :fetched_at, :etag, :last_modified,
                      :content_hash, :raw_uri, :parsed_uri, CAST(:parsed_payload AS jsonb), :status, :row_count)
-                    ON CONFLICT (snapshot_id)
+                    ON CONFLICT (namespace_id, snapshot_id)
                     DO UPDATE SET
                       source_id = EXCLUDED.source_id,
                       version_tag = EXCLUDED.version_tag,

@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from .errors import InvalidTransitionError, NotFoundError
-from .evidence_store import SQLiteEvidenceStore
-from .state_store import SQLiteStateStore
 from .policies import check_required_approvals
 
 
@@ -37,11 +35,7 @@ class Orchestrator:
 
     def __init__(
         self,
-        state_store: Optional[SQLiteStateStore] = None,
-        evidence_store: Optional[SQLiteEvidenceStore] = None,
     ):
-        self.state_store = state_store or SQLiteStateStore()
-        self.evidence_store = evidence_store or SQLiteEvidenceStore()
 
     def submit(self, task_id: str, context: Optional[Dict] = None, approvals_required: Optional[List[str]] = None) -> Dict:
         payload = TaskRuntimeState(

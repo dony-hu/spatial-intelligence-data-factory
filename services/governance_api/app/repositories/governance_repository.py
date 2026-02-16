@@ -30,9 +30,11 @@ class GovernanceRepository:
     def __init__(self) -> None:
         self._allow_memory_fallback = str(os.getenv("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "0")).strip() == "1"
         db_url = str(os.getenv("DATABASE_URL") or "").strip()
-        if not self._allow_memory_fallback and not db_url.startswith("postgresql"):
+        
+        # Allow SQLite for local "real DB" simulation when Docker is unavailable
+        if not self._allow_memory_fallback and not db_url.startswith("postgresql") and not db_url.startswith("sqlite"):
             raise RuntimeError(
-                "DATABASE_URL must be postgresql:// in PG-only runtime mode. "
+                "DATABASE_URL must be postgresql:// or sqlite:// in persistent runtime mode. "
                 "Set GOVERNANCE_ALLOW_MEMORY_FALLBACK=1 for temporary local fallback."
             )
         self._memory = _MemoryStore(
@@ -53,35 +55,43 @@ class GovernanceRepository:
         if self._allow_memory_fallback:
             return False
         url = self._database_url()
-        return bool(url and url.startswith("postgresql"))
+        return bool(url and (url.startswith("postgresql") or url.startswith("sqlite")))
+
+    def _sql_now(self) -> str:
+        url = self._database_url() or ""
+        return "CURRENT_TIMESTAMP" if url.startswith("sqlite") else "NOW()"
+
+    def _sql_json_cast(self, param: str) -> str:
+        url = self._database_url() or ""
+        return param if url.startswith("sqlite") else f"CAST({param} AS jsonb)"
 
     def _execute(self, sql: str, params: dict[str, Any]) -> bool:
         if not self._db_enabled():
             return False
-        try:
-            from sqlalchemy import create_engine, text
+        # If DB is enabled, we expect strict consistency. Failures should propagate.
+        from sqlalchemy import create_engine, text
 
-            engine = create_engine(self._database_url())
-            with engine.begin() as conn:
+        engine = create_engine(self._database_url())
+        with engine.begin() as conn:
+            # Postgres specific search path, skip for SQLite
+            if self._database_url().startswith("postgresql"):
                 conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
-                conn.execute(text(sql), params)
-            return True
-        except Exception:
-            return False
+            conn.execute(text(sql), params)
+        return True
 
     def _query(self, sql: str, params: dict[str, Any]) -> list[dict[str, Any]]:
         if not self._db_enabled():
             return []
-        try:
-            from sqlalchemy import create_engine, text
+        # If DB is enabled, we expect strict consistency. Failures should propagate.
+        from sqlalchemy import create_engine, text
 
-            engine = create_engine(self._database_url())
-            with engine.begin() as conn:
+        engine = create_engine(self._database_url())
+        with engine.begin() as conn:
+            # Postgres specific search path, skip for SQLite
+            if self._database_url().startswith("postgresql"):
                 conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
-                rows = conn.execute(text(sql), params).mappings().all()
-            return [dict(item) for item in rows]
-        except Exception:
-            return []
+            rows = conn.execute(text(sql), params).mappings().all()
+        return [dict(item) for item in rows]
 
     def create_task(
         self,
@@ -104,12 +114,13 @@ class GovernanceRepository:
             "queue_backend": queue_backend,
             "queue_message": queue_message,
         }
+        now_func = self._sql_now()
         self._execute(
-            """
+            f"""
             INSERT INTO addr_batch (batch_id, batch_name, status, created_at, updated_at)
-            VALUES (:batch_id, :batch_name, :status, NOW(), NOW())
+            VALUES (:batch_id, :batch_name, :status, {now_func}, {now_func})
             ON CONFLICT (batch_id)
-            DO UPDATE SET batch_name = EXCLUDED.batch_name, status = EXCLUDED.status, updated_at = NOW();
+            DO UPDATE SET batch_name = EXCLUDED.batch_name, status = EXCLUDED.status, updated_at = {now_func};
             """,
             {
                 "batch_id": batch_id,
@@ -118,12 +129,12 @@ class GovernanceRepository:
             },
         )
         self._execute(
-            """
+            f"""
             INSERT INTO addr_task_run (task_id, batch_id, status, error_message, runtime, created_at, updated_at)
-            VALUES (:task_id, :batch_id, :status, :error_message, :runtime, NOW(), NOW())
+            VALUES (:task_id, :batch_id, :status, :error_message, :runtime, {now_func}, {now_func})
             ON CONFLICT (task_id)
             DO UPDATE SET batch_id = EXCLUDED.batch_id, status = EXCLUDED.status, error_message = EXCLUDED.error_message,
-                          runtime = EXCLUDED.runtime, updated_at = NOW();
+                          runtime = EXCLUDED.runtime, updated_at = {now_func};
             """,
             {
                 "task_id": task_id,
@@ -140,10 +151,11 @@ class GovernanceRepository:
     def set_task_status(self, task_id: str, status: str) -> None:
         if task_id in self._memory.tasks:
             self._memory.tasks[task_id]["status"] = status
+        now_func = self._sql_now()
         self._execute(
-            """
+            f"""
             UPDATE addr_task_run
-            SET status = :status, updated_at = NOW(), finished_at = CASE WHEN :status IN ('SUCCEEDED','FAILED') THEN NOW() ELSE finished_at END
+            SET status = :status, updated_at = {now_func}, finished_at = CASE WHEN :status IN ('SUCCEEDED','FAILED') THEN {now_func} ELSE finished_at END
             WHERE task_id = :task_id;
             """,
             {"task_id": task_id, "status": status},
@@ -159,6 +171,9 @@ class GovernanceRepository:
         task = self._memory.tasks.get(task_id, {})
         batch_id = task.get("batch_id", task_id)
         raw_by_id = {item.get("raw_id"): item for item in (raw_records or [])}
+        now_func = self._sql_now()
+        evidence_cast = self._sql_json_cast(":evidence")
+        
         for item in results:
             raw_id = item.get("raw_id")
             if not raw_id:
@@ -166,9 +181,9 @@ class GovernanceRepository:
             raw_input = raw_by_id.get(raw_id, {})
             raw_text = raw_input.get("raw_text") or item.get("canon_text", "")
             self._execute(
-                """
+                f"""
                 INSERT INTO addr_raw (raw_id, batch_id, raw_text, province, city, district, street, detail, raw_hash, ingested_at)
-                VALUES (:raw_id, :batch_id, :raw_text, :province, :city, :district, :street, :detail, :raw_hash, NOW())
+                VALUES (:raw_id, :batch_id, :raw_text, :province, :city, :district, :street, :detail, :raw_hash, {now_func})
                 ON CONFLICT (raw_id)
                 DO UPDATE SET batch_id = EXCLUDED.batch_id, raw_text = EXCLUDED.raw_text,
                               province = EXCLUDED.province, city = EXCLUDED.city, district = EXCLUDED.district,
@@ -189,12 +204,12 @@ class GovernanceRepository:
 
             evidence_json = json.dumps(item.get("evidence", {"items": []}), ensure_ascii=False)
             self._execute(
-                """
+                f"""
                 INSERT INTO addr_canonical (canonical_id, raw_id, canon_text, confidence, strategy, evidence, ruleset_version, created_at, updated_at)
-                VALUES (:canonical_id, :raw_id, :canon_text, :confidence, :strategy, CAST(:evidence AS jsonb), :ruleset_version, NOW(), NOW())
+                VALUES (:canonical_id, :raw_id, :canon_text, :confidence, :strategy, {evidence_cast}, :ruleset_version, {now_func}, {now_func})
                 ON CONFLICT (canonical_id)
                 DO UPDATE SET canon_text = EXCLUDED.canon_text, confidence = EXCLUDED.confidence,
-                              strategy = EXCLUDED.strategy, evidence = EXCLUDED.evidence, updated_at = NOW();
+                              strategy = EXCLUDED.strategy, evidence = EXCLUDED.evidence, updated_at = {now_func};
                 """,
                 {
                     "canonical_id": f"canon_{raw_id}",
@@ -219,13 +234,15 @@ class GovernanceRepository:
             resolved_raw_id = task_results[0].get("raw_id")
         if not resolved_raw_id:
             resolved_raw_id = task_id
+        
+        now_func = self._sql_now()
         self._execute(
-            """
+            f"""
             INSERT INTO addr_review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
-            VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, :reviewed_at, NOW(), NOW())
+            VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, :reviewed_at, {now_func}, {now_func})
             ON CONFLICT (review_id)
             DO UPDATE SET review_status = EXCLUDED.review_status, final_canon_text = EXCLUDED.final_canon_text, reviewer = EXCLUDED.reviewer,
-                          comment = EXCLUDED.comment, reviewed_at = EXCLUDED.reviewed_at, updated_at = NOW();
+                          comment = EXCLUDED.comment, reviewed_at = EXCLUDED.reviewed_at, updated_at = {now_func};
             """,
             {
                 "review_id": f"review_{task_id}",
@@ -252,10 +269,13 @@ class GovernanceRepository:
         counters["total_reviews"] = int(counters.get("total_reviews", 0)) + 1
         config_json["feedback_counters"] = counters
         ruleset["config_json"] = config_json
+        
+        now_func = self._sql_now()
+        config_cast = self._sql_json_cast(":config_json")
         self._execute(
-            """
+            f"""
             UPDATE addr_ruleset
-            SET config_json = CAST(:config_json AS jsonb), updated_at = NOW()
+            SET config_json = {config_cast}, updated_at = {now_func}
             WHERE ruleset_id = :ruleset_id;
             """,
             {"ruleset_id": ruleset_id, "config_json": json.dumps(config_json, ensure_ascii=False)},
@@ -303,14 +323,16 @@ class GovernanceRepository:
                 item["confidence"] = max(current_confidence, 0.9)
                 updated_count += 1
 
+            now_func = self._sql_now()
+            evidence_cast = self._sql_json_cast(":evidence")
             self._execute(
-                """
+                f"""
                 UPDATE addr_canonical
                 SET canon_text = :canon_text,
                     confidence = :confidence,
                     strategy = :strategy,
-                    evidence = CAST(:evidence AS jsonb),
-                    updated_at = NOW()
+                    evidence = {evidence_cast},
+                    updated_at = {now_func}
                 WHERE raw_id = :raw_id;
                 """,
                 {
@@ -493,10 +515,11 @@ class GovernanceRepository:
 
         if self._db_enabled():
             review_id = f"rv_{uuid4().hex[:24]}"
+            now_func = self._sql_now()
             self._execute(
-                """
+                f"""
                 INSERT INTO addr_review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
-                VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, NOW(), NOW(), NOW());
+                VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, {now_func}, {now_func}, {now_func});
                 """,
                 {
                     "review_id": review_id,
@@ -509,47 +532,47 @@ class GovernanceRepository:
             )
             if normalized_status == "approved":
                 self._execute(
-                    """
+                    f"""
                     UPDATE addr_canonical
                     SET
                         canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
                         confidence = GREATEST(confidence, 0.90),
                         strategy = 'human_approved',
-                        updated_at = NOW()
+                        updated_at = {now_func}
                     WHERE raw_id = :raw_id;
                     """,
                     {"raw_id": raw_id, "final_canon_text": final_canon_text},
                 )
             elif normalized_status == "rejected":
                 self._execute(
-                    """
+                    f"""
                     UPDATE addr_canonical
                     SET
                         confidence = LEAST(confidence, 0.50),
                         strategy = 'human_rejected',
-                        updated_at = NOW()
+                        updated_at = {now_func}
                     WHERE raw_id = :raw_id;
                     """,
                     {"raw_id": raw_id},
                 )
             else:
                 self._execute(
-                    """
+                    f"""
                     UPDATE addr_canonical
                     SET
                         canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
                         confidence = GREATEST(confidence, 0.95),
                         strategy = 'human_edited',
-                        updated_at = NOW()
+                        updated_at = {now_func}
                     WHERE raw_id = :raw_id;
                     """,
                     {"raw_id": raw_id, "final_canon_text": final_canon_text},
                 )
             self._execute(
-                """
+                f"""
                 UPDATE addr_task_run
                 SET status = CASE WHEN status = 'FAILED' THEN status ELSE 'REVIEWED' END,
-                    updated_at = NOW()
+                    updated_at = {now_func}
                 WHERE task_id = :task_id;
                 """,
                 {"task_id": task_id},
@@ -614,10 +637,12 @@ class GovernanceRepository:
             "created_at": self._now_iso(),
         }
         self._memory.audit_events.append(event)
+        now_func = self._sql_now()
+        payload_cast = self._sql_json_cast(":payload")
         self._execute(
-            """
+            f"""
             INSERT INTO addr_audit_event (event_id, event_type, caller, payload, related_change_id, created_at)
-            VALUES (:event_id, :event_type, :caller, CAST(:payload AS jsonb), :related_change_id, NOW())
+            VALUES (:event_id, :event_type, :caller, {payload_cast}, :related_change_id, {now_func})
             ON CONFLICT (event_id) DO NOTHING;
             """,
             {
@@ -736,12 +761,14 @@ class GovernanceRepository:
             "config_json": payload["config_json"],
         }
         self._memory.rulesets[ruleset_id] = item
+        now_func = self._sql_now()
+        config_cast = self._sql_json_cast(":config_json")
         self._execute(
-            """
+            f"""
             INSERT INTO addr_ruleset (ruleset_id, version, is_active, config_json, created_at, updated_at)
-            VALUES (:ruleset_id, :version, :is_active, CAST(:config_json AS jsonb), NOW(), NOW())
+            VALUES (:ruleset_id, :version, :is_active, {config_cast}, {now_func}, {now_func})
             ON CONFLICT (ruleset_id)
-            DO UPDATE SET version = EXCLUDED.version, is_active = EXCLUDED.is_active, config_json = EXCLUDED.config_json, updated_at = NOW();
+            DO UPDATE SET version = EXCLUDED.version, is_active = EXCLUDED.is_active, config_json = EXCLUDED.config_json, updated_at = {now_func};
             """,
             {
                 "ruleset_id": ruleset_id,
@@ -773,16 +800,20 @@ class GovernanceRepository:
             "updated_at": now_iso,
         }
         self._memory.change_requests[change_id] = item
+        now_func = self._sql_now()
+        diff_cast = self._sql_json_cast(":diff_json")
+        scorecard_cast = self._sql_json_cast(":scorecard_json")
+        evidence_cast = self._sql_json_cast(":evidence_bullets")
         self._execute(
-            """
+            f"""
             INSERT INTO addr_change_request (
                 change_id, from_ruleset_id, to_ruleset_id, baseline_task_id, candidate_task_id,
                 diff_json, scorecard_json, recommendation, status, approved_by, approved_at,
                 review_comment, evidence_bullets, created_at, updated_at
             ) VALUES (
                 :change_id, :from_ruleset_id, :to_ruleset_id, :baseline_task_id, :candidate_task_id,
-                CAST(:diff_json AS jsonb), CAST(:scorecard_json AS jsonb), :recommendation, :status, :approved_by, :approved_at,
-                :review_comment, CAST(:evidence_bullets AS jsonb), NOW(), NOW()
+                {diff_cast}, {scorecard_cast}, :recommendation, :status, :approved_by, :approved_at,
+                :review_comment, {evidence_cast}, {now_func}, {now_func}
             )
             ON CONFLICT (change_id)
             DO UPDATE SET
@@ -798,7 +829,7 @@ class GovernanceRepository:
                 approved_at = EXCLUDED.approved_at,
                 review_comment = EXCLUDED.review_comment,
                 evidence_bullets = EXCLUDED.evidence_bullets,
-                updated_at = NOW();
+                updated_at = {now_func};
             """,
             {
                 "change_id": change_id,
@@ -856,14 +887,15 @@ class GovernanceRepository:
             item["approved_at"] = None
         if comment:
             item["review_comment"] = comment
+        now_func = self._sql_now()
         self._execute(
-            """
+            f"""
             UPDATE addr_change_request
             SET status = :status,
                 approved_by = :approved_by,
                 approved_at = :approved_at,
                 review_comment = :review_comment,
-                updated_at = NOW()
+                updated_at = {now_func}
             WHERE change_id = :change_id;
             """,
             {
@@ -941,9 +973,10 @@ class GovernanceRepository:
         target["published_by"] = caller
         target["published_reason"] = reason or f"activated via change {change_id}"
 
+        now_func = self._sql_now()
         self._execute("UPDATE addr_ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
         self._execute(
-            "UPDATE addr_ruleset SET is_active = TRUE, updated_at = NOW() WHERE ruleset_id = :ruleset_id;",
+            f"UPDATE addr_ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
             {"ruleset_id": ruleset_id},
         )
         self._append_audit_event(
@@ -987,9 +1020,10 @@ class GovernanceRepository:
         target["is_active"] = True
         target["published_by"] = operator
         target["published_reason"] = reason
+        now_func = self._sql_now()
         self._execute("UPDATE addr_ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
         self._execute(
-            "UPDATE addr_ruleset SET is_active = TRUE, updated_at = NOW() WHERE ruleset_id = :ruleset_id;",
+            f"UPDATE addr_ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
             {"ruleset_id": ruleset_id},
         )
         return target

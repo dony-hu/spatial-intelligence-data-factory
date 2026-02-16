@@ -1,4 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS trust_meta;
+    CREATE SCHEMA IF NOT EXISTS trust_meta;
 
 CREATE TABLE IF NOT EXISTS trust_meta.source_registry (
     namespace_id TEXT NOT NULL,
