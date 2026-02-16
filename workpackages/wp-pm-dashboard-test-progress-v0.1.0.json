@@ -1,0 +1,204 @@
+{
+  "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-pm-dashboard-test-progress-v0.1.0",
+    "tool_bundle_version": "tools-dashboard-web-v0.1.0",
+    "engine_version": "engine-dashboard-web-v1.0.0",
+    "released_at": "2026-02-15T19:45:00+08:00",
+    "released_by": "orchestrator",
+    "rollback_target_version": "dashboard-web-baseline",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-pm-dashboard-test-progress-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "pm_dashboard",
+    "goal": "在看板首页底部补全整体测试进展可视化，支持管理层快速查看总体状态并直达测试详情面板",
+    "constraints": [
+      "首页必须新增第5区块并可上线",
+      "弱数据场景不得报错，缺字段统一显示 '-'",
+      "新增渲染逻辑不得阻塞现有自动刷新",
+      "必须保留并验证覆盖详情页和数据接口直达链接"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "business_goal",
+      "delivery_must",
+      "schedule",
+      "risk_notes"
+    ],
+    "properties": {
+      "business_goal": {
+        "type": "string"
+      },
+      "delivery_must": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "schedule": {
+        "type": "object"
+      },
+      "risk_notes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "ui_delivery",
+      "metrics_completeness",
+      "link_validation",
+      "qa_evidence",
+      "release_decision"
+    ],
+    "properties": {
+      "ui_delivery": {
+        "type": "object",
+        "required": [
+          "section5_online",
+          "auto_refresh_ok",
+          "fallback_render_ok"
+        ]
+      },
+      "metrics_completeness": {
+        "type": "object",
+        "required": [
+          "total",
+          "executed",
+          "passed",
+          "failed",
+          "skipped",
+          "pass_rate",
+          "last_run_at",
+          "mode"
+        ]
+      },
+      "link_validation": {
+        "type": "object",
+        "required": [
+          "coverage_view_url",
+          "coverage_data_url",
+          "view_ok",
+          "data_ok"
+        ]
+      },
+      "qa_evidence": {
+        "type": "object",
+        "required": [
+          "change_note_ref",
+          "screenshot_ref",
+          "self_test_ref"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "d1_ui_section5",
+        "name": "首页第5区块开发",
+        "deliverables": [
+          "底部新增“整体测试进展”区块",
+          "展示总/执行/通过/失败/跳过/通过率/最近执行/模式",
+          "新增“一键进入测试详细面板”入口"
+        ],
+        "done_definition": [
+          "区块在首页可见且数据可刷新",
+          "缺字段时统一显示 '-'"
+        ]
+      },
+      {
+        "code": "d2_data_and_fallback",
+        "name": "数据映射与弱数据兜底",
+        "deliverables": [
+          "与现有 dashboard 数据文件兼容",
+          "新增字段缺失不报错",
+          "渲染函数异常隔离，不阻塞全页刷新"
+        ],
+        "done_definition": [
+          "弱数据场景自测通过",
+          "页面其他区块刷新不受影响"
+        ]
+      },
+      {
+        "code": "d3_validation_and_report",
+        "name": "联调验收与交付归档",
+        "deliverables": [
+          "链接校验：coverage/view 与 coverage/data",
+          "变更说明",
+          "截图",
+          "自测记录"
+        ],
+        "done_definition": [
+          "交付标准全部满足",
+          "给出 GO/NO_GO 判定"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "scripts/run_dashboard_web.py",
+      "scripts/update_dashboard_on_event.py",
+      "curl",
+      "pytest"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "dashboard_web",
+    "entrypoint": "web/dashboard/app.js",
+    "mode": "ui_patch",
+    "compatibility": {
+      "python_min": "3.9",
+      "python_max": "3.12",
+      "browser": [
+        "chrome",
+        "safari"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "output/dashboard/test_status_board.json",
+      "web/dashboard/index.html",
+      "web/dashboard/app.js"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "dashboard-web-baseline",
+    "instructions": [
+      "回退首页第5区块渲染改动",
+      "恢复旧版 dashboard 前端资源",
+      "保留变更说明与截图用于复盘"
+    ]
+  }
+}

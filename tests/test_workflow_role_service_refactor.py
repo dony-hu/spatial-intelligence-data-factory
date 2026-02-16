@@ -49,6 +49,14 @@ class WorkflowRoleServiceRefactorTests(unittest.TestCase):
             self.assertEqual(result.get("agent"), "factory_director")
             director_service.get_factory_status.assert_called_once()
 
+    def test_registered_workers_are_executable_agents(self):
+        with tempfile.TemporaryDirectory() as td:
+            db_path = f"{td}/factory.db"
+            wf = FactoryWorkflow(factory_name="refactor-ut-workers", db_path=db_path, init_production_lines=True)
+            self.assertGreater(len(wf.workers), 0)
+            for worker in wf.workers.values():
+                self.assertTrue(callable(getattr(worker, "execute", None)))
+
 
 if __name__ == "__main__":
     unittest.main()

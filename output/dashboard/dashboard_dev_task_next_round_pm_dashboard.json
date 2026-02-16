@@ -1,0 +1,52 @@
+{
+  "as_of_local": "2026-02-15 21:35:00 CST",
+  "task_id": "dashboard-next-round-merged-001",
+  "owner_line": "管理看板研发线",
+  "owner": "管理看板研发线-Codex",
+  "batch_type": "next_round_merged",
+  "merged_from": [
+    "dashboard-engineering-supervisor-visibility-001",
+    "dashboard-overview-optimization-001"
+  ],
+  "goal": "合并交付工程监理线可视化与项目介绍模块优化",
+  "delivery_blocks": {
+    "engineering_supervisor_visibility": [
+      "工作线总览可见工程监理线",
+      "任务详情可见工程监理线任务提示词",
+      "边界说明可见：仅输出审计报告不改项目输出"
+    ],
+    "overview_module_optimization": [
+      "管理摘要+可展开详情双层结构",
+      "默认6行关键摘要",
+      "结论先行四段结构",
+      "每条带Owner|ETA|证据链接",
+      "缺ETA或证据标黄"
+    ],
+    "panel_layout_and_interaction": [
+      "左侧4卡片区",
+      "顶部sticky摘要条",
+      "密度切换：简版/完整版（默认简版）"
+    ],
+    "visual_spec": [
+      "摘要条背景更深",
+      "正文卡片浅底",
+      "正文14px",
+      "行距1.45"
+    ]
+  },
+  "data_sources": [
+    "output/dashboard/worklines_overview.json",
+    "output/dashboard/workline_dispatch_prompts_latest.json",
+    "output/dashboard/project_overview.json",
+    "output/dashboard/workpackages_live.json",
+    "output/dashboard/dispatch-address-line-closure-002-management-review.json",
+    "output/dashboard/dashboard_manifest.json"
+  ],
+  "fallback_rule": "缺字段显示-，不得报错阻塞渲染",
+  "deliverables": [
+    "变更说明",
+    "截图",
+    "自测记录"
+  ],
+  "status": "task_dispatched"
+}

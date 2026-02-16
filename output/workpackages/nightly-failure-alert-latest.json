@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-02-15T14:43:08.974305+00:00",
+  "release_decision": "NO_GO",
+  "risk_notes": [
+    "sql readonly security regression has failures",
+    "transient failures recovered by retry; monitor stability trend"
+  ],
+  "failed_classification": [
+    {
+      "suite_id": "suite_web_e2e_catalog",
+      "failure_type": "transient_recovered_by_retry",
+      "severity": "P3",
+      "retryable": true,
+      "retest_attempts": 1,
+      "gate_impact": "GO_WITH_RISK_NOTE",
+      "reason": "web_e2e recovered after retry"
+    },
+    {
+      "suite_id": "ops_sql_readonly_and_lab_sql",
+      "failure_type": "security_regression",
+      "severity": "P0",
+      "retryable": true,
+      "retest_attempts": 1,
+      "gate_impact": "NO_GO",
+      "reason": "sql readonly security regression failed"
+    }
+  ],
+  "gate_report_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/nightly-quality-gate-20260215_144410.md"
+}

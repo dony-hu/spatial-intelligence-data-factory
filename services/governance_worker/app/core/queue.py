@@ -41,7 +41,9 @@ def enqueue_task(task_payload: dict[str, Any]) -> QueueEnqueueResult:
         queue.enqueue("services.governance_worker.app.jobs.governance_job.run", task_payload)
         return QueueEnqueueResult(queued=True, backend="rq", message="queued")
     except Exception as exc:
-        if os.getenv("ALLOW_IN_MEMORY_QUEUE", "0") != "1":
+        # Default to in-memory fallback for local/API test execution.
+        # Production can explicitly disable by setting ALLOW_IN_MEMORY_QUEUE=0.
+        if os.getenv("ALLOW_IN_MEMORY_QUEUE", "1") != "1":
             return QueueEnqueueResult(queued=False, backend="rq", message=f"enqueue_failed:{exc.__class__.__name__}")
         IN_MEMORY_QUEUE.jobs.append(task_payload)
         return QueueEnqueueResult(queued=True, backend="in_memory", message=f"fallback:{exc.__class__.__name__}")

@@ -1,0 +1,255 @@
+{
+  "workpackage_id": "wp-trust-evidence-index-phase1-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-trust-evidence-index-phase1-v1.0.0",
+    "tool_bundle_version": "tools-trust-evidence-index-phase1-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "trust_data_hub_phase1",
+    "goal": "在PG统一架构下完成证据索引体系设计并形成可执行交付，支撑地址治理产线的可追踪、可回放、可审计闭环",
+    "constraints": [
+      "数据库权威源仅允许Postgres，SQLite仅可作为历史兼容读取，不可作为写入与发布依据",
+      "必须覆盖 addr_batch/addr_task_run/addr_raw/addr_canonical/addr_review/addr_ruleset/addr_change_request/addr_audit_event/api_audit_log/agent_execution_log/failure_queue/replay_runs",
+      "必须定义 trace_id 与 agent_run_id 在任务、标准化结果、API审计、Agent审计四层透传规则",
+      "必须提供 schema_version 字段规范，覆盖 evidence/diff_json/scorecard_json",
+      "交付物需可被项目管理看板与测试面板直接消费"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "pg_namespace",
+      "physical_tables",
+      "semantic_views",
+      "trace_keys",
+      "evidence_objects",
+      "governance_rules"
+    ],
+    "properties": {
+      "pg_namespace": {
+        "type": "string",
+        "enum": [
+          "public",
+          "address_line"
+        ]
+      },
+      "physical_tables": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "semantic_views": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "trace_keys": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "evidence_objects": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "governance_rules": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "architecture_note",
+      "evidence_dictionary",
+      "mapping_spec",
+      "query_index_spec",
+      "acceptance_sql_pack",
+      "risk_register",
+      "release_decision"
+    ],
+    "properties": {
+      "architecture_note": {
+        "type": "string",
+        "description": "说明 public.addr_* 物理层与 address_line 语义层映射边界"
+      },
+      "evidence_dictionary": {
+        "type": "object",
+        "required": [
+          "version",
+          "objects",
+          "compatibility"
+        ]
+      },
+      "mapping_spec": {
+        "type": "object",
+        "required": [
+          "task_flow",
+          "review_flow",
+          "change_flow",
+          "replay_flow"
+        ]
+      },
+      "query_index_spec": {
+        "type": "object",
+        "required": [
+          "primary_keys",
+          "join_keys",
+          "trace_paths"
+        ]
+      },
+      "acceptance_sql_pack": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "risk_register": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "p1_pg_baseline_alignment",
+        "name": "PG统一基线与边界定义",
+        "deliverables": [
+          "文档: docs/architecture/trust_evidence_pg_baseline.md",
+          "明确声明: SQLite不再作为运行时权威源",
+          "表级覆盖矩阵: docs/architecture/trust_evidence_table_coverage.csv"
+        ],
+        "done_definition": [
+          "覆盖矩阵包含12张核心表",
+          "记录每张表的Owner/写入方/读取方/刷新频率",
+          "管理看板线可直接引用该文档输出中文摘要"
+        ]
+      },
+      {
+        "code": "p2_schema_and_mapping_design",
+        "name": "证据字典与映射规则设计",
+        "deliverables": [
+          "字典: docs/contracts/trust_evidence_dictionary.v1.json",
+          "映射规范: docs/contracts/trust_evidence_mapping.v1.md",
+          "字段版本策略: evidence/diff_json/scorecard_json 的 schema_version 规则"
+        ],
+        "done_definition": [
+          "每个证据对象都有 object_name/version/required_fields/producer/consumer",
+          "映射规范包含 addr_task_run -> addr_canonical -> addr_review -> addr_audit_event 全链路",
+          "定义 trace_id 与 agent_run_id 的生成与透传约束"
+        ]
+      },
+      {
+        "code": "p3_query_keys_and_sql_pack",
+        "name": "查询键设计与验收SQL包",
+        "deliverables": [
+          "查询键文档: docs/contracts/trust_query_keys.v1.md",
+          "SQL包: database/postgres/sql/qa/phase1_trust_evidence_checks.sql",
+          "只读示例: database/postgres/sql/qa/phase1_readonly_examples.sql"
+        ],
+        "done_definition": [
+          "查询键至少包含 batch_id/task_run_id/raw_hash/trace_id/agent_run_id/related_change_id",
+          "SQL包覆盖完整性/一致性/可追踪性/回放恢复率四类检查",
+          "SQL可在PG直接执行并输出可解释结果"
+        ]
+      },
+      {
+        "code": "p4_gate_and_handoff",
+        "name": "发布门槛与跨线交接",
+        "deliverables": [
+          "门槛清单: docs/release/gates/trust_evidence_phase1_gate.md",
+          "风险登记: docs/release/gates/trust_evidence_phase1_risks.md",
+          "交接摘要: output/workpackages/wp-trust-evidence-index-phase1-v1.0.0.handoff.md"
+        ],
+        "done_definition": [
+          "门槛包含 schema校验/line_feedback_contract消费/failure replay字段固定",
+          "风险项都带 Owner/ETA/缓解动作",
+          "形成GO/NO_GO结论且附回滚建议"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "postgresql",
+      "jq",
+      "markdown",
+      "rg",
+      "services/trust_data_hub/",
+      "database/postgres/sql/"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "services/trust_data_hub/app/main.py",
+    "mode": "evidence_index_design",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "database/trust_meta_schema.sql",
+      "database/postgres/sql/002_init_tables.sql",
+      "database/postgres/sql/003_init_indexes.sql",
+      "output/dashboard/project_overview.json",
+      "output/dashboard/workpackages_live.json",
+      "output/dashboard/test_status_board.json",
+      "output/workpackages/"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+    "instructions": [
+      "冻结新证据字典版本，不继续下发phase1映射",
+      "回退到已验证的trust_data_hub稳定包",
+      "保留phase1产物用于复盘并重开差距清单"
+    ]
+  }
+}

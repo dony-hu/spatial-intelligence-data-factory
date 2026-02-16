@@ -1,0 +1,59 @@
+{
+  "as_of_local": "2026-02-15 21:11:50 CST",
+  "line": "项目管理总控线",
+  "owner": "项目管理总控线-Codex",
+  "dispatch_batch_id": "dispatch-address-line-closure-002",
+  "dispatch_time_local": "2026-02-15 20:58:53 CST",
+  "current_status": "done",
+  "current_progress": 100,
+  "package_status_matrix": [
+    {
+      "workpackage_id": "wp-address-topology-v1.0.1",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-address-topology-v1.0.1.acceptance.report.py311.json"
+    },
+    {
+      "workpackage_id": "wp-address-topology-v1.0.2",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-address-topology-v1.0.2.acceptance.report.py311.json"
+    },
+    {
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-pm-dashboard-test-progress-v0.1.0.report.json"
+    },
+    {
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-test-panel-sql-query-readonly-v0.1.0.report.json"
+    }
+  ],
+  "top_risks": [
+    "工程监理线尚处首轮执行期，需持续做职责边界审计",
+    "测试通过率口径需结合关键门槛全绿解读",
+    "本地python版本展示与目标版本仍有口径偏差"
+  ],
+  "go_nogo_decision": {
+    "release": "GO",
+    "reason": "四个目标包验收均为GO，web_e2e最新4/4通过，质量门槛overall=true"
+  },
+  "rollback_plan": [
+    "地址治理异常时回退到wp-address-topology-v1.0.1并重放失败队列",
+    "看板异常时回退第5区块与任务详情新渲染逻辑",
+    "SQL只读能力异常时关闭查询入口并保留测试进展展示"
+  ],
+  "next_48h_plan": [
+    "工程监理线输出首份项目级监理审计报告",
+    "核心引擎线补齐SQL历史与模板接口并收尾验收",
+    "测试线将web_e2e与关键门槛接入夜间回归",
+    "总控线在看板固化任务包+决策单+审计报告联动展示"
+  ]
+}

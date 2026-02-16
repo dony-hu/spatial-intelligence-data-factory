@@ -1,0 +1,16 @@
+{
+  "admin_division": [
+    {"adcode": "320000", "name": "江苏省", "level": "province", "parent_adcode": null, "name_aliases": ["苏"]},
+    {"adcode": "320500", "name": "苏州市", "level": "city", "parent_adcode": "320000", "name_aliases": ["苏州"]},
+    {"adcode": "320508", "name": "姑苏区", "level": "district", "parent_adcode": "320500", "name_aliases": ["姑苏"]}
+  ],
+  "roads": [
+    {"road_id": "r-320508-001", "name": "人民路", "normalized_name": "人民路", "admin_adcode": "320508"}
+  ],
+  "pois": [
+    {"poi_id": "p-320508-001", "name": "观前街", "normalized_name": "观前街", "category": "shopping", "admin_adcode": "320508", "centroid": "120.621,31.314"}
+  ],
+  "places": [
+    {"place_id": "pl-320508-001", "name": "姑苏", "normalized_name": "姑苏", "type": "place", "admin_adcode": "320508", "confidence_hint": 0.9}
+  ]
+}

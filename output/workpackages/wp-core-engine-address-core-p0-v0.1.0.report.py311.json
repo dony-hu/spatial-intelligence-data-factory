@@ -1,0 +1,55 @@
+{
+  "runtime_baseline": {
+    "python_version": "3.11",
+    "ci_runtime": "github-actions-setup-python@3.11",
+    "local_bootstrap": "python3.11 -m venv .venv && .venv/bin/pip install -r requirements-governance.txt"
+  },
+  "delivery_packages": [
+    {
+      "name": "address_core",
+      "scope": "A",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    },
+    {
+      "name": "governance_api_and_lab",
+      "scope": "B",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    },
+    {
+      "name": "trust_data_hub",
+      "scope": "C",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    }
+  ],
+  "gate_results": {
+    "runtime_unified_3_11_plus": true,
+    "workpackage_schema_ci": true,
+    "line_feedback_contract_enforced": true,
+    "failure_replay_feedback_closed": true
+  },
+  "release_decision": "GO",
+  "meta": {
+    "workpackage_id": "wp-core-engine-address-core-p0-v0.1.0",
+    "workpackage_version": "0.1.0",
+    "executed_at": "2026-02-15T12:33:38.009377+00:00",
+    "executor_python": "3.11.14 (main, Oct  9 2025, 16:16:55) [Clang 17.0.0 (clang-1700.6.3.2)]",
+    "executor_python_short": "3.11.14",
+    "runtime_declared": "3.11",
+    "runtime_matches_declared": true,
+    "schema_errors": [],
+    "line_feedback_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.address_topology.latest.json",
+    "line_feedback_errors": [],
+    "replay_store": {
+      "failure_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+      "replay_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+      "failure_queue_table_exists": true,
+      "replay_runs_table_exists": true,
+      "failure_queue_rows": 2,
+      "replay_runs_rows": 2,
+      "errors": []
+    }
+  }
+}

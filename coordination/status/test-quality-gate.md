@@ -1,0 +1,23 @@
+# 子线状态：测试平台与质量门槛线
+
+- 进度：100%
+- Done：
+  - 已建立 P0 稳定化测试报告汇总与门槛判定
+  - 已接入质量门槛输出到看板数据（schema/feedback/replay）
+  - 已完成 `suite_web_e2e_catalog` 重跑并通过（4/4）
+  - 已完成 SQL 只读能力安全回归并通过（白名单/limit/timeout/审计）
+  - 已接入 nightly `web_e2e + SQL 只读安全回归` 自动复测机制（web/sql 均支持失败重试）
+  - 已固化失败告警产物（`nightly-failure-alert-latest.json` + 历史 `jsonl`）
+  - 已固化失败分型与门槛判定单（`nightly-quality-gate-latest.json` 含 `failed_classification`/`gate_judgement_card`）
+- Next：
+  - 观察 3 个夜间窗口的告警噪声与误报率，必要时下调瞬时故障等级
+  - 对接企业 IM/Webhook（当前已具备文件与CI日志告警）
+- Blocker：无
+- ETA：2026-02-16 20:00（本地时间）完成夜间回归接入
+- Artifacts：
+  - `output/workpackages/`
+  - `tests/web_e2e/`
+  - `output/workpackages/nightly-quality-gate-latest.json`
+  - `output/workpackages/nightly-failure-alert-latest.json`
+  - `output/workpackages/nightly-failure-alert-history.jsonl`
+  - `tests/test_nightly_quality_gate_hardening.py`

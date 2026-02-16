@@ -3,7 +3,7 @@
 from typing import Any, Dict
 
 from database.factory_db import FactoryDB
-from tools.factory_agents import ProductionLineLeader, Worker
+from tools.factory_agents import ProductionLineLeader, Worker as WorkerAgent
 from tools.factory_framework import FactoryState, ProcessSpec, ProductionLine
 
 
@@ -15,7 +15,7 @@ class ProductionLineLeaderService:
         factory_state: FactoryState,
         db: FactoryDB,
         leader: ProductionLineLeader,
-        workers: Dict[str, Worker],
+        workers: Dict[str, WorkerAgent],
     ):
         self.factory_state = factory_state
         self.db = db
@@ -33,11 +33,16 @@ class ProductionLineLeaderService:
             },
         )["production_line"]
         line.line_id = line_id
+        for worker in line.workers:
+            # Keep worker-line relationship consistent for strict FK backends (PostgreSQL).
+            worker.assigned_line_id = line_id
         self.factory_state.add_production_line(line)
         self.db.save_production_line(line)
 
         for worker in line.workers:
-            self.workers[worker.worker_id] = Worker(worker.worker_id)
+            # ProductionLine stores WorkerModel (framework dataclass).
+            # Runtime execution requires executable WorkerAgent instances.
+            self.workers[worker.worker_id] = WorkerAgent(worker.worker_id)
 
         return line
 

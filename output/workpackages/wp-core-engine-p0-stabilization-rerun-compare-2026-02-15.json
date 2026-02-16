@@ -1,0 +1,47 @@
+{
+  "workpackage_id": "wp-core-engine-p0-stabilization-v0.1.0",
+  "comparison_generated_at": "2026-02-15T20:00:00+08:00",
+  "before_fix": {
+    "observed_at": "2026-02-15T19:58:04+08:00",
+    "release_decision": "NO_GO",
+    "gate_results": {
+      "runtime_unified_3_11_plus": false,
+      "workpackage_schema_ci": true,
+      "line_feedback_contract_enforced": true,
+      "failure_replay_feedback_closed": true
+    },
+    "executor_python_short": "3.9.6",
+    "runtime_declared": "3.11",
+    "runtime_matches_declared": false
+  },
+  "intermediate_failure": {
+    "observed_at": "2026-02-15T20:06:xx+08:00",
+    "release_decision": "NO_GO",
+    "runtime_unified_3_11_plus": true,
+    "packages_ok": false,
+    "failing_package": "governance_api_and_lab",
+    "failing_symptom": "ops_summary total_results remained 0 after run_in_memory_all"
+  },
+  "after_fix": {
+    "observed_at": "2026-02-15T20:12:xx+08:00",
+    "release_decision": "GO",
+    "gate_results": {
+      "runtime_unified_3_11_plus": true,
+      "workpackage_schema_ci": true,
+      "line_feedback_contract_enforced": true,
+      "failure_replay_feedback_closed": true
+    },
+    "packages_ok": true,
+    "executor_python_short": "3.11.14"
+  },
+  "fixes": [
+    {
+      "file": "services/governance_worker/app/jobs/governance_job.py",
+      "change": "default OPENHANDS_STRICT to 0 when env var not explicitly set, restore original env after run"
+    },
+    {
+      "file": "scripts/run_p0_workpackage.py",
+      "change": "runtime gate includes runtime_unified_3_11_plus and version matching checks"
+    }
+  ]
+}

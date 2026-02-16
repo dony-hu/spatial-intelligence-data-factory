@@ -1,31 +1,38 @@
-# 子线状态：工厂-工具与执行引擎
+# 子线状态：核心引擎与运行时线
 
-- 进度：84%
+- 进度：100%
 - Done：
-  - TC-03 已启动，工具/引擎版本留痕目标已确认
-  - 已在 `process_version` 增加工具包版本字段：`tool_bundle_version`
-  - 已在 `process_version` 增加引擎兼容字段：`engine_version` / `engine_compatibility_json`
-  - 已完成旧库兼容迁移：初始化自动补列
-  - 已在 `create_version` 流程打通字段透传与查询输出
-  - 已接入外部工具首批真实调用与降级能力：`map_service` / `web_search` / `review_platform`
-  - 已新增外部调用日志查询接口：`/api/v1/external-api/calls`
-  - 已在外部调用日志写入 `task_run_id` 透传能力（支持按任务回放查询）
-  - 已在 `ExecutorAdapter` 接入 `AddressVerificationOrchestrator`，并回填 `unverifiable_online_list/strategy_patch`
-  - 已将 `task_run_id` 注入核验请求，形成调用审计可追踪闭环
-  - 已将 Router/Gate 阈值中心化到 `settings/router_gates.json`，支持环境变量覆盖（`FACTORY_GATE_*`）
-  - 已补充阈值配置文档：`docs/router-gate-config-2026-02-14.md`
-  - 已新增操作审计存储与查询框架：`operation_audit`（写入/过滤查询）
-  - 已补充 confirmation 列表查询能力（支持按状态/类型/会话过滤）
-  - 已补充 confirmation 批量状态更新与过期清理能力（存储层+API）
-  - 已引入控制平面服务层：`OperationAuditService` / `PublishService` / `ConfirmationWorkflowService`
-  - 已新增控制平面服务层测试：`tests/test_control_plane_services.py`
+  - `wp-core-engine-p0-stabilization-v0.1.0` gate 已重跑为 GO，运行时一致性门槛通过（`runtime_unified_3_11_plus=true`）
+  - 已完成 ChangeRequest -> ActivateRuleset 审批硬门控（403/409/404/200 路径覆盖）
+  - 已完成 `/lab/optimize/{batch_id}` 与 `/lab/change_requests/{change_id}` 最小闭环入口并通过回归
+  - 已新增测试面板只读 SQL API：`POST /v1/governance/ops/sql/read-only-query`
+  - 已完成 SQL 安全约束：仅 `SELECT/WITH`、白名单表、强制 `LIMIT`、查询超时、阻断审计
+  - 已新增测试：`services/governance_api/tests/test_ops_sql_readonly_api.py`
+  - 核心回归通过：`test_rulesets_api.py`、`test_ops_api.py`、`test_lab_api.py`、`test_observability_integration.py`
+  - 已修复 web_e2e `/lab/optimize` 超时路径：`tests/web_e2e/conftest.py` 增强超时阈值、健康探测、重试退避与日志
+  - 已增强 web_e2e catalog 执行器：`scripts/run_web_e2e_catalog.py` 增加浏览器参数兼容探测与运行时配置留痕
+  - 已重跑 P0 gate：`output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json` 维持 `release_decision=GO`
+  - 已补齐测试面板 SQL 模板/历史接口并纳入回归：`GET /v1/governance/lab/sql/templates`、`GET /v1/governance/lab/sql/history`
+  - 已完成 SQL 面板接口回归：`services/governance_api/tests/test_lab_sql_api.py`（2/2 通过）
+  - 已完成夜间门槛连续两次通过（`suite_web_e2e_catalog`）：
+    - `output/workpackages/nightly-quality-gate-20260215_145134.md`（GO）
+    - `output/workpackages/nightly-quality-gate-20260215_145217.md`（GO）
+  - 已完成根因复盘：`20260215_144410` 报告出现“判定 NO_GO 与展示计数不一致”的瞬态门槛异常，后续重跑恢复并通过双次夜测验证稳定
 - Next：
-  - 在前端/接口文档补充字段说明与示例
-  - 将剩余确认/发布业务逻辑继续从 `agent_server` 下沉到 service 层
+  - 持续观察 nightly 门槛判定一致性（重点关注 `sql_security.return_code` 与报告展示字段一致性）
 - Blocker：无
-- ETA：2026-02-15 18:00（本地时间）完成字段文档化与阈值配置草案
+- ETA：2026-02-16 10:30（本地时间）完成夜间稳定性复核（非阻断）
 - Artifacts：
   - `coordination/status/factory-tooling.md`
-  - `database/agent_runtime_store.py`
-  - `tools/process_db_api.py`
-  - `tools/dialogue_schema_validation.py`
+  - `services/governance_worker/app/jobs/governance_job.py`
+  - `services/governance_api/app/routers/ops.py`
+  - `services/governance_api/tests/test_ops_sql_readonly_api.py`
+  - `tests/web_e2e/conftest.py`
+  - `scripts/run_web_e2e_catalog.py`
+  - `services/governance_api/app/routers/lab.py`
+  - `services/governance_api/tests/test_lab_sql_api.py`
+  - `output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json`
+  - `output/workpackages/wp-test-panel-sql-query-readonly-v0.1.0.report.json`
+  - `output/workpackages/nightly-quality-gate-20260215_145134.md`
+  - `output/workpackages/nightly-quality-gate-20260215_145217.md`
+  - `output/lab_mode/web_e2e_latest.json`

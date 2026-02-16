@@ -1,0 +1,24 @@
+{
+  "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+  "version": "0.1.0",
+  "executed_at": "2026-02-15T12:35:20.709504+00:00",
+  "runtime": {
+    "python": "3.11.14",
+    "api": "governance_api"
+  },
+  "security_gates": {
+    "allow_only_select_with": true,
+    "whitelist_enforced": true,
+    "limit_enforced": true,
+    "timeout_enforced": true,
+    "audit_logged": true
+  },
+  "tests": [
+    "services/governance_api/tests/test_ops_sql_readonly_api.py",
+    "services/governance_api/tests/test_rulesets_api.py",
+    "services/governance_api/tests/test_ops_api.py",
+    "services/governance_api/tests/test_lab_api.py",
+    "services/governance_api/tests/test_observability_integration.py"
+  ],
+  "result": "GO"
+}

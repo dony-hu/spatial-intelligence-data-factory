@@ -1,0 +1,15 @@
+{
+  "status": "done",
+  "done": [
+    "runtime_unify",
+    "package_split",
+    "r2_gate_closure"
+  ],
+  "next": [],
+  "blocker": "",
+  "eta": "2026-02-16T11:46:05.844134",
+  "test_report_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_failure_replay_2026-02-16_114605_763053.json",
+  "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+  "replay_result_ref": "pg://address_line.replay_runs",
+  "release_decision": "GO"
+}

@@ -1,5 +1,5 @@
 version: 1
-updated_at: "2026-02-09"
+updated_at: "2026-02-15"
 datasets:
   - id: geo_poi_smoke_p0
     version: v2026.02.09.1
@@ -17,3 +17,51 @@ datasets:
     checksum:
       algo: sha256
       value: "3b820e802ba06a81cb013d85f85e0dcd560da10020861394c90bd88dcaac110e"
+  - id: lab_mode_phase1_5_case_matrix_1300
+    version: v2026.02.15.1
+    level: p1
+    purpose: "phase 1.5 lab mode integration and e2e deterministic case matrix"
+    owner: "governance-platform"
+    source: "synthetic-rule-generator-v1"
+    pii: "synthetic"
+    retention_days: 365
+    format: csv
+    local_path: "testdata/fixtures/lab-mode-phase1_5-integration-e2e-case-matrix-1300-2026-02-15.csv"
+    storage:
+      type: local
+      uri: "testdata/fixtures/lab-mode-phase1_5-integration-e2e-case-matrix-1300-2026-02-15.csv"
+    checksum:
+      algo: sha256
+      value: "19610b4e308f313c352878dae0a582f52a14b0848d4bd143fe43e22db04d0bf2"
+  - id: lab_mode_phase1_5_cn_address_cases_1300
+    version: v2026.02.15.1
+    level: p1
+    purpose: "phase 1.5 lab mode chinese address integration and e2e cases"
+    owner: "governance-platform"
+    source: "synthetic-rule-generator-v1"
+    pii: "synthetic"
+    retention_days: 365
+    format: csv
+    local_path: "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv"
+    storage:
+      type: local
+      uri: "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv"
+    checksum:
+      algo: sha256
+      value: "e9dca04d8e35670e26932fef621eb2f3cf885c6a9268f269ac4f9a4d952e1ef9"
+  - id: lab_mode_phase1_5_cn_address_cases_1000_json
+    version: v2026.02.15.1
+    level: p1
+    purpose: "phase 1.5 chinese address governance json cases for normalize parse match dedup score and review tiering"
+    owner: "governance-platform"
+    source: "synthetic-rule-generator-v2"
+    pii: "synthetic"
+    retention_days: 365
+    format: json
+    local_path: "testdata/fixtures/lab-mode-phase1_5-cn-address-cases-1000-2026-02-15.json"
+    storage:
+      type: local
+      uri: "testdata/fixtures/lab-mode-phase1_5-cn-address-cases-1000-2026-02-15.json"
+    checksum:
+      algo: sha256
+      value: "2cd895d66a7e6b667803d72616eb375412da07759273ff0342404a213c42984c"

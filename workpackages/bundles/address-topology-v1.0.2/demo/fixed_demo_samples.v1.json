@@ -1,0 +1,47 @@
+{
+  "sample_set_id": "address-topology-fixed-demo-v1",
+  "workpackage_targets": ["wp-address-topology-v1.0.1", "wp-address-topology-v1.0.2"],
+  "generated_at": "2026-02-15T19:30:00+08:00",
+  "samples": [
+    {
+      "sample_id": "demo-success-001",
+      "scenario": "success",
+      "input": {
+        "task_id": "task-demo-success-001",
+        "raw_address": "上海市浦东新区世纪大道100号"
+      },
+      "expected": {
+        "status": "completed",
+        "quality_score_min": 0.95,
+        "required_output_fields": ["standard_address", "topology_nodes", "topology_edges", "quality_score"]
+      }
+    },
+    {
+      "sample_id": "demo-failure-001",
+      "scenario": "failure",
+      "input": {
+        "task_id": "task-demo-failure-001",
+        "raw_address": "中山东一路1号"
+      },
+      "expected": {
+        "status": "failed",
+        "failed_stage": "cleaning",
+        "reason_code": "CLEANING_INVALID_OUTPUT",
+        "queue_ref": "pg://address_line.failure_queue"
+      }
+    },
+    {
+      "sample_id": "demo-replay-001",
+      "scenario": "replay",
+      "replay_of": "demo-failure-001",
+      "input": {
+        "limit": 1,
+        "queue_ref": "pg://address_line.failure_queue"
+      },
+      "expected": {
+        "report_ref": "pg://address_line.replay_runs",
+        "required_fields": ["replayed", "recovered", "remaining"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "version": "1.0.0",
+  "files": {
+    "project_overview": "project_overview.json",
+    "worklines_overview": "worklines_overview.json",
+    "workpackages_live": "workpackages_live.json",
+    "test_status_board": "test_status_board.json",
+    "pm_brief_json": "pm_brief_zh-CN.json",
+    "pm_brief_md": "pm_brief_zh-CN.md",
+    "workline_dispatch_prompts_json": "workline_dispatch_prompts_latest.json",
+    "workline_dispatch_prompts_md": "workline_dispatch_prompts_latest.md",
+    "management_review_json": "dispatch-address-line-closure-001-management-review.json",
+    "management_review_md": "dispatch-address-line-closure-001-management-review.md",
+    "management_review_latest_json": "dispatch-address-line-closure-002-management-review.json",
+    "management_review_latest_md": "dispatch-address-line-closure-002-management-review.md",
+    "dashboard_dev_task_engineering_supervisor_json": "dashboard_dev_task_engineering_supervisor.json",
+    "dashboard_dev_task_engineering_supervisor_md": "dashboard_dev_task_engineering_supervisor.md",
+    "dashboard_dev_task_overview_optimization_json": "dashboard_dev_task_overview_optimization.json",
+    "dashboard_dev_task_overview_optimization_md": "dashboard_dev_task_overview_optimization.md",
+    "dashboard_dev_task_next_round_pm_dashboard_json": "dashboard_dev_task_next_round_pm_dashboard.json",
+    "dashboard_dev_task_next_round_pm_dashboard_md": "dashboard_dev_task_next_round_pm_dashboard.md",
+    "phase1_workpackage_prompts_json": "phase1_workpackage_prompts_latest.json",
+    "phase1_workpackage_prompts_md": "phase1_workpackage_prompts_latest.md"
+  },
+  "refresh_policy": {
+    "event_driven": true,
+    "scheduled_cron": "*/15 * * * *"
+  },
+  "observability_fields": {
+    "test_overview": [
+      "total",
+      "executed",
+      "passed",
+      "failed",
+      "skipped",
+      "pass_rate",
+      "quality_score",
+      "last_run_at",
+      "gate_decision"
+    ],
+    "execution_process": [
+      "task_batch_id",
+      "workpackage_id",
+      "status",
+      "progress",
+      "owner",
+      "eta",
+      "updated_at"
+    ],
+    "failure_classification": [
+      "failure_type",
+      "severity",
+      "retryable",
+      "gate_impact",
+      "evidence_ref"
+    ],
+    "sql_panel": [
+      "readonly_select_with_only",
+      "whitelist_tables",
+      "limit_enforced",
+      "timeout_sec",
+      "audit_history_ref"
+    ]
+  }
+}

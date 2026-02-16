@@ -1,0 +1,20 @@
+{
+  "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+  "version": "0.1.0",
+  "executed_at": "2026-02-15T13:11:50Z",
+  "result": "GO",
+  "release_decision": "GO",
+  "checks": {
+    "section5_online": true,
+    "metrics_complete": true,
+    "coverage_links_valid": true,
+    "fallback_render_safe": true,
+    "web_e2e_catalog_passed": true
+  },
+  "evidence": {
+    "selftest_ref": "output/dashboard/wp-pm-dashboard-test-progress-v0.1.0-selftest.md",
+    "screenshot_ref": "output/dashboard/wp-pm-dashboard-test-progress-v0.1.0.section5.png",
+    "test_status_ref": "output/dashboard/test_status_board.json",
+    "web_e2e_ref": "output/lab_mode/web_e2e_latest.json"
+  }
+}

@@ -1,7 +1,10 @@
+import os
+
 from packages.address_core.pipeline import run
 
 
 def test_pipeline_smoke() -> None:
+    os.environ["ADDRESS_TRUSTED_FENGTU_ENABLED"] = "0"
     outputs = run(
         records=[{"raw_id": "r1", "raw_text": "杭州市西湖区文三路90号"}],
         ruleset={"ruleset_id": "default"},

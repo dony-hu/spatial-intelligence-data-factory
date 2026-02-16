@@ -1,0 +1,26 @@
+# 子线状态：项目管理看板
+
+- 进度：100% ✅
+- Done：
+  - TC-07 已下发，业务目标、交付标准、排期与风险已冻结
+  - Iteration-005 合并任务包已下发（工程监理可视化 + 项目介绍双层结构）
+  - 研发治理字段已补齐（A/R/Agent/Skill/Go-NoGo/Evidence）
+  - ✅ 已完成全部Iteration-005验收标准（9项通过）：
+    - Sticky摘要条固定定位已验证
+    - 密度切换（简版/完整版）已验证
+    - PM摘要6行展开结构已验证
+    - 工程监理线数据在表中可见
+    - Owner|ETA|证据元数据显示已验证，缺失项标黄
+    - 变更说明与自测记录已提交
+  - 夜间质量门槛已转为GO（web_e2e 4/4通过 + SQL安全6/6通过）
+- Next：
+  - 后续迭代优化（Iteration-006）：四卡片深度优化、工程监理审计详情展示、移动端响应式
+- Blocker：无
+- ETA：✅ 2026-02-16 08:45（本地时间）已完成验收，提前于目标 20:00
+- Artifacts：
+  - `coordination/dispatch/iteration-005-dashboard-next-round-merged.md`
+  - `output/dashboard/ITERATION_005_CHANGELOG.md` ✅ 变更说明+验收清单
+  - `web/dashboard/index.html`
+  - `web/dashboard/app.js`
+  - `web/dashboard/styles.css`
+  - `output/dashboard/test_status_board.json`

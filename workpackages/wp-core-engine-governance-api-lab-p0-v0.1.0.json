@@ -1,0 +1,186 @@
+{
+  "workpackage_id": "wp-core-engine-governance-api-lab-p0-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-governance-api-lab-p0-v0.1.0",
+    "tool_bundle_version": "tools-governance-api-lab-p0-v0.1.0",
+    "engine_version": "engine-core-v1.0.3",
+    "released_at": "2026-02-15T19:10:00+08:00",
+    "released_by": "orchestrator",
+    "rollback_target_version": "wp-address-topology-v1.0.2",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-governance-api-lab-p0-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "governance_api_and_lab_stabilization",
+    "goal": "完成治理 API 与 Lab 的运行时统一、门禁闭环与可观测回归",
+    "constraints": [
+      "仅允许修改 services/governance_api 与关联契约文件",
+      "必须在 Python 3.11+ 运行时通过核心测试",
+      "ChangeRequest 与 ActivateRuleset 必须走审批硬门控",
+      "新增端点必须提供 schema 与测试"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "runtime_target",
+      "api_scope",
+      "target_branch"
+    ],
+    "properties": {
+      "runtime_target": {
+        "type": "string",
+        "enum": [
+          "python311_plus"
+        ]
+      },
+      "api_scope": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "target_branch": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "runtime_baseline",
+      "api_gate_report",
+      "observability_report",
+      "release_decision"
+    ],
+    "properties": {
+      "runtime_baseline": {
+        "type": "object",
+        "required": [
+          "python_version",
+          "requirements_ref",
+          "ci_command"
+        ]
+      },
+      "api_gate_report": {
+        "type": "object",
+        "required": [
+          "ruleset_activation_hard_gate",
+          "change_request_flow",
+          "schema_validation"
+        ]
+      },
+      "observability_report": {
+        "type": "object",
+        "required": [
+          "ops_summary",
+          "event_stream",
+          "web_e2e"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "b1_runtime_fix",
+        "name": "治理 API 运行时基线修复",
+        "deliverables": [
+          "修复 Python 3.9 与 3.10+ 类型注解差异导致的测试收集失败",
+          "固定本地与 CI 统一的 Python 3.11+ 启动方式",
+          "补 requirements-governance 与启动说明"
+        ],
+        "done_definition": [
+          "test_rulesets_api 与 test_ops_api 可执行",
+          "运行命令写入文档并可复现"
+        ]
+      },
+      {
+        "code": "b2_gate_hardening",
+        "name": "规则发布门禁硬化",
+        "deliverables": [
+          "ActivateRuleset 依赖 ChangeRequest 审批状态",
+          "操作审计事件补齐 task_run_id 与变更原因",
+          "拒绝绕过审批的直接激活"
+        ],
+        "done_definition": [
+          "新增/更新 API 测试覆盖允许与拒绝两类路径",
+          "门禁失败返回稳定错误码"
+        ]
+      },
+      {
+        "code": "b3_lab_observability",
+        "name": "Lab 与可观测闭环",
+        "deliverables": [
+          "lab optimize 与 change_requests 最小闭环",
+          "观测流接口与 scorecard 输出一致",
+          "run_web_e2e.sh 纳入回归入口"
+        ],
+        "done_definition": [
+          "test_lab_api 与 test_observability_integration 通过",
+          "产出 GO/NO_GO 判定单"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "fastapi",
+      "pytest",
+      "alembic",
+      "scripts/run_web_e2e.sh"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "services/governance_api/app/main.py",
+    "mode": "api_regression",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "sqlite",
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "services/governance_api/app/routers/lab.py",
+      "services/governance_api/tests/test_observability_integration.py",
+      "tests/web_e2e/test_observability_live_ui.py"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "wp-address-topology-v1.0.2",
+    "instructions": [
+      "回退 governance_api 相关路由与模型变更",
+      "恢复原规则激活路径并锁定发布",
+      "保留审计日志用于失败分析"
+    ]
+  }
+}

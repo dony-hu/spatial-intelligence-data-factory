@@ -1,0 +1,157 @@
+{
+  "workpackage_id": "wp-runtime-pg-repository-switch-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-runtime-pg-repository-switch-v1.0.0",
+    "tool_bundle_version": "tools-wp-runtime-pg-repository-switch-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-core-engine-governance-api-lab-p0-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "core_runtime_phase1",
+    "goal": "完成仓储层PG主读写切换并固化API与执行器审计落库",
+    "constraints": [
+      "PG为主, 内存仅缓存",
+      "API审计必须写入api_audit_log",
+      "执行器审计必须写入agent_execution_log"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "repository_modules",
+      "audit_middleware_scope",
+      "execution_log_scope",
+      "trace_policy"
+    ],
+    "properties": {
+      "repository_modules": {
+        "type": "string"
+      },
+      "audit_middleware_scope": {
+        "type": "string"
+      },
+      "execution_log_scope": {
+        "type": "string"
+      },
+      "trace_policy": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "repository_switch_report",
+      "api_audit_evidence",
+      "execution_log_evidence",
+      "regression_report",
+      "release_decision"
+    ],
+    "properties": {
+      "repository_switch_report": {
+        "type": "string"
+      },
+      "api_audit_evidence": {
+        "type": "string"
+      },
+      "execution_log_evidence": {
+        "type": "string"
+      },
+      "regression_report": {
+        "type": "string"
+      },
+      "release_decision": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "r1",
+        "name": "仓储切换",
+        "deliverables": [
+          "services/governance_api/app/repositories/README_PHASE1_PG_SWITCH.md"
+        ],
+        "done_definition": [
+          "关键路径不再依赖SQLite"
+        ]
+      },
+      {
+        "code": "r2",
+        "name": "审计落库",
+        "deliverables": [
+          "output/workpackages/runtime-phase1-audit-write-evidence.json"
+        ],
+        "done_definition": [
+          "api_audit_log/agent_execution_log有样本"
+        ]
+      },
+      {
+        "code": "r3",
+        "name": "回归验证",
+        "deliverables": [
+          "output/workpackages/runtime-phase1-regression.md"
+        ],
+        "done_definition": [
+          "PG-only回归通过"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "pytest",
+      "postgresql",
+      "fastapi"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "services/governance_api/app/main.py",
+    "mode": "pg_repository_switch",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "services/governance_api/app/",
+      "output/workpackages/runtime-phase1-regression.md"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-core-engine-governance-api-lab-p0-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "batch_id": "dispatch-address-line-closure-002",
+  "line": "地址算法与治理规则线",
+  "generated_at": "2026-02-15T21:03:30.727555+08:00",
+  "summary": {
+    "sample_count": 10,
+    "passed": 0,
+    "failed": 10,
+    "pass_rate": 0.0,
+    "failure_categories": {
+      "CLEANING_INVALID_OUTPUT": 10
+    }
+  },
+  "samples": [
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_402132.json",
+      "raw_address": "上海市浦东新区世纪大道100号",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_465499.json",
+      "raw_address": "中山东一路1号",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_533038.json",
+      "raw_address": "广东省深圳市罗湖区南京西路190号星河湾2栋8单元397室",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_600432.json",
+      "raw_address": "广东省深圳市罗湖区不存在路64号龙湖天街",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_661770.json",
+      "raw_address": "湖北省随州市广水市解放大道43号未来城19幢166室",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_723416.json",
+      "raw_address": "深圳市南山区科技园科苑路15号",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_786318.json",
+      "raw_address": "上海市浦东新区世纪大道8号东方明珠花园4栋6单元111室",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_848718.json",
+      "raw_address": "杭州市西湖区文三路90号",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_910999.json",
+      "raw_address": "北京市朝阳区建国路88号SOHO现代城A座1201",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    },
+    {
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_981644.json",
+      "raw_address": "苏州市虎丘区人民路113号未来城9栋276室",
+      "status": "failed",
+      "failed_stage": "cleaning",
+      "reason_code": "CLEANING_INVALID_OUTPUT"
+    }
+  ],
+  "fixed_demo_samples": {
+    "success": {
+      "sample_id": "fixed-success-baseline-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-14_114036_180784.json",
+      "input": {
+        "raw_address": "上海市浦东新区世纪大道100号"
+      },
+      "expected": {
+        "status": "completed",
+        "quality_score_min": 0.95
+      }
+    },
+    "failure": {
+      "sample_id": "fixed-failure-current-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_402132.json",
+      "input": {
+        "raw_address": "上海市浦东新区世纪大道100号"
+      },
+      "expected": {
+        "status": "failed",
+        "failed_stage": "cleaning",
+        "reason_code": "CLEANING_INVALID_OUTPUT"
+      }
+    },
+    "replay": {
+      "sample_id": "fixed-replay-current-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
+      "expected": {
+        "required_fields": [
+          "replayed",
+          "recovered",
+          "remaining"
+        ]
+      }
+    }
+  },
+  "rule_fix_suggestions": [
+    {
+      "id": "R-001",
+      "title": "清洗阶段兜底输出",
+      "detail": "当 cleaning 产物为空时，回退到 normalize(raw_address) 作为最小可用输出，避免直接 CLEANING_INVALID_OUTPUT。",
+      "risk": "可能引入低质量候选，需结合质量阈值过滤。"
+    },
+    {
+      "id": "R-002",
+      "title": "清洗失败分类细化",
+      "detail": "将 CLEANING_INVALID_OUTPUT 拆分为 EMPTY_AFTER_CLEAN / INVALID_CHARSET / COMPONENT_MISSING，便于针对性修复。",
+      "risk": "错误码枚举变更需同步观测与告警规则。"
+    },
+    {
+      "id": "R-003",
+      "title": "样本准入预检查",
+      "detail": "在 parse 前增加地址长度、数字门牌、行政区命中预检查；不满足则标记可回放失败并保留结构化原因。",
+      "risk": "过严规则可能误拒真实地址。"
+    }
+  ],
+  "release_decision": "NO_GO"
+}

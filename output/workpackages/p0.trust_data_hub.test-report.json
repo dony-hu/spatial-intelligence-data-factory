@@ -1,0 +1,12 @@
+{
+  "package": "trust_data_hub",
+  "scope": "C",
+  "passed": true,
+  "result": {
+    "command": "/Users/huda/Code/spatial-intelligence-data-factory/.venv/bin/python -m pytest services/trust_data_hub/tests/test_trust_data_hub_api.py -q",
+    "returncode": 0,
+    "started_at": "2026-02-15T13:06:45.002004+00:00",
+    "ended_at": "2026-02-15T13:06:45.605896+00:00",
+    "output_tail": "...........                                                              [100%]\n11 passed in 0.36s\n"
+  }
+}

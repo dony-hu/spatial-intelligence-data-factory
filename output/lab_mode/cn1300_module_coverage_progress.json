@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "started_at": "2026-02-15T10:34:01.709158+00:00",
+  "updated_at": "2026-02-15T10:38:19.948564+00:00",
+  "processed_rows": 1300,
+  "total_rows": 1300,
+  "progress_rate": 1.0,
+  "last_case_id": "",
+  "report_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/lab_mode/cn1300_module_coverage_20260215_103819.json",
+  "message": "coverage run completed"
+}

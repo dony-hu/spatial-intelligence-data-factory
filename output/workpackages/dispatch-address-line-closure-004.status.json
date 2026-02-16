@@ -1,0 +1,106 @@
+{
+  "batch_id": "dispatch-address-line-closure-004",
+  "workline": "工程监理线",
+  "owner": "工程监理-Codex",
+  "updated_at_local": "2026-02-15 23:55:00 CST",
+  "updated_at_utc": "2026-02-15T15:55:00Z",
+  "workpackages": [
+    "wp-engineering-supervisor-audit-v0.2.0"
+  ],
+  "progress": "100%",
+  "current_status": "done",
+  "audit_scope": [
+    "越界检查",
+    "抄近路检查",
+    "项目级 Hold/Release 建议"
+  ],
+  "checks": {
+    "boundary_check": {
+      "result": "partial_pass",
+      "risk_id": "R-Boundary-001",
+      "risk_level": "High",
+      "summary": "跨目录改动可见，但逐文件 owner/workpackage 归因清单缺失，暂不满足可追溯闭环。"
+    },
+    "shortcut_check": {
+      "result": "pass",
+      "risk_id": "R-Shortcut-001",
+      "risk_level": "Low",
+      "summary": "未发现新增 mock/skip/xfail 等抄近路特征；审批硬门控与测试覆盖增强。"
+    }
+  },
+  "gate": {
+    "release_decision": "HOLD",
+    "blocking_reasons": [
+      "R-Boundary-001: 越界归因链未闭环",
+      "nightly quality gate 仍为 NO_GO（suite_web_e2e_catalog 失败）"
+    ],
+    "release_requirements": [
+      "提交 changed_file->owner_line->workpackage_id->approval_ref 归因清单",
+      "nightly suite_web_e2e_catalog 连续两次 passed 并回写证据",
+      "工程监理线复核关闭 R-Boundary-001"
+    ]
+  },
+  "evidence_refs": [
+    "coordination/dispatch/iteration-008-bm-master-next-iteration.md",
+    "coordination/status/overview.md",
+    "coordination/README.md",
+    "coordination/status/line-execution.md",
+    "services/governance_api/app/routers/rulesets.py",
+    "services/governance_api/tests/test_rulesets_api.py",
+    "output/workpackages/dispatch-address-line-closure-004-engineering-supervisor-audit.md"
+  ],
+  "newly_completed": [
+    "完成首轮越界审查与抄近路审查",
+    "发布首份项目级工程边界合规报告",
+    "形成项目级 HOLD 建议并回写状态"
+  ],
+  "remaining_actions": [
+    "对各线补齐逐文件归因证据",
+    "复核 nightly 门槛恢复",
+    "向总控线同步高风险闭环进度"
+  ]
+}
+{
+  "batch_id": "dispatch-address-line-closure-004",
+  "workline": "产线执行与回传闭环线",
+  "owner": "产线执行与回传闭环线-Codex",
+  "updated_at_local": "2026-02-15 22:45:00 CST",
+  "updated_at_utc": "2026-02-15T14:45:00Z",
+  "workpackage": "wp-line-feedback-ci-enforcement-v0.2.0",
+  "progress": "100%",
+  "status": "done",
+  "ci_gate": {
+    "workflow": ".github/workflows/p0-workpackage.yml",
+    "hard_block_step": "python scripts/run_p0_workpackage.py --skip-package-tests",
+    "demo_step": "python scripts/run_line_feedback_ci_block_demo.py",
+    "artifact_upload": "p0-workpackage-gate-artifacts",
+    "trigger_paths": [
+      "output/workpackages/line_feedback.latest.json",
+      "output/workpackages/line_feedback.latest.sha256",
+      "scripts/run_p0_workpackage.py",
+      "scripts/run_line_feedback_ci_block_demo.py"
+    ]
+  },
+  "block_demo": {
+    "evidence_json_ref": "output/workpackages/line_feedback_ci_block_demo.latest.json",
+    "evidence_md_ref": "output/workpackages/line_feedback_ci_block_demo.latest.md",
+    "scenario": "tampered_line_feedback_hash",
+    "result": "blocked_as_expected",
+    "run_p0_returncode": 1,
+    "release_decision": "NO_GO",
+    "line_feedback_hash_verified": false
+  },
+  "newly_completed": [
+    "line_feedback hash 校验接入 CI gate（自动执行）",
+    "hash 不一致自动阻断（return code != 0）",
+    "阻断演示证据已产出并可上传为 artifact"
+  ],
+  "remaining_risks": [
+    "当前本地默认解释器为 Python 3.9，run_p0_workpackage 的 runtime_unified_3_11_plus 门槛在本地演示中仍为 false；CI 使用 3.11 不受该风险影响",
+    "如 line_feedback 产物未随变更提交，CI 仍无法对未进入仓库的本地文件进行校验"
+  ],
+  "next_actions": [
+    "持续执行当次新鲜样本抽检，避免历史证据复用",
+    "PR 合并前复核 p0-workpackage-gate-artifacts 中阻断演示证据"
+  ]
+}

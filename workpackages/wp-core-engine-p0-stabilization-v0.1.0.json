@@ -1,0 +1,195 @@
+{
+  "workpackage_id": "wp-core-engine-p0-stabilization-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-core-engine-p0-v0.1.0",
+    "tool_bundle_version": "tools-core-engine-p0-v0.1.0",
+    "engine_version": "engine-core-v1.0.3",
+    "released_at": "2026-02-15T19:00:00+08:00",
+    "released_by": "orchestrator",
+    "rollback_target_version": "wp-address-topology-v1.0.2",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-p0-stabilization-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "core_engine_stabilization",
+    "goal": "在不新增业务功能前提下完成 P0 收敛发布：统一 Python 运行时、拆分变更包、闭环 R2 发布门槛",
+    "constraints": [
+      "禁止新增非 P0 范围业务能力",
+      "必须按包隔离提交与回归",
+      "必须给出可复现测试命令与结果",
+      "失败回放与回传字段格式必须固定"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "scope",
+      "target_branch",
+      "owners"
+    ],
+    "properties": {
+      "scope": {
+        "type": "string",
+        "enum": [
+          "P0"
+        ]
+      },
+      "target_branch": {
+        "type": "string"
+      },
+      "owners": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1
+      },
+      "deadline": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "runtime_baseline",
+      "delivery_packages",
+      "gate_results",
+      "release_decision"
+    ],
+    "properties": {
+      "runtime_baseline": {
+        "type": "object",
+        "required": [
+          "python_version",
+          "ci_runtime",
+          "local_bootstrap"
+        ]
+      },
+      "delivery_packages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "scope",
+            "status",
+            "test_report_ref"
+          ]
+        },
+        "minItems": 3
+      },
+      "gate_results": {
+        "type": "object",
+        "required": [
+          "workpackage_schema_ci",
+          "line_feedback_contract_enforced",
+          "failure_replay_feedback_closed"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "runtime_unify",
+        "name": "统一 Python 运行时到 3.11+",
+        "deliverables": [
+          "运行时版本声明文件与启动脚本",
+          "CI 执行基线固定",
+          "治理 API 测试可收集可执行"
+        ],
+        "done_definition": [
+          "services/governance_api/tests 在统一运行时下可执行",
+          "README 或运行文档包含一键环境启动命令"
+        ]
+      },
+      {
+        "code": "package_split",
+        "name": "按 P0 拆分三包并独立验收",
+        "deliverables": [
+          "包A: address_core",
+          "包B: governance_api_and_lab",
+          "包C: trust_data_hub"
+        ],
+        "done_definition": [
+          "每包都有最小回归测试与结果引用",
+          "每包可独立回滚，不互相阻塞合并"
+        ]
+      },
+      {
+        "code": "r2_gate_closure",
+        "name": "完成 R2 门槛闭环并形成发布判定",
+        "deliverables": [
+          "workpackage schema CI 校验接入",
+          "line_feedback_contract 强制消费",
+          "failure replay 回传字段固定并回传工厂"
+        ],
+        "done_definition": [
+          "wp/observability/line 执行三者版本一致",
+          "输出 GO/NO_GO 判定单"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "pytest",
+      "jsonschema",
+      "alembic",
+      "scripts/run_web_e2e.sh"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "services/governance_api/app/main.py",
+    "mode": "stabilization",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "sqlite",
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "templates/system_observability_suite.html",
+      "tests/web_e2e/test_observability_live_ui.py",
+      "services/governance_api/tests/test_observability_integration.py"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref",
+      "release_decision"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "wp-address-topology-v1.0.2",
+    "instructions": [
+      "冻结 core-engine-p0 分支任务注入",
+      "恢复治理 API 到上一个稳定运行时基线",
+      "回滚未通过门槛的包并保留失败回放证据"
+    ]
+  }
+}

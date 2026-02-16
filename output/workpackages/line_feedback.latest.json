@@ -1,0 +1,15 @@
+{
+  "status": "done",
+  "done": [
+    "runtime_unify",
+    "package_split",
+    "r2_gate_closure"
+  ],
+  "next": [],
+  "blocker": "",
+  "eta": "2026-02-15T21:03:51.792709",
+  "test_report_ref": "output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
+  "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+  "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+  "release_decision": "GO"
+}

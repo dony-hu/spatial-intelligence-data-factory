@@ -1,0 +1,192 @@
+{
+  "as_of_local": "2026-02-16 11:22:20 CST",
+  "as_of": "2026-02-16T11:22:20+08:00",
+  "phase": "phase1",
+  "phase_name": "PG统一架构落地（可运行 + 可观测 + 可追踪）",
+  "dispatch_batch_id": "dispatch-phase1-pg-foundation-002",
+  "dispatch_time_local": "2026-02-16 11:22:20 CST",
+  "goal": "在PG统一架构下形成地址治理产线可运行、可观测、可追踪的对外可演示闭环",
+  "global_requirements": [
+    "数据库权威源统一为Postgres，禁止SQLite回落作为发布依据",
+    "line_feedback_contract必须使用PG引用且字段固定",
+    "trace_id/agent_run_id全链路透传并可查询",
+    "每条线回写Done/Next/Blocker/ETA/证据与发布决策"
+  ],
+  "lines": [
+    {
+      "line_name": "项目管理总控线",
+      "owner": "项目管理总控线-Codex",
+      "workpackage_id": "wp-orchestrator-phase1-crossline-closure-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 18:00 CST",
+      "prompt": "你负责本轮总控收敛与发布决策。必须完成：1) 汇总10条线Done/Next/Blocker/ETA/证据；2) 校验Phase1发布门槛；3) 输出管理层验收包与Go/No-Go单。",
+      "must_deliver": [
+        "Package Status Matrix",
+        "Top Risks",
+        "Go-NoGo Decision",
+        "Rollback Plan",
+        "Next 48h Plan"
+      ],
+      "writeback_file": "output/workpackages/dispatch-phase1-pg-foundation-002.status.json"
+    },
+    {
+      "line_name": "数据库专家",
+      "owner": "数据库专家-Codex",
+      "workpackage_id": "wp-db-pg-canonical-model-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 18:00 CST",
+      "prompt": "你负责PG统一模型冻结。必须完成：1) addr主链路DDL与约束；2) 迁移/回滚脚本；3) address_line语义层视图与回归SQL。",
+      "must_deliver": [
+        "DDL与约束清单",
+        "迁移与回滚脚本",
+        "兼容视图",
+        "数据质量检查SQL"
+      ],
+      "writeback_file": "output/workpackages/phase1-db-expert.status.json"
+    },
+    {
+      "line_name": "工程监理线",
+      "owner": "工程监理线-Codex",
+      "workpackage_id": "wp-engineering-supervisor-phase1-audit-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 18:30 CST",
+      "prompt": "你负责独立监理审计。必须完成：1) 越界改动检查；2) mock抄近路检查；3) 测试与研发边界检查；4) 发布建议。仅输出报告不改代码。",
+      "must_deliver": [
+        "项目级监理审计报告",
+        "违规清单",
+        "风险级别",
+        "Hold/Release建议"
+      ],
+      "writeback_file": "output/workpackages/phase1-engineering-supervisor.status.json"
+    },
+    {
+      "line_name": "核心引擎与运行时线",
+      "owner": "核心引擎与运行时线-Codex",
+      "workpackage_id": "wp-runtime-pg-repository-switch-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 19:00 CST",
+      "prompt": "你负责运行时PG主读写切换。必须完成：1) 仓储层PG为准；2) api_audit_log落库；3) agent_execution_log落库；4) 回归验证。",
+      "must_deliver": [
+        "仓储切换清单",
+        "API审计证据",
+        "执行器审计证据",
+        "回归测试报告"
+      ],
+      "writeback_file": "output/workpackages/phase1-core-runtime.status.json"
+    },
+    {
+      "line_name": "产线执行与回传闭环线",
+      "owner": "产线执行与回传闭环线-Codex",
+      "workpackage_id": "wp-line-feedback-contract-pg-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 19:00 CST",
+      "prompt": "你负责回传合约PG化。必须完成：1) line_feedback_contract固定字段；2) failure/replay PG引用；3) CI阻断校验。",
+      "must_deliver": [
+        "PG引用contract",
+        "回传样本",
+        "CI校验报告",
+        "字段一致性检查"
+      ],
+      "writeback_file": "output/workpackages/phase1-line-execution.status.json"
+    },
+    {
+      "line_name": "可信数据Hub线",
+      "owner": "可信数据Hub线-Codex",
+      "workpackage_id": "wp-trust-evidence-index-phase1-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 20:00 CST",
+      "prompt": "你负责trust证据索引Phase1。必须完成：1) 证据字典与schema_version；2) 映射规则；3) 查询键与验收SQL包；4) GO/NO_GO建议。",
+      "must_deliver": [
+        "证据字典",
+        "映射规范",
+        "查询键清单",
+        "验收SQL包"
+      ],
+      "writeback_file": "output/workpackages/phase1-trust-hub.status.json"
+    },
+    {
+      "line_name": "地址算法与治理规则线",
+      "owner": "地址算法与治理规则线-Codex",
+      "workpackage_id": "wp-address-canonical-pg-baseline-v1.0.0",
+      "priority": "P1",
+      "eta_local": "2026-02-16 20:00 CST",
+      "prompt": "你负责地址标准化质量基线。必须完成：1) addr_canonical字段质量报告；2) 低置信度分布；3) 失败分类与改进建议。",
+      "must_deliver": [
+        "字段完整性报告",
+        "样本质量基线",
+        "低置信度分布",
+        "失败分类"
+      ],
+      "writeback_file": "output/workpackages/phase1-address-algo.status.json"
+    },
+    {
+      "line_name": "测试平台与质量门槛线",
+      "owner": "测试平台与质量门槛线-Codex",
+      "workpackage_id": "wp-pg-only-integration-baseline-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 20:30 CST",
+      "prompt": "你负责PG-only发布硬门。必须完成：1) 集成测试；2) SQLite回落检测；3) 门槛判定单；4) 失败分类。",
+      "must_deliver": [
+        "PG-only测试结果",
+        "SQLite回落检测报告",
+        "门槛判定单",
+        "失败分类报告"
+      ],
+      "writeback_file": "output/workpackages/phase1-test-quality.status.json"
+    },
+    {
+      "line_name": "可观测与运营指标线",
+      "owner": "可观测与运营指标线-Codex",
+      "workpackage_id": "wp-observability-phase1-run-test-sql-map-v1.0.0",
+      "priority": "P0",
+      "eta_local": "2026-02-16 20:30 CST",
+      "prompt": "你负责可观测补全。必须完成：1) 测试结果映射；2) 执行过程映射；3) SQL交互映射；4) 缺口补齐计划。",
+      "must_deliver": [
+        "三类指标映射文档",
+        "看板字段映射",
+        "缺口清单",
+        "验证记录"
+      ],
+      "writeback_file": "output/workpackages/phase1-observability.status.json"
+    },
+    {
+      "line_name": "管理看板研发线",
+      "owner": "管理看板研发线-Codex",
+      "workpackage_id": "wp-dashboard-phase1-structured-rollup-v1.0.0",
+      "priority": "P1",
+      "eta_local": "2026-02-16 21:00 CST",
+      "prompt": "你负责管理看板结构化展示。必须完成：1) 管理摘要+展开详情双层；2) 缺字段标黄；3) 测试进展可视化与跳转。",
+      "must_deliver": [
+        "变更说明",
+        "截图",
+        "自测记录",
+        "上线判定"
+      ],
+      "writeback_file": "output/workpackages/phase1-dashboard-dev.status.json"
+    }
+  ],
+  "writeback_contract": {
+    "required_fields": [
+      "line_name",
+      "workpackage_id",
+      "status",
+      "progress",
+      "eta_local",
+      "evidence_links",
+      "release_decision",
+      "updated_at_local",
+      "dispatch_time_local"
+    ],
+    "status_enum": [
+      "planned",
+      "in_progress",
+      "blocked",
+      "done"
+    ],
+    "release_decision_enum": [
+      "GO",
+      "NO_GO",
+      "HOLD"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "generated_at_utc": "2026-02-15T14:40:53.716820+00:00",
+  "scenario": "tampered_line_feedback_hash",
+  "expected": {
+    "run_p0_returncode_nonzero": true,
+    "release_decision": "NO_GO",
+    "line_feedback_hash_verified": false
+  },
+  "actual": {
+    "run_p0_returncode": 1,
+    "release_decision": "NO_GO",
+    "line_feedback_hash_verified": false,
+    "line_feedback_hash": {
+      "payload_path": "/var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/line_feedback.latest.json",
+      "hash_path": "/var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/line_feedback.latest.sha256",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "actual_sha256": "621fc1cbbad4bad2c58e4c75fc8a62579f3847868292a7075b7e3e6b36b9f79e",
+      "errors": [
+        "line feedback hash mismatch"
+      ]
+    }
+  },
+  "status": "blocked_as_expected",
+  "command": "/Users/huda/Code/.venv/bin/python /Users/huda/Code/spatial-intelligence-data-factory/scripts/run_p0_workpackage.py --workpackage /Users/huda/Code/spatial-intelligence-data-factory/workpackages/wp-core-engine-p0-stabilization-v0.1.0.json --schema /Users/huda/Code/spatial-intelligence-data-factory/contracts/workpackage.schema.json --line-feedback-input /var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/line_feedback.latest.json --line-feedback-hash /var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/line_feedback.latest.sha256 --output /var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/wp-core-engine-p0-stabilization-v0.1.0.report.json --skip-package-tests",
+  "stdout_tail": "workpackage=/Users/huda/Code/spatial-intelligence-data-factory/workpackages/wp-core-engine-p0-stabilization-v0.1.0.json\nschema_ok=True\npackages_ok=True\ngate_results={'runtime_unified_3_11_plus': False, 'workpackage_schema_ci': True, 'line_feedback_contract_enforced': True, 'line_feedback_hash_verified': False, 'failure_replay_feedback_closed': True}\nrelease_decision=NO_GO\nreport=/var/folders/n6/wrl1rkqj3rb6xh8v31m_1sw40000gn/T/line-feedback-block-demo-o0e9xxyy/wp-core-engine-p0-stabilization-v0.1.0.report.json\n",
+  "stderr_tail": ""
+}

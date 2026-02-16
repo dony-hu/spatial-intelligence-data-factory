@@ -1,0 +1,30 @@
+{
+  "batch_id": "dispatch-address-line-closure-001",
+  "line": "地址算法与治理规则线",
+  "updated_at": "2026-02-15T20:34:07.658269+08:00",
+  "workpackages": {
+    "wp-address-topology-v1.0.1": {
+      "status": "done",
+      "release_decision": "GO",
+      "report_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/wp-address-topology-v1.0.1.acceptance.report.py311.json"
+    },
+    "wp-address-topology-v1.0.2": {
+      "status": "done",
+      "release_decision": "GO",
+      "report_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/wp-address-topology-v1.0.2.acceptance.report.py311.json"
+    },
+    "wp-core-engine-address-core-p0-v0.1.0": {
+      "status": "done",
+      "release_decision": "GO",
+      "report_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/wp-core-engine-address-core-p0-v0.1.0.report.py311.json"
+    }
+  },
+  "evidence": {
+    "fixed_samples_ref": "/Users/huda/Code/spatial-intelligence-data-factory/workpackages/bundles/address-topology-v1.0.2/demo/fixed_demo_samples.v1.json",
+    "line_feedback_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.address_topology.latest.json",
+    "acceptance_doc_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/wp-address-topology-v1.0.1-v1.0.2.acceptance.md"
+  },
+  "risk_disclosure": [
+    "固定成功样本当前仍引用历史 completed 记录；最新两次 single 实跑为 failed，需后续继续提高成功复现稳定性。"
+  ]
+}

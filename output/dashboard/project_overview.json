@@ -1,0 +1,70 @@
+{
+  "project_id": "spatial-intelligence-data-factory",
+  "project_name": "Spatial Intelligence Data Factory",
+  "iteration": "iteration-011-phase1-pg-foundation-prompts",
+  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "overall_status": "red",
+  "priority_summary": {
+    "p0_open": 0,
+    "p1_open": 10,
+    "p2_open": 0
+  },
+  "key_milestones": [
+    {
+      "name": "wp-address-canonical-pg-baseline-v1.0.0",
+      "status": "in_progress",
+      "eta": "2026-02-16T11:22:20+08:00"
+    },
+    {
+      "name": "wp-address-topology-v1.0.1",
+      "status": "in_progress",
+      "eta": "2026-02-14T11:40:00"
+    },
+    {
+      "name": "wp-address-topology-v1.0.2",
+      "status": "in_progress",
+      "eta": "2026-02-14T14:50:00"
+    },
+    {
+      "name": "wp-core-engine-address-core-p0-v0.1.0",
+      "status": "in_progress",
+      "eta": "2026-02-15T19:10:00+08:00"
+    },
+    {
+      "name": "wp-core-engine-governance-api-lab-p0-v0.1.0",
+      "status": "in_progress",
+      "eta": "2026-02-15T19:10:00+08:00"
+    }
+  ],
+  "top_risks": [
+    {
+      "id": "R-001",
+      "title": "无硬阻塞",
+      "severity": "low",
+      "owner": "总控Codex（Orchestrator）",
+      "status": "mitigated"
+    },
+    {
+      "id": "R-002",
+      "title": "治理风险：工程监理线尚处首轮执行期，需持续审计越界与抄近路风险",
+      "severity": "high",
+      "owner": "总控Codex（Orchestrator）",
+      "status": "open"
+    },
+    {
+      "id": "R-003",
+      "title": "门槛风险：`nightly quality gate` 已回写 `NO_GO`，主因 `suite_web_e2e_catalog` 失败（0 passed / 4 failed）",
+      "severity": "high",
+      "owner": "总控Codex（Orchestrator）",
+      "status": "open"
+    },
+    {
+      "id": "R-004",
+      "title": "展示风险：总控与看板对“日间 GO / 夜间 NO_GO”口径需统一，避免误读",
+      "severity": "high",
+      "owner": "总控Codex（Orchestrator）",
+      "status": "open"
+    }
+  ],
+  "release_decision": "NO_GO"
+}

@@ -1,0 +1,159 @@
+{
+  "workpackage_id": "wp-orchestrator-phase1-crossline-closure-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-orchestrator-phase1-crossline-closure-v1.0.0",
+    "tool_bundle_version": "tools-wp-orchestrator-phase1-crossline-closure-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-core-engine-p0-stabilization-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "project_orchestrator_phase1",
+    "goal": "完成PG统一架构Phase1跨线收敛, 输出管理层可签发的Go/No-Go决策包",
+    "constraints": [
+      "必须汇总10条线Done/Next/Blocker/ETA/证据",
+      "必须执行跨线依赖与风险闭环检查",
+      "必须产出可回滚方案与48小时计划"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "dispatch_batch_id",
+      "line_status_inputs",
+      "gate_inputs",
+      "decision_template"
+    ],
+    "properties": {
+      "dispatch_batch_id": {
+        "type": "string"
+      },
+      "line_status_inputs": {
+        "type": "string"
+      },
+      "gate_inputs": {
+        "type": "string"
+      },
+      "decision_template": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "status_matrix",
+      "top_risks",
+      "go_nogo_decision",
+      "rollback_plan",
+      "next_48h_plan"
+    ],
+    "properties": {
+      "status_matrix": {
+        "type": "string"
+      },
+      "top_risks": {
+        "type": "string"
+      },
+      "go_nogo_decision": {
+        "type": "string"
+      },
+      "rollback_plan": {
+        "type": "string"
+      },
+      "next_48h_plan": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "o1",
+        "name": "状态与证据收口",
+        "deliverables": [
+          "output/workpackages/dispatch-phase1-pg-foundation-002.status.json"
+        ],
+        "done_definition": [
+          "覆盖10条线且字段完整"
+        ]
+      },
+      {
+        "code": "o2",
+        "name": "发布门槛判定",
+        "deliverables": [
+          "output/workpackages/dispatch-phase1-pg-foundation-002-go-nogo.md"
+        ],
+        "done_definition": [
+          "给出GO/NO_GO并说明原因"
+        ]
+      },
+      {
+        "code": "o3",
+        "name": "管理层验收包",
+        "deliverables": [
+          "output/dashboard/dispatch-phase1-pg-foundation-002-management-review.md"
+        ],
+        "done_definition": [
+          "含风险、回滚、48h计划"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "jq",
+      "markdown",
+      "rg",
+      "scripts/update_dashboard_on_event.py"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "coordination/status/line-execution.md",
+    "mode": "crossline_closure",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "output/dashboard/project_overview.json",
+      "output/dashboard/worklines_overview.json",
+      "output/dashboard/workpackages_live.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-core-engine-p0-stabilization-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

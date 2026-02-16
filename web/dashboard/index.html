@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据治理人工复核决策台</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="hero" id="top">
+      <div class="hero-brand">
+        <h1>数据治理人工复核决策台</h1>
+        <p id="meta">加载中...</p>
+      </div>
+      <div class="hero-ops">
+        <span id="heroHealth" class="health-badge">决策压力：加载中</span>
+        <button id="refresh" type="button">刷新</button>
+        <select id="interval" aria-label="刷新间隔">
+          <option value="15">15s</option>
+          <option value="30" selected>30s</option>
+          <option value="60">60s</option>
+        </select>
+      </div>
+    </header>
+
+    <section class="kpi-strip" id="kpis"></section>
+
+    <main>
+      <section class="panel" id="panel-review-queue">
+        <div class="panel-head">
+          <h2 class="panel-title"><span class="panel-no">01</span>待人工确认成果</h2>
+          <div class="panel-actions">
+            <label class="inline-check">
+              <input id="onlyPending" type="checkbox" checked />
+              仅看未决策
+            </label>
+            <button id="exportDecisions" type="button">导出决策记录</button>
+          </div>
+        </div>
+        <p class="panel-meta">展示需要人工确认的阶段性成果，并对每条成果给出下一步流转决策。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>成果ID</th>
+                <th>阶段</th>
+                <th>摘要</th>
+                <th>风险</th>
+                <th>证据</th>
+                <th>当前门禁</th>
+                <th>决策动作</th>
+                <th>下一步流转</th>
+                <th>备注</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="reviewQueue"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-decisions">
+        <h2 class="panel-title"><span class="panel-no">02</span>人工决策留痕</h2>
+        <div id="decisionFeed" class="decision-feed"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

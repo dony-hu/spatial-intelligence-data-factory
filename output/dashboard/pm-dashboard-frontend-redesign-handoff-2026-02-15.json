@@ -1,0 +1,50 @@
+{
+  "handoff_id": "pm-dashboard-frontend-redesign-2026-02-15",
+  "type": "frontend_design_handoff",
+  "as_of": "2026-02-15",
+  "target_team": "管理看板研发线",
+  "scope": {
+    "in_scope": [
+      "信息架构重组",
+      "视觉样式升级",
+      "交互行为规范",
+      "响应式布局"
+    ],
+    "out_of_scope": [
+      "后端接口变更",
+      "数据schema变更",
+      "新增服务端聚合逻辑"
+    ]
+  },
+  "deliverables": {
+    "prototype_files": [
+      "/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/index.html",
+      "/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/styles.css",
+      "/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/app.js"
+    ],
+    "spec_doc": "/Users/huda/Code/spatial-intelligence-data-factory/output/dashboard/pm-dashboard-frontend-redesign-handoff-2026-02-15.md"
+  },
+  "sections": [
+    "hero",
+    "kpi_strip",
+    "section_nav",
+    "pm_brief_panel",
+    "workline_overview_panel",
+    "workpackage_panel",
+    "test_status_panel",
+    "test_progress_panel"
+  ],
+  "kpi_logic": {
+    "project_health": "score=100-blockedLines*8-gateFail*18-pkgRisk*6+round(pkgAvgProgress*0.08), clipped to 0..100",
+    "active_lines": "status not containing done/closed/completed",
+    "package_progress": "average(progress)",
+    "quality_gate": "pass count among workpackage_schema_ci,line_feedback_contract,failure_replay_contract,overall"
+  },
+  "acceptance": [
+    "新版结构在 / 可见并正常加载",
+    "自动刷新与手动刷新可用",
+    "任务详情弹窗复制可用",
+    "移动端布局可读",
+    "数据缺失时页面降级不崩溃"
+  ]
+}

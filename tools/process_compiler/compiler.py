@@ -25,6 +25,7 @@ class CompileResult:
     process_spec: Dict[str, Any]
     tool_scripts: Dict[str, str]                    # 工具名 → 代码
     tool_metadata: List[Dict[str, Any]]             # 工具信息和缺失告警
+    observability_bundle: Dict[str, Any]
     validation_errors: List[str]
     validation_warnings: List[str]
     execution_readiness: str                        # "ready" | "partial" | "manual_required"
@@ -67,6 +68,7 @@ class ProcessCompiler:
         warnings = []
         tool_scripts = {}
         tool_metadata = []
+        observability_bundle: Dict[str, Any] = {}
 
         try:
             # 步骤1: 提取元数据
@@ -124,6 +126,7 @@ class ProcessCompiler:
                 process_name=process_name,
                 domain=domain,
                 metadata=metadata,
+                draft_dict=draft_dict,
                 steps=steps,
                 tool_scripts=tool_scripts
             )
@@ -136,12 +139,13 @@ class ProcessCompiler:
                 domain=domain,
             )
             if observability.get("status") == "generated":
-                process_spec["observability_bundle"] = {
+                observability_bundle = {
                     "generator": "process_compiler.tool_generator",
                     "bundle_id": observability.get("bundle_id"),
                     "entrypoints": observability.get("entrypoints", []),
                     "step_error_codes": observability.get("step_error_codes", {}),
                 }
+                process_spec["observability_bundle"] = observability_bundle
                 tool_metadata.append({
                     "tool_name": "line_observability_bundle",
                     "step": "OBSERVABILITY",
@@ -172,6 +176,7 @@ class ProcessCompiler:
                 process_spec=process_spec,
                 tool_scripts=tool_scripts,
                 tool_metadata=tool_metadata,
+                observability_bundle=observability_bundle,
                 validation_errors=errors,
                 validation_warnings=warnings,
                 execution_readiness=execution_readiness
@@ -186,10 +191,29 @@ class ProcessCompiler:
                 process_spec={},
                 tool_scripts={},
                 tool_metadata=[],
+                observability_bundle={},
                 validation_errors=[f"编译异常: {str(e)}"],
                 validation_warnings=[],
                 execution_readiness="manual_required"
             )
+
+    @staticmethod
+    def _resolve_process_version(metadata: Dict[str, Any], draft_dict: Dict[str, Any]) -> str:
+        candidates = [
+            draft_dict.get("version"),
+            draft_dict.get("workpackage_version"),
+            draft_dict.get("version_label"),
+            metadata.get("version"),
+            metadata.get("workpackage_version"),
+        ]
+        for value in candidates:
+            raw = str(value or "").strip()
+            if not raw:
+                continue
+            normalized = raw.lower().lstrip("v")
+            if re.fullmatch(r"\d+\.\d+\.\d+", normalized):
+                return normalized
+        return "1.0.0"
 
     def _extract_metadata(self, draft_dict: Dict[str, Any]) -> Dict[str, Any]:
         """提取工艺元数据"""
@@ -216,19 +240,21 @@ class ProcessCompiler:
                            process_name: str,
                            domain: str,
                            metadata: Dict[str, Any],
+                           draft_dict: Dict[str, Any],
                            steps: List[Dict[str, Any]],
                            tool_scripts: Dict[str, str]) -> Dict[str, Any]:
         """构建 ProcessSpec"""
 
         process_id = f"procdef_{uuid.uuid4().hex[:12]}"
         process_version_id = f"procver_{uuid.uuid4().hex[:12]}"
+        process_version = self._resolve_process_version(metadata=metadata, draft_dict=draft_dict)
 
         return {
             "process_id": process_id,
             "process_code": process_code,
             "process_name": process_name,
             "domain": domain,
-            "version": "1.0.0",
+            "version": process_version,
             "version_id": process_version_id,
             "status": "draft",
             "created_at": datetime.now().isoformat(),

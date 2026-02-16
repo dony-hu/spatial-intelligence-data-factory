@@ -35,6 +35,28 @@
 4. 任何范围或架构决策变更必须在当日写入日志。
 5. 日志历史采用追加写入；若需更正，必须新增带时间戳的更正记录。
 
+## 4.1 研发角色体系口径（强制）
+
+1. 研发期（Build-time）必须使用统一角色体系：
+- BMAD 治理角色（RACI）
+- 协同工作线角色
+- Agent 能力域
+2. 运营期（Run-time）业务使用者角色不得混入研发派单责任字段。
+3. 角色映射的唯一规范来源：`docs/codex-bmad-role-mapping-v1-2026-02-15.md`。
+
+## 4.2 派单与状态回写字段（强制）
+
+所有 `coordination/dispatch/*.md` 与 `coordination/status/*.md` 的研发任务描述必须包含：
+
+- `workline`
+- `A_role`
+- `R_owner`
+- `agent_capabilities`
+- `go_no_go_gate`
+- `evidence_links`
+
+缺失上述字段的任务，不得标记为“已下发”或“已验收”。
+
 ## 5. 完成定义（日志合规）
 
 仅在满足以下条件时，当日才算合规：

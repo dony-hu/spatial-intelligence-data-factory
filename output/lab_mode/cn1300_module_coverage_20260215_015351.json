@@ -1,0 +1,193 @@
+{
+  "dataset": "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv",
+  "generated_at": "2026-02-15T01:53:51.362541+00:00",
+  "rows_total": 1300,
+  "module_coverage": {
+    "normalize": {
+      "hit_count": 780,
+      "hit_rate": 0.6
+    },
+    "parse": {
+      "field_hit_count": {
+        "province": 1300,
+        "city": 1300,
+        "district": 1300,
+        "road": 1170,
+        "house_no": 1170
+      },
+      "field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.9,
+        "house_no": 0.9
+      }
+    },
+    "match": {
+      "hit_count": 910,
+      "hit_rate": 0.7
+    },
+    "dedup": {
+      "input_count": 1582,
+      "expected_unique_count": 1300,
+      "output_unique_count": 1300,
+      "injected_exact_duplicates": 130,
+      "injected_variant_duplicates": 152,
+      "injected_duplicates": 282,
+      "removed_duplicates": 282,
+      "dedup_exact_pass": true
+    },
+    "score": {
+      "judgement_hit_count": 1300,
+      "judgement_hit_rate": 1.0,
+      "strategy_distribution": {
+        "rule_only": 780,
+        "match_dict": 260,
+        "human_required": 260
+      },
+      "expected_distribution": {
+        "accept": 780,
+        "needs-human": 260,
+        "reject": 260
+      },
+      "predicted_distribution": {
+        "accept": 780,
+        "needs-human": 260,
+        "reject": 260
+      },
+      "confidence_stats": {
+        "mean": 0.79835,
+        "median": 0.9335,
+        "min": 0.322,
+        "max": 0.9335,
+        "p95": 0.9335
+      }
+    }
+  },
+  "samples": {
+    "normalize_mismatch_top20": [
+      {
+        "case_id": "CNADDR-0006",
+        "raw_text": "随州市广水市解放大道43号未来城19幢166室",
+        "expected_normalized": "湖北省随州市广水市解放大道43号 未来城19栋7单元166室",
+        "normalized": "湖北省随州市广水市解放大道43号未来城19栋166室"
+      },
+      {
+        "case_id": "CNADDR-0007",
+        "raw_text": "上海市浦东新区创新大道50号星河湾2幢177室",
+        "expected_normalized": "上海市上海市浦东新区创新大道50号 星河湾2栋4单元177室",
+        "normalized": "上海市上海市浦东新区创新大道50号星河湾2栋177室"
+      },
+      {
+        "case_id": "CNADDR-0008",
+        "raw_text": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+        "expected_normalized": "北京市北京市朝阳区科创路57号 万和府5栋1单元188室",
+        "normalized": "北京市北京市朝阳区科创路万和府5栋1单元188室"
+      },
+      {
+        "case_id": "CNADDR-0009",
+        "raw_text": "广东省深圳市罗湖区不存在路64号龙湖天街",
+        "expected_normalized": "广东省深圳市罗湖区不存在路64号",
+        "normalized": "广东省深圳市罗湖区不存在路64号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0016",
+        "raw_text": "苏州市虎丘区人民路113号未来城9幢276室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路113号 未来城9栋1单元276室",
+        "normalized": "江苏省苏州市虎丘区人民路113号未来城9栋276室"
+      },
+      {
+        "case_id": "CNADDR-0017",
+        "raw_text": "武汉市武昌区建设路120号星河湾12幢287室",
+        "expected_normalized": "湖北省武汉市武昌区建设路120号 星河湾12栋6单元287室",
+        "normalized": "湖北省武汉市武昌区建设路120号星河湾12栋287室"
+      },
+      {
+        "case_id": "CNADDR-0018",
+        "raw_text": "湖北省随州市广水市解放大道万和府15栋3单元298室",
+        "expected_normalized": "湖北省随州市广水市解放大道127号 万和府15栋3单元298室",
+        "normalized": "湖北省随州市广水市解放大道万和府15栋3单元298室"
+      },
+      {
+        "case_id": "CNADDR-0019",
+        "raw_text": "上海市上海市浦东新区不存在路134号龙湖天街",
+        "expected_normalized": "上海市上海市浦东新区不存在路134号",
+        "normalized": "上海市上海市浦东新区不存在路134号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0026",
+        "raw_text": "北京市朝阳区中山东一路183号未来城19幢386室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路183号 未来城19栋3单元386室",
+        "normalized": "北京市北京市朝阳区中山东一路183号未来城19栋386室"
+      },
+      {
+        "case_id": "CNADDR-0027",
+        "raw_text": "深圳市罗湖区南京西路190号星河湾2幢397室",
+        "expected_normalized": "广东省深圳市罗湖区南京西路190号 星河湾2栋8单元397室",
+        "normalized": "广东省深圳市罗湖区南京西路190号星河湾2栋397室"
+      },
+      {
+        "case_id": "CNADDR-0028",
+        "raw_text": "江苏省苏州市虎丘区人民路万和府5栋5单元408室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路197号 万和府5栋5单元408室",
+        "normalized": "江苏省苏州市虎丘区人民路万和府5栋5单元408室"
+      },
+      {
+        "case_id": "CNADDR-0029",
+        "raw_text": "湖北省武汉市武昌区不存在路204号龙湖天街",
+        "expected_normalized": "湖北省武汉市武昌区不存在路204号",
+        "normalized": "湖北省武汉市武昌区不存在路204号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0036",
+        "raw_text": "随州市广水市幸福路253号未来城9幢496室",
+        "expected_normalized": "湖北省随州市广水市幸福路253号 未来城9栋5单元496室",
+        "normalized": "湖北省随州市广水市幸福路253号未来城9栋496室"
+      },
+      {
+        "case_id": "CNADDR-0037",
+        "raw_text": "上海市浦东新区世纪大道260号星河湾12幢507室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道260号 星河湾12栋2单元507室",
+        "normalized": "上海市上海市浦东新区世纪大道260号星河湾12栋507室"
+      },
+      {
+        "case_id": "CNADDR-0038",
+        "raw_text": "北京市北京市朝阳区中山东一路万和府15栋7单元518室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路267号 万和府15栋7单元518室",
+        "normalized": "北京市北京市朝阳区中山东一路万和府15栋7单元518室"
+      },
+      {
+        "case_id": "CNADDR-0039",
+        "raw_text": "广东省深圳市罗湖区不存在路274号龙湖天街",
+        "expected_normalized": "广东省深圳市罗湖区不存在路274号",
+        "normalized": "广东省深圳市罗湖区不存在路274号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0046",
+        "raw_text": "苏州市虎丘区沿江大道323号未来城19幢606室",
+        "expected_normalized": "江苏省苏州市虎丘区沿江大道323号 未来城19栋7单元606室",
+        "normalized": "江苏省苏州市虎丘区沿江大道323号未来城19栋606室"
+      },
+      {
+        "case_id": "CNADDR-0047",
+        "raw_text": "武汉市武昌区文化路330号星河湾2幢617室",
+        "expected_normalized": "湖北省武汉市武昌区文化路330号 星河湾2栋4单元617室",
+        "normalized": "湖北省武汉市武昌区文化路330号星河湾2栋617室"
+      },
+      {
+        "case_id": "CNADDR-0048",
+        "raw_text": "湖北省随州市广水市幸福路万和府5栋1单元628室",
+        "expected_normalized": "湖北省随州市广水市幸福路337号 万和府5栋1单元628室",
+        "normalized": "湖北省随州市广水市幸福路万和府5栋1单元628室"
+      },
+      {
+        "case_id": "CNADDR-0049",
+        "raw_text": "上海市上海市浦东新区不存在路344号龙湖天街",
+        "expected_normalized": "上海市上海市浦东新区不存在路344号",
+        "normalized": "上海市上海市浦东新区不存在路344号龙湖天街"
+      }
+    ],
+    "score_mismatch_top20": []
+  },
+  "phase2_note": "human review tiering refinement intentionally deferred"
+}

@@ -1,0 +1,6 @@
+{
+  "elements": [
+    {"type": "way", "id": 1001, "tags": {"highway": "primary", "name": "中山路", "addr:adcode": "320508"}},
+    {"type": "node", "id": 2001, "lat": 31.314, "lon": 120.621, "tags": {"name": "拙政园", "amenity": "tourism", "addr:adcode": "320508"}}
+  ]
+}

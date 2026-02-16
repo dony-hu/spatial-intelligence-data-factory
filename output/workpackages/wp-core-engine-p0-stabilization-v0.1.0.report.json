@@ -1,0 +1,64 @@
+{
+  "runtime_baseline": {
+    "python_version": "3.11",
+    "ci_runtime": "github-actions-setup-python@3.11",
+    "local_bootstrap": "python3.11 -m venv .venv && .venv/bin/pip install -r requirements-governance.txt"
+  },
+  "delivery_packages": [
+    {
+      "name": "address_core",
+      "scope": "A",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    },
+    {
+      "name": "governance_api_and_lab",
+      "scope": "B",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    },
+    {
+      "name": "trust_data_hub",
+      "scope": "C",
+      "status": "skipped",
+      "test_report_ref": "skipped-by-flag"
+    }
+  ],
+  "gate_results": {
+    "runtime_unified_3_11_plus": false,
+    "workpackage_schema_ci": true,
+    "line_feedback_contract_enforced": true,
+    "line_feedback_hash_verified": true,
+    "failure_replay_feedback_closed": true
+  },
+  "release_decision": "NO_GO",
+  "meta": {
+    "workpackage_id": "wp-core-engine-p0-stabilization-v0.1.0",
+    "workpackage_version": "0.1.0",
+    "executed_at": "2026-02-15T13:35:00.627342+00:00",
+    "executor_python": "3.9.6 (default, Dec  2 2025, 07:27:58) \n[Clang 17.0.0 (clang-1700.6.3.2)]",
+    "executor_python_short": "3.9.6",
+    "runtime_declared": "3.11",
+    "runtime_matches_declared": false,
+    "schema_errors": [],
+    "line_feedback_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.latest.json",
+    "line_feedback_hash_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.latest.sha256",
+    "line_feedback_errors": [],
+    "line_feedback_hash": {
+      "payload_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.latest.json",
+      "hash_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback.latest.sha256",
+      "expected_sha256": "621fc1cbbad4bad2c58e4c75fc8a62579f3847868292a7075b7e3e6b36b9f79e",
+      "actual_sha256": "621fc1cbbad4bad2c58e4c75fc8a62579f3847868292a7075b7e3e6b36b9f79e",
+      "errors": []
+    },
+    "replay_store": {
+      "failure_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+      "replay_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+      "failure_queue_table_exists": true,
+      "replay_runs_table_exists": true,
+      "failure_queue_rows": 2,
+      "replay_runs_rows": 2,
+      "errors": []
+    }
+  }
+}

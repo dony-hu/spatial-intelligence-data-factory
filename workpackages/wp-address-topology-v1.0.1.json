@@ -14,7 +14,9 @@
     "constraints": [
       "产线不得修改工艺与工具内核",
       "质量阈值>=0.95",
-      "失败需输出步骤级错误信息"
+      "失败需输出步骤级错误信息",
+      "算法口径固定为 parse->normalize->validate->topology_build",
+      "规则口径固定为 quality_score>=0.95 判定成功，否则进入失败回放链路"
     ]
   },
   "input_contract": {
@@ -32,7 +34,10 @@
       "standard_address": {"type": "string"},
       "topology_nodes": {"type": "array"},
       "topology_edges": {"type": "array"},
-      "quality_score": {"type": "number"}
+      "quality_score": {"type": "number"},
+      "execution_trace_id": {"type": "string"},
+      "failure_queue_snapshot_ref": {"type": "string"},
+      "replay_result_ref": {"type": "string"}
     }
   },
   "process_spec": {
@@ -61,6 +66,11 @@
       "workpackages/bundles/address-topology-v1.0.1/observability/line_observe.py",
       "workpackages/bundles/address-topology-v1.0.1/observability/line_metrics.json"
     ]
+  },
+  "line_feedback_contract": {
+    "required_fields": ["status", "failure_queue_snapshot_ref", "replay_result_ref"],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
   },
   "rollback": {
     "from_version": "1.0.1",

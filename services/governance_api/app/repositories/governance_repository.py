@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
+from uuid import uuid4
 
 
 @dataclass
@@ -13,10 +14,27 @@ class _MemoryStore:
     results: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     reviews: dict[str, dict[str, Any]] = field(default_factory=dict)
     rulesets: dict[str, dict[str, Any]] = field(default_factory=dict)
+    change_requests: dict[str, dict[str, Any]] = field(default_factory=dict)
+    audit_events: list[dict[str, Any]] = field(default_factory=list)
+
+
+class GovernanceGateError(Exception):
+    def __init__(self, *, code: str, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.status_code = status_code
 
 
 class GovernanceRepository:
     def __init__(self) -> None:
+        self._allow_memory_fallback = str(os.getenv("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "0")).strip() == "1"
+        db_url = str(os.getenv("DATABASE_URL") or "").strip()
+        if not self._allow_memory_fallback and not db_url.startswith("postgresql"):
+            raise RuntimeError(
+                "DATABASE_URL must be postgresql:// in PG-only runtime mode. "
+                "Set GOVERNANCE_ALLOW_MEMORY_FALLBACK=1 for temporary local fallback."
+            )
         self._memory = _MemoryStore(
             rulesets={
                 "default": {
@@ -32,6 +50,8 @@ class GovernanceRepository:
         return os.getenv("DATABASE_URL")
 
     def _db_enabled(self) -> bool:
+        if self._allow_memory_fallback:
+            return False
         url = self._database_url()
         return bool(url and url.startswith("postgresql"))
 
@@ -43,10 +63,25 @@ class GovernanceRepository:
 
             engine = create_engine(self._database_url())
             with engine.begin() as conn:
+                conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
                 conn.execute(text(sql), params)
             return True
         except Exception:
             return False
+
+    def _query(self, sql: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+        if not self._db_enabled():
+            return []
+        try:
+            from sqlalchemy import create_engine, text
+
+            engine = create_engine(self._database_url())
+            with engine.begin() as conn:
+                conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
+                rows = conn.execute(text(sql), params).mappings().all()
+            return [dict(item) for item in rows]
+        except Exception:
+            return []
 
     def create_task(
         self,
@@ -304,6 +339,297 @@ class GovernanceRepository:
     def get_ruleset(self, ruleset_id: str) -> dict[str, Any] | None:
         return self._memory.rulesets.get(ruleset_id)
 
+    def list_manual_review_items(self, *, pending_only: bool = True, limit: int = 200) -> list[dict[str, Any]]:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                WITH review_latest AS (
+                    SELECT DISTINCT ON (raw_id)
+                        raw_id,
+                        review_status,
+                        reviewer,
+                        comment,
+                        reviewed_at,
+                        updated_at
+                    FROM addr_review
+                    ORDER BY raw_id, COALESCE(reviewed_at, updated_at, created_at) DESC
+                )
+                SELECT
+                    tr.task_id,
+                    tr.status AS task_status,
+                    tr.created_at AS task_created_at,
+                    tr.updated_at AS task_updated_at,
+                    raw.raw_id,
+                    raw.raw_text,
+                    canon.canon_text,
+                    canon.confidence,
+                    canon.strategy,
+                    canon.updated_at AS canonical_updated_at,
+                    rl.review_status,
+                    rl.reviewer,
+                    rl.comment AS review_comment,
+                    rl.reviewed_at
+                FROM addr_task_run tr
+                JOIN addr_raw raw
+                    ON raw.batch_id = tr.batch_id
+                JOIN addr_canonical canon
+                    ON canon.raw_id = raw.raw_id
+                LEFT JOIN review_latest rl
+                    ON rl.raw_id = raw.raw_id
+                WHERE (
+                        canon.strategy IN ('human_required', 'human_rejected', 'low_confidence', 'fallback')
+                        OR canon.confidence < :confidence_gate
+                        OR tr.status IN ('SUCCEEDED', 'REVIEWED')
+                    )
+                    AND (:pending_only = FALSE OR rl.review_status IS NULL)
+                ORDER BY
+                    CASE WHEN rl.review_status IS NULL THEN 0 ELSE 1 END ASC,
+                    canon.confidence ASC,
+                    tr.updated_at DESC
+                LIMIT :limit;
+                """,
+                {
+                    "pending_only": bool(pending_only),
+                    "limit": int(limit),
+                    "confidence_gate": 0.85,
+                },
+            )
+            normalized: list[dict[str, Any]] = []
+            for row in rows:
+                confidence = float(row.get("confidence", 0.0) or 0.0)
+                review_status = str(row.get("review_status") or "")
+                task_status = str(row.get("task_status") or "")
+                strategy = str(row.get("strategy") or "")
+                if review_status:
+                    risk_level = "low"
+                    stage = "已人工决策"
+                else:
+                    stage = "待人工确认"
+                    if task_status.upper() == "FAILED" or confidence < 0.6 or strategy == "human_rejected":
+                        risk_level = "high"
+                    elif confidence < 0.85:
+                        risk_level = "medium"
+                    else:
+                        risk_level = "low"
+                normalized.append(
+                    {
+                        "task_id": str(row.get("task_id") or ""),
+                        "raw_id": str(row.get("raw_id") or ""),
+                        "raw_text": str(row.get("raw_text") or ""),
+                        "canon_text": str(row.get("canon_text") or ""),
+                        "confidence": round(confidence, 6),
+                        "strategy": strategy,
+                        "task_status": task_status,
+                        "review_status": review_status,
+                        "reviewer": str(row.get("reviewer") or ""),
+                        "review_comment": str(row.get("review_comment") or ""),
+                        "reviewed_at": str(row.get("reviewed_at") or ""),
+                        "task_created_at": str(row.get("task_created_at") or ""),
+                        "task_updated_at": str(row.get("task_updated_at") or ""),
+                        "canonical_updated_at": str(row.get("canonical_updated_at") or ""),
+                        "stage": stage,
+                        "risk_level": risk_level,
+                        "evidence_ref": f"/v1/governance/tasks/{str(row.get('task_id') or '')}/result",
+                    }
+                )
+            return normalized
+
+        items: list[dict[str, Any]] = []
+        for task_id, task in self._memory.tasks.items():
+            task_status = str(task.get("status") or "")
+            for result in self._memory.results.get(task_id, []):
+                raw_id = str(result.get("raw_id") or "")
+                review = self._memory.reviews.get(task_id, {})
+                review_status = str(review.get("review_status") or "")
+                is_reviewed = bool(review_status and (not review.get("raw_id") or review.get("raw_id") == raw_id))
+                if pending_only and is_reviewed:
+                    continue
+                confidence = float(result.get("confidence", 0.0) or 0.0)
+                strategy = str(result.get("strategy") or "")
+                needs_manual = strategy in {"human_required", "human_rejected"} or confidence < 0.85 or task_status in {"SUCCEEDED", "REVIEWED"}
+                if not needs_manual:
+                    continue
+                risk_level = "high" if confidence < 0.6 else ("medium" if confidence < 0.85 else "low")
+                stage = "已人工决策" if is_reviewed else "待人工确认"
+                items.append(
+                    {
+                        "task_id": task_id,
+                        "raw_id": raw_id,
+                        "raw_text": str(result.get("canon_text") or ""),
+                        "canon_text": str(result.get("canon_text") or ""),
+                        "confidence": round(confidence, 6),
+                        "strategy": strategy,
+                        "task_status": task_status,
+                        "review_status": review_status,
+                        "reviewer": str(review.get("reviewer") or ""),
+                        "review_comment": str(review.get("comment") or ""),
+                        "reviewed_at": "",
+                        "task_created_at": str(task.get("created_at") or ""),
+                        "task_updated_at": "",
+                        "canonical_updated_at": "",
+                        "stage": stage,
+                        "risk_level": risk_level,
+                        "evidence_ref": f"/v1/governance/tasks/{task_id}/result",
+                    }
+                )
+        items.sort(key=lambda row: (row["stage"] != "待人工确认", row["confidence"]))
+        return items[:limit]
+
+    def submit_manual_review_decision(
+        self,
+        *,
+        task_id: str,
+        raw_id: str,
+        review_status: str,
+        reviewer: str,
+        next_route: str,
+        comment: str = "",
+        final_canon_text: str | None = None,
+    ) -> dict[str, Any]:
+        normalized_status = review_status.strip().lower()
+        if normalized_status not in {"approved", "rejected", "edited"}:
+            raise ValueError("review_status must be one of approved/rejected/edited")
+        merged_comment = f"[route:{next_route}] {comment}".strip()
+
+        if self._db_enabled():
+            review_id = f"rv_{uuid4().hex[:24]}"
+            self._execute(
+                """
+                INSERT INTO addr_review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
+                VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, NOW(), NOW(), NOW());
+                """,
+                {
+                    "review_id": review_id,
+                    "raw_id": raw_id,
+                    "review_status": normalized_status,
+                    "final_canon_text": final_canon_text,
+                    "reviewer": reviewer,
+                    "comment": merged_comment,
+                },
+            )
+            if normalized_status == "approved":
+                self._execute(
+                    """
+                    UPDATE addr_canonical
+                    SET
+                        canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
+                        confidence = GREATEST(confidence, 0.90),
+                        strategy = 'human_approved',
+                        updated_at = NOW()
+                    WHERE raw_id = :raw_id;
+                    """,
+                    {"raw_id": raw_id, "final_canon_text": final_canon_text},
+                )
+            elif normalized_status == "rejected":
+                self._execute(
+                    """
+                    UPDATE addr_canonical
+                    SET
+                        confidence = LEAST(confidence, 0.50),
+                        strategy = 'human_rejected',
+                        updated_at = NOW()
+                    WHERE raw_id = :raw_id;
+                    """,
+                    {"raw_id": raw_id},
+                )
+            else:
+                self._execute(
+                    """
+                    UPDATE addr_canonical
+                    SET
+                        canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
+                        confidence = GREATEST(confidence, 0.95),
+                        strategy = 'human_edited',
+                        updated_at = NOW()
+                    WHERE raw_id = :raw_id;
+                    """,
+                    {"raw_id": raw_id, "final_canon_text": final_canon_text},
+                )
+            self._execute(
+                """
+                UPDATE addr_task_run
+                SET status = CASE WHEN status = 'FAILED' THEN status ELSE 'REVIEWED' END,
+                    updated_at = NOW()
+                WHERE task_id = :task_id;
+                """,
+                {"task_id": task_id},
+            )
+            event = self._append_audit_event(
+                event_type="manual_review_decision",
+                caller=reviewer,
+                payload={
+                    "task_id": task_id,
+                    "raw_id": raw_id,
+                    "review_status": normalized_status,
+                    "next_route": next_route,
+                    "comment": comment,
+                },
+                related_change_id=None,
+            )
+            return {
+                "accepted": True,
+                "task_id": task_id,
+                "raw_id": raw_id,
+                "review_status": normalized_status,
+                "next_route": next_route,
+                "audit_event_id": str(event.get("event_id") or ""),
+            }
+
+        review_data = {
+            "raw_id": raw_id,
+            "review_status": normalized_status,
+            "reviewer": reviewer,
+            "comment": merged_comment,
+            "final_canon_text": final_canon_text,
+        }
+        self.upsert_review(task_id, review_data)
+        reconciled = self.reconcile_review(task_id, review_data)
+        return {
+            "accepted": True,
+            "task_id": task_id,
+            "raw_id": raw_id,
+            "review_status": normalized_status,
+            "next_route": next_route,
+            "updated_count": int(reconciled.get("updated_count", 0)),
+            "audit_event_id": "",
+        }
+
+    def _now_iso(self) -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    def _append_audit_event(
+        self,
+        event_type: str,
+        caller: str,
+        payload: dict[str, Any],
+        related_change_id: str | None = None,
+    ) -> dict[str, Any]:
+        event_id = f"evt_{uuid4().hex[:12]}"
+        event = {
+            "event_id": event_id,
+            "event_type": event_type,
+            "caller": caller,
+            "payload": payload,
+            "related_change_id": related_change_id,
+            "created_at": self._now_iso(),
+        }
+        self._memory.audit_events.append(event)
+        self._execute(
+            """
+            INSERT INTO addr_audit_event (event_id, event_type, caller, payload, related_change_id, created_at)
+            VALUES (:event_id, :event_type, :caller, CAST(:payload AS jsonb), :related_change_id, NOW())
+            ON CONFLICT (event_id) DO NOTHING;
+            """,
+            {
+                "event_id": event_id,
+                "event_type": event_type,
+                "caller": caller,
+                "payload": json.dumps(payload, ensure_ascii=False),
+                "related_change_id": related_change_id,
+            },
+        )
+        return event
+
     def get_ops_summary(
         self,
         task_id: str | None = None,
@@ -426,6 +752,232 @@ class GovernanceRepository:
         )
         return item
 
+    def create_change_request(self, payload: dict[str, Any]) -> dict[str, Any]:
+        change_id = f"chg_{uuid4().hex[:12]}"
+        now_iso = self._now_iso()
+        item = {
+            "change_id": change_id,
+            "from_ruleset_id": payload["from_ruleset_id"],
+            "to_ruleset_id": payload["to_ruleset_id"],
+            "baseline_task_id": payload["baseline_task_id"],
+            "candidate_task_id": payload["candidate_task_id"],
+            "diff": payload.get("diff", {}),
+            "scorecard": payload.get("scorecard", {}),
+            "recommendation": payload["recommendation"],
+            "status": "pending",
+            "approved_by": None,
+            "approved_at": None,
+            "review_comment": None,
+            "evidence_bullets": payload.get("evidence_bullets", []),
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        }
+        self._memory.change_requests[change_id] = item
+        self._execute(
+            """
+            INSERT INTO addr_change_request (
+                change_id, from_ruleset_id, to_ruleset_id, baseline_task_id, candidate_task_id,
+                diff_json, scorecard_json, recommendation, status, approved_by, approved_at,
+                review_comment, evidence_bullets, created_at, updated_at
+            ) VALUES (
+                :change_id, :from_ruleset_id, :to_ruleset_id, :baseline_task_id, :candidate_task_id,
+                CAST(:diff_json AS jsonb), CAST(:scorecard_json AS jsonb), :recommendation, :status, :approved_by, :approved_at,
+                :review_comment, CAST(:evidence_bullets AS jsonb), NOW(), NOW()
+            )
+            ON CONFLICT (change_id)
+            DO UPDATE SET
+                from_ruleset_id = EXCLUDED.from_ruleset_id,
+                to_ruleset_id = EXCLUDED.to_ruleset_id,
+                baseline_task_id = EXCLUDED.baseline_task_id,
+                candidate_task_id = EXCLUDED.candidate_task_id,
+                diff_json = EXCLUDED.diff_json,
+                scorecard_json = EXCLUDED.scorecard_json,
+                recommendation = EXCLUDED.recommendation,
+                status = EXCLUDED.status,
+                approved_by = EXCLUDED.approved_by,
+                approved_at = EXCLUDED.approved_at,
+                review_comment = EXCLUDED.review_comment,
+                evidence_bullets = EXCLUDED.evidence_bullets,
+                updated_at = NOW();
+            """,
+            {
+                "change_id": change_id,
+                "from_ruleset_id": item["from_ruleset_id"],
+                "to_ruleset_id": item["to_ruleset_id"],
+                "baseline_task_id": item["baseline_task_id"],
+                "candidate_task_id": item["candidate_task_id"],
+                "diff_json": json.dumps(item["diff"], ensure_ascii=False),
+                "scorecard_json": json.dumps(item["scorecard"], ensure_ascii=False),
+                "recommendation": item["recommendation"],
+                "status": item["status"],
+                "approved_by": item["approved_by"],
+                "approved_at": item["approved_at"],
+                "review_comment": item["review_comment"],
+                "evidence_bullets": json.dumps(item["evidence_bullets"], ensure_ascii=False),
+            },
+        )
+        self._append_audit_event(
+            event_type="change_request_created",
+            caller="system",
+            payload={
+                "change_id": change_id,
+                "from_ruleset_id": item["from_ruleset_id"],
+                "to_ruleset_id": item["to_ruleset_id"],
+                "task_run_id": item["candidate_task_id"],
+                "recommendation": item["recommendation"],
+                "reason": "change_request_submitted",
+            },
+            related_change_id=change_id,
+        )
+        return item
+
+    def get_change_request(self, change_id: str) -> dict[str, Any] | None:
+        return self._memory.change_requests.get(change_id)
+
+    def update_change_request_status(
+        self,
+        change_id: str,
+        *,
+        status: str,
+        actor: str,
+        comment: str | None = None,
+    ) -> dict[str, Any] | None:
+        item = self._memory.change_requests.get(change_id)
+        if not item:
+            return None
+        now_iso = self._now_iso()
+        item["status"] = status
+        item["updated_at"] = now_iso
+        if status == "approved":
+            item["approved_by"] = actor
+            item["approved_at"] = now_iso
+        else:
+            item["approved_by"] = None
+            item["approved_at"] = None
+        if comment:
+            item["review_comment"] = comment
+        self._execute(
+            """
+            UPDATE addr_change_request
+            SET status = :status,
+                approved_by = :approved_by,
+                approved_at = :approved_at,
+                review_comment = :review_comment,
+                updated_at = NOW()
+            WHERE change_id = :change_id;
+            """,
+            {
+                "change_id": change_id,
+                "status": item["status"],
+                "approved_by": item["approved_by"],
+                "approved_at": item["approved_at"],
+                "review_comment": item["review_comment"],
+            },
+        )
+        self._append_audit_event(
+            event_type="approval_changed",
+            caller=actor,
+            payload={
+                "change_id": change_id,
+                "status": status,
+                "task_run_id": item.get("candidate_task_id"),
+                "comment": comment,
+                "reason": comment,
+            },
+            related_change_id=change_id,
+        )
+        return item
+
+    def activate_ruleset(
+        self,
+        *,
+        ruleset_id: str,
+        change_id: str,
+        caller: str,
+        reason: str | None = None,
+    ) -> dict[str, Any]:
+        change = self._memory.change_requests.get(change_id)
+
+        def _block(code: str, message: str, status_code: int, gate_reason: str) -> None:
+            task_run_id = None
+            if isinstance(change, dict):
+                task_run_id = change.get("candidate_task_id")
+            self._append_audit_event(
+                event_type="ruleset_activation_blocked",
+                caller=caller,
+                payload={
+                    "ruleset_id": ruleset_id,
+                    "change_id": change_id,
+                    "task_run_id": task_run_id,
+                    "reason": reason,
+                    "gate_reason": gate_reason,
+                    "gate_code": code,
+                },
+                related_change_id=change_id if isinstance(change, dict) else None,
+            )
+            raise GovernanceGateError(code=code, message=message, status_code=status_code)
+
+        if caller.lower() != "admin":
+            _block("CALLER_NOT_AUTHORIZED", "caller must be admin", 403, "caller_not_admin")
+
+        if not isinstance(change, dict):
+            _block("APPROVAL_MISSING", "change request not found", 409, "missing_change_request")
+
+        if change.get("status") == "rejected":
+            _block("APPROVAL_REJECTED", "change request is rejected", 409, "approval_rejected")
+        if change.get("status") != "approved":
+            _block("APPROVAL_PENDING", "change request is not approved", 409, "approval_not_ready")
+        if not change.get("approved_by") or not change.get("approved_at"):
+            _block("APPROVAL_MISSING", "approval metadata is missing", 409, "approval_metadata_missing")
+        if change.get("to_ruleset_id") != ruleset_id:
+            _block("CHANGE_TARGET_MISMATCH", "change request does not match target ruleset", 409, "target_mismatch")
+        if ruleset_id not in self._memory.rulesets:
+            _block("RULESET_NOT_FOUND", "ruleset not found", 404, "ruleset_not_found")
+
+        for key in self._memory.rulesets:
+            self._memory.rulesets[key]["is_active"] = False
+        target = self._memory.rulesets[ruleset_id]
+        target["is_active"] = True
+        target["published_by"] = caller
+        target["published_reason"] = reason or f"activated via change {change_id}"
+
+        self._execute("UPDATE addr_ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
+        self._execute(
+            "UPDATE addr_ruleset SET is_active = TRUE, updated_at = NOW() WHERE ruleset_id = :ruleset_id;",
+            {"ruleset_id": ruleset_id},
+        )
+        self._append_audit_event(
+            event_type="ruleset_activated",
+            caller=caller,
+            payload={
+                "ruleset_id": ruleset_id,
+                "change_id": change_id,
+                "task_run_id": change.get("candidate_task_id"),
+                "reason": reason,
+            },
+            related_change_id=change_id,
+        )
+        return target
+
+    def list_audit_events(self, related_change_id: str | None = None) -> list[dict[str, Any]]:
+        if not related_change_id:
+            return list(self._memory.audit_events)
+        return [evt for evt in self._memory.audit_events if evt.get("related_change_id") == related_change_id]
+
+    def log_audit_event(
+        self,
+        event_type: str,
+        caller: str,
+        payload: dict[str, Any],
+        related_change_id: str | None = None,
+    ) -> dict[str, Any]:
+        return self._append_audit_event(
+            event_type=event_type,
+            caller=caller,
+            payload=payload,
+            related_change_id=related_change_id,
+        )
+
     def publish_ruleset(self, ruleset_id: str, operator: str, reason: str) -> dict[str, Any] | None:
         target = self._memory.rulesets.get(ruleset_id)
         if not target:
@@ -441,6 +993,126 @@ class GovernanceRepository:
             {"ruleset_id": ruleset_id},
         )
         return target
+
+    def _task_thresholds(self, task_id: str, t_low_override: float | None, t_high_override: float | None) -> tuple[float, float]:
+        task = self._memory.tasks.get(task_id, {})
+        ruleset = self._memory.rulesets.get(task.get("ruleset_id", "default"), self._memory.rulesets.get("default", {}))
+        thresholds = (ruleset or {}).get("config_json", {}).get("thresholds", {})
+        t_low = float(t_low_override) if t_low_override is not None else float(thresholds.get("t_low", 0.6))
+        t_high = float(t_high_override) if t_high_override is not None else float(thresholds.get("t_high", 0.85))
+        return t_low, t_high
+
+    def _task_metrics(self, task_id: str, t_low: float, t_high: float) -> dict[str, float]:
+        results = list(self._memory.results.get(task_id, []))
+        total = len(results)
+        if total <= 0:
+            return {
+                "auto_pass_rate": 0.0,
+                "review_rate": 0.0,
+                "human_required_rate": 0.0,
+                "consistency_score": 1.0,
+                "quality_gate_pass_rate": 1.0,
+                "review_accept_rate": 0.0,
+            }
+
+        auto_pass = 0
+        review_bucket = 0
+        human_required = 0
+        gate_pass = 0
+        groups: dict[str, set[str]] = {}
+        for item in results:
+            confidence = float(item.get("confidence", 0.0))
+            if confidence >= t_high:
+                auto_pass += 1
+            elif confidence >= t_low:
+                review_bucket += 1
+            else:
+                human_required += 1
+            if confidence >= t_low:
+                gate_pass += 1
+            raw_key = str(item.get("raw_id") or "")
+            canon = str(item.get("canon_text") or "")
+            groups.setdefault(raw_key, set()).add(canon)
+
+        conflict_groups = 0
+        duplicated_groups = 0
+        for _, outputs in groups.items():
+            if len(outputs) > 1:
+                duplicated_groups += 1
+                conflict_groups += 1
+        consistency_score = 1.0
+        if duplicated_groups > 0:
+            consistency_score = max(0.0, 1.0 - (float(conflict_groups) / float(duplicated_groups)))
+
+        review_item = self._memory.reviews.get(task_id)
+        review_accept_rate = 0.0
+        if review_item:
+            review_status = str(review_item.get("review_status") or "").lower()
+            review_accept_rate = 1.0 if review_status in {"approved", "edited"} else 0.0
+
+        return {
+            "auto_pass_rate": round(float(auto_pass) / float(total), 6),
+            "review_rate": round(float(review_bucket) / float(total), 6),
+            "human_required_rate": round(float(human_required) / float(total), 6),
+            "consistency_score": round(consistency_score, 6),
+            "quality_gate_pass_rate": round(float(gate_pass) / float(total), 6),
+            "review_accept_rate": round(review_accept_rate, 6),
+        }
+
+    def compute_scorecard(
+        self,
+        baseline_task_id: str,
+        candidate_task_id: str,
+        t_low_override: float | None = None,
+        t_high_override: float | None = None,
+    ) -> dict[str, Any]:
+        t_low_b, t_high_b = self._task_thresholds(baseline_task_id, t_low_override, t_high_override)
+        t_low_c, t_high_c = self._task_thresholds(candidate_task_id, t_low_override, t_high_override)
+        baseline = self._task_metrics(baseline_task_id, t_low=t_low_b, t_high=t_high_b)
+        candidate = self._task_metrics(candidate_task_id, t_low=t_low_c, t_high=t_high_c)
+        delta = {
+            key: round(float(candidate.get(key, 0.0)) - float(baseline.get(key, 0.0)), 6)
+            for key in baseline.keys()
+        }
+
+        reasons: list[str] = []
+        if (
+            delta["auto_pass_rate"] > 0
+            and delta["human_required_rate"] <= 0
+            and delta["consistency_score"] >= 0
+            and delta["quality_gate_pass_rate"] >= 0
+        ):
+            recommendation = "accept"
+            reasons.append("auto_pass_rate_up")
+            reasons.append("human_required_not_up")
+            reasons.append("consistency_not_down")
+            reasons.append("quality_gate_not_worse")
+        elif (
+            delta["human_required_rate"] > 0
+            or delta["consistency_score"] < -0.05
+            or delta["quality_gate_pass_rate"] < 0
+        ):
+            recommendation = "reject"
+            if delta["human_required_rate"] > 0:
+                reasons.append("human_required_up")
+            if delta["consistency_score"] < -0.05:
+                reasons.append("consistency_down")
+            if delta["quality_gate_pass_rate"] < 0:
+                reasons.append("quality_gate_worse")
+        else:
+            recommendation = "needs-human"
+            reasons.append("tradeoff_or_uncertain_gain")
+
+        return {
+            "baseline_task_id": baseline_task_id,
+            "candidate_task_id": candidate_task_id,
+            "thresholds": {"t_low": t_low_b, "t_high": t_high_b},
+            "baseline": baseline,
+            "candidate": candidate,
+            "delta": delta,
+            "recommendation": recommendation,
+            "reasons": reasons,
+        }
 
 
 REPOSITORY = GovernanceRepository()

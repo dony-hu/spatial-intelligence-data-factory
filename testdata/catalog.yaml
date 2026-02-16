@@ -98,6 +98,33 @@ fixtures:
     tables: 0
     records: 15
 
+  lab-mode-phase1_5-integration-e2e-case-matrix-1300:
+    file: fixtures/lab-mode-phase1_5-integration-e2e-case-matrix-1300-2026-02-15.csv
+    version: 2026.02.15.1
+    size_bytes: 392374
+    region: global
+    purpose: Phase 1.5 Lab Mode integration and e2e case matrix with deterministic expected outcomes
+    tables: 0
+    records: 1300
+
+  lab-mode-phase1_5-cn-address-cases-1300:
+    file: fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv
+    version: 2026.02.15.1
+    size_bytes: 440793
+    region: CN
+    purpose: Phase 1.5 Lab Mode Chinese address integration and e2e test cases
+    tables: 0
+    records: 1300
+
+  lab-mode-phase1_5-cn-address-cases-1000-json:
+    file: fixtures/lab-mode-phase1_5-cn-address-cases-1000-2026-02-15.json
+    version: 2026.02.15.1
+    size_bytes: 1780428
+    region: CN
+    purpose: High-quality Chinese address governance test cases in JSON for normalize parse match dedup score review
+    tables: 0
+    records: 1000
+
 contracts:
   address-governance:
     file: contracts/governance-workflow.openapi.yaml

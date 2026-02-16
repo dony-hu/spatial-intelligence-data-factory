@@ -187,3 +187,52 @@ def test_ops_summary_supports_recent_hours_filter() -> None:
     assert after.status_code == 200
     after_json = after.json()
     assert after_json["total_tasks"] >= before_total + 1
+
+
+def test_ops_scorecard_compare_schema() -> None:
+    client = TestClient(app)
+
+    baseline_submit = client.post(
+        "/v1/governance/tasks",
+        json={
+            "idempotency_key": "idem-scorecard-baseline",
+            "batch_name": "batch-scorecard",
+            "ruleset_id": "default",
+            "records": [
+                {"raw_id": "score-b-1", "raw_text": "杭州市西湖区文三路1号"},
+                {"raw_id": "score-b-2", "raw_text": "杭州市西湖区文三路2号"},
+            ],
+        },
+    )
+    candidate_submit = client.post(
+        "/v1/governance/tasks",
+        json={
+            "idempotency_key": "idem-scorecard-candidate",
+            "batch_name": "batch-scorecard",
+            "ruleset_id": "default",
+            "records": [
+                {"raw_id": "score-c-1", "raw_text": "杭州市西湖区文三路3号"},
+                {"raw_id": "score-c-2", "raw_text": "杭州市西湖区文三路4号"},
+            ],
+        },
+    )
+    assert baseline_submit.status_code == 200
+    assert candidate_submit.status_code == 200
+    run_in_memory_all()
+
+    baseline_task_id = baseline_submit.json()["task_id"]
+    candidate_task_id = candidate_submit.json()["task_id"]
+    resp = client.get(
+        f"/v1/governance/ops/scorecard?baseline_task_id={baseline_task_id}&candidate_task_id={candidate_task_id}"
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    for block in ("baseline", "candidate", "delta"):
+        assert block in data
+        assert "auto_pass_rate" in data[block]
+        assert "review_rate" in data[block]
+        assert "human_required_rate" in data[block]
+        assert "consistency_score" in data[block]
+        assert "quality_gate_pass_rate" in data[block]
+        assert "review_accept_rate" in data[block]
+    assert data["recommendation"] in {"accept", "reject", "needs-human"}

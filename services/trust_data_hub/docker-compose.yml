@@ -1,0 +1,71 @@
+services:
+  trust-api:
+    build:
+      context: ../..
+      dockerfile: services/trust_data_hub/Dockerfile
+    container_name: trust-api
+    command: uvicorn services.trust_data_hub.app.main:app --host 0.0.0.0 --port 8082
+    ports:
+      - "8082:8082"
+    environment:
+      - PYTHONPATH=/workspace
+      - TRUST_PERSISTENCE_MODE=postgres
+      - TRUST_ALLOW_MEMORY_FALLBACK=0
+      - TRUST_STORE_DIR=/workspace/runtime_store/trust-store
+      - DATABASE_URL=${DATABASE_URL:-postgresql://trust:trust@trust-meta-postgres:5432/trust_meta}
+      - TRUST_META_DATABASE_URL=${DATABASE_URL:-postgresql://trust:trust@trust-meta-postgres:5432/trust_meta}
+      - TRUST_TRUSTDB_DSN=${DATABASE_URL:-postgresql://trust:trust@trust-meta-postgres:5432/trust_meta}
+    volumes:
+      - ../../:/workspace
+      - trust-store:/workspace/runtime_store/trust-store
+    depends_on:
+      - trust-meta-postgres
+
+  trust-worker:
+    build:
+      context: ../..
+      dockerfile: services/trust_data_hub/Dockerfile
+    container_name: trust-worker
+    command: python -m services.trust_data_hub.ops.worker
+    environment:
+      - PYTHONPATH=/workspace
+      - TRUST_WORKER_POLL_SECONDS=15
+    volumes:
+      - ../../:/workspace
+      - trust-store:/workspace/runtime_store/trust-store
+    depends_on:
+      - trust-api
+
+  trust-scheduler:
+    build:
+      context: ../..
+      dockerfile: services/trust_data_hub/Dockerfile
+    container_name: trust-scheduler
+    command: python -m services.trust_data_hub.ops.scheduler
+    environment:
+      - PYTHONPATH=/workspace
+      - TRUST_API_BASE=http://trust-api:8082
+      - TRUST_NAMESPACE=system.trust
+      - TRUST_SCHEDULER_SOURCE_IDS=src-admin-001,src-osm-china-001
+      - TRUST_SCHEDULER_INTERVAL_SECONDS=3600
+    volumes:
+      - ../../:/workspace
+    depends_on:
+      - trust-api
+
+  trust-meta-postgres:
+    image: postgres:16
+    container_name: trust-meta-postgres
+    environment:
+      POSTGRES_DB: trust_meta
+      POSTGRES_USER: trust
+      POSTGRES_PASSWORD: trust
+    ports:
+      - "5442:5432"
+    volumes:
+      - trust-meta-pg:/var/lib/postgresql/data
+      - ../../database/trust_meta_schema.sql:/docker-entrypoint-initdb.d/01-trust-meta.sql:ro
+
+volumes:
+  trust-meta-pg:
+  trust-store:

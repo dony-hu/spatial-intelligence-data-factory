@@ -1,0 +1,12 @@
+{
+  "package": "address_core",
+  "scope": "A",
+  "passed": true,
+  "result": {
+    "command": "/Users/huda/Code/spatial-intelligence-data-factory/.venv/bin/python -m pytest packages/address_core/tests/test_normalize.py packages/address_core/tests/test_parse.py packages/address_core/tests/test_match.py packages/address_core/tests/test_dedup.py packages/address_core/tests/test_score.py packages/address_core/tests/test_pipeline_smoke.py -q",
+    "returncode": 0,
+    "started_at": "2026-02-15T13:06:42.968769+00:00",
+    "ended_at": "2026-02-15T13:06:43.152929+00:00",
+    "output_tail": "...............                                                          [100%]\n15 passed in 0.02s\n"
+  }
+}

@@ -1,0 +1,530 @@
+{
+  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "packages": [
+    {
+      "workpackage_id": "wp-address-canonical-pg-baseline-v1.0.0",
+      "title": "建立addr_canonical字段质量基线并形成低置信度治理策略",
+      "priority": "P1",
+      "owner_line": "address_algo_rules_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768965+00:00"
+    },
+    {
+      "workpackage_id": "wp-address-topology-v1.0.1",
+      "title": "基于单条地址输入产出拓扑节点与关系",
+      "priority": "P1",
+      "owner_line": "产线执行与回传闭环线",
+      "owner": "产线执行与回传闭环线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-14T11:40:00",
+      "eta": "持续滚动（已完成 CI 校验自动化接入）",
+      "test_report_ref": "output/workpackages/wp-address-topology-v1.0.1.acceptance.report.py311.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T11:58:22.742265+00:00"
+    },
+    {
+      "workpackage_id": "wp-address-topology-v1.0.2",
+      "title": "基于单条地址输入产出拓扑节点与关系，并回传失败回放证据",
+      "priority": "P1",
+      "owner_line": "产线执行与回传闭环线",
+      "owner": "产线执行与回传闭环线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-14T14:50:00",
+      "eta": "持续滚动（已完成 CI 校验自动化接入）",
+      "test_report_ref": "output/workpackages/wp-address-topology-v1.0.2.acceptance.report.py311.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T13:36:26.422049+00:00"
+    },
+    {
+      "workpackage_id": "wp-core-engine-address-core-p0-v0.1.0",
+      "title": "收敛地址算法模块改动并形成可复现测试基线",
+      "priority": "P0",
+      "owner_line": "地址算法与治理规则线",
+      "owner": "地址算法与治理规则线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T19:10:00+08:00",
+      "eta": "2026-02-15 13:00（本地时间）完成 schema 自动校验接入",
+      "test_report_ref": "output/workpackages/p0.address_core.test-report.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T10:43:33.941621+00:00"
+    },
+    {
+      "workpackage_id": "wp-core-engine-governance-api-lab-p0-v0.1.0",
+      "title": "完成治理 API 与 Lab 的运行时统一、门禁闭环与可观测回归",
+      "priority": "P0",
+      "owner_line": "核心引擎与运行时线",
+      "owner": "核心引擎与运行时线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T19:10:00+08:00",
+      "eta": "2026-02-16 10:30（本地时间）完成夜间稳定性复核（非阻断）",
+      "test_report_ref": "output/workpackages/p0.governance_api_and_lab.test-report.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T10:43:58.812378+00:00"
+    },
+    {
+      "workpackage_id": "wp-core-engine-p0-stabilization-v0.1.0",
+      "title": "在不新增业务功能前提下完成 P0 收敛发布：统一 Python 运行时、拆分变更包、闭环 R2 发布门槛",
+      "priority": "P0",
+      "owner_line": "核心引擎与运行时线",
+      "owner": "核心引擎与运行时线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T19:00:00+08:00",
+      "eta": "2026-02-16 10:30（本地时间）完成夜间稳定性复核（非阻断）",
+      "test_report_ref": "output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json",
+      "release_decision": "NO_GO",
+      "updated_at": "2026-02-15T10:40:32.875031+00:00"
+    },
+    {
+      "workpackage_id": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+      "title": "将 trust_data_hub 从内存语义可演示态推进到可持久化回放的稳定态",
+      "priority": "P0",
+      "owner_line": "可信数据Hub线",
+      "owner": "可信数据Hub线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T19:10:00+08:00",
+      "eta": "2026-02-17 18:00（本地时间）完成持久化闭环联调",
+      "test_report_ref": "output/workpackages/p0.trust_data_hub.test-report.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T10:44:25.547814+00:00"
+    },
+    {
+      "workpackage_id": "wp-dashboard-phase1-structured-rollup-v1.0.0",
+      "title": "将Phase1结构化回写接入管理看板, 展示管理摘要、风险、48h计划与测试进展入口",
+      "priority": "P1",
+      "owner_line": "dashboard_dev_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.769446+00:00"
+    },
+    {
+      "workpackage_id": "wp-db-pg-canonical-model-v1.0.0",
+      "title": "冻结PG统一数据模型与约束, 形成地址治理主链路物理层与语义层规范",
+      "priority": "P1",
+      "owner_line": "database_expert_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768289+00:00"
+    },
+    {
+      "workpackage_id": "wp-engineering-supervisor-phase1-audit-v1.0.0",
+      "title": "执行Phase1工程边界与质量合规审计, 输出项目级监理审计报告",
+      "priority": "P1",
+      "owner_line": "engineering_supervisor_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768459+00:00"
+    },
+    {
+      "workpackage_id": "wp-line-feedback-contract-pg-v1.0.0",
+      "title": "将line_feedback_contract与失败回放链路统一切换为PG引用并固定回传字段",
+      "priority": "P1",
+      "owner_line": "line_execution_feedback_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768798+00:00"
+    },
+    {
+      "workpackage_id": "wp-observability-phase1-run-test-sql-map-v1.0.0",
+      "title": "补全测试结果、执行过程、SQL交互三类可观测映射并落看板展示",
+      "priority": "P1",
+      "owner_line": "observability_ops_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.769286+00:00"
+    },
+    {
+      "workpackage_id": "wp-orchestrator-phase1-crossline-closure-v1.0.0",
+      "title": "完成PG统一架构Phase1跨线收敛, 输出管理层可签发的Go/No-Go决策包",
+      "priority": "P1",
+      "owner_line": "project_orchestrator_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768074+00:00"
+    },
+    {
+      "workpackage_id": "wp-pg-only-integration-baseline-v1.0.0",
+      "title": "建立PG-only集成测试硬门并禁止SQLite回落",
+      "priority": "P1",
+      "owner_line": "test_quality_gate_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.769128+00:00"
+    },
+    {
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "title": "在看板首页底部补全整体测试进展可视化，支持管理层快速查看总体状态并直达测试详情面板",
+      "priority": "P2",
+      "owner_line": "项目管理总控线",
+      "owner": "项目管理总控线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T19:45:00+08:00",
+      "eta": "✅ 2026-02-16 09:15（本地时间）ALL TASKS COMPLETE",
+      "test_report_ref": "output/workpackages/wp-pm-dashboard-test-progress-v0.1.0.report.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T11:35:49.372620+00:00"
+    },
+    {
+      "workpackage_id": "wp-runtime-pg-repository-switch-v1.0.0",
+      "title": "完成仓储层PG主读写切换并固化API与执行器审计落库",
+      "priority": "P1",
+      "owner_line": "core_runtime_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.768636+00:00"
+    },
+    {
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "title": "在测试面板提供测试数据库数据查看能力，并支持只读 SQL 查询与结果展示",
+      "priority": "P2",
+      "owner_line": "测试平台与质量门槛线",
+      "owner": "测试平台与质量门槛线-Codex",
+      "status": "done",
+      "progress": 100,
+      "started_at": "2026-02-15T20:20:00+08:00",
+      "eta": "2026-02-16 20:00（本地时间）完成夜间回归接入",
+      "test_report_ref": "output/workpackages/wp-test-panel-sql-query-readonly-v0.1.0.report.json",
+      "release_decision": "GO",
+      "updated_at": "2026-02-15T12:23:42.284850+00:00"
+    },
+    {
+      "workpackage_id": "wp-trust-evidence-index-phase1-v1.0.0",
+      "title": "在PG统一架构下完成证据索引体系设计并形成可执行交付，支撑地址治理产线的可追踪、可回放、可审计闭环",
+      "priority": "P1",
+      "owner_line": "trust_data_hub_phase1",
+      "owner": "待分配",
+      "status": "planned",
+      "progress": 0,
+      "started_at": "2026-02-16T11:22:20+08:00",
+      "eta": "",
+      "test_report_ref": "",
+      "release_decision": "HOLD",
+      "updated_at": "2026-02-16T03:25:02.769854+00:00"
+    }
+  ],
+  "by_owner_line": [
+    {
+      "owner_line": "address_algo_rules_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "core_runtime_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "dashboard_dev_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "database_expert_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "engineering_supervisor_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "line_execution_feedback_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "observability_ops_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "project_orchestrator_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "test_quality_gate_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "trust_data_hub_phase1",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 0
+    },
+    {
+      "owner_line": "产线执行与回传闭环线",
+      "total": 2,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 2
+    },
+    {
+      "owner_line": "可信数据Hub线",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 1
+    },
+    {
+      "owner_line": "地址算法与治理规则线",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 1
+    },
+    {
+      "owner_line": "核心引擎与运行时线",
+      "total": 2,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 2
+    },
+    {
+      "owner_line": "测试平台与质量门槛线",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 1
+    },
+    {
+      "owner_line": "项目管理总控线",
+      "total": 1,
+      "in_progress": 0,
+      "blocked": 0,
+      "done": 1
+    }
+  ],
+  "by_priority": [
+    {
+      "priority": "P0",
+      "total": 4,
+      "open": 0
+    },
+    {
+      "priority": "P1",
+      "total": 12,
+      "open": 10
+    },
+    {
+      "priority": "P2",
+      "total": 2,
+      "open": 0
+    }
+  ],
+  "recent_changes": [
+    {
+      "time": "2026-02-15T14:44:10.209597+00:00",
+      "event_type": "release_decision_changed",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly quality gate NO_GO",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:46:54.265738+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly web_e2e passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:46:54.318677+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "summary": "nightly sql security passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:46:54.379431+00:00",
+      "event_type": "release_decision_changed",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly quality gate GO",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T15:50:10.000000+00:00",
+      "event_type": "progress_refreshed",
+      "workpackage_id": "wp-dashboard-management-panel-optimization-v0.1.0",
+      "summary": "再次刷新工作线总览：管理看板研发线已补回并可在总览显示",
+      "operator": "project-manager"
+    },
+    {
+      "time": "2026-02-15T14:51:34.918714+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly web_e2e passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:51:34.976390+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "summary": "nightly sql security passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:51:35.032925+00:00",
+      "event_type": "release_decision_changed",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly quality gate GO",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:51:54.802581+00:00",
+      "event_type": "progress_refreshed",
+      "workpackage_id": "wp-trust-hub-replay-persistence-v0.2.0",
+      "summary": "可信数据Hub线状态回写：replay持久化闭环与证据映射联调已完成代码与测试收口",
+      "operator": "trust-data-hub-codex"
+    },
+    {
+      "time": "2026-02-15T14:52:17.692627+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly web_e2e passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:52:17.756225+00:00",
+      "event_type": "test_synced",
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "summary": "nightly sql security passed",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T14:52:17.821804+00:00",
+      "event_type": "release_decision_changed",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "nightly quality gate GO",
+      "operator": "nightly-bot"
+    },
+    {
+      "time": "2026-02-15T22:35:00Z",
+      "event_type": "iteration_milestone",
+      "workpackage_id": "wp-dashboard-management-panel-optimization-v0.1.0",
+      "summary": "Iteration-005完成：sticky摘要条+密度切换+PM双层结构+缺字段标黄",
+      "operator": "dashboard-research-codex"
+    },
+    {
+      "time": "2026-02-16T09:15:00.000000+00:00",
+      "event_type": "progress_refreshed",
+      "workpackage_id": "",
+      "summary": "项目管理总控线：最终决策完成 - 9/9工作线GO、工程边界审查通过、技术架构审视完成",
+      "operator": "orchestrator-codex"
+    },
+    {
+      "time": "2026-02-16T01:40:00.000000+00:00",
+      "event_type": "task_dispatched",
+      "workpackage_id": "wp-orchestrator-progress-consistency-v0.1.0",
+      "summary": "下发 Iteration-011 下一迭代工作包",
+      "operator": "project-manager"
+    },
+    {
+      "time": "2026-02-16T01:40:10.000000+00:00",
+      "event_type": "progress_refreshed",
+      "workpackage_id": "wp-orchestrator-progress-consistency-v0.1.0",
+      "summary": "刷新派单数据源：workline_dispatch_prompts_latest.json 已切换至 dispatch-007",
+      "operator": "project-manager"
+    },
+    {
+      "time": "2026-02-16T02:15:40.531173+00:00",
+      "event_type": "status_collected",
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "summary": "system observability management dashboard published",
+      "operator": "observability-line-codex"
+    },
+    {
+      "time": "2026-02-16T03:10:19.665381+00:00",
+      "event_type": "task_dispatched",
+      "workpackage_id": "wp-pg-only-integration-baseline-v1.0.0",
+      "summary": "下发Phase1工作包提示词与结构化回写契约",
+      "operator": "project-manager"
+    },
+    {
+      "time": "2026-02-16T11:22:20+08:00",
+      "event_type": "task_dispatched",
+      "workpackage_id": "wp-orchestrator-phase1-crossline-closure-v1.0.0",
+      "summary": "刷新各条线Phase1工作包文件与提示词（dispatch-phase1-pg-foundation-002）",
+      "operator": "project-manager"
+    },
+    {
+      "time": "2026-02-16T03:25:32.285140+00:00",
+      "event_type": "status_collected",
+      "workpackage_id": "line-address-manual-review",
+      "summary": "manual review status check",
+      "operator": "codex"
+    }
+  ]
+}

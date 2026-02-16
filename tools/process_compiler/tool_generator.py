@@ -236,4 +236,32 @@ def observe_step(
         "error_detail": error_detail,
         "payload": payload,
     }}
+
+
+def aggregate_runtime_metrics(step_events: list[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate runtime step metrics including step_error_rate."""
+    total_steps = len(step_events)
+    failed_steps = sum(1 for event in step_events if str((event or {{}}).get("status") or "").lower() == "failed")
+    step_error_rate = round(float(failed_steps) / float(total_steps), 6) if total_steps > 0 else 0.0
+
+    by_step: Dict[str, Dict[str, Any]] = {{}}
+    for event in step_events:
+        row = event or {{}}
+        step_key = str(row.get("step_code") or "UNKNOWN").upper()
+        holder = by_step.setdefault(step_key, {{"total": 0, "failed": 0, "step_error_rate": 0.0}})
+        holder["total"] += 1
+        if str(row.get("status") or "").lower() == "failed":
+            holder["failed"] += 1
+
+    for holder in by_step.values():
+        holder["step_error_rate"] = round(float(holder["failed"]) / float(holder["total"]), 6) if holder["total"] > 0 else 0.0
+
+    return {{
+        "timestamp": datetime.now().isoformat(),
+        "domain": "{domain}",
+        "step_total": total_steps,
+        "step_failed": failed_steps,
+        "step_error_rate": step_error_rate,
+        "by_step": by_step,
+    }}
 '''

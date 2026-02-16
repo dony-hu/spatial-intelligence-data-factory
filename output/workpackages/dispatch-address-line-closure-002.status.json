@@ -1,0 +1,33 @@
+{
+  "batch_id": "dispatch-address-line-closure-002",
+  "workline": "产线执行与回传闭环线",
+  "owner": "产线执行与回传闭环线-Codex",
+  "updated_at_local": "2026-02-15 21:13:30 CST",
+  "updated_at_utc": "2026-02-15T13:13:30Z",
+  "workpackages": [
+    "wp-address-topology-v1.0.1",
+    "wp-address-topology-v1.0.2"
+  ],
+  "progress": "100%",
+  "fresh_chain": {
+    "success_sample_ref": "output/line_runs/tc06_single_run_2026-02-15_210323_668618.json",
+    "failure_sample_ref": "output/line_runs/tc06_single_run_2026-02-15_210323_689989.json",
+    "replay_report_ref": "output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
+    "line_feedback_ref": "output/workpackages/line_feedback.latest.json",
+    "line_feedback_hash_ref": "output/workpackages/line_feedback.latest.sha256"
+  },
+  "gate": {
+    "report_ref": "output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json",
+    "line_feedback_hash_verified": true,
+    "release_decision": "NO_GO",
+    "blocking_reason": "runtime_unified_3_11_plus=false (executor_python_short=3.9.6)"
+  },
+  "newly_completed": [
+    "line_feedback.latest.sha256 校验已接入 gate（line_feedback_hash_verified）",
+    "line_feedback 缺失时不再自动生成，改为硬失败阻断"
+  ],
+  "remaining_risks": [
+    "python3.11 本机环境缺 jsonschema，无法直接在 3.11 解释器执行 gate 脚本",
+    "若不补齐 3.11 依赖，去 HOLD 仍会被 runtime 门槛阻断"
+  ]
+}

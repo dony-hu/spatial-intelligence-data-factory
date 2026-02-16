@@ -2,11 +2,12 @@
 Factory Database - SQLite persistence layer for factory state and operations
 """
 
-import sqlite3
+import os
 from contextlib import contextmanager
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import json
+from src.common.env_bootstrap import bootstrap_pg_env
 
 from tools.factory_framework import (
     WorkOrder, ProductRequirement, ProcessSpec, ProductionLine,
@@ -15,25 +16,64 @@ from tools.factory_framework import (
 
 
 class FactoryDB:
-    """SQLite database for factory demonstration system"""
+    """Factory database (PostgreSQL-only)."""
 
     def __init__(self, db_path: str = "database/factory.db"):
+        bootstrap_pg_env()
+        self.database_url = str(os.getenv("DATABASE_URL") or "")
+        if not self.database_url.startswith("postgresql"):
+            raise RuntimeError("DATABASE_URL must be postgresql://... in PG-only mode")
         self.db_path = db_path
         self.init_schema()
 
     @contextmanager
     def get_connection(self):
         """Context manager for database connections"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        driver_dsn = self.database_url.replace("postgresql+psycopg://", "postgresql://", 1)
+        conn = None
+        cursor_factory = None
         try:
-            yield conn
-            conn.commit()
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+
+            conn = psycopg2.connect(driver_dsn)
+            cursor_factory = RealDictCursor
+        except Exception:
+            # Fallback to psycopg v3 when psycopg2 is unavailable.
+            import psycopg
+
+            conn = psycopg.connect(driver_dsn)
+            cursor_factory = None
+
+        compat = _CompatConnection(
+            conn,
+            cursor_factory=cursor_factory,
+        )
+        try:
+            yield compat
+            compat.commit()
         except Exception as e:
-            conn.rollback()
+            compat.rollback()
             raise e
         finally:
-            conn.close()
+            compat.close()
+
+    def _upsert(
+        self,
+        cursor: Any,
+        table: str,
+        columns: List[str],
+        values: List[Any],
+        conflict_key: str,
+    ) -> None:
+        placeholders = ", ".join(["?"] * len(columns))
+        cols_sql = ", ".join(columns)
+        updates = ", ".join([f"{c} = EXCLUDED.{c}" for c in columns if c != conflict_key])
+        sql = (
+            f"INSERT INTO {table} ({cols_sql}) VALUES ({placeholders}) "
+            f"ON CONFLICT ({conflict_key}) DO UPDATE SET {updates}"
+        )
+        cursor.execute(sql, tuple(values))
 
     def init_schema(self) -> None:
         """Initialize database schema"""
@@ -150,7 +190,7 @@ class FactoryDB:
                     execution_id TEXT NOT NULL,
                     inspector_id TEXT NOT NULL,
                     quality_score REAL NOT NULL,
-                    passed BOOLEAN DEFAULT 0,
+                    passed BOOLEAN DEFAULT FALSE,
                     issues TEXT,  -- JSON array
                     recommendations TEXT,
                     checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -217,21 +257,31 @@ class FactoryDB:
         """Save a product requirement"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO factory_products
-                (requirement_id, product_name, product_type, input_format, output_format,
-                 input_data_count, priority, submitted_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                requirement.requirement_id,
-                requirement.product_name,
-                requirement.product_type.value,
-                requirement.input_format,
-                requirement.output_format,
-                len(requirement.input_data),
-                requirement.priority,
-                requirement.submitted_at.isoformat()
-            ))
+            self._upsert(
+                cursor,
+                table="factory_products",
+                columns=[
+                    "requirement_id",
+                    "product_name",
+                    "product_type",
+                    "input_format",
+                    "output_format",
+                    "input_data_count",
+                    "priority",
+                    "submitted_at",
+                ],
+                values=[
+                    requirement.requirement_id,
+                    requirement.product_name,
+                    requirement.product_type.value,
+                    requirement.input_format,
+                    requirement.output_format,
+                    len(requirement.input_data),
+                    requirement.priority,
+                    requirement.submitted_at.isoformat(),
+                ],
+                conflict_key="requirement_id",
+            )
 
     def get_product_requirement(self, requirement_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a product requirement"""
@@ -246,20 +296,29 @@ class FactoryDB:
         """Save a process specification"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO factory_processes
-                (process_id, process_name, steps, estimated_duration, required_workers,
-                 quality_rules, resource_requirements)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                spec.process_id,
-                spec.process_name,
-                json.dumps([step.value for step in spec.steps]),
-                spec.estimated_duration,
-                spec.required_workers,
-                json.dumps(spec.quality_rules),
-                json.dumps(spec.resource_requirements)
-            ))
+            self._upsert(
+                cursor,
+                table="factory_processes",
+                columns=[
+                    "process_id",
+                    "process_name",
+                    "steps",
+                    "estimated_duration",
+                    "required_workers",
+                    "quality_rules",
+                    "resource_requirements",
+                ],
+                values=[
+                    spec.process_id,
+                    spec.process_name,
+                    json.dumps([step.value for step in spec.steps]),
+                    spec.estimated_duration,
+                    spec.required_workers,
+                    json.dumps(spec.quality_rules),
+                    json.dumps(spec.resource_requirements),
+                ],
+                conflict_key="process_id",
+            )
 
     def get_process_spec(self, process_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a process specification"""
@@ -274,42 +333,63 @@ class FactoryDB:
         """Save a production line"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO production_lines
-                (line_id, line_name, process_id, max_capacity, status,
-                 active_tasks, completed_tasks, failed_tasks, total_tokens_consumed,
-                 average_quality_score)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                line.line_id,
-                line.line_name,
-                line.process_spec.process_id if line.process_spec else None,
-                line.max_capacity,
-                line.status.value,
-                line.active_tasks,
-                line.completed_tasks,
-                line.failed_tasks,
-                line.total_tokens_consumed,
-                line.average_quality_score
-            ))
+            self._upsert(
+                cursor,
+                table="production_lines",
+                columns=[
+                    "line_id",
+                    "line_name",
+                    "process_id",
+                    "max_capacity",
+                    "status",
+                    "active_tasks",
+                    "completed_tasks",
+                    "failed_tasks",
+                    "total_tokens_consumed",
+                    "average_quality_score",
+                ],
+                values=[
+                    line.line_id,
+                    line.line_name,
+                    line.process_spec.process_id if line.process_spec else None,
+                    line.max_capacity,
+                    line.status.value,
+                    line.active_tasks,
+                    line.completed_tasks,
+                    line.failed_tasks,
+                    line.total_tokens_consumed,
+                    line.average_quality_score,
+                ],
+                conflict_key="line_id",
+            )
 
             # Save workers
             for worker in line.workers:
-                cursor.execute("""
-                    INSERT OR REPLACE INTO workers
-                    (worker_id, name, line_id, capability_level, tokens_consumed,
-                     tasks_completed, average_quality, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    worker.worker_id,
-                    worker.name,
-                    worker.assigned_line_id,
-                    worker.capability_level,
-                    worker.tokens_consumed,
-                    worker.tasks_completed,
-                    worker.average_quality,
-                    worker.status
-                ))
+                self._upsert(
+                    cursor,
+                    table="workers",
+                    columns=[
+                        "worker_id",
+                        "name",
+                        "line_id",
+                        "capability_level",
+                        "tokens_consumed",
+                        "tasks_completed",
+                        "average_quality",
+                        "status",
+                    ],
+                    values=[
+                        worker.worker_id,
+                        worker.name,
+                        worker.assigned_line_id,
+                        worker.capability_level,
+                        worker.tokens_consumed,
+                        worker.tasks_completed,
+                        worker.average_quality,
+                        worker.status,
+                    ],
+                    conflict_key="worker_id",
+                )
 
     def get_production_line(self, line_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a production line"""
@@ -331,24 +411,35 @@ class FactoryDB:
         """Save a work order"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO work_orders
-                (work_order_id, requirement_id, product_name, process_id,
-                 assigned_line_id, status, priority, expected_completion,
-                 quality_checks_count, completed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                order.work_order_id,
-                order.requirement_id,
-                order.product_name,
-                order.process_spec.process_id if order.process_spec else None,
-                order.assigned_line_id,
-                order.status.value,
-                order.priority,
-                order.expected_completion.isoformat() if order.expected_completion else None,
-                len(order.quality_checks),
-                order.completed_at.isoformat() if order.completed_at else None
-            ))
+            self._upsert(
+                cursor,
+                table="work_orders",
+                columns=[
+                    "work_order_id",
+                    "requirement_id",
+                    "product_name",
+                    "process_id",
+                    "assigned_line_id",
+                    "status",
+                    "priority",
+                    "expected_completion",
+                    "quality_checks_count",
+                    "completed_at",
+                ],
+                values=[
+                    order.work_order_id,
+                    order.requirement_id,
+                    order.product_name,
+                    order.process_spec.process_id if order.process_spec else None,
+                    order.assigned_line_id,
+                    order.status.value,
+                    order.priority,
+                    order.expected_completion.isoformat() if order.expected_completion else None,
+                    len(order.quality_checks),
+                    order.completed_at.isoformat() if order.completed_at else None,
+                ],
+                conflict_key="work_order_id",
+            )
 
     def get_work_order(self, order_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a work order"""
@@ -370,24 +461,35 @@ class FactoryDB:
         """Save a task execution"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO task_executions
-                (execution_id, work_order_id, worker_id, process_step, status,
-                 token_consumed, duration_minutes, quality_score,
-                 started_at, completed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                execution.execution_id,
-                execution.work_order_id,
-                execution.worker_id,
-                execution.process_step.value,
-                execution.status.value,
-                execution.token_consumed,
-                execution.duration_minutes,
-                execution.quality_score,
-                execution.started_at.isoformat() if execution.started_at else None,
-                execution.completed_at.isoformat() if execution.completed_at else None
-            ))
+            self._upsert(
+                cursor,
+                table="task_executions",
+                columns=[
+                    "execution_id",
+                    "work_order_id",
+                    "worker_id",
+                    "process_step",
+                    "status",
+                    "token_consumed",
+                    "duration_minutes",
+                    "quality_score",
+                    "started_at",
+                    "completed_at",
+                ],
+                values=[
+                    execution.execution_id,
+                    execution.work_order_id,
+                    execution.worker_id,
+                    execution.process_step.value,
+                    execution.status.value,
+                    execution.token_consumed,
+                    execution.duration_minutes,
+                    execution.quality_score,
+                    execution.started_at.isoformat() if execution.started_at else None,
+                    execution.completed_at.isoformat() if execution.completed_at else None,
+                ],
+                conflict_key="execution_id",
+            )
 
     def get_task_executions_by_worker(self, worker_id: str) -> List[Dict[str, Any]]:
         """Get all task executions for a worker"""
@@ -414,21 +516,31 @@ class FactoryDB:
         """Save a quality check result"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO quality_checks
-                (check_id, work_order_id, execution_id, inspector_id, quality_score,
-                 passed, issues, recommendations)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                check.check_id,
-                check.work_order_id,
-                check.execution_id,
-                check.inspector_id,
-                check.quality_score,
-                1 if check.passed else 0,
-                json.dumps(check.issues),
-                check.recommendations
-            ))
+            self._upsert(
+                cursor,
+                table="quality_checks",
+                columns=[
+                    "check_id",
+                    "work_order_id",
+                    "execution_id",
+                    "inspector_id",
+                    "quality_score",
+                    "passed",
+                    "issues",
+                    "recommendations",
+                ],
+                values=[
+                    check.check_id,
+                    check.work_order_id,
+                    check.execution_id,
+                    check.inspector_id,
+                    check.quality_score,
+                    bool(check.passed),
+                    json.dumps(check.issues),
+                    check.recommendations,
+                ],
+                conflict_key="check_id",
+            )
 
     def get_quality_checks(self, work_order_id: str = None) -> List[Dict[str, Any]]:
         """Retrieve quality checks"""
@@ -494,7 +606,7 @@ class FactoryDB:
 
             # Quality stats
             cursor.execute("""
-                SELECT COUNT(*) as total, SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) as passed
+                SELECT COUNT(*) as total, SUM(CASE WHEN passed THEN 1 ELSE 0 END) as passed
                 FROM quality_checks
             """)
             quality_stats = dict(cursor.fetchone())
@@ -519,34 +631,45 @@ class FactoryDB:
         """Save a graph node"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO graph_nodes
-                (node_id, node_type, name, properties, source_address)
-                VALUES (?, ?, ?, ?, ?)
-            """, (
-                node.node_id,
-                node.node_type,
-                node.name,
-                json.dumps(node.properties),
-                node.source_address
-            ))
+            self._upsert(
+                cursor,
+                table="graph_nodes",
+                columns=["node_id", "node_type", "name", "properties", "source_address"],
+                values=[
+                    node.node_id,
+                    node.node_type,
+                    node.name,
+                    json.dumps(node.properties),
+                    node.source_address,
+                ],
+                conflict_key="node_id",
+            )
 
     def save_graph_relationship(self, relationship) -> None:
         """Save a graph relationship"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO graph_relationships
-                (relationship_id, source_node_id, target_node_id, relationship_type, properties, source_address)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                relationship.relationship_id,
-                relationship.source_node_id,
-                relationship.target_node_id,
-                relationship.relationship_type,
-                json.dumps(relationship.properties),
-                relationship.source_address
-            ))
+            self._upsert(
+                cursor,
+                table="graph_relationships",
+                columns=[
+                    "relationship_id",
+                    "source_node_id",
+                    "target_node_id",
+                    "relationship_type",
+                    "properties",
+                    "source_address",
+                ],
+                values=[
+                    relationship.relationship_id,
+                    relationship.source_node_id,
+                    relationship.target_node_id,
+                    relationship.relationship_type,
+                    json.dumps(relationship.properties),
+                    relationship.source_address,
+                ],
+                conflict_key="relationship_id",
+            )
 
     def get_graph_statistics(self) -> Dict[str, Any]:
         """Get knowledge graph statistics"""
@@ -578,3 +701,45 @@ class FactoryDB:
                 'nodes_by_type': nodes_by_type,
                 'relationships_by_type': relationships_by_type
             }
+
+
+class _CompatCursor:
+    def __init__(self, raw_cursor: Any):
+        self._raw = raw_cursor
+
+    def execute(self, sql: str, params: Optional[tuple[Any, ...]] = None):
+        if params is None:
+            self._raw.execute(sql)
+            return self
+        sql = sql.replace("?", "%s")
+        self._raw.execute(sql, params)
+        return self
+
+    def fetchone(self):
+        return self._raw.fetchone()
+
+    def fetchall(self):
+        return self._raw.fetchall()
+
+    def __getattr__(self, name: str):
+        return getattr(self._raw, name)
+
+
+class _CompatConnection:
+    def __init__(self, raw_conn: Any, cursor_factory: Any = None):
+        self._raw = raw_conn
+        self._cursor_factory = cursor_factory
+
+    def cursor(self):
+        if self._cursor_factory is not None:
+            return _CompatCursor(self._raw.cursor(cursor_factory=self._cursor_factory))
+        return _CompatCursor(self._raw.cursor())
+
+    def commit(self):
+        self._raw.commit()
+
+    def rollback(self):
+        self._raw.rollback()
+
+    def close(self):
+        self._raw.close()

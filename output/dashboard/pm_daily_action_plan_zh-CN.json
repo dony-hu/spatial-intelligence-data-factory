@@ -1,0 +1,90 @@
+{
+  "as_of_utc": "2026-02-15T12:58:53Z",
+  "as_of_local": "2026-02-15 20:58:53 CST",
+  "goal": "24小时内完成地址治理产线对外可演示GO收敛",
+  "plan": {
+    "D0": {
+      "must_finish": [
+        {
+          "workline": "核心引擎与运行时线",
+          "tasks": [
+            "修复web_e2e optimize超时路径",
+            "重跑web_e2e并输出失败定位"
+          ],
+          "deliverables": [
+            "修复说明",
+            "重跑报告",
+            "风险披露"
+          ]
+        },
+        {
+          "workline": "产线执行与回传闭环线",
+          "tasks": [
+            "生成当次新鲜成功/失败/回放样本",
+            "回传failure_queue_snapshot_ref/replay_result_ref并附hash"
+          ],
+          "deliverables": [
+            "Run Report",
+            "Replay Report",
+            "line_feedback与sha256"
+          ]
+        },
+        {
+          "workline": "地址算法与治理规则线",
+          "tasks": [
+            "完成10条样本稳定性统计",
+            "输出失败分类与规则修正建议"
+          ],
+          "deliverables": [
+            "10条样本报告",
+            "规则修正建议"
+          ]
+        },
+        {
+          "workline": "可观测与运营指标线",
+          "tasks": [
+            "输出观测页状态/质量分/回放引用截图",
+            "补齐字段映射说明"
+          ],
+          "deliverables": [
+            "观测截图",
+            "字段说明"
+          ]
+        },
+        {
+          "workline": "测试平台与质量门槛线",
+          "tasks": [
+            "重跑web_e2e",
+            "完成SQL只读安全测试"
+          ],
+          "deliverables": [
+            "测试报告",
+            "门槛判定单"
+          ]
+        },
+        {
+          "workline": "项目管理总控线",
+          "tasks": [
+            "汇总跨线状态与证据",
+            "输出管理层Go/No-Go决策单"
+          ],
+          "deliverables": [
+            "Package Status Matrix",
+            "Go/No-Go决策单",
+            "Rollback Plan"
+          ]
+        }
+      ]
+    },
+    "D1": [
+      "P1双包状态从in_progress提升为可验收结论",
+      "看板任务详情改为读取最新派单数据源",
+      "管理层演示包定版并完成复核"
+    ],
+    "D2": [
+      "夜间回归接入web_e2e与核心门槛",
+      "形成稳定对外演示节奏与复盘机制"
+    ]
+  },
+  "source": "coordination/dispatch/iteration-004-address-line-closure.md"
+}

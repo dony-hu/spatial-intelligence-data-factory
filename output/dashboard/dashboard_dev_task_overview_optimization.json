@@ -1,0 +1,73 @@
+{
+  "as_of_local": "2026-02-15 21:28:00 CST",
+  "task_id": "dashboard-overview-optimization-001",
+  "owner_line": "管理看板研发线",
+  "owner": "管理看板研发线-Codex",
+  "scope": "项目介绍与当前状态模块优化",
+  "execution_order": [
+    {
+      "phase": "先做",
+      "name": "内容结构优化",
+      "must": [
+        "长文改为管理摘要+可展开详情两层",
+        "默认展示6行关键信息",
+        "顺序固定为结论先行",
+        "每条带Owner|ETA|证据链接",
+        "缺ETA或证据标黄",
+        "删除与右侧状态表重复信息"
+      ]
+    },
+    {
+      "phase": "再做",
+      "name": "面板布局与交互优化",
+      "must": [
+        "左面板拆分4卡片区",
+        "新增sticky顶部摘要条",
+        "新增密度切换（默认简版）",
+        "统一视觉层级与排版参数"
+      ]
+    }
+  ],
+  "required_cards": [
+    "管理摘要",
+    "风险雷达（Top3）",
+    "48h执行计划",
+    "管理层关注点"
+  ],
+  "sticky_summary_fields": [
+    "更新时间",
+    "总体状态",
+    "Go/No-Go",
+    "风险数"
+  ],
+  "density_modes": [
+    "简版",
+    "完整版"
+  ],
+  "default_density": "简版",
+  "style_constraints": {
+    "body_font_size": "14px",
+    "line_height": 1.45,
+    "summary_bar_background": "deeper",
+    "content_card_background": "lighter"
+  },
+  "data_sources": [
+    "output/dashboard/project_overview.json",
+    "output/dashboard/worklines_overview.json",
+    "output/dashboard/workpackages_live.json",
+    "output/dashboard/dispatch-address-line-closure-002-management-review.json"
+  ],
+  "fallback_rule": "缺字段显示-，不得报错阻塞渲染",
+  "deliverables": [
+    "变更说明",
+    "截图",
+    "自测记录"
+  ],
+  "timeline": {
+    "phase_1_days": 0.5,
+    "phase_2_days": 0.5,
+    "integration_days": 0.5,
+    "total_days": 1.5
+  },
+  "status": "task_dispatched"
+}

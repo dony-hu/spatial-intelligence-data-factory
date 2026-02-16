@@ -1,0 +1,32 @@
+# 子线状态：项目管理总控线
+
+- 进度：✅ 100% COMPLETE
+- Done：
+  - 已完成本轮工作包拆解、派单、验收口径统一，并按 `dispatch-address-line-closure-001` 执行
+  - 已完成“每次任务推进即刷新看板落盘”机制固化，刷新触发口径统一为：`task_dispatched/progress_refreshed/status_collected/test_synced`
+  - 已完成四个目标工作包证据收集与总控核对（含 P1 双包、看板补全包、测试面板 SQL 包）
+  - 已输出管理层验收包草案（Package Status Matrix / Top Risks / Go-NoGo / Rollback / Next 48h）
+  - 已新增“工程监理”角色并纳入派单体系，负责跨线边界治理与违规拦截
+  - 已完成 `dispatch-address-line-closure-002` 最终验收包与 Go/No-Go 决策单定版（GO）
+  - 已完成四个目标工作包收口：`wp-address-topology-v1.0.1`、`wp-address-topology-v1.0.2`、`wp-pm-dashboard-test-progress-v0.1.0`、`wp-test-panel-sql-query-readonly-v0.1.0`
+  - 已将“工程监理线可视化 + 项目介绍模块优化”合并为下一轮管理看板统一任务包
+  - 已完成总控线历史工作包总账梳理与接任基线建立：`coordination/status/project-orchestrator-workpackage-history-2026-02-15.md`
+  - 已下发 Iteration-007 全角色下一迭代工作包（含 9 条工作线）并完成事件流落盘
+- Next：
+  - 以“夜间门槛优先”口径收敛：修复 `suite_web_e2e_catalog` 失败并恢复统一 `GO`
+  - 跟进 Iteration-005 管理看板合并任务包落地并完成验收勾选
+  - 推进工程监理线提交首份《项目级监理审计报告》并纳入总控决策
+- Blocker：无（夜间质量门槛已转为GO；工程边界COMPLIANT；技术风险可控）
+- ETA：✅ 2026-02-16 09:15（本地时间）ALL TASKS COMPLETE
+- Artifacts：
+  - `coordination/dispatch/iteration-007-role-workpackages.md`
+  - `coordination/status/project-orchestrator-workpackage-history-2026-02-15.md`
+  - `coordination/dispatch/iteration-006-orchestrator-takeover-recovery.md`
+  - `coordination/dispatch/iteration-003-address-line-daily-plan.md`
+  - `output/dashboard/workline_dispatch_prompts_latest.json`
+  - `output/dashboard/dispatch-address-line-closure-001-management-review.md`
+  - `output/dashboard/dispatch-address-line-closure-001-management-review.json`
+  - `output/dashboard/dispatch-address-line-closure-002-management-review.md`
+  - `output/dashboard/dispatch-address-line-closure-002-management-review.json`
+  - `output/dashboard/dashboard_dev_task_next_round_pm_dashboard.md`
+  - `output/dashboard/dashboard_dev_task_next_round_pm_dashboard.json`

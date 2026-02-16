@@ -26,7 +26,7 @@ export PATH="$PG_BIN_DIR:$PATH"
 PG_HOST="${PG_HOST:-127.0.0.1}"
 PG_PORT="${PG_PORT:-5432}"
 PG_USER="${PG_USER:-$(whoami)}"
-PG_DB="${PG_DB:-addr_governance}"
+PG_DB="${PG_DB:-si_factory}"
 
 export DATABASE_URL="${DATABASE_URL:-postgresql://${PG_USER}@${PG_HOST}:${PG_PORT}/${PG_DB}}"
 export PYTHONPATH="$ROOT_DIR"

@@ -1,0 +1,72 @@
+name: p0-workpackage
+
+on:
+  pull_request:
+    paths:
+      - "workpackages/wp-core-engine-p0-stabilization-v0.1.0.json"
+      - "contracts/workpackage.schema.json"
+      - "scripts/run_p0_workpackage.py"
+      - "scripts/run_line_feedback_ci_block_demo.py"
+      - "scripts/line_execution_tc06.py"
+      - "tests/test_run_p0_workpackage.py"
+      - "tests/test_tc06_line_execution.py"
+      - "output/workpackages/line_feedback.latest.json"
+      - "output/workpackages/line_feedback.latest.sha256"
+      - ".github/workflows/p0-workpackage.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "workpackages/wp-core-engine-p0-stabilization-v0.1.0.json"
+      - "contracts/workpackage.schema.json"
+      - "scripts/run_p0_workpackage.py"
+      - "scripts/run_line_feedback_ci_block_demo.py"
+      - "scripts/line_execution_tc06.py"
+      - "tests/test_run_p0_workpackage.py"
+      - "tests/test_tc06_line_execution.py"
+      - "output/workpackages/line_feedback.latest.json"
+      - "output/workpackages/line_feedback.latest.sha256"
+      - ".github/workflows/p0-workpackage.yml"
+
+jobs:
+  p0-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-governance.txt
+          python -m pip install pytest
+      - name: Runtime baseline check
+        run: |
+          python --version
+      - name: Run gate unit tests
+        run: |
+          python -m pytest tests/test_run_p0_workpackage.py tests/test_tc06_line_execution.py -q
+      - name: Enforce line feedback hash gate (hard block)
+        run: |
+          python scripts/run_p0_workpackage.py --skip-package-tests
+      - name: Generate line feedback block demo evidence
+        run: |
+          python scripts/run_line_feedback_ci_block_demo.py
+      - name: Run governance_api core tests
+        run: |
+          PYTHONPATH=. python -m pytest -q \
+            services/governance_api/tests/test_ops_sql_readonly_api.py \
+            services/governance_api/tests/test_rulesets_api.py \
+            services/governance_api/tests/test_ops_api.py
+      - name: Run P0 workpackage gate
+        run: |
+          python scripts/run_p0_workpackage.py
+      - name: Upload P0 gate evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-workpackage-gate-artifacts
+          path: |
+            output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json
+            output/workpackages/line_feedback_ci_block_demo.latest.json
+            output/workpackages/line_feedback_ci_block_demo.latest.md

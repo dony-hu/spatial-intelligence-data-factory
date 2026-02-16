@@ -23,3 +23,55 @@ defaults:
   language: "zh-CN"
   status_command: "/workflow-status"
   init_command: "/workflow-init"
+
+governance:
+  role_mapping_doc: "docs/codex-bmad-role-mapping-v1-2026-02-15.md"
+  coordination_doc: "coordination/README.md"
+  build_time_role_system: true
+  run_time_role_system_separated: true
+
+skills:
+  namespace: "speckit"
+  available:
+    - speckit.specify
+    - speckit.clarify
+    - speckit.plan
+    - speckit.tasks
+    - speckit.implement
+    - speckit.analyze
+    - speckit.checklist
+    - speckit.taskstoissues
+
+skill_profiles:
+  project_orchestrator_v1:
+    workline: "项目管理总控"
+    chain: ["speckit.specify", "speckit.clarify", "speckit.tasks", "speckit.checklist"]
+    default_exit_gate: "checklist_pass"
+  engineering_supervisor_v1:
+    workline: "工程监理"
+    chain: ["speckit.analyze", "speckit.checklist"]
+    default_exit_gate: "checklist_pass"
+  core_runtime_v1:
+    workline: "核心引擎与运行时"
+    chain: ["speckit.plan", "speckit.implement", "speckit.analyze"]
+    default_exit_gate: "analyze_pass"
+  line_execution_v1:
+    workline: "产线执行与回传"
+    chain: ["speckit.tasks", "speckit.implement", "speckit.analyze"]
+    default_exit_gate: "analyze_pass"
+  trust_data_hub_v1:
+    workline: "可信数据Hub"
+    chain: ["speckit.plan", "speckit.implement", "speckit.analyze"]
+    default_exit_gate: "analyze_pass"
+  address_rules_v1:
+    workline: "地址算法与治理规则"
+    chain: ["speckit.specify", "speckit.plan", "speckit.implement", "speckit.analyze"]
+    default_exit_gate: "analyze_pass"
+  test_quality_gate_v1:
+    workline: "测试平台与质量门槛"
+    chain: ["speckit.tasks", "speckit.implement", "speckit.checklist"]
+    default_exit_gate: "checklist_pass"
+  observability_ops_v1:
+    workline: "可观测与运营指标"
+    chain: ["speckit.plan", "speckit.implement", "speckit.checklist"]
+    default_exit_gate: "checklist_pass"

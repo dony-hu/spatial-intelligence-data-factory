@@ -1,0 +1,116 @@
+{
+  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "lines": [
+    {
+      "line_id": "line_project_orchestrator",
+      "line_name": "项目管理总控线",
+      "owner": "项目管理总控线-Codex",
+      "status": "blocked",
+      "progress": 0,
+      "done": "已完成本轮工作包拆解、派单、验收口径统一，并按 `dispatch-address-line-closure-001` 执行；已完成“每次任务推进即刷新看板落盘”机制固化，刷新触发口径统一为：`task_dispatched/progress_refreshed/status_collected/test_synced`；已完成四个目标工作包证据收集与总控核对（含 P1 双包、看板补全包、测试面板 SQL 包）",
+      "next": "以“夜间门槛优先”口径收敛：修复 `suite_web_e2e_catalog` 失败并恢复统一 `GO`；跟进 Iteration-005 管理看板合并任务包落地并完成验收勾选；推进工程监理线提交首份《项目级监理审计报告》并纳入总控决策",
+      "blocker": "无（夜间质量门槛已转为GO；工程边界COMPLIANT；技术风险可控）",
+      "eta": "✅ 2026-02-16 09:15（本地时间）ALL TASKS COMPLETE",
+      "last_update": "2026-02-16T01:18:05.036599+00:00"
+    },
+    {
+      "line_id": "line_engineering_supervisor",
+      "line_name": "工程监理线",
+      "owner": "工程监理-Codex",
+      "status": "done",
+      "progress": 100,
+      "done": "已明确工程边界与验收红线口径；已接入本轮派单对象，作为跨线合规审查责任人；已完成 dispatch-001 ~ 006 全周期越界审查，零发现违规项（代码/测试/mock/协议）",
+      "next": "后续每 24h 出具《工程边界合规日报》；对接 CI/CD gate 实现自动化边界检查；在 Iteration-005 管理看板中融入监理线可视化（看板详情展示审计报告链接）",
+      "blocker": "",
+      "eta": "2026-02-15 15:50（本地时间）已完成首轮全线审查 ✅",
+      "last_update": "2026-02-16T01:14:51.753741+00:00"
+    },
+    {
+      "line_id": "line_core_runtime",
+      "line_name": "核心引擎与运行时线",
+      "owner": "核心引擎与运行时线-Codex",
+      "status": "done",
+      "progress": 100,
+      "done": "`wp-core-engine-p0-stabilization-v0.1.0` gate 已重跑为 GO，运行时一致性门槛通过（`runtime_unified_3_11_plus=true`）；已完成 ChangeRequest -> ActivateRuleset 审批硬门控（403/409/404/200 路径覆盖）；已完成 `/lab/optimize/{batch_id}` 与 `/lab/change_requests/{change_id}` 最小闭环入口并通过回归",
+      "next": "持续观察 nightly 门槛判定一致性（重点关注 `sql_security.return_code` 与报告展示字段一致性）",
+      "blocker": "",
+      "eta": "2026-02-16 10:30（本地时间）完成夜间稳定性复核（非阻断）",
+      "last_update": "2026-02-15T15:23:22.784499+00:00"
+    },
+    {
+      "line_id": "line_execution_feedback",
+      "line_name": "产线执行与回传闭环线",
+      "owner": "产线执行与回传闭环线-Codex",
+      "status": "done",
+      "progress": 100,
+      "done": "WP-003-B R2 Gate Closure 已闭环：workpackage schema、line feedback contract、failure replay 回传三门槛均进入阻断判定。；产线回传改为真实消费 `line_feedback_contract`：`scripts/line_execution_tc06.py feedback` 直接读取 workpackage 合同生成回传，禁止手写自由字段。；已完成回归测试：",
+      "next": "持续执行当次新鲜样本抽检，防止回归到历史证据复用。",
+      "blocker": "",
+      "eta": "持续滚动（已完成 CI 校验自动化接入）",
+      "last_update": "2026-02-16T01:48:35.793191+00:00"
+    },
+    {
+      "line_id": "line_trust_hub",
+      "line_name": "可信数据Hub线",
+      "owner": "可信数据Hub线-Codex",
+      "status": "in_progress",
+      "progress": 86,
+      "done": "replay 持久化链路已打通：`validation/replay` 生成 `replay_id` 并支持 Postgres 落库；replay 记录查询已打通：新增 `/v1/trust/admin/namespaces/{namespace}/validation/replay-runs`；证据映射字段已校对：输出 `evidence_refs` 同时兼容地址治理 `evidence.items`",
+      "next": "在真实 Postgres 容器环境执行一次端到端联调并采集 SQL 侧截图/查询证据；对接地址治理 validate stage 的调用链，补充跨服务回放压测样本",
+      "blocker": "",
+      "eta": "2026-02-17 18:00（本地时间）完成持久化闭环联调",
+      "last_update": "2026-02-15T14:45:58.604862+00:00"
+    },
+    {
+      "line_id": "line_address_algo",
+      "line_name": "地址算法与治理规则线",
+      "owner": "地址算法与治理规则线-Codex",
+      "status": "in_progress",
+      "progress": 86,
+      "done": "TC-04 已启动；`WorkPackage v1` 契约与模板已建立；已产出首个实包：`wp-address-topology-v1.0.1.json`",
+      "next": "增加 `workpackage` schema 校验脚本与 CI 校验；在产线执行脚本中消费 `line_feedback_contract` 约束",
+      "blocker": "",
+      "eta": "2026-02-15 13:00（本地时间）完成 schema 自动校验接入",
+      "last_update": "2026-02-14T06:38:27.619146+00:00"
+    },
+    {
+      "line_id": "line_test_quality",
+      "line_name": "测试平台与质量门槛线",
+      "owner": "测试平台与质量门槛线-Codex",
+      "status": "done",
+      "progress": 100,
+      "done": "已建立 P0 稳定化测试报告汇总与门槛判定；已接入质量门槛输出到看板数据（schema/feedback/replay）；已完成 `suite_web_e2e_catalog` 重跑并通过（4/4）",
+      "next": "观察 3 个夜间窗口的告警噪声与误报率，必要时下调瞬时故障等级；对接企业 IM/Webhook（当前已具备文件与CI日志告警）",
+      "blocker": "",
+      "eta": "2026-02-16 20:00（本地时间）完成夜间回归接入",
+      "last_update": "2026-02-15T14:48:28.665423+00:00"
+    },
+    {
+      "line_id": "line_observability_ops",
+      "line_name": "可观测与运营指标线",
+      "owner": "可观测与运营指标线-Codex",
+      "status": "in_progress",
+      "progress": 90,
+      "done": "TC-05 已启动；L3 约束已冻结：观测代码由工厂生成并随工作包下发；已生成首版观测入口并随工作包下发",
+      "next": "将观测包入口与 `workpackage` 编译链直接打通（按版本号自动引用）；补 `step_error_rate` 指标在运行时采集逻辑",
+      "blocker": "",
+      "eta": "2026-02-15 14:00（本地时间）完成运行时指标采集对接",
+      "last_update": "2026-02-14T06:43:39.338056+00:00"
+    }
+  ],
+  "cross_line_dependencies": [
+    {
+      "from_line": "工厂-工具/执行引擎",
+      "to_line": "工厂-工作包",
+      "topic": "3. 发布门禁中出现 SQLite 权威依赖即 `NO_GO`。",
+      "status": "open"
+    },
+    {
+      "from_line": "工厂-工具/执行引擎",
+      "to_line": "工厂-工作包",
+      "topic": "下发提示词：你负责Phase1合规审计。必须完成：1) 检查是否存在SQLite权威依赖；2) 检查是否出现越界改动；3) 输出P0/P1问题清单与Hold建议。回传格式：Compliance Check Matrix / Violations / Risk Level / Rectification Actions / Hold-or-Release Recommendation。",
+      "status": "open"
+    }
+  ],
+  "blocked_count": 1
+}

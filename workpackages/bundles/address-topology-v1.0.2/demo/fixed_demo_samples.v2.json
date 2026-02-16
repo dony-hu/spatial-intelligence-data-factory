@@ -1,0 +1,59 @@
+{
+  "sample_set_id": "address-topology-fixed-demo-v2",
+  "workpackage_targets": [
+    "wp-address-topology-v1.0.1",
+    "wp-address-topology-v1.0.2"
+  ],
+  "generated_at": "2026-02-15T21:03:30.728463+08:00",
+  "io_contract": {
+    "input_required": [
+      "raw_address"
+    ],
+    "output_required": [
+      "standard_address",
+      "topology_nodes",
+      "topology_edges",
+      "quality_score"
+    ],
+    "line_feedback_refs": {
+      "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+      "replay_result_ref": "pg://address_line.replay_runs"
+    }
+  },
+  "fixed_samples": {
+    "success": {
+      "sample_id": "fixed-success-baseline-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-14_114036_180784.json",
+      "input": {
+        "raw_address": "上海市浦东新区世纪大道100号"
+      },
+      "expected": {
+        "status": "completed",
+        "quality_score_min": 0.95
+      }
+    },
+    "failure": {
+      "sample_id": "fixed-failure-current-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_402132.json",
+      "input": {
+        "raw_address": "上海市浦东新区世纪大道100号"
+      },
+      "expected": {
+        "status": "failed",
+        "failed_stage": "cleaning",
+        "reason_code": "CLEANING_INVALID_OUTPUT"
+      }
+    },
+    "replay": {
+      "sample_id": "fixed-replay-current-001",
+      "run_ref": "/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
+      "expected": {
+        "required_fields": [
+          "replayed",
+          "recovered",
+          "remaining"
+        ]
+      }
+    }
+  }
+}

@@ -39,8 +39,8 @@
   },
   "line_feedback_contract": {
     "required_fields": ["status", "failure_queue_snapshot_ref", "replay_result_ref"],
-    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
-    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
   },
   "rollback": {
     "from_version": "1.0.0",

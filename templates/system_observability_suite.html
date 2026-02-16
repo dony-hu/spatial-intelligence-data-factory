@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data Factory Observability Suite</title>
+  <style>
+    :root {
+      --bg-0: #eef4f8;
+      --bg-1: #dce9f2;
+      --ink-strong: #0b2236;
+      --ink-mid: #2a4b63;
+      --ink-soft: #5a7285;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-solid: #ffffff;
+      --line: #d6e1ea;
+      --blue: #1368c4;
+      --teal: #0a9c89;
+      --amber: #c58a12;
+      --red: #be2e2e;
+      --violet: #28589f;
+      --radius: 14px;
+      --shadow: 0 12px 28px rgba(16, 40, 62, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink-strong);
+      background:
+        radial-gradient(circle at 8% 0%, #ffffff 0%, transparent 30%),
+        radial-gradient(circle at 85% 20%, #cde6f6 0%, transparent 28%),
+        linear-gradient(140deg, var(--bg-0), var(--bg-1));
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px 16px 36px;
+    }
+
+    .hero {
+      background: linear-gradient(130deg, #0e2f4a 0%, #124161 48%, #146690 100%);
+      color: #f5fbff;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -36px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 70%);
+    }
+
+    .hero-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.7vw, 30px);
+      letter-spacing: 0.02em;
+    }
+
+    .hero-sub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #cbe8ff;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn, .select {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      font-size: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f2f8ff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn:hover { background: rgba(255, 255, 255, 0.18); }
+
+    .select {
+      background: #f5fbff;
+      color: #1a405f;
+      border-color: #bad6ea;
+      min-width: 130px;
+    }
+
+    .tabs {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .tab {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink-mid);
+      padding: 9px 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab.active {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(120deg, #145ca8, #0a8a99);
+      transform: translateY(-1px);
+    }
+
+    .view { display: none; margin-top: 14px; animation: appear 0.24s ease; }
+    .view.active { display: block; }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-kpi {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .card {
+      background: var(--panel);
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .kpi-title { font-size: 12px; color: var(--ink-soft); }
+    .kpi-value { margin-top: 6px; font-size: 30px; font-weight: 800; }
+    .kpi-foot { margin-top: 3px; font-size: 12px; color: var(--ink-mid); }
+
+    .split {
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.5fr 1fr;
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .title-row h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .ok { background: var(--teal); }
+    .warn { background: var(--amber); }
+    .err { background: var(--red); }
+
+    .burn {
+      height: 10px;
+      border-radius: 999px;
+      background: #e2edf4;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .burn span {
+      display: block;
+      height: 100%;
+      width: 76%;
+      background: linear-gradient(90deg, #178ad5, #16b6aa);
+    }
+
+    .timeline { display: grid; gap: 8px; }
+
+    .timeline-item {
+      border: 1px solid #dce6ef;
+      border-radius: 10px;
+      padding: 9px;
+      background: #fbfeff;
+      font-size: 13px;
+      color: var(--ink-mid);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .table th, .table td {
+      text-align: left;
+      padding: 8px 6px;
+      border-bottom: 1px solid #e2ebf2;
+      vertical-align: top;
+    }
+
+    .table th { color: var(--ink-soft); font-weight: 600; }
+
+    .swimlane {
+      display: grid;
+      gap: 8px;
+    }
+
+    .lane {
+      border: 1px solid #dce6ef;
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 8px;
+    }
+
+    .lane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .lane-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e4edf5;
+      overflow: hidden;
+    }
+
+    .lane-bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #1368c4, #0a9c89);
+    }
+
+    .event-flow {
+      max-height: 360px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .event {
+      border-left: 4px solid var(--blue);
+      background: #f8fcff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+
+    .event.warn-line { border-left-color: var(--amber); }
+    .event.err-line { border-left-color: var(--red); }
+
+    .alert-list { display: grid; gap: 8px; }
+
+    .alert {
+      border: 1px solid #dde7ef;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fbfdff;
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn-lite {
+      border: 1px solid #c9dceb;
+      background: #eef7ff;
+      color: #1a4464;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .trace-card {
+      border: 1px dashed #b9d0e2;
+      background: #f7fbfe;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: #244861;
+    }
+
+    .trace-list { display: grid; gap: 8px; }
+
+    .mini {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    @media (max-width: 1024px) {
+      .tabs { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+      .split { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .tabs { grid-template-columns: repeat(2, minmax(100px, 1fr)); }
+      .hero-row { flex-direction: column; align-items: flex-start; }
+      .control-group { width: 100%; }
+      .control-group .select, .control-group .btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-row">
+        <div>
+          <h1>数据工厂系统可观测套件</h1>
+          <div class="hero-sub">L1 项目总控 · L2 工厂研发 · L3 产线执行 · 告警中心 · 链路追踪</div>
+        </div>
+        <div class="control-group">
+          <select id="envSelect" class="select">
+            <option value="all">环境：全量</option>
+            <option value="prod">环境：生产</option>
+            <option value="staging">环境：预发</option>
+            <option value="dev">环境：开发</option>
+          </select>
+          <button class="btn" id="toggleAutoRefresh">自动刷新：开</button>
+          <button class="btn" id="refreshNow">立即刷新</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabs" id="tabs">
+      <button class="tab active" data-view="view-l1">L1 总览</button>
+      <button class="tab" data-view="view-l2">L2 研发</button>
+      <button class="tab" data-view="view-l3">L3 产线</button>
+      <button class="tab" data-view="view-alert">告警中心</button>
+      <button class="tab" data-view="view-trace">链路追踪</button>
+    </section>
+
+    <section id="view-l1" class="view active">
+      <div class="grid-kpi">
+        <article class="card"><div class="kpi-title">周 WorkPackage 发布</div><div class="kpi-value">12</div><div class="kpi-foot">较上周 +3</div></article>
+        <article class="card"><div class="kpi-title">交付成功率</div><div class="kpi-value">97.8%</div><div class="kpi-foot">SLO 目标 96%</div></article>
+        <article class="card"><div class="kpi-title">阻塞任务数</div><div class="kpi-value">4</div><div class="kpi-foot">平均阻塞 41 分钟</div></article>
+        <article class="card"><div class="kpi-title">待决策项</div><div class="kpi-value">9</div><div class="kpi-foot">P0: 1 / P1: 3 / P2: 5</div></article>
+      </div>
+
+      <div class="split">
+        <article class="card">
+          <div class="title-row"><h3>里程碑燃尽</h3><span class="badge ok">健康</span></div>
+          <div class="mini">总体完成度 76%，当前节奏可在 2026-03-15 前完成阶段目标。</div>
+          <div class="burn"><span></span></div>
+          <div class="timeline">
+            <div class="timeline-item"><strong>阶段 1</strong> 基础能力搭建：100%</div>
+            <div class="timeline-item"><strong>阶段 2</strong> 流程规范化：86%</div>
+            <div class="timeline-item"><strong>阶段 3</strong> 可视化开发：59%</div>
+            <div class="timeline-item"><strong>阶段 4</strong> 全量上线优化：21%</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="title-row"><h3>当前阻塞列表</h3><span class="badge warn">需处理</span></div>
+          <table class="table">
+            <thead><tr><th>模块</th><th>问题</th><th>停留</th></tr></thead>
+            <tbody>
+              <tr><td>质量网关</td><td>规则集 v1.8 回归失败</td><td>58m</td></tr>
+              <tr><td>发布编排</td><td>审批流签名服务抖动</td><td>43m</td></tr>
+              <tr><td>实体关联</td><td>上游 POI 接口超时</td><td>37m</td></tr>
+              <tr><td>L3 产线 B</td><td>批处理窗口冲突</td><td>26m</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-l2" class="view">
+      <div class="split">
+        <article class="card">
+          <div class="title-row"><h3>工厂研发泳道</h3><span class="badge ok">7 条活跃流</span></div>
+          <div class="swimlane">
+            <div class="lane"><div class="lane-head"><span>工具引擎升级</span><span>84%</span></div><div class="lane-bar"><span style="width:84%"></span></div></div>
+            <div class="lane"><div class="lane-head"><span>治理 API 扩展</span><span>66%</span></div><div class="lane-bar"><span style="width:66%"></span></div></div>
+            <div class="lane"><div class="lane-head"><span>审计规则体系</span><span>72%</span></div><div class="lane-bar"><span style="width:72%"></span></div></div>
+            <div class="lane"><div class="lane-head"><span>可观测埋点补齐</span><span>91%</span></div><div class="lane-bar"><span style="width:91%"></span></div></div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="title-row"><h3>版本矩阵（最新）</h3><span class="badge warn">1 项待发布</span></div>
+          <table class="table">
+            <thead><tr><th>模块</th><th>当前版本</th><th>候选版本</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>Orchestrator</td><td>v2.3.1</td><td>v2.3.2-rc1</td><td>灰度中</td></tr>
+              <tr><td>Quality Gate</td><td>v1.8.4</td><td>v1.8.5</td><td>回归中</td></tr>
+              <tr><td>Governance API</td><td>v1.5.2</td><td>v1.5.3</td><td>待审批</td></tr>
+              <tr><td>Trace Collector</td><td>v0.9.7</td><td>v0.9.7</td><td>稳定</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top:10px;">
+        <div class="title-row"><h3>研发事件流</h3><span class="mini">最近 90 分钟</span></div>
+        <div class="event-flow" id="devEventFlow"></div>
+      </article>
+    </section>
+
+    <section id="view-l3" class="view">
+      <div class="grid-kpi">
+        <article class="card"><div class="kpi-title">产线 A 吞吐（条/分钟）</div><div class="kpi-value">1,240</div><div class="kpi-foot">峰值 1,460</div></article>
+        <article class="card"><div class="kpi-title">产线 B 吞吐（条/分钟）</div><div class="kpi-value">928</div><div class="kpi-foot">峰值 1,100</div></article>
+        <article class="card"><div class="kpi-title">端到端 P95 延迟</div><div class="kpi-value">18.6s</div><div class="kpi-foot">目标 <= 30s</div></article>
+        <article class="card"><div class="kpi-title">自动恢复成功率</div><div class="kpi-value">95.9%</div><div class="kpi-foot">近 24h 自愈 71 次</div></article>
+      </div>
+
+      <div class="split">
+        <article class="card">
+          <div class="title-row"><h3>产线任务健康</h3><span class="badge ok">整体稳定</span></div>
+          <table class="table">
+            <thead><tr><th>产线</th><th>成功率</th><th>平均耗时</th><th>当前队列</th></tr></thead>
+            <tbody>
+              <tr><td>公安地址治理</td><td>98.4%</td><td>11.2s</td><td>47</td></tr>
+              <tr><td>城市治理</td><td>97.1%</td><td>16.9s</td><td>33</td></tr>
+              <tr><td>实体发现</td><td>95.8%</td><td>24.5s</td><td>16</td></tr>
+              <tr><td>互联网融合</td><td>96.6%</td><td>20.1s</td><td>28</td></tr>
+            </tbody>
+          </table>
+        </article>
+        <article class="card">
+          <div class="title-row"><h3>SLA 热区</h3><span class="badge err">2 项超阈值</span></div>
+          <table class="table">
+            <thead><tr><th>指标</th><th>阈值</th><th>当前</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>批流切换耗时</td><td>&lt; 12s</td><td>14.8s</td><td>告警</td></tr>
+              <tr><td>规则命中回放耗时</td><td>&lt; 4s</td><td>4.6s</td><td>告警</td></tr>
+              <tr><td>统一日志落盘</td><td>&lt; 2s</td><td>1.4s</td><td>正常</td></tr>
+              <tr><td>数据新鲜度</td><td>&lt; 5m</td><td>3.2m</td><td>正常</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-alert" class="view">
+      <article class="card">
+        <div class="title-row"><h3>告警中心</h3><span class="badge warn">未确认 5</span></div>
+        <div class="alert-list" id="alertList"></div>
+      </article>
+    </section>
+
+    <section id="view-trace" class="view">
+      <article class="card">
+        <div class="title-row"><h3>链路追踪</h3><span class="mini">支持按任务 ID 下钻</span></div>
+        <div class="trace-list" id="traceList"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const views = document.querySelectorAll('.view');
+    const autoRefreshButton = document.getElementById('toggleAutoRefresh');
+    const refreshNowButton = document.getElementById('refreshNow');
+
+    let autoRefresh = true;
+    let timer = null;
+
+    const devEvents = [
+      { level: 'ok', text: '10:22 Orchestrator 发布 v2.3.2-rc1，灰度比例 20%。' },
+      { level: 'ok', text: '10:15 质量规则包 1.8.5 回归任务启动，样本集 1300 条。' },
+      { level: 'warn', text: '10:07 审批流签名服务延迟上升，峰值 690ms。' },
+      { level: 'ok', text: '09:58 Trace Collector 增补埋点 12 处，覆盖率 98%。' },
+      { level: 'err', text: '09:44 规则集 v1.8.5 第 3 轮回归失败（边界用例 2 条）。' }
+    ];
+
+    const alerts = [
+      { id: 'ALT-6241', level: 'P1', msg: 'Quality Gate 连续 3 次重试失败', owner: '质量 Agent', hold: '18 分钟' },
+      { id: 'ALT-6240', level: 'P2', msg: '审批流服务抖动（95 线升高）', owner: '治理 API', hold: '33 分钟' },
+      { id: 'ALT-6238', level: 'P1', msg: '产线 B 批处理窗口冲突', owner: '编排 Agent', hold: '26 分钟' },
+      { id: 'ALT-6237', level: 'P3', msg: '链路采样率低于 90%', owner: 'Trace Collector', hold: '47 分钟' },
+      { id: 'ALT-6236', level: 'P2', msg: '上游 POI 接口耗时波动', owner: '数据接入', hold: '39 分钟' }
+    ];
+
+    const traces = [
+      {
+        id: 'TR-20260215-00091',
+        status: 'RUNNING',
+        detail: '任务: 地址治理流程 / 阶段: 规则校验 / 当前节点: gate.evaluate / 重试: 1'
+      },
+      {
+        id: 'TR-20260215-00088',
+        status: 'SUCCESS',
+        detail: '任务: 城市治理融合 / 全链路 14 节点 / 耗时 19.3s / 命中规则 22 条'
+      },
+      {
+        id: 'TR-20260215-00084',
+        status: 'FAILED',
+        detail: '任务: 实体发现闭环 / 失败节点: source.poi.fetch / 原因: timeout'
+      },
+      {
+        id: 'TR-20260215-00079',
+        status: 'SUCCESS',
+        detail: '任务: 互联网内容融合 / 质量评分 96.2 / 产出 3,842 条'
+      }
+    ];
+
+    function renderDevEvents() {
+      const root = document.getElementById('devEventFlow');
+      root.innerHTML = '';
+      devEvents.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = `event ${item.level === 'warn' ? 'warn-line' : ''} ${item.level === 'err' ? 'err-line' : ''}`;
+        div.textContent = item.text;
+        root.appendChild(div);
+      });
+    }
+
+    function renderAlerts() {
+      const root = document.getElementById('alertList');
+      root.innerHTML = '';
+      alerts.forEach((item) => {
+        const node = document.createElement('div');
+        node.className = 'alert';
+        node.innerHTML = `
+          <strong>${item.id} · ${item.level}</strong>
+          <span>${item.msg}</span>
+          <span class="mini">责任方：${item.owner} · 停留：${item.hold}</span>
+          <div class="alert-actions">
+            <button class="btn-lite" data-action="ack" data-id="${item.id}">确认告警</button>
+            <button class="btn-lite" data-action="trace" data-id="${item.id}">查看链路</button>
+            <button class="btn-lite" data-action="ticket" data-id="${item.id}">生成工单</button>
+          </div>
+        `;
+        root.appendChild(node);
+      });
+    }
+
+    function renderTraces() {
+      const root = document.getElementById('traceList');
+      root.innerHTML = '';
+      traces.forEach((item) => {
+        const tagClass = item.status === 'SUCCESS' ? 'ok' : (item.status === 'FAILED' ? 'err' : 'warn');
+        const node = document.createElement('div');
+        node.className = 'trace-card';
+        node.innerHTML = `
+          <div class="title-row" style="margin-bottom:6px;"><strong>${item.id}</strong><span class="badge ${tagClass}">${item.status}</span></div>
+          <div>${item.detail}</div>
+        `;
+        root.appendChild(node);
+      });
+    }
+
+    function refreshData() {
+      renderDevEvents();
+      renderAlerts();
+      renderTraces();
+    }
+
+    function startAutoRefresh() {
+      if (timer) clearInterval(timer);
+      if (!autoRefresh) return;
+      timer = setInterval(() => {
+        const first = devEvents.shift();
+        if (first) devEvents.push(first);
+        refreshData();
+      }, 12000);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((it) => it.classList.remove('active'));
+        views.forEach((it) => it.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.view).classList.add('active');
+      });
+    });
+
+    autoRefreshButton.addEventListener('click', () => {
+      autoRefresh = !autoRefresh;
+      autoRefreshButton.textContent = `自动刷新：${autoRefresh ? '开' : '关'}`;
+      startAutoRefresh();
+    });
+
+    refreshNowButton.addEventListener('click', refreshData);
+
+    document.body.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!target.matches('.btn-lite')) return;
+      const id = target.getAttribute('data-id');
+      const action = target.getAttribute('data-action');
+      if (action === 'ack') target.textContent = `${id} 已确认`;
+      if (action === 'trace') {
+        document.querySelector('[data-view="view-trace"]').click();
+      }
+      if (action === 'ticket') target.textContent = `${id} 工单已创建`;
+    });
+
+    refreshData();
+    startAutoRefresh();
+  </script>
+</body>
+</html>

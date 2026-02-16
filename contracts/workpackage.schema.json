@@ -14,6 +14,7 @@
     "tool_bundle",
     "engine_bundle",
     "observability_bundle",
+    "line_feedback_contract",
     "rollback"
   ],
   "properties": {
@@ -56,11 +57,23 @@
     },
     "line_feedback_contract": {
       "type": "object",
+      "required": [
+        "required_fields",
+        "failure_queue_snapshot_ref",
+        "replay_result_ref"
+      ],
       "properties": {
         "required_fields": {"type": "array", "items": {"type": "string"}},
-        "failure_queue_snapshot_ref": {"type": "string"},
-        "replay_result_ref": {"type": "string"}
-      }
+        "failure_queue_snapshot_ref": {
+          "type": "string",
+          "pattern": "^(sqlite://[^#]+#failure_queue|pg://[A-Za-z0-9_.-]+\\.failure_queue)$"
+        },
+        "replay_result_ref": {
+          "type": "string",
+          "pattern": "^(sqlite://[^#]+#replay_runs|pg://[A-Za-z0-9_.-]+\\.replay_runs)$"
+        }
+      },
+      "additionalProperties": false
     },
     "rollback": {
       "type": "object",

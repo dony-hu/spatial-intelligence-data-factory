@@ -1,0 +1,12 @@
+{
+  "package": "governance_api_and_lab",
+  "scope": "B",
+  "passed": true,
+  "result": {
+    "command": "/Users/huda/Code/spatial-intelligence-data-factory/.venv/bin/python -m pytest services/governance_api/tests/test_ops_sql_readonly_api.py services/governance_api/tests/test_rulesets_api.py services/governance_api/tests/test_ops_api.py services/governance_api/tests/test_lab_api.py services/governance_api/tests/test_observability_integration.py -q",
+    "returncode": 0,
+    "started_at": "2026-02-15T13:06:43.153407+00:00",
+    "ended_at": "2026-02-15T13:06:45.001484+00:00",
+    "output_tail": "..........................                                               [100%]\n26 passed in 1.59s\n"
+  }
+}

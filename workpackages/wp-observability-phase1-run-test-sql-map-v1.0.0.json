@@ -1,0 +1,157 @@
+{
+  "workpackage_id": "wp-observability-phase1-run-test-sql-map-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-observability-phase1-run-test-sql-map-v1.0.0",
+    "tool_bundle_version": "tools-wp-observability-phase1-run-test-sql-map-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-pm-dashboard-test-progress-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "observability_ops_phase1",
+    "goal": "补全测试结果、执行过程、SQL交互三类可观测映射并落看板展示",
+    "constraints": [
+      "三类指标必须可直接在看板读取",
+      "弱数据场景显示-不可报错",
+      "必须提供字段映射与缺口清单"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "metric_sources",
+      "mapping_scope",
+      "sql_interaction_scope",
+      "fallback_rules"
+    ],
+    "properties": {
+      "metric_sources": {
+        "type": "string"
+      },
+      "mapping_scope": {
+        "type": "string"
+      },
+      "sql_interaction_scope": {
+        "type": "string"
+      },
+      "fallback_rules": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "metric_mapping_doc",
+      "dashboard_field_map",
+      "gap_backlog",
+      "verification_report",
+      "release_decision"
+    ],
+    "properties": {
+      "metric_mapping_doc": {
+        "type": "string"
+      },
+      "dashboard_field_map": {
+        "type": "string"
+      },
+      "gap_backlog": {
+        "type": "string"
+      },
+      "verification_report": {
+        "type": "string"
+      },
+      "release_decision": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "o1",
+        "name": "指标映射",
+        "deliverables": [
+          "docs/observability/phase1_metric_mapping.md"
+        ],
+        "done_definition": [
+          "覆盖测试/执行/SQL三类"
+        ]
+      },
+      {
+        "code": "o2",
+        "name": "看板映射",
+        "deliverables": [
+          "output/dashboard/test_status_board.json"
+        ],
+        "done_definition": [
+          "字段可见且容错"
+        ]
+      },
+      {
+        "code": "o3",
+        "name": "验证报告",
+        "deliverables": [
+          "output/workpackages/observability-phase1-verification.md"
+        ],
+        "done_definition": [
+          "包含截图与查询证据"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "jq",
+      "markdown",
+      "postgresql"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "observability/l3/line_observability_spec.md",
+    "mode": "metrics_mapping",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "output/dashboard/test_status_board.json",
+      "output/dashboard/workpackages_live.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-pm-dashboard-test-progress-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

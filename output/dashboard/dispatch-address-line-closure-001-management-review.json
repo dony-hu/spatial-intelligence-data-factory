@@ -1,0 +1,63 @@
+{
+  "as_of": "2026-02-15T12:55:15Z",
+  "line": "项目管理总控线",
+  "owner": "项目管理总控线-Codex",
+  "dispatch_batch_id": "dispatch-address-line-closure-001",
+  "dispatch_time_local": "2026-02-15 20:27:30 CST",
+  "dispatch_time_utc": "2026-02-15T12:27:30Z",
+  "refresh_time_local": "2026-02-15 20:55:15 CST",
+  "refresh_time_utc": "2026-02-15T12:55:15Z",
+  "current_status": "in_progress",
+  "current_progress": 90,
+  "package_status_matrix": [
+    {
+      "workpackage_id": "wp-address-topology-v1.0.1",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-address-topology-v1.0.1.acceptance.report.py311.json"
+    },
+    {
+      "workpackage_id": "wp-address-topology-v1.0.2",
+      "status": "done",
+      "progress": 100,
+      "release_decision": "GO",
+      "evidence_ref": "output/workpackages/wp-address-topology-v1.0.2.acceptance.report.py311.json"
+    },
+    {
+      "workpackage_id": "wp-pm-dashboard-test-progress-v0.1.0",
+      "status": "in_progress",
+      "progress": 82,
+      "release_decision": "HOLD",
+      "evidence_ref": "output/dashboard/wp-pm-dashboard-test-progress-v0.1.0-selftest.md"
+    },
+    {
+      "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+      "status": "in_progress",
+      "progress": 64,
+      "release_decision": "HOLD",
+      "evidence_ref": "output/workpackages/wp-test-panel-sql-query-readonly-v0.1.0.report.json"
+    }
+  ],
+  "top_risks": [
+    "web_e2e_catalog 仍有2条失败（socket.timeout），质量门槛未全绿",
+    "看板任务详情弹窗仍存在旧数据源读取，任务下发时间可能显示 '-'",
+    "地址治理成功样本有历史依赖，需提升最新单条实跑稳定性"
+  ],
+  "go_nogo_decision": {
+    "external_release": "NO_GO",
+    "internal_demo": "GO",
+    "reason": "P1双包已GO，但web_e2e_catalog仍failed=2，未达到全局质量门槛"
+  },
+  "rollback_plan": [
+    "地址拓扑链路异常时回退到 wp-address-topology-v1.0.1 并重放失败队列",
+    "看板渲染异常时回退前端新渲染逻辑，保留数据层刷新",
+    "测试面板SQL风险暴露时关闭查询入口，仅保留测试进展展示"
+  ],
+  "next_48h_plan": [
+    "T+12h: 修复web_e2e optimize超时并重跑suite_web_e2e_catalog",
+    "T+24h: 收口wp-pm-dashboard-test-progress-v0.1.0与wp-test-panel-sql-query-readonly-v0.1.0验收",
+    "T+36h: 完成成功/失败/回放样本复核与观测证据补齐",
+    "T+48h: 提交最终Go/No-Go单与对外演示包"
+  ]
+}

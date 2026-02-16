@@ -1,0 +1,24 @@
+# 子线状态：可信数据Hub线
+
+- workline：可信数据Hub线
+- A_role：平台PM（总控最终负责）
+- R_owner：可信数据Hub线-Codex
+- agent_capabilities：建模 + 执行
+- go_no_go_gate：analyze_pass
+- 进度：86%
+- Done：
+  - replay 持久化链路已打通：`validation/replay` 生成 `replay_id` 并支持 Postgres 落库
+  - replay 记录查询已打通：新增 `/v1/trust/admin/namespaces/{namespace}/validation/replay-runs`
+  - 证据映射字段已校对：输出 `evidence_refs` 同时兼容地址治理 `evidence.items`
+  - 地址治理输入映射已补齐：支持 `street -> road`、`detail -> poi`
+  - 回归测试通过：`services/trust_data_hub/tests/test_trust_data_hub_api.py`（12 passed）
+- Next：
+  - 在真实 Postgres 容器环境执行一次端到端联调并采集 SQL 侧截图/查询证据
+  - 对接地址治理 validate stage 的调用链，补充跨服务回放压测样本
+- Blocker：无
+- ETA：2026-02-17 18:00（本地时间）完成持久化闭环联调
+- evidence_links：
+  - `coordination/status/trust-data-hub-replay-persistence-record-2026-02-15.md`
+  - `services/trust_data_hub/tests/test_trust_data_hub_api.py`
+  - `database/trust_meta_schema.sql`
+- updated_at：2026-02-15T23:55:00+08:00

@@ -4,8 +4,28 @@
     "task_success",
     "task_failed",
     "quality_pass_rate",
-    "avg_task_latency_ms"
+    "avg_task_latency_ms",
+    "step_error_rate"
   ],
   "owner": "factory",
-  "version": "1.0.1"
+  "version": "1.0.2",
+  "domain": "address_topology",
+  "step_error_codes": {
+    "PARSE": {
+      "error_code": "STEP_PARSE_FAIL",
+      "error_message": "地址解析 执行失败"
+    },
+    "NORMALIZE": {
+      "error_code": "STEP_NORMALIZE_FAIL",
+      "error_message": "地址标准化 执行失败"
+    },
+    "VALIDATE": {
+      "error_code": "STEP_VALIDATE_FAIL",
+      "error_message": "质量校验 执行失败"
+    },
+    "TOPOLOGY_BUILD": {
+      "error_code": "STEP_TOPOLOGY_BUILD_FAIL",
+      "error_message": "拓扑构建 执行失败"
+    }
+  }
 }

@@ -1,0 +1,100 @@
+{
+  "generated_at": "2026-02-15T14:51:35.093437+00:00",
+  "web_e2e": {
+    "passed": true,
+    "attempts": [
+      {
+        "attempt": 1,
+        "return_code": 0,
+        "status": "passed",
+        "passed": 4,
+        "failed": 0,
+        "duration_sec": 41.15,
+        "output_tail": "{\n  \"suite_id\": \"suite_web_e2e_catalog\",\n  \"name\": \"web_e2e_catalog\",\n  \"scope\": \"ui\",\n  \"status\": \"passed\",\n  \"return_code\": 0,\n  \"last_run_at\": \"2026-02-15T14:52:16.725537+00:00\",\n  \"started_at\": \"2026-02-15T14:51:35.335965+00:00\",\n  \"ended_at\": \"2026-02-15T14:52:16.725537+00:00\",\n  \"duration_sec\": 41.15,\n  \"total\": 4,\n  \"passed\": 4,\n  \"failed\": 0,\n  \"skipped\": 0,\n  \"xfailed\": 0,\n  \"xpassed\": 0,\n  \"command\": \"/Users/huda/Code/.venv/bin/python -m pytest tests/web_e2e -q --browser chromium --browser-channel chrome\",\n  \"browser_args_enabled\": true,\n  \"runtime_config\": {\n    \"web_e2e_server_wait_sec\": \"60\",\n    \"web_e2e_optimize_timeout_sec\": \"90\",\n    \"web_e2e_optimize_retries\": \"3\",\n    \"web_e2e_optimize_retry_delay_sec\": \"1.5\"\n  },\n  \"output_tail\": \"....                                                                     [100%]\\n4 passed in 41.15s\",\n  \"report_ref\": \"output/lab_mode/web_e2e_latest.json\"\n}"
+      }
+    ],
+    "final": {
+      "suite_id": "suite_web_e2e_catalog",
+      "name": "web_e2e_catalog",
+      "scope": "ui",
+      "status": "passed",
+      "return_code": 0,
+      "last_run_at": "2026-02-15T14:52:16.725537+00:00",
+      "started_at": "2026-02-15T14:51:35.335965+00:00",
+      "ended_at": "2026-02-15T14:52:16.725537+00:00",
+      "duration_sec": 41.15,
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "xfailed": 0,
+      "xpassed": 0,
+      "command": "/Users/huda/Code/.venv/bin/python -m pytest tests/web_e2e -q --browser chromium --browser-channel chrome",
+      "browser_args_enabled": true,
+      "runtime_config": {
+        "web_e2e_server_wait_sec": "60",
+        "web_e2e_optimize_timeout_sec": "90",
+        "web_e2e_optimize_retries": "3",
+        "web_e2e_optimize_retry_delay_sec": "1.5"
+      },
+      "output_tail": "....                                                                     [100%]\n4 passed in 41.15s",
+      "report_ref": "output/lab_mode/web_e2e_latest.json"
+    },
+    "retry_policy": {
+      "max_attempts": 2,
+      "retry_delay_sec": 1.5
+    }
+  },
+  "sql_security": {
+    "passed": true,
+    "return_code": 0,
+    "test_passed": 6,
+    "test_failed": 0,
+    "output_tail": "......                                                                   [100%]\n6 passed in 0.45s",
+    "attempts": [
+      {
+        "attempt": 1,
+        "return_code": 0,
+        "output_tail": "......                                                                   [100%]\n6 passed in 0.45s"
+      }
+    ],
+    "retry_policy": {
+      "max_attempts": 2,
+      "retry_delay_sec": 1.0
+    }
+  },
+  "failed_classification": [],
+  "release_decision": "GO",
+  "risk_notes": [
+    "no blocking risk found in nightly quality gate"
+  ],
+  "gate_report_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/nightly-quality-gate-20260215_145217.md",
+  "gate_judgement_card": {
+    "generated_at": "2026-02-15T14:51:35.093437+00:00",
+    "workpackage_id": "wp-quality-gate-nightly-hardening-v0.2.0",
+    "task_batch_id": "dispatch-address-line-closure-004",
+    "release_decision": "GO",
+    "gate_thresholds": {
+      "suite_web_e2e_catalog": {
+        "max_failed": 0,
+        "required_status": "passed"
+      },
+      "ops_sql_readonly_and_lab_sql": {
+        "max_failed": 0,
+        "required_status": "passed"
+      }
+    },
+    "retry_observations": {
+      "web_e2e_attempts": 1,
+      "sql_security_attempts": 1
+    },
+    "failed_classification": [],
+    "gate_report_path": "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/nightly-quality-gate-20260215_145217.md",
+    "evidence_paths": [
+      "/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/nightly-quality-gate-20260215_145217.md",
+      "output/lab_mode/web_e2e_latest.json",
+      "output/dashboard/test_status_board.json",
+      "output/dashboard/dashboard_events.jsonl"
+    ]
+  }
+}

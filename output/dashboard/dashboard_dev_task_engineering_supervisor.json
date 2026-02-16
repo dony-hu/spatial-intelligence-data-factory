@@ -1,0 +1,25 @@
+{
+  "as_of_local": "2026-02-15 21:12:00 CST",
+  "task_id": "dashboard-engineering-supervisor-visibility-001",
+  "owner_line": "管理看板研发线",
+  "owner": "管理看板研发线-Codex",
+  "goal": "在管理面板展示工程监理线及其任务详情",
+  "data_sources": [
+    "output/dashboard/worklines_overview.json",
+    "output/dashboard/workline_dispatch_prompts_latest.json",
+    "output/dashboard/dashboard_manifest.json"
+  ],
+  "must_deliver": [
+    "工作线总览新增工程监理线",
+    "任务详情弹窗可展示工程监理线任务与提示词",
+    "仅显示本地下发时间",
+    "缺字段显示-且不报错",
+    "变更说明+截图+自测记录"
+  ],
+  "guardrails": [
+    "管理看板研发线仅改看板前端与看板数据读取逻辑",
+    "不得改生产系统研发代码",
+    "不得改测试逻辑与测试数据"
+  ],
+  "status": "task_dispatched"
+}

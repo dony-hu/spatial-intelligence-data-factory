@@ -1,0 +1,73 @@
+{
+  "workpackage_id": "wp-core-runtime-web-e2e-recovery-v0.2.0",
+  "version": "0.2.0",
+  "task_batch_id": "dispatch-address-line-closure-004",
+  "workline": "核心引擎与运行时线",
+  "owner": "核心引擎与运行时线-Codex",
+  "executed_at": "2026-02-15T14:52:20+00:00",
+  "status": "done",
+  "progress": "100%",
+  "release_decision": "GO",
+  "root_cause": {
+    "summary": "夜间门槛存在一次瞬态判定异常（NO_GO），表现为报告判定与展示计数字段不一致，导致质量门槛误报风险。",
+    "evidence": [
+      "output/workpackages/nightly-quality-gate-20260215_144410.md"
+    ]
+  },
+  "fix_and_recovery": {
+    "sql_panel_api_contract_completed": true,
+    "sql_panel_endpoints": [
+      "GET /v1/governance/lab/sql/templates",
+      "GET /v1/governance/lab/sql/history",
+      "POST /v1/governance/lab/sql/query"
+    ],
+    "verification": [
+      {
+        "type": "unit_test",
+        "command": "/Users/huda/Code/.venv/bin/python -m pytest -q services/governance_api/tests/test_lab_sql_api.py",
+        "result": "passed",
+        "report": "services/governance_api/tests/test_lab_sql_api.py"
+      },
+      {
+        "type": "suite_run",
+        "command": "/Users/huda/Code/.venv/bin/python scripts/run_web_e2e_catalog.py",
+        "result": "passed",
+        "report": "output/lab_mode/web_e2e_latest.json"
+      }
+    ]
+  },
+  "nightly_continuous_pass": {
+    "required": 2,
+    "actual": 2,
+    "runs": [
+      {
+        "report": "output/workpackages/nightly-quality-gate-20260215_145134.md",
+        "decision": "GO"
+      },
+      {
+        "report": "output/workpackages/nightly-quality-gate-20260215_145217.md",
+        "decision": "GO"
+      }
+    ]
+  },
+  "risk_disclosure": {
+    "blocking_risks": [],
+    "non_blocking_risks": [
+      "夜间门槛历史上出现过一次判定与展示不一致的瞬态异常，需要持续监控判定字段与展示字段一致性。"
+    ],
+    "mitigation": [
+      "持续对比 nightly-quality-gate-latest.json 与 nightly-quality-gate-latest.md 的决策与计数字段。",
+      "若再次出现 NO_GO 且计数展示无失败，优先排查 sql_security.return_code 与输出解析链路。"
+    ]
+  },
+  "evidence_paths": [
+    "coordination/status/factory-tooling.md",
+    "services/governance_api/app/routers/lab.py",
+    "services/governance_api/tests/test_lab_sql_api.py",
+    "output/lab_mode/web_e2e_latest.json",
+    "output/workpackages/nightly-quality-gate-20260215_144410.md",
+    "output/workpackages/nightly-quality-gate-20260215_145134.md",
+    "output/workpackages/nightly-quality-gate-20260215_145217.md",
+    "output/workpackages/nightly-quality-gate-latest.json"
+  ]
+}

@@ -154,3 +154,18 @@ scripts/testdata/verify.sh geo_poi_smoke_p0
 - `scripts/panel_up.sh`：后台拉起工艺专家对话室
 
 更多见：`docs/STORY-runtime-scripts.md` 与 `docs/STORY-alignment-check-2026-02-14.md`。
+
+## P0 核心引擎工作包执行
+
+P0 工作包：`workpackages/wp-core-engine-p0-stabilization-v0.1.0.json`
+
+本地执行（建议 Python 3.11+）：
+
+```bash
+python scripts/run_p0_workpackage.py
+```
+
+执行产物：
+
+- `output/workpackages/wp-core-engine-p0-stabilization-v0.1.0.report.json`
+- `output/workpackages/line_feedback.latest.json`

@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +7,7 @@ from scripts.line_execution_tc06 import (
     load_failed_queue,
     replay_failed_queue,
     save_failed_queue,
+    build_line_feedback_payload,
 )
 
 
@@ -67,6 +67,57 @@ class Tc06LineExecutionTests(unittest.TestCase):
             remaining = load_failed_queue(queue_path)
             self.assertEqual(len(remaining), 1)
             self.assertEqual(remaining[0]["raw_address"], "中山东一路1号")
+
+    def test_build_line_feedback_payload_consumes_contract_refs(self):
+        contract = {
+            "required_fields": [
+                "status",
+                "done",
+                "next",
+                "blocker",
+                "eta",
+                "test_report_ref",
+                "failure_queue_snapshot_ref",
+                "replay_result_ref",
+                "release_decision",
+            ],
+            "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+            "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+        }
+        payload = build_line_feedback_payload(
+            contract=contract,
+            replay_report_ref="output/line_runs/tc06_failure_replay_2026-02-15_190000_000000.json",
+            status="done",
+        )
+
+        self.assertEqual(payload["failure_queue_snapshot_ref"], contract["failure_queue_snapshot_ref"])
+        self.assertEqual(payload["replay_result_ref"], contract["replay_result_ref"])
+        self.assertEqual(payload["status"], "done")
+        self.assertEqual(payload["release_decision"], "GO")
+
+    def test_build_line_feedback_payload_accepts_pg_contract_refs(self):
+        contract = {
+            "required_fields": [
+                "status",
+                "done",
+                "next",
+                "blocker",
+                "eta",
+                "test_report_ref",
+                "failure_queue_snapshot_ref",
+                "replay_result_ref",
+                "release_decision",
+            ],
+            "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+            "replay_result_ref": "pg://address_line.replay_runs",
+        }
+        payload = build_line_feedback_payload(
+            contract=contract,
+            replay_report_ref="output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
+            status="done",
+        )
+        self.assertEqual(payload["failure_queue_snapshot_ref"], contract["failure_queue_snapshot_ref"])
+        self.assertEqual(payload["replay_result_ref"], contract["replay_result_ref"])
 
 
 if __name__ == "__main__":

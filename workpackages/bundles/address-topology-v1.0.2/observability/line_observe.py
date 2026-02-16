@@ -5,13 +5,72 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict
 
+STEP_ERROR_CODE_CATALOG = {
+    "PARSE": {
+        "error_code": "STEP_PARSE_FAIL",
+        "error_message": "地址解析 执行失败",
+    },
+    "NORMALIZE": {
+        "error_code": "STEP_NORMALIZE_FAIL",
+        "error_message": "地址标准化 执行失败",
+    },
+    "VALIDATE": {
+        "error_code": "STEP_VALIDATE_FAIL",
+        "error_message": "质量校验 执行失败",
+    },
+    "TOPOLOGY_BUILD": {
+        "error_code": "STEP_TOPOLOGY_BUILD_FAIL",
+        "error_message": "拓扑构建 执行失败",
+    },
+}
 
-def observe_step(task_id: str, step_code: str, status: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Return a normalized step observation event for line runtime."""
+
+def observe_step(
+    task_id: str,
+    step_code: str,
+    status: str,
+    payload: Dict[str, Any],
+    error_code: str = "",
+    error_detail: str = "",
+) -> Dict[str, Any]:
+    """Return normalized step observation event with standard error code."""
+    step_key = str(step_code or "").upper()
+    default_code = (STEP_ERROR_CODE_CATALOG.get(step_key) or {}).get("error_code", "")
+    final_error_code = error_code or (default_code if status == "failed" else "")
     return {
         "timestamp": datetime.now().isoformat(),
         "task_id": task_id,
         "step_code": step_code,
         "status": status,
+        "error_code": final_error_code,
+        "error_detail": error_detail,
         "payload": payload,
+    }
+
+
+def aggregate_runtime_metrics(step_events: list[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate runtime step metrics including step_error_rate."""
+    total_steps = len(step_events)
+    failed_steps = sum(1 for event in step_events if str((event or {}).get("status") or "").lower() == "failed")
+    step_error_rate = round(float(failed_steps) / float(total_steps), 6) if total_steps > 0 else 0.0
+
+    by_step: Dict[str, Dict[str, Any]] = {}
+    for event in step_events:
+        row = event or {}
+        step_key = str(row.get("step_code") or "UNKNOWN").upper()
+        holder = by_step.setdefault(step_key, {"total": 0, "failed": 0, "step_error_rate": 0.0})
+        holder["total"] += 1
+        if str(row.get("status") or "").lower() == "failed":
+            holder["failed"] += 1
+
+    for holder in by_step.values():
+        holder["step_error_rate"] = round(float(holder["failed"]) / float(holder["total"]), 6) if holder["total"] > 0 else 0.0
+
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "domain": "address_governance",
+        "step_total": total_steps,
+        "step_failed": failed_steps,
+        "step_error_rate": step_error_rate,
+        "by_step": by_step,
     }

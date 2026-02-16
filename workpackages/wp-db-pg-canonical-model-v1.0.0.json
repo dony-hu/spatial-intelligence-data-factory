@@ -1,0 +1,158 @@
+{
+  "workpackage_id": "wp-db-pg-canonical-model-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-db-pg-canonical-model-v1.0.0",
+    "tool_bundle_version": "tools-wp-db-pg-canonical-model-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "database_expert_phase1",
+    "goal": "冻结PG统一数据模型与约束, 形成地址治理主链路物理层与语义层规范",
+    "constraints": [
+      "覆盖 public.addr_* 与 address_line 语义层映射",
+      "补齐非空/枚举/外键约束与回归SQL",
+      "提供迁移脚本与回滚脚本"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "table_inventory",
+      "constraint_targets",
+      "migration_scope",
+      "compatibility_scope"
+    ],
+    "properties": {
+      "table_inventory": {
+        "type": "string"
+      },
+      "constraint_targets": {
+        "type": "string"
+      },
+      "migration_scope": {
+        "type": "string"
+      },
+      "compatibility_scope": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "ddl_pack",
+      "migration_pack",
+      "compatibility_views",
+      "dq_sql_pack",
+      "release_decision"
+    ],
+    "properties": {
+      "ddl_pack": {
+        "type": "string"
+      },
+      "migration_pack": {
+        "type": "string"
+      },
+      "compatibility_views": {
+        "type": "string"
+      },
+      "dq_sql_pack": {
+        "type": "string"
+      },
+      "release_decision": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "d1",
+        "name": "模型冻结",
+        "deliverables": [
+          "database/postgres/sql/010_phase1_addr_model.sql"
+        ],
+        "done_definition": [
+          "关键表约束完整"
+        ]
+      },
+      {
+        "code": "d2",
+        "name": "迁移与回滚",
+        "deliverables": [
+          "database/postgres/sql/011_phase1_migration.sql",
+          "database/postgres/sql/011_phase1_migration.rollback.sql"
+        ],
+        "done_definition": [
+          "可前滚可回滚"
+        ]
+      },
+      {
+        "code": "d3",
+        "name": "质量回归SQL",
+        "deliverables": [
+          "database/postgres/sql/qa/phase1_data_quality_checks.sql"
+        ],
+        "done_definition": [
+          "覆盖完整性与一致性"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "postgresql",
+      "psql",
+      "rg"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "database/postgres/sql/",
+    "mode": "pg_model_freeze",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "database/postgres/sql/",
+      "output/workpackages/"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

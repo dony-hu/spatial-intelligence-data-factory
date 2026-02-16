@@ -153,6 +153,25 @@
 5. 数据底座遵循“Lake 负责生长试错，DW 负责权威治理审计”原则
 6. 关键决策点必须通过人工审批后方可触发自动执行
 
+## 4.1 研发治理角色口径（Implementation 强制）
+
+为统一研发过程中的责任归属与执行口径，Implementation 阶段采用 Build-time 角色体系：
+
+- 治理角色来源：`docs/platform-subproject-collaboration-charter.md`
+- 工作线来源：`coordination/status/overview.md`
+- 映射规范来源：`docs/codex-bmad-role-mapping-v1-2026-02-15.md`
+
+从本 PRD 派生的 Story/Task 在进入 `coordination/dispatch/` 前，必须补齐以下字段：
+
+1. `workline`（8 条协同工作线之一）
+2. `A_role`（治理最终负责角色）
+3. `R_owner`（工作线执行 Owner）
+4. `agent_capabilities`（主 Agent 能力域，建议 1-2 个）
+5. `go_no_go_gate`（可量化验收门槛）
+6. `evidence_paths`（证据路径）
+
+说明：运营使用者角色（Run-time）不参与研发派单字段，不作为研发期责任归属口径。
+
 ## 5. 依赖与风险
 
 ### 5.1 关键依赖

@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
@@ -17,21 +16,78 @@ def _now_iso() -> str:
     return datetime.now().isoformat()
 
 
+class _CompatCursor:
+    """Small cursor adapter to keep sqlite-style '?' placeholders working on postgres."""
+
+    def __init__(self, raw_cursor: Any):
+        self._raw = raw_cursor
+
+    def execute(self, sql: str, params: Optional[tuple[Any, ...] | list[Any]] = None):
+        if params is None:
+            self._raw.execute(sql)
+            return self
+        sql = sql.replace("?", "%s")
+        self._raw.execute(sql, params)
+        return self
+
+    def fetchone(self):
+        return self._raw.fetchone()
+
+    def fetchall(self):
+        return self._raw.fetchall()
+
+    def __getattr__(self, name: str):
+        return getattr(self._raw, name)
+
+
+class _CompatConnection:
+    def __init__(self, raw_conn: Any, cursor_factory: Any = None):
+        self._raw = raw_conn
+        self._cursor_factory = cursor_factory
+
+    def cursor(self):
+        if self._cursor_factory is not None:
+            raw_cursor = self._raw.cursor(cursor_factory=self._cursor_factory)
+        else:
+            raw_cursor = self._raw.cursor()
+        return _CompatCursor(raw_cursor)
+
+    def commit(self):
+        self._raw.commit()
+
+    def rollback(self):
+        self._raw.rollback()
+
+    def close(self):
+        self._raw.close()
+
+    def __getattr__(self, name: str):
+        return getattr(self._raw, name)
+
+
 class AgentRuntimeStore:
-    """SQLite + local filesystem runtime store."""
+    """Runtime store (PostgreSQL-only)."""
 
     def __init__(self, db_path: str = "database/agent_runtime.db", base_dir: str = "runtime_store"):
+        self.database_url = str(os.getenv("DATABASE_URL") or "")
+        if not self.database_url.startswith("postgresql"):
+            raise RuntimeError("DATABASE_URL must be postgresql://... in PG-only mode")
         self.db_path = db_path
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
-        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self.init_schema()
         self.seed_default_processes()
 
     @contextmanager
     def get_connection(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+
+        raw_conn = psycopg2.connect(self.database_url)
+        with raw_conn.cursor() as cur:
+            cur.execute("CREATE SCHEMA IF NOT EXISTS control_plane")
+            cur.execute("SET search_path TO control_plane, public")
+        conn = _CompatConnection(raw_conn, cursor_factory=RealDictCursor)
         try:
             yield conn
             conn.commit()
@@ -81,7 +137,7 @@ class AgentRuntimeStore:
                 )
                 """
             )
-            self._ensure_process_version_columns(cur)
+            self._ensure_process_version_columns_pg(cur)
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS process_step (
@@ -195,7 +251,7 @@ class AgentRuntimeStore:
                 )
                 """
             )
-            self._ensure_iteration_event_columns(cur)
+            self._ensure_iteration_event_columns_pg(cur)
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS process_draft (
@@ -440,26 +496,17 @@ class AgentRuntimeStore:
             )
 
     @staticmethod
-    def _ensure_iteration_event_columns(cur: sqlite3.Cursor) -> None:
-        """Backfill columns for older databases created before iteration event extension."""
-        cur.execute("PRAGMA table_info(process_iteration_event)")
-        columns = {str(row[1]) for row in cur.fetchall()}
-        if "from_version" not in columns:
-            cur.execute("ALTER TABLE process_iteration_event ADD COLUMN from_version TEXT")
-        if "to_version" not in columns:
-            cur.execute("ALTER TABLE process_iteration_event ADD COLUMN to_version TEXT")
+    def _ensure_iteration_event_columns_pg(cur: Any) -> None:
+        """Backfill columns for postgres runtime schema."""
+        cur.execute("ALTER TABLE process_iteration_event ADD COLUMN IF NOT EXISTS from_version TEXT")
+        cur.execute("ALTER TABLE process_iteration_event ADD COLUMN IF NOT EXISTS to_version TEXT")
 
     @staticmethod
-    def _ensure_process_version_columns(cur: sqlite3.Cursor) -> None:
-        """Backfill process_version columns for tooling/engine compatibility metadata."""
-        cur.execute("PRAGMA table_info(process_version)")
-        columns = {str(row[1]) for row in cur.fetchall()}
-        if "tool_bundle_version" not in columns:
-            cur.execute("ALTER TABLE process_version ADD COLUMN tool_bundle_version TEXT")
-        if "engine_version" not in columns:
-            cur.execute("ALTER TABLE process_version ADD COLUMN engine_version TEXT")
-        if "engine_compatibility_json" not in columns:
-            cur.execute("ALTER TABLE process_version ADD COLUMN engine_compatibility_json TEXT")
+    def _ensure_process_version_columns_pg(cur: Any) -> None:
+        """Backfill process_version columns for postgres runtime schema."""
+        cur.execute("ALTER TABLE process_version ADD COLUMN IF NOT EXISTS tool_bundle_version TEXT")
+        cur.execute("ALTER TABLE process_version ADD COLUMN IF NOT EXISTS engine_version TEXT")
+        cur.execute("ALTER TABLE process_version ADD COLUMN IF NOT EXISTS engine_compatibility_json TEXT")
 
     def seed_default_processes(self) -> None:
         """Seed default process definitions if absent."""

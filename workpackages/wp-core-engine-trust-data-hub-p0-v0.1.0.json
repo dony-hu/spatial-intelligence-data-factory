@@ -1,0 +1,180 @@
+{
+  "workpackage_id": "wp-core-engine-trust-data-hub-p0-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-trust-data-hub-p0-v0.1.0",
+    "tool_bundle_version": "tools-trust-data-hub-p0-v0.1.0",
+    "engine_version": "engine-core-v1.0.3",
+    "released_at": "2026-02-15T19:10:00+08:00",
+    "released_by": "orchestrator",
+    "rollback_target_version": "wp-address-topology-v1.0.2",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-trust-data-hub-p0-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "trust_data_hub_stabilization",
+    "goal": "将 trust_data_hub 从内存语义可演示态推进到可持久化回放的稳定态",
+    "constraints": [
+      "仅允许修改 services/trust_data_hub 与 trust 相关数据库脚本",
+      "namespace 隔离能力必须保持",
+      "证据链 source_id/snapshot_id 不得丢失",
+      "发布链路必须支持回放"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "namespace",
+      "source_profiles",
+      "target_branch"
+    ],
+    "properties": {
+      "namespace": {
+        "type": "string"
+      },
+      "source_profiles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "target_branch": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "fetch_validate_publish_report",
+      "persistence_report",
+      "replay_report",
+      "release_decision"
+    ],
+    "properties": {
+      "fetch_validate_publish_report": {
+        "type": "object",
+        "required": [
+          "sources",
+          "snapshots",
+          "quality"
+        ]
+      },
+      "persistence_report": {
+        "type": "object",
+        "required": [
+          "meta_db_ok",
+          "trust_db_ok",
+          "tables"
+        ]
+      },
+      "replay_report": {
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "replay_consistent"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "c1_repository_split",
+        "name": "仓储层分层与持久化接线",
+        "deliverables": [
+          "TrustRepository 拆分为 meta 与 trustdb 语义层",
+          "publish 路径支持落库",
+          "active release 与质量报告可查询"
+        ],
+        "done_definition": [
+          "DDL 与仓储字段一致",
+          "不破坏当前 fixture 演示路径"
+        ]
+      },
+      {
+        "code": "c2_fetch_parser_realpath",
+        "name": "Fetch/Parser 从样板到可配置实链路",
+        "deliverables": [
+          "file/http fetcher 配置稳态化",
+          "file_json/osm_elements_v1 parser profile 固化",
+          "bootstrap 样板源可一键初始化"
+        ],
+        "done_definition": [
+          "fetch-validate-publish-promote 可连跑",
+          "失败场景有错误码与审计事件"
+        ]
+      },
+      {
+        "code": "c3_validation_replay_contract",
+        "name": "回放与证据契约固化",
+        "deliverables": [
+          "validation evidence 引入 schema_version",
+          "replay 结果与实时结果一致性校验",
+          "对接地址治理 validate stage 的 HTTP 契约"
+        ],
+        "done_definition": [
+          "test_trust_data_hub_api 全量通过",
+          "输出 GO/NO_GO 判定单"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "fastapi",
+      "pytest",
+      "docker-compose",
+      "services/trust_data_hub/ops/worker.py"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "services/trust_data_hub/app/main.py",
+    "mode": "service_regression",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "services/trust_data_hub/tests/test_trust_data_hub_api.py",
+      "services/trust_data_hub/docker-compose.yml"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "wp-address-topology-v1.0.2",
+    "instructions": [
+      "关闭 trust_data_hub 新发布任务",
+      "回退到 fixture-only 模式并冻结 promote",
+      "保留 snapshot 与 replay 产物用于复盘"
+    ]
+  }
+}

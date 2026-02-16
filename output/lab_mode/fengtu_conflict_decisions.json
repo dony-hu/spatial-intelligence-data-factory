@@ -1,0 +1,10 @@
+{
+  "items": {
+    "CNADDR-X001": {
+      "decision": "accept_expected",
+      "comment": "keep fixture expectation",
+      "operator": "huda",
+      "decided_at": "2026-02-15T03:14:00.968203+00:00"
+    }
+  }
+}

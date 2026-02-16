@@ -1,0 +1,157 @@
+{
+  "workpackage_id": "wp-pg-only-integration-baseline-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-pg-only-integration-baseline-v1.0.0",
+    "tool_bundle_version": "tools-wp-pg-only-integration-baseline-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-test-panel-sql-query-readonly-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "test_quality_gate_phase1",
+    "goal": "建立PG-only集成测试硬门并禁止SQLite回落",
+    "constraints": [
+      "CI必须执行PG-only集成测试",
+      "检测到SQLite回落即NO_GO",
+      "输出门槛判定与失败分类"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "ci_scope",
+      "pg_env",
+      "gate_rules",
+      "fallback_rules"
+    ],
+    "properties": {
+      "ci_scope": {
+        "type": "string"
+      },
+      "pg_env": {
+        "type": "string"
+      },
+      "gate_rules": {
+        "type": "string"
+      },
+      "fallback_rules": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "pg_only_test_report",
+      "sqlite_fallback_detection",
+      "gate_decision_sheet",
+      "failure_classification_report",
+      "release_decision"
+    ],
+    "properties": {
+      "pg_only_test_report": {
+        "type": "string"
+      },
+      "sqlite_fallback_detection": {
+        "type": "string"
+      },
+      "gate_decision_sheet": {
+        "type": "string"
+      },
+      "failure_classification_report": {
+        "type": "string"
+      },
+      "release_decision": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "t1",
+        "name": "PG-only门槛",
+        "deliverables": [
+          "output/workpackages/pg-only-gate-phase1.md"
+        ],
+        "done_definition": [
+          "门槛规则可执行"
+        ]
+      },
+      {
+        "code": "t2",
+        "name": "集成回归",
+        "deliverables": [
+          "output/workpackages/pg-only-integration-phase1-report.json"
+        ],
+        "done_definition": [
+          "关键用例有结果"
+        ]
+      },
+      {
+        "code": "t3",
+        "name": "判定发布",
+        "deliverables": [
+          "output/workpackages/pg-only-gate-phase1-decision.md"
+        ],
+        "done_definition": [
+          "GO/NO_GO明确"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "pytest",
+      "bash",
+      "postgresql"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "tests/",
+    "mode": "pg_only_gate",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "tests/",
+      "output/workpackages/nightly-quality-gate-latest.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-test-panel-sql-query-readonly-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

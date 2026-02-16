@@ -1,0 +1,173 @@
+{
+  "workpackage_id": "wp-core-engine-address-core-p0-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-address-core-p0-v0.1.0",
+    "tool_bundle_version": "tools-address-core-p0-v0.1.0",
+    "engine_version": "engine-core-v1.0.3",
+    "released_at": "2026-02-15T19:10:00+08:00",
+    "released_by": "orchestrator",
+    "rollback_target_version": "wp-address-topology-v1.0.2",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-address-core-p0-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "address_core_algorithm_and_tests",
+    "goal": "收敛地址算法模块改动并形成可复现测试基线",
+    "constraints": [
+      "仅允许修改 packages/address_core",
+      "保持函数输入输出契约兼容",
+      "新增能力必须有对应单测",
+      "禁止引入网络强依赖到核心算法路径"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "module_scope",
+      "test_scope",
+      "target_branch"
+    ],
+    "properties": {
+      "module_scope": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "test_scope": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "target_branch": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "algorithm_changes",
+      "coverage_report",
+      "compatibility_report",
+      "release_decision"
+    ],
+    "properties": {
+      "algorithm_changes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "coverage_report": {
+        "type": "object",
+        "required": [
+          "command",
+          "passed_tests",
+          "failed_tests"
+        ]
+      },
+      "compatibility_report": {
+        "type": "object",
+        "required": [
+          "input_compatible",
+          "output_compatible"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "a1_baseline",
+        "name": "基线冻结",
+        "deliverables": [
+          "确认 dedup/match/normalize/parse/score 现状行为",
+          "补齐 test_dedup/test_match/test_score/test_trusted_fengtu 失败样本"
+        ],
+        "done_definition": [
+          "pytest packages/address_core/tests 全量可执行",
+          "关键边界条件形成回归用例"
+        ]
+      },
+      {
+        "code": "a2_algorithm_stabilize",
+        "name": "算法收敛",
+        "deliverables": [
+          "统一 normalize/parse 输出字段稳定性",
+          "明确 match 与 score 阈值口径",
+          "清理重复逻辑并补释义注释"
+        ],
+        "done_definition": [
+          "pipeline smoke 与模块单测全部通过",
+          "输出阈值变更说明"
+        ]
+      },
+      {
+        "code": "a3_release_gate",
+        "name": "发布门槛",
+        "deliverables": [
+          "提交最小性能对比",
+          "提交兼容性报告",
+          "给出 GO/NO_GO 判定"
+        ],
+        "done_definition": [
+          "无 P0 回归",
+          "回滚方案可执行"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "pytest",
+      "packages/address_core/pipeline.py"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "packages/address_core/pipeline.py",
+    "mode": "module_regression",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12"
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "packages/address_core/tests/test_pipeline_smoke.py",
+      "output/lab_mode/"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "wp-address-topology-v1.0.2",
+    "instructions": [
+      "回退 packages/address_core 到上一稳定提交",
+      "恢复旧阈值配置并重跑 smoke",
+      "保留失败样本用于 replay"
+    ]
+  }
+}

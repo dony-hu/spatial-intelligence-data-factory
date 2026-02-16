@@ -1,0 +1,157 @@
+{
+  "workpackage_id": "wp-address-canonical-pg-baseline-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-address-canonical-pg-baseline-v1.0.0",
+    "tool_bundle_version": "tools-wp-address-canonical-pg-baseline-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-core-engine-address-core-p0-v0.1.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "address_algo_rules_phase1",
+    "goal": "建立addr_canonical字段质量基线并形成低置信度治理策略",
+    "constraints": [
+      "覆盖标准地址结构化字段与置信度策略",
+      "必须输出样本质量报告与失败分类",
+      "结果可被测试线与看板线消费"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "sample_scope",
+      "canonical_fields",
+      "confidence_policy",
+      "failure_taxonomy"
+    ],
+    "properties": {
+      "sample_scope": {
+        "type": "string"
+      },
+      "canonical_fields": {
+        "type": "string"
+      },
+      "confidence_policy": {
+        "type": "string"
+      },
+      "failure_taxonomy": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "quality_baseline_report",
+      "low_confidence_distribution",
+      "failure_classification",
+      "improvement_backlog",
+      "release_decision"
+    ],
+    "properties": {
+      "quality_baseline_report": {
+        "type": "string"
+      },
+      "low_confidence_distribution": {
+        "type": "string"
+      },
+      "failure_classification": {
+        "type": "string"
+      },
+      "improvement_backlog": {
+        "type": "string"
+      },
+      "release_decision": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "a1",
+        "name": "字段质量基线",
+        "deliverables": [
+          "output/workpackages/address-canonical-phase1-baseline.json"
+        ],
+        "done_definition": [
+          "关键字段完整性可量化"
+        ]
+      },
+      {
+        "code": "a2",
+        "name": "样本评估",
+        "deliverables": [
+          "output/workpackages/address-canonical-phase1-samples.md"
+        ],
+        "done_definition": [
+          "至少10条样本含证据"
+        ]
+      },
+      {
+        "code": "a3",
+        "name": "策略建议",
+        "deliverables": [
+          "output/workpackages/address-canonical-phase1-strategy.md"
+        ],
+        "done_definition": [
+          "给出低置信度治理动作"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "pytest",
+      "pandas",
+      "postgresql"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "packages/address_core/pipeline.py",
+    "mode": "canonical_quality_baseline",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "packages/address_core/",
+      "output/workpackages/address-canonical-phase1-baseline.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-core-engine-address-core-p0-v0.1.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

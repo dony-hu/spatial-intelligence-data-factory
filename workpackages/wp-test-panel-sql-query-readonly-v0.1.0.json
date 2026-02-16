@@ -1,0 +1,198 @@
+{
+  "workpackage_id": "wp-test-panel-sql-query-readonly-v0.1.0",
+  "version": "0.1.0",
+  "factory_release": {
+    "process_version": "process-test-panel-sql-query-readonly-v0.1.0",
+    "tool_bundle_version": "tools-dashboard-sql-v0.1.0",
+    "engine_version": "engine-governance-api-v1.0.0",
+    "released_at": "2026-02-15T20:20:00+08:00",
+    "released_by": "project-manager",
+    "rollback_target_version": "dashboard-web-baseline",
+    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-test-panel-sql-query-readonly-v0.1.0"
+  },
+  "line_spec": {
+    "line_type": "test_panel_sql_query",
+    "goal": "在测试面板提供测试数据库数据查看能力，并支持只读 SQL 查询与结果展示",
+    "constraints": [
+      "仅允许 SELECT/WITH 查询",
+      "仅允许白名单表访问",
+      "必须限制查询行数、执行时长并记录审计日志",
+      "缺字段或空数据场景必须兜底显示 '-'"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "db_scope",
+      "security_policy",
+      "ui_scope"
+    ],
+    "properties": {
+      "db_scope": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "security_policy": {
+        "type": "object"
+      },
+      "ui_scope": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "api_delivery",
+      "ui_delivery",
+      "security_validation",
+      "audit_validation",
+      "release_decision"
+    ],
+    "properties": {
+      "api_delivery": {
+        "type": "object",
+        "required": [
+          "query_endpoint",
+          "templates_endpoint",
+          "history_endpoint"
+        ]
+      },
+      "ui_delivery": {
+        "type": "object",
+        "required": [
+          "query_panel",
+          "result_table",
+          "pagination",
+          "error_fallback"
+        ]
+      },
+      "security_validation": {
+        "type": "object",
+        "required": [
+          "readonly_enforced",
+          "table_whitelist_enforced",
+          "limit_enforced",
+          "timeout_enforced"
+        ]
+      },
+      "audit_validation": {
+        "type": "object",
+        "required": [
+          "query_log_enabled",
+          "operator_traceable",
+          "elapsed_ms_recorded"
+        ]
+      },
+      "release_decision": {
+        "type": "string",
+        "enum": [
+          "GO",
+          "NO_GO"
+        ]
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "s1_api_readonly",
+        "name": "后端只读 SQL 查询 API",
+        "deliverables": [
+          "POST /v1/governance/lab/sql/query",
+          "GET /v1/governance/lab/sql/templates",
+          "GET /v1/governance/lab/sql/history"
+        ],
+        "done_definition": [
+          "非 SELECT/WITH 被拒绝",
+          "白名单外表名被拒绝",
+          "超时与行数限制生效"
+        ]
+      },
+      {
+        "code": "s2_ui_query_panel",
+        "name": "测试面板查询区块",
+        "deliverables": [
+          "模板 SQL 选择",
+          "自定义 SQL 输入",
+          "结果表格与分页",
+          "错误与弱数据兜底展示"
+        ],
+        "done_definition": [
+          "查询成功返回可读表格",
+          "缺字段显示 '-' 且不阻塞全页刷新"
+        ]
+      },
+      {
+        "code": "s3_validation",
+        "name": "安全与验收",
+        "deliverables": [
+          "接口测试",
+          "安全规则测试",
+          "审计日志验证",
+          "变更说明+截图+自测记录"
+        ],
+        "done_definition": [
+          "管理层可在测试面板执行一次查询并看到结果",
+          "产出 GO/NO_GO 判定单"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "fastapi",
+      "pytest",
+      "sqlite",
+      "web/dashboard/app.js"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "governance_api",
+    "entrypoint": "services/governance_api/app/main.py",
+    "mode": "readonly_query",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "sqlite",
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "services/governance_api/app/routers/lab.py",
+      "services/governance_api/tests/test_lab_api.py",
+      "output/dashboard/test_status_board.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision"
+    ],
+    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
+    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
+  },
+  "rollback": {
+    "from_version": "0.1.0",
+    "fallback_version": "dashboard-web-baseline",
+    "instructions": [
+      "关闭 SQL 查询入口路由",
+      "回退测试面板查询区块改动",
+      "保留审计日志用于复盘"
+    ]
+  }
+}

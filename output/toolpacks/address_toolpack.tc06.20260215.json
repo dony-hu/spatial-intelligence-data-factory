@@ -1,0 +1,16 @@
+{
+  "version": "2026-02-15.tc06.local.1",
+  "description": "TC06 local reproducible toolpack for line-closure evidence",
+  "generation_mode": "manual_local_for_repro",
+  "cities": [
+    {
+      "name": "上海市",
+      "aliases": ["上海", "上海市"],
+      "districts": [
+        {"name": "浦东新区", "aliases": ["浦东新区", "浦东"]},
+        {"name": "黄浦区", "aliases": ["黄浦区", "黄浦"]},
+        {"name": "静安区", "aliases": ["静安区", "静安"]}
+      ]
+    }
+  ]
+}

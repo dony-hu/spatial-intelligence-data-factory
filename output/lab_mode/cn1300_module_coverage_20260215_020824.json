@@ -1,0 +1,421 @@
+{
+  "dataset": "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv",
+  "generated_at": "2026-02-15T02:08:24.912919+00:00",
+  "rows_total": 1300,
+  "module_coverage": {
+    "normalize": {
+      "hit_count": 780,
+      "hit_rate": 0.6
+    },
+    "parse": {
+      "field_hit_count": {
+        "province": 1300,
+        "city": 1300,
+        "district": 1300,
+        "road": 1170,
+        "house_no": 1170
+      },
+      "field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.9,
+        "house_no": 0.9
+      }
+    },
+    "match": {
+      "hit_count": 910,
+      "hit_rate": 0.7
+    },
+    "dedup": {
+      "input_count": 1582,
+      "expected_unique_count": 1300,
+      "output_unique_count": 1300,
+      "injected_exact_duplicates": 130,
+      "injected_variant_duplicates": 152,
+      "injected_duplicates": 282,
+      "removed_duplicates": 282,
+      "dedup_exact_pass": true
+    },
+    "score": {
+      "judgement_hit_count": 1298,
+      "judgement_hit_rate": 0.998462,
+      "fengtu_conflict_pending_count": 30,
+      "strategy_distribution": {
+        "rule_only": 780,
+        "match_dict": 262,
+        "human_required": 258
+      },
+      "expected_distribution": {
+        "accept": 780,
+        "needs-human": 260,
+        "reject": 260
+      },
+      "predicted_distribution": {
+        "accept": 780,
+        "needs-human": 262,
+        "reject": 258
+      },
+      "confidence_stats": {
+        "mean": 0.800033,
+        "median": 0.9335,
+        "min": 0.322,
+        "max": 0.979,
+        "p95": 0.9335
+      }
+    }
+  },
+  "samples": {
+    "normalize_mismatch_top20": [
+      {
+        "case_id": "CNADDR-0006",
+        "raw_text": "随州市广水市解放大道43号未来城19幢166室",
+        "expected_normalized": "湖北省随州市广水市解放大道43号 未来城19栋7单元166室",
+        "normalized": "湖北省随州市广水市解放大道43号未来城19栋166室"
+      },
+      {
+        "case_id": "CNADDR-0007",
+        "raw_text": "上海市浦东新区创新大道50号星河湾2幢177室",
+        "expected_normalized": "上海市上海市浦东新区创新大道50号 星河湾2栋4单元177室",
+        "normalized": "上海市上海市浦东新区创新大道50号星河湾2栋177室"
+      },
+      {
+        "case_id": "CNADDR-0008",
+        "raw_text": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+        "expected_normalized": "北京市北京市朝阳区科创路57号 万和府5栋1单元188室",
+        "normalized": "北京市北京市朝阳区科创路万和府5栋1单元188室"
+      },
+      {
+        "case_id": "CNADDR-0009",
+        "raw_text": "广东省深圳市罗湖区不存在路64号龙湖天街",
+        "expected_normalized": "广东省深圳市罗湖区不存在路64号",
+        "normalized": "广东省深圳市罗湖区不存在路64号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0016",
+        "raw_text": "苏州市虎丘区人民路113号未来城9幢276室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路113号 未来城9栋1单元276室",
+        "normalized": "江苏省苏州市虎丘区人民路113号未来城9栋276室"
+      },
+      {
+        "case_id": "CNADDR-0017",
+        "raw_text": "武汉市武昌区建设路120号星河湾12幢287室",
+        "expected_normalized": "湖北省武汉市武昌区建设路120号 星河湾12栋6单元287室",
+        "normalized": "湖北省武汉市武昌区建设路120号星河湾12栋287室"
+      },
+      {
+        "case_id": "CNADDR-0018",
+        "raw_text": "湖北省随州市广水市解放大道万和府15栋3单元298室",
+        "expected_normalized": "湖北省随州市广水市解放大道127号 万和府15栋3单元298室",
+        "normalized": "湖北省随州市广水市解放大道万和府15栋3单元298室"
+      },
+      {
+        "case_id": "CNADDR-0019",
+        "raw_text": "上海市上海市浦东新区不存在路134号龙湖天街",
+        "expected_normalized": "上海市上海市浦东新区不存在路134号",
+        "normalized": "上海市上海市浦东新区不存在路134号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0026",
+        "raw_text": "北京市朝阳区中山东一路183号未来城19幢386室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路183号 未来城19栋3单元386室",
+        "normalized": "北京市北京市朝阳区中山东一路183号未来城19栋386室"
+      },
+      {
+        "case_id": "CNADDR-0027",
+        "raw_text": "深圳市罗湖区南京西路190号星河湾2幢397室",
+        "expected_normalized": "广东省深圳市罗湖区南京西路190号 星河湾2栋8单元397室",
+        "normalized": "广东省深圳市罗湖区南京西路190号星河湾2栋397室"
+      },
+      {
+        "case_id": "CNADDR-0028",
+        "raw_text": "江苏省苏州市虎丘区人民路万和府5栋5单元408室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路197号 万和府5栋5单元408室",
+        "normalized": "江苏省苏州市虎丘区人民路万和府5栋5单元408室"
+      },
+      {
+        "case_id": "CNADDR-0029",
+        "raw_text": "湖北省武汉市武昌区不存在路204号龙湖天街",
+        "expected_normalized": "湖北省武汉市武昌区不存在路204号",
+        "normalized": "湖北省武汉市武昌区不存在路204号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0036",
+        "raw_text": "随州市广水市幸福路253号未来城9幢496室",
+        "expected_normalized": "湖北省随州市广水市幸福路253号 未来城9栋5单元496室",
+        "normalized": "湖北省随州市广水市幸福路253号未来城9栋496室"
+      },
+      {
+        "case_id": "CNADDR-0037",
+        "raw_text": "上海市浦东新区世纪大道260号星河湾12幢507室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道260号 星河湾12栋2单元507室",
+        "normalized": "上海市上海市浦东新区世纪大道260号星河湾12栋507室"
+      },
+      {
+        "case_id": "CNADDR-0038",
+        "raw_text": "北京市北京市朝阳区中山东一路万和府15栋7单元518室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路267号 万和府15栋7单元518室",
+        "normalized": "北京市北京市朝阳区中山东一路万和府15栋7单元518室"
+      },
+      {
+        "case_id": "CNADDR-0039",
+        "raw_text": "广东省深圳市罗湖区不存在路274号龙湖天街",
+        "expected_normalized": "广东省深圳市罗湖区不存在路274号",
+        "normalized": "广东省深圳市罗湖区不存在路274号龙湖天街"
+      },
+      {
+        "case_id": "CNADDR-0046",
+        "raw_text": "苏州市虎丘区沿江大道323号未来城19幢606室",
+        "expected_normalized": "江苏省苏州市虎丘区沿江大道323号 未来城19栋7单元606室",
+        "normalized": "江苏省苏州市虎丘区沿江大道323号未来城19栋606室"
+      },
+      {
+        "case_id": "CNADDR-0047",
+        "raw_text": "武汉市武昌区文化路330号星河湾2幢617室",
+        "expected_normalized": "湖北省武汉市武昌区文化路330号 星河湾2栋4单元617室",
+        "normalized": "湖北省武汉市武昌区文化路330号星河湾2栋617室"
+      },
+      {
+        "case_id": "CNADDR-0048",
+        "raw_text": "湖北省随州市广水市幸福路万和府5栋1单元628室",
+        "expected_normalized": "湖北省随州市广水市幸福路337号 万和府5栋1单元628室",
+        "normalized": "湖北省随州市广水市幸福路万和府5栋1单元628室"
+      },
+      {
+        "case_id": "CNADDR-0049",
+        "raw_text": "上海市上海市浦东新区不存在路344号龙湖天街",
+        "expected_normalized": "上海市上海市浦东新区不存在路344号",
+        "normalized": "上海市上海市浦东新区不存在路344号龙湖天街"
+      }
+    ],
+    "score_mismatch_top20": [
+      {
+        "case_id": "CNADDR-0019",
+        "expected_judgement": "reject",
+        "predicted_judgement": "needs-human",
+        "confidence": 0.779,
+        "strategy": "match_dict"
+      },
+      {
+        "case_id": "CNADDR-0029",
+        "expected_judgement": "reject",
+        "predicted_judgement": "needs-human",
+        "confidence": 0.779,
+        "strategy": "match_dict"
+      }
+    ],
+    "fengtu_conflicts_pending_confirmation_top50": [
+      {
+        "case_id": "CNADDR-0001",
+        "raw_text": "上海市上海市浦东新区世纪大道8号东方明珠花园4栋6单元111室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道8号 东方明珠花园4栋6单元111室",
+        "fengtu_candidate": "上海市浦东新区陆家嘴街道世纪大道1号东方明珠4栋6单元111室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0002",
+        "raw_text": "北京市北京市朝阳区中山东一路15号海纳公馆7栋3单元122室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路15号 海纳公馆7栋3单元122室",
+        "fengtu_candidate": "北京市朝阳区中山东一路15号海纳公馆7栋3单元122室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0004",
+        "raw_text": "江苏省苏州市虎丘区人民路29号金色华庭13栋5单元144室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路29号 金色华庭13栋5单元144室",
+        "fengtu_candidate": "江苏省苏州市姑苏区人民路29号金色华庭13栋5单元144室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0005",
+        "raw_text": "湖北省武汉市武昌区建设路36号书香门第16栋2单元155室",
+        "expected_normalized": "湖北省武汉市武昌区建设路36号 书香门第16栋2单元155室",
+        "fengtu_candidate": "湖北省武汉市武昌区珞南街道珞狮路89号书香门第16栋2单元155室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0007",
+        "raw_text": "上海市浦东新区创新大道50号星河湾2幢177室",
+        "expected_normalized": "上海市上海市浦东新区创新大道50号 星河湾2栋4单元177室",
+        "fengtu_candidate": "上海市浦东新区花木街道锦绣路2580号浦东星河湾2号177室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0008",
+        "raw_text": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+        "expected_normalized": "北京市北京市朝阳区科创路57号 万和府5栋1单元188室",
+        "fengtu_candidate": "北京市朝阳区崔各庄地区河荫东路1号远洋万和公馆东区5号楼1单元188室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0010",
+        "raw_text": "江苏省苏州市虎丘区沿江大道71号翡翠城11栋3单元210室",
+        "expected_normalized": "江苏省苏州市虎丘区沿江大道71号 翡翠城11栋3单元210室",
+        "fengtu_candidate": "江苏省苏州市常熟市虞山街道环湖南路15号翡翠湾11幢3单元210室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0011",
+        "raw_text": "湖北省武汉市武昌区文化路78号东方明珠花园14栋8单元221室",
+        "expected_normalized": "湖北省武汉市武昌区文化路78号 东方明珠花园14栋8单元221室",
+        "fengtu_candidate": "湖北省武汉市洪山区文化路78号东方明珠花园14栋8单元221室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0013",
+        "raw_text": "上海市上海市浦东新区世纪大道92号锦绣家园20栋2单元243室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道92号 锦绣家园20栋2单元243室",
+        "fengtu_candidate": "上海市浦东新区陆家嘴街道世纪大道92号锦绣家园20栋2单元243室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0014",
+        "raw_text": "北京市北京市朝阳区中山东一路99号金色华庭3栋7单元254室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路99号 金色华庭3栋7单元254室",
+        "fengtu_candidate": "北京市朝阳区中山东一路99号金色华庭3栋7单元254室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0016",
+        "raw_text": "苏州市虎丘区人民路113号未来城9幢276室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路113号 未来城9栋1单元276室",
+        "fengtu_candidate": "江苏省苏州市姑苏区人民路113号未来城9栋276室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0017",
+        "raw_text": "武汉市武昌区建设路120号星河湾12幢287室",
+        "expected_normalized": "湖北省武汉市武昌区建设路120号 星河湾12栋6单元287室",
+        "fengtu_candidate": "湖北省武汉市洪山区和平街道建设路120号星河湾12栋287室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0018",
+        "raw_text": "湖北省随州市广水市解放大道万和府15栋3单元298室",
+        "expected_normalized": "湖北省随州市广水市解放大道127号 万和府15栋3单元298室",
+        "fengtu_candidate": "湖北省随州市广水市万和解放大道15栋3单元2层298室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0019",
+        "raw_text": "上海市上海市浦东新区不存在路134号龙湖天街",
+        "expected_normalized": "上海市上海市浦东新区不存在路134号",
+        "fengtu_candidate": "上海市上海市上海市宝山区顾村镇丹霞山路50弄1号龙湖宝山天街",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0020",
+        "raw_text": "北京市北京市朝阳区科创路141号翡翠城1栋5单元320室",
+        "expected_normalized": "北京市北京市朝阳区科创路141号 翡翠城1栋5单元320室",
+        "fengtu_candidate": "北京市大兴区高米店街道兴业路61号康隆园1号楼5单元320室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0023",
+        "raw_text": "湖北省武汉市武昌区文化路162号锦绣家园10栋4单元353室",
+        "expected_normalized": "湖北省武汉市武昌区文化路162号 锦绣家园10栋4单元353室",
+        "fengtu_candidate": "湖北省武汉市洪山区文化路162号锦绣家园10栋4单元353室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0025",
+        "raw_text": "上海市上海市浦东新区世纪大道176号书香门第16栋6单元375室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道176号 书香门第16栋6单元375室",
+        "fengtu_candidate": "上海市浦东新区陆家嘴街道世纪大道176号书香门第16栋6单元375室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0026",
+        "raw_text": "北京市朝阳区中山东一路183号未来城19幢386室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路183号 未来城19栋3单元386室",
+        "fengtu_candidate": "北京市大兴区林校路街道新源大街25号恒大未来城19号楼386室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0028",
+        "raw_text": "江苏省苏州市虎丘区人民路万和府5栋5单元408室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路197号 万和府5栋5单元408室",
+        "fengtu_candidate": "江苏省苏州市姑苏区人民路万和府5栋5单元4层408室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0029",
+        "raw_text": "湖北省武汉市武昌区不存在路204号龙湖天街",
+        "expected_normalized": "湖北省武汉市武昌区不存在路204号",
+        "fengtu_candidate": "湖北省武汉市洪山区张家湾街道白沙三路48号龙湖白沙天街",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0031",
+        "raw_text": "上海市上海市浦东新区创新大道218号东方明珠花园14栋4单元441室",
+        "expected_normalized": "上海市上海市浦东新区创新大道218号 东方明珠花园14栋4单元441室",
+        "fengtu_candidate": "上海市青浦区徐泾镇诸光路900号东方明珠花园14号4单元441室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0032",
+        "raw_text": "北京市北京市朝阳区科创路225号海纳公馆17栋1单元452室",
+        "expected_normalized": "北京市北京市朝阳区科创路225号 海纳公馆17栋1单元452室",
+        "fengtu_candidate": "北京市朝阳区科创路225号海纳公馆17栋1单元452室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0035",
+        "raw_text": "湖北省武汉市武昌区文化路246号书香门第6栋8单元485室",
+        "expected_normalized": "湖北省武汉市武昌区文化路246号 书香门第6栋8单元485室",
+        "fengtu_candidate": "湖北省武汉市洪山区文化路246号书香门第6栋8单元485室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0037",
+        "raw_text": "上海市浦东新区世纪大道260号星河湾12幢507室",
+        "expected_normalized": "上海市上海市浦东新区世纪大道260号 星河湾12栋2单元507室",
+        "fengtu_candidate": "上海市浦东新区陆家嘴街道世纪大道260号星河湾12栋5层507室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0038",
+        "raw_text": "北京市北京市朝阳区中山东一路万和府15栋7单元518室",
+        "expected_normalized": "北京市北京市朝阳区中山东一路267号 万和府15栋7单元518室",
+        "fengtu_candidate": "北京市朝阳区中山东一路万和府15栋7单元518室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0040",
+        "raw_text": "江苏省苏州市虎丘区人民路281号翡翠城1栋1单元540室",
+        "expected_normalized": "江苏省苏州市虎丘区人民路281号 翡翠城1栋1单元540室",
+        "fengtu_candidate": "江苏省苏州市姑苏区人民路281号翡翠城1栋1单元540室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0041",
+        "raw_text": "湖北省武汉市武昌区建设路288号东方明珠花园4栋6单元551室",
+        "expected_normalized": "湖北省武汉市武昌区建设路288号 东方明珠花园4栋6单元551室",
+        "fengtu_candidate": "湖北省武汉市江岸区建设路288号东方明珠花园4栋6单元551室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0043",
+        "raw_text": "上海市上海市浦东新区创新大道302号锦绣家园10栋8单元573室",
+        "expected_normalized": "上海市上海市浦东新区创新大道302号 锦绣家园10栋8单元573室",
+        "fengtu_candidate": "上海市浦东新区花木街道罗山路1700号锦绣小区10号8单元573室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0044",
+        "raw_text": "北京市北京市朝阳区科创路309号金色华庭13栋5单元584室",
+        "expected_normalized": "北京市北京市朝阳区科创路309号 金色华庭13栋5单元584室",
+        "fengtu_candidate": "北京市朝阳区科创路309号金色华庭13栋5单元584室",
+        "note": "pending_user_confirmation"
+      },
+      {
+        "case_id": "CNADDR-0046",
+        "raw_text": "苏州市虎丘区沿江大道323号未来城19幢606室",
+        "expected_normalized": "江苏省苏州市虎丘区沿江大道323号 未来城19栋7单元606室",
+        "fengtu_candidate": "江苏省苏州市姑苏区金鸡湖街道沈浒路588号新未来花园19栋6层606室",
+        "note": "pending_user_confirmation"
+      }
+    ]
+  },
+  "phase2_note": "human review tiering refinement intentionally deferred"
+}

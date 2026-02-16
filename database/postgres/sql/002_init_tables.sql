@@ -65,6 +65,24 @@ CREATE TABLE IF NOT EXISTS addr_ruleset (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS addr_change_request (
+    change_id VARCHAR(64) PRIMARY KEY,
+    from_ruleset_id VARCHAR(64) NOT NULL REFERENCES addr_ruleset(ruleset_id),
+    to_ruleset_id VARCHAR(64) NOT NULL REFERENCES addr_ruleset(ruleset_id),
+    baseline_task_id VARCHAR(64) NOT NULL,
+    candidate_task_id VARCHAR(64) NOT NULL,
+    diff_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    scorecard_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    recommendation VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    approved_by VARCHAR(128),
+    approved_at TIMESTAMPTZ,
+    review_comment TEXT,
+    evidence_bullets JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS addr_task_run (
     task_id VARCHAR(64) PRIMARY KEY,
     batch_id VARCHAR(64),
@@ -78,6 +96,15 @@ CREATE TABLE IF NOT EXISTS addr_task_run (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     finished_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS addr_audit_event (
+    event_id VARCHAR(64) PRIMARY KEY,
+    event_type VARCHAR(64) NOT NULL,
+    caller VARCHAR(128) NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    related_change_id VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS api_audit_log (

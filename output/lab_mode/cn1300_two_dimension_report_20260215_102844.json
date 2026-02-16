@@ -1,0 +1,240 @@
+{
+  "dataset": "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv",
+  "generated_at": "2026-02-15T10:28:44.584575+00:00",
+  "mode": "offline_no_fengtu_network",
+  "rows_total": 1300,
+  "dimension_functional": {
+    "normalize": {
+      "hit_count": 780,
+      "hit_rate": 0.6
+    },
+    "parse": {
+      "field_hit_count": {
+        "province": 1300,
+        "city": 1300,
+        "district": 1300,
+        "road": 1170,
+        "house_no": 1170
+      },
+      "field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.9,
+        "house_no": 0.9
+      }
+    },
+    "match": {
+      "hit_count": 910,
+      "hit_rate": 0.7
+    },
+    "score": {
+      "judgement_hit_count": 1300,
+      "judgement_hit_rate": 1.0,
+      "expected_distribution": {
+        "accept": 780,
+        "needs-human": 260,
+        "reject": 260
+      },
+      "predicted_distribution": {
+        "accept": 780,
+        "needs-human": 260,
+        "reject": 260
+      },
+      "mismatch_top20": []
+    },
+    "dedup": {
+      "input_count": 1582,
+      "expected_unique_count": 1300,
+      "output_unique_count": 1300,
+      "injected_exact_duplicates": 130,
+      "injected_variant_duplicates": 152,
+      "injected_duplicates": 282,
+      "removed_duplicates": 282,
+      "dedup_exact_pass": true
+    }
+  },
+  "dimension_city": {
+    "上海市": {
+      "rows": 217,
+      "normalize_hit_rate": 0.599078,
+      "match_hit_rate": 0.797235,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.801843,
+        "house_no": 1.0
+      },
+      "scene_distribution": {
+        "标准地址": 130,
+        "简称/别名": 44,
+        "疑似不存在": 43
+      },
+      "expected_distribution": {
+        "accept": 130,
+        "needs-human": 44,
+        "reject": 43
+      },
+      "predicted_distribution": {
+        "accept": 130,
+        "needs-human": 44,
+        "reject": 43
+      },
+      "score_mismatch_cases_top10": []
+    },
+    "北京市": {
+      "rows": 217,
+      "normalize_hit_rate": 0.599078,
+      "match_hit_rate": 0.599078,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 1.0,
+        "house_no": 0.797235
+      },
+      "scene_distribution": {
+        "标准地址": 130,
+        "缺失门牌": 44,
+        "简称/别名": 43
+      },
+      "expected_distribution": {
+        "accept": 130,
+        "reject": 44,
+        "needs-human": 43
+      },
+      "predicted_distribution": {
+        "accept": 130,
+        "reject": 44,
+        "needs-human": 43
+      },
+      "score_mismatch_cases_top10": []
+    },
+    "武汉市": {
+      "rows": 216,
+      "normalize_hit_rate": 0.601852,
+      "match_hit_rate": 0.800926,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.800926,
+        "house_no": 1.0
+      },
+      "scene_distribution": {
+        "标准地址": 130,
+        "简称/别名": 43,
+        "疑似不存在": 43
+      },
+      "expected_distribution": {
+        "accept": 130,
+        "needs-human": 43,
+        "reject": 43
+      },
+      "predicted_distribution": {
+        "accept": 130,
+        "needs-human": 43,
+        "reject": 43
+      },
+      "score_mismatch_cases_top10": []
+    },
+    "深圳市": {
+      "rows": 217,
+      "normalize_hit_rate": 0.599078,
+      "match_hit_rate": 0.801843,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.797235,
+        "house_no": 1.0
+      },
+      "scene_distribution": {
+        "标准地址": 130,
+        "疑似不存在": 44,
+        "简称/别名": 43
+      },
+      "expected_distribution": {
+        "accept": 130,
+        "reject": 44,
+        "needs-human": 43
+      },
+      "predicted_distribution": {
+        "accept": 130,
+        "reject": 44,
+        "needs-human": 43
+      },
+      "score_mismatch_cases_top10": []
+    },
+    "苏州市": {
+      "rows": 217,
+      "normalize_hit_rate": 0.603687,
+      "match_hit_rate": 0.603687,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 1.0,
+        "house_no": 0.801843
+      },
+      "scene_distribution": {
+        "标准地址": 131,
+        "简称/别名": 43,
+        "缺失门牌": 43
+      },
+      "expected_distribution": {
+        "accept": 131,
+        "needs-human": 43,
+        "reject": 43
+      },
+      "predicted_distribution": {
+        "accept": 131,
+        "needs-human": 43,
+        "reject": 43
+      },
+      "score_mismatch_cases_top10": []
+    },
+    "随州市": {
+      "rows": 216,
+      "normalize_hit_rate": 0.597222,
+      "match_hit_rate": 0.597222,
+      "score_hit_rate": 1.0,
+      "parse_field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 1.0,
+        "house_no": 0.800926
+      },
+      "scene_distribution": {
+        "简称/别名": 44,
+        "标准地址": 129,
+        "缺失门牌": 43
+      },
+      "expected_distribution": {
+        "needs-human": 44,
+        "accept": 129,
+        "reject": 43
+      },
+      "predicted_distribution": {
+        "needs-human": 44,
+        "accept": 129,
+        "reject": 43
+      },
+      "score_mismatch_cases_top10": []
+    }
+  },
+  "effect_summary": {
+    "best_city_by_score_hit_rate": "上海市",
+    "worst_city_by_score_hit_rate": "上海市",
+    "global_score_hit_rate": 1.0,
+    "global_normalize_hit_rate": 0.6,
+    "global_match_hit_rate": 0.7
+  }
+}

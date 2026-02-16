@@ -1,0 +1,153 @@
+{
+  "workpackage_id": "wp-engineering-supervisor-phase1-audit-v1.0.0",
+  "version": "1.0.0",
+  "factory_release": {
+    "process_version": "process-wp-engineering-supervisor-phase1-audit-v1.0.0",
+    "tool_bundle_version": "tools-wp-engineering-supervisor-phase1-audit-v1.0.0",
+    "engine_version": "engine-core-v1.0.5",
+    "released_at": "2026-02-16T11:22:20+08:00",
+    "released_by": "project-manager",
+    "dispatch_time_local": "2026-02-16 11:22:20 CST",
+    "rollback_target_version": "wp-engineering-supervisor-audit-v0.3.0",
+    "runtime_record_ref": "pg://address_line.addr_audit_event"
+  },
+  "line_spec": {
+    "line_type": "engineering_supervisor_phase1",
+    "goal": "执行Phase1工程边界与质量合规审计, 输出项目级监理审计报告",
+    "constraints": [
+      "仅审计不改代码",
+      "检查越界改动、mock滥用、测试污染研发代码",
+      "审计结果必须可追溯到文件与证据"
+    ]
+  },
+  "input_contract": {
+    "type": "object",
+    "required": [
+      "audit_scope",
+      "role_boundary_rules",
+      "evidence_sources",
+      "report_template"
+    ],
+    "properties": {
+      "audit_scope": {
+        "type": "string"
+      },
+      "role_boundary_rules": {
+        "type": "string"
+      },
+      "evidence_sources": {
+        "type": "string"
+      },
+      "report_template": {
+        "type": "string"
+      }
+    }
+  },
+  "output_contract": {
+    "type": "object",
+    "required": [
+      "audit_report",
+      "violations",
+      "risk_level",
+      "hold_or_release_recommendation"
+    ],
+    "properties": {
+      "audit_report": {
+        "type": "string"
+      },
+      "violations": {
+        "type": "string"
+      },
+      "risk_level": {
+        "type": "string"
+      },
+      "hold_or_release_recommendation": {
+        "type": "string"
+      }
+    }
+  },
+  "process_spec": {
+    "steps": [
+      {
+        "code": "s1",
+        "name": "越界审计",
+        "deliverables": [
+          "output/workpackages/engineering-supervisor-phase1-audit-report.md"
+        ],
+        "done_definition": [
+          "覆盖全部工作线"
+        ]
+      },
+      {
+        "code": "s2",
+        "name": "证据审计",
+        "deliverables": [
+          "output/workpackages/engineering-supervisor-phase1-evidence-index.json"
+        ],
+        "done_definition": [
+          "每项结论有证据链接"
+        ]
+      },
+      {
+        "code": "s3",
+        "name": "发布建议",
+        "deliverables": [
+          "output/workpackages/engineering-supervisor-phase1-release-recommendation.md"
+        ],
+        "done_definition": [
+          "给出HOLD/GO建议"
+        ]
+      }
+    ]
+  },
+  "tool_bundle": {
+    "tools": [
+      "rg",
+      "markdown",
+      "jq"
+    ]
+  },
+  "engine_bundle": {
+    "runtime": "factory_engine",
+    "entrypoint": "output/workpackages/",
+    "mode": "audit_only",
+    "compatibility": {
+      "python_min": "3.11",
+      "python_max": "3.12",
+      "db": [
+        "postgres"
+      ]
+    }
+  },
+  "observability_bundle": {
+    "generator": "factory_observability_generator",
+    "entrypoints": [
+      "output/workpackages/engineering-supervisor-phase1-audit-report.md",
+      "output/dashboard/worklines_overview.json"
+    ]
+  },
+  "line_feedback_contract": {
+    "required_fields": [
+      "status",
+      "done",
+      "next",
+      "blocker",
+      "eta",
+      "test_report_ref",
+      "release_decision",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
+  },
+  "rollback": {
+    "from_version": "1.0.0",
+    "fallback_version": "wp-engineering-supervisor-audit-v0.3.0",
+    "instructions": [
+      "冻结本工作包增量变更并保留证据产物",
+      "回退到 fallback_version 对应稳定实现",
+      "提交差距与修复计划后再重开派单"
+    ]
+  }
+}

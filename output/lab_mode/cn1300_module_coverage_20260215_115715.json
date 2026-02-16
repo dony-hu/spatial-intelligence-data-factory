@@ -1,0 +1,468 @@
+{
+  "dataset": "testdata/fixtures/lab-mode-phase1_5-中文地址测试用例-1300-2026-02-15.csv",
+  "generated_at": "2026-02-15T11:57:15.357571+00:00",
+  "rows_total": 10,
+  "execution": {
+    "status": "completed",
+    "processed_rows": 10,
+    "total_rows": 10,
+    "progress_rate": 1.0
+  },
+  "module_coverage": {
+    "normalize": {
+      "hit_count": 6,
+      "hit_rate": 0.6
+    },
+    "parse": {
+      "field_hit_count": {
+        "province": 10,
+        "city": 10,
+        "district": 10,
+        "road": 9,
+        "house_no": 9
+      },
+      "field_hit_rate": {
+        "province": 1.0,
+        "city": 1.0,
+        "district": 1.0,
+        "road": 0.9,
+        "house_no": 0.9
+      }
+    },
+    "match": {
+      "hit_count": 7,
+      "hit_rate": 0.7
+    },
+    "dedup": {
+      "input_count": 13,
+      "expected_unique_count": 10,
+      "output_unique_count": 10,
+      "injected_exact_duplicates": 1,
+      "injected_variant_duplicates": 2,
+      "injected_duplicates": 3,
+      "removed_duplicates": 3,
+      "dedup_exact_pass": true
+    },
+    "score": {
+      "judgement_hit_count": 10,
+      "judgement_hit_rate": 1.0,
+      "fengtu_conflict_pending_count": 0,
+      "strategy_distribution": {
+        "rule_only": 6,
+        "match_dict": 2,
+        "human_required": 2
+      },
+      "expected_distribution": {
+        "accept": 6,
+        "needs-human": 2,
+        "reject": 2
+      },
+      "predicted_distribution": {
+        "accept": 6,
+        "needs-human": 2,
+        "reject": 2
+      },
+      "confidence_stats": {
+        "mean": 0.79835,
+        "median": 0.9335,
+        "min": 0.322,
+        "max": 0.9335,
+        "p95": 0.9335
+      }
+    }
+  },
+  "case_summary": {
+    "overall_result_distribution": {
+      "pass": 6,
+      "fail": 4
+    },
+    "case_type_distribution": {
+      "integration": 10
+    },
+    "city_distribution_top20": {
+      "上海市": 2,
+      "北京市": 2,
+      "深圳市": 2,
+      "苏州市": 2,
+      "武汉市": 1,
+      "随州市": 1
+    }
+  },
+  "case_details": [
+    {
+      "case_id": "CNADDR-0001",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "上海市",
+      "district": "浦东新区",
+      "raw_text": "上海市上海市浦东新区世纪大道8号东方明珠花园4栋6单元111室",
+      "normalized": "上海市上海市浦东新区世纪大道8号东方明珠花园4栋6单元111室",
+      "expected_normalized": "上海市上海市浦东新区世纪大道8号 东方明珠花园4栋6单元111室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0002",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "北京市",
+      "district": "朝阳区",
+      "raw_text": "北京市北京市朝阳区中山东一路15号海纳公馆7栋3单元122室",
+      "normalized": "北京市北京市朝阳区中山东一路15号海纳公馆7栋3单元122室",
+      "expected_normalized": "北京市北京市朝阳区中山东一路15号 海纳公馆7栋3单元122室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0003",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "深圳市",
+      "district": "罗湖区",
+      "raw_text": "广东省深圳市罗湖区南京西路22号锦绣家园10栋8单元133室",
+      "normalized": "广东省深圳市罗湖区南京西路22号锦绣家园10栋8单元133室",
+      "expected_normalized": "广东省深圳市罗湖区南京西路22号 锦绣家园10栋8单元133室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0004",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "苏州市",
+      "district": "虎丘区",
+      "raw_text": "江苏省苏州市虎丘区人民路29号金色华庭13栋5单元144室",
+      "normalized": "江苏省苏州市虎丘区人民路29号金色华庭13栋5单元144室",
+      "expected_normalized": "江苏省苏州市虎丘区人民路29号 金色华庭13栋5单元144室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0005",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "武汉市",
+      "district": "武昌区",
+      "raw_text": "湖北省武汉市武昌区建设路36号书香门第16栋2单元155室",
+      "normalized": "湖北省武汉市武昌区建设路36号书香门第16栋2单元155室",
+      "expected_normalized": "湖北省武汉市武昌区建设路36号 书香门第16栋2单元155室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0006",
+      "case_type": "integration",
+      "scenario_tag": "简称/别名",
+      "city": "随州市",
+      "district": "广水市",
+      "raw_text": "随州市广水市解放大道43号未来城19幢166室",
+      "normalized": "湖北省随州市广水市解放大道43号未来城19栋166室",
+      "expected_normalized": "湖北省随州市广水市解放大道43号 未来城19栋7单元166室",
+      "overall_result": "fail",
+      "module_result": {
+        "normalize": false,
+        "parse": true,
+        "match": false,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "match_dict",
+      "confidence": 0.7635,
+      "expected_judgement": "needs-human",
+      "predicted_judgement": "needs-human",
+      "expected_human_review": true,
+      "predicted_human_review": true,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0007",
+      "case_type": "integration",
+      "scenario_tag": "简称/别名",
+      "city": "上海市",
+      "district": "浦东新区",
+      "raw_text": "上海市浦东新区创新大道50号星河湾2幢177室",
+      "normalized": "上海市上海市浦东新区创新大道50号星河湾2栋177室",
+      "expected_normalized": "上海市上海市浦东新区创新大道50号 星河湾2栋4单元177室",
+      "overall_result": "fail",
+      "module_result": {
+        "normalize": false,
+        "parse": true,
+        "match": false,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "match_dict",
+      "confidence": 0.7635,
+      "expected_judgement": "needs-human",
+      "predicted_judgement": "needs-human",
+      "expected_human_review": true,
+      "predicted_human_review": true,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0008",
+      "case_type": "integration",
+      "scenario_tag": "缺失门牌",
+      "city": "北京市",
+      "district": "朝阳区",
+      "raw_text": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+      "normalized": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+      "expected_normalized": "北京市北京市朝阳区科创路57号 万和府5栋1单元188室",
+      "overall_result": "fail",
+      "module_result": {
+        "normalize": false,
+        "parse": false,
+        "match": false,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": false
+      },
+      "parse_missing_fields": [
+        "house_no"
+      ],
+      "strategy": "human_required",
+      "confidence": 0.5335,
+      "expected_judgement": "reject",
+      "predicted_judgement": "reject",
+      "expected_human_review": true,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0009",
+      "case_type": "integration",
+      "scenario_tag": "疑似不存在",
+      "city": "深圳市",
+      "district": "罗湖区",
+      "raw_text": "广东省深圳市罗湖区不存在路64号龙湖天街",
+      "normalized": "广东省深圳市罗湖区不存在路64号龙湖天街",
+      "expected_normalized": "广东省深圳市罗湖区不存在路64号",
+      "overall_result": "fail",
+      "module_result": {
+        "normalize": false,
+        "parse": false,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": false,
+        "house_no": true
+      },
+      "parse_missing_fields": [
+        "road"
+      ],
+      "strategy": "human_required",
+      "confidence": 0.322,
+      "expected_judgement": "reject",
+      "predicted_judgement": "reject",
+      "expected_human_review": true,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    },
+    {
+      "case_id": "CNADDR-0010",
+      "case_type": "integration",
+      "scenario_tag": "标准地址",
+      "city": "苏州市",
+      "district": "虎丘区",
+      "raw_text": "江苏省苏州市虎丘区沿江大道71号翡翠城11栋3单元210室",
+      "normalized": "江苏省苏州市虎丘区沿江大道71号翡翠城11栋3单元210室",
+      "expected_normalized": "江苏省苏州市虎丘区沿江大道71号 翡翠城11栋3单元210室",
+      "overall_result": "pass",
+      "module_result": {
+        "normalize": true,
+        "parse": true,
+        "match": true,
+        "score": true
+      },
+      "parse_field_hits": {
+        "province": true,
+        "city": true,
+        "district": true,
+        "road": true,
+        "house_no": true
+      },
+      "parse_missing_fields": [],
+      "strategy": "rule_only",
+      "confidence": 0.9335,
+      "expected_judgement": "accept",
+      "predicted_judgement": "accept",
+      "expected_human_review": false,
+      "predicted_human_review": false,
+      "status": "completed",
+      "fengtu_conflict_pending": false,
+      "fengtu_candidate": ""
+    }
+  ],
+  "samples": {
+    "normalize_mismatch_top20": [
+      {
+        "case_id": "CNADDR-0006",
+        "raw_text": "随州市广水市解放大道43号未来城19幢166室",
+        "expected_normalized": "湖北省随州市广水市解放大道43号 未来城19栋7单元166室",
+        "normalized": "湖北省随州市广水市解放大道43号未来城19栋166室"
+      },
+      {
+        "case_id": "CNADDR-0007",
+        "raw_text": "上海市浦东新区创新大道50号星河湾2幢177室",
+        "expected_normalized": "上海市上海市浦东新区创新大道50号 星河湾2栋4单元177室",
+        "normalized": "上海市上海市浦东新区创新大道50号星河湾2栋177室"
+      },
+      {
+        "case_id": "CNADDR-0008",
+        "raw_text": "北京市北京市朝阳区科创路万和府5栋1单元188室",
+        "expected_normalized": "北京市北京市朝阳区科创路57号 万和府5栋1单元188室",
+        "normalized": "北京市北京市朝阳区科创路万和府5栋1单元188室"
+      },
+      {
+        "case_id": "CNADDR-0009",
+        "raw_text": "广东省深圳市罗湖区不存在路64号龙湖天街",
+        "expected_normalized": "广东省深圳市罗湖区不存在路64号",
+        "normalized": "广东省深圳市罗湖区不存在路64号龙湖天街"
+      }
+    ],
+    "score_mismatch_top20": [],
+    "fengtu_conflicts_pending_confirmation_top50": []
+  },
+  "phase2_note": "human review tiering refinement intentionally deferred"
+}
