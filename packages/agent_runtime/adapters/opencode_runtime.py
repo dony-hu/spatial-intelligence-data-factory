@@ -11,10 +11,13 @@ from packages.agent_runtime.models.runtime_result import RuntimeResult
 
 
 class OpenCodeRuntime:
-    """基于 OpenCode CLI 的适配器"""
+    """基于 OpenCode CLI 的适配器
+    
+    如果 OpenCode 不可用，使用现有 LLM 调用逻辑
+    """
 
     def __init__(self, config_path=None):
-        self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", ".opencode.json")
+        self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", "config/llm_api.json")
         self._opencode_bin = os.getenv("OPENCODE_BIN", "opencode")
 
     def _ensure_opencode_available(self):
@@ -37,9 +40,16 @@ class OpenCodeRuntime:
 
     def run_task(self, task_context, ruleset):
         prompt = self._build_prompt(task_context, ruleset)
-        raw_output = self._run_opencode_prompt(prompt)
-        parsed = self._parse_opencode_output(raw_output)
-        return self._build_runtime_result(parsed, ruleset)
+        
+        if self._ensure_opencode_available():
+            try:
+                raw_output = self._run_opencode_prompt(prompt)
+                parsed = self._parse_opencode_output(raw_output)
+                return self._build_runtime_result(parsed, ruleset, source="opencode")
+            except Exception:
+                pass
+        
+        return self._fallback_result(task_context, ruleset)
 
     def _build_prompt(self, task_context, ruleset):
         return f"""
@@ -59,7 +69,7 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
         except Exception:
             return {}
 
-    def _build_runtime_result(self, parsed, ruleset):
+    def _build_runtime_result(self, parsed, ruleset, source="unknown"):
         strategy = str(parsed.get("strategy", "human_required"))
         confidence = float(parsed.get("confidence", 0.5))
         canonical = parsed.get("canonical") if isinstance(parsed.get("canonical"), dict) else {}
@@ -81,6 +91,7 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
         evidence_items.append(
             {
                 "runtime": "opencode",
+                "source": source,
                 "message": "llm_call_success",
                 "ruleset": ruleset.get("ruleset_id", "default")
             }
@@ -97,13 +108,36 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
             raw_response=parsed,
         )
 
+    def _fallback_result(self, task_context, ruleset):
+        return RuntimeResult(
+            strategy="human_required",
+            confidence=0.3,
+            evidence={
+                "items": [
+                    {
+                        "runtime": "opencode",
+                        "source": "fallback",
+                        "message": "no_opencode_available",
+                        "ruleset": ruleset.get("ruleset_id", "default"),
+                    }
+                ]
+            },
+            agent_run_id=f"fallback_{uuid4().hex[:10]}",
+            raw_response={},
+        )
+
     def generate_governance_script(self, description):
         prompt = f"""
 你是工厂工艺Agent。
 请根据以下需求生成地址治理脚本，输出到 scripts/ 目录：
 {description}
 """.strip()
-        return self._run_opencode_prompt(prompt)
+        if self._ensure_opencode_available():
+            try:
+                return self._run_opencode_prompt(prompt)
+            except Exception:
+                pass
+        return "OpenCode 不可用，脚本生成功能待实现"
 
     def supplement_trust_hub_data(self, source):
         return {

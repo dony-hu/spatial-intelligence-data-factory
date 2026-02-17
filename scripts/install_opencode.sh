@@ -34,7 +34,7 @@ if command -v brew &amp;&gt; /dev/null; then
     echo "检测到 Homebrew，尝试通过 brew 安装..."
     echo ""
     
-    if brew install opencode-ai/tap/opencode; then
+    if brew install anomalyco/tap/opencode; then
         echo ""
         echo "✅ OpenCode 安装成功！"
         opencode --version
@@ -47,7 +47,7 @@ fi
 echo "尝试使用官方安装脚本..."
 echo ""
 
-if curl -fsSL https://raw.githubusercontent.com/opencode-ai/opencode/refs/heads/main/install | bash; then
+if curl -fsSL https://opencode.ai/install | bash; then
     echo ""
     echo "✅ OpenCode 安装成功！"
     if command -v opencode &amp;&gt; /dev/null; then
@@ -61,13 +61,13 @@ echo ""
 echo "⚠️  自动安装失败，请参考以下方式手动安装："
 echo ""
 echo "方式 1: Homebrew (macOS/Linux)"
-echo "  brew install opencode-ai/tap/opencode"
+echo "  brew install anomalyco/tap/opencode"
 echo ""
 echo "方式 2: 官方安装脚本"
-echo "  curl -fsSL https://raw.githubusercontent.com/opencode-ai/opencode/refs/heads/main/install | bash"
+echo "  curl -fsSL https://opencode.ai/install | bash"
 echo ""
-echo "方式 3: Go 安装"
-echo "  go install github.com/opencode-ai/opencode@latest"
+echo "方式 3: NPM 安装"
+echo "  npm i -g opencode-ai@latest"
 echo ""
 echo "安装后运行: opencode --version"
 echo ""
