@@ -42,3 +42,7 @@ output/factory_story5_panel.pid
 output/factory_process_dialog_room.log
 output/factory_process_dialog_room.pid
 database/tc06_line_execution.db
+.venv/
+
+# Temporary scripts
+fix_paths.py

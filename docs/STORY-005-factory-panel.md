@@ -6,7 +6,7 @@
 
 ## 启动方式
 ```bash
-cd /Users/huda/Code/spatial-intelligence-data-factory
+cd .
 python3 scripts/factory_story5_panel_server.py
 ```
 

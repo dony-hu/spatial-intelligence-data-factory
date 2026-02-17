@@ -6,4 +6,4 @@
 - 发布判定：`NO_GO`
 - hash 校验通过：`False`
 - 结论：`blocked_as_expected`
-- JSON 证据：`/Users/huda/Code/spatial-intelligence-data-factory/output/workpackages/line_feedback_ci_block_demo.latest.json`
+- JSON 证据：`./output/workpackages/line_feedback_ci_block_demo.latest.json`

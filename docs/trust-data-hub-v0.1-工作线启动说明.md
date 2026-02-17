@@ -14,21 +14,21 @@
 
 ## 2. 目录与文件
 
-- API 主入口：`/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/main.py`
-- 核心仓储：`/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/repositories/trust_repository.py`
+- API 主入口：`./services/trust_data_hub/app/main.py`
+- 核心仓储：`./services/trust_data_hub/app/repositories/trust_repository.py`
 - 路由：
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/routers/admin.py`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/routers/ops.py`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/routers/query.py`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/app/routers/validation.py`
+  - `./services/trust_data_hub/app/routers/admin.py`
+  - `./services/trust_data_hub/app/routers/ops.py`
+  - `./services/trust_data_hub/app/routers/query.py`
+  - `./services/trust_data_hub/app/routers/validation.py`
 - 部署：
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/docker-compose.yml`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/Dockerfile`
+  - `./services/trust_data_hub/docker-compose.yml`
+  - `./services/trust_data_hub/Dockerfile`
 - 调度与执行占位：
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/ops/worker.py`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/ops/scheduler.py`
-- 数据库 DDL：`/Users/huda/Code/spatial-intelligence-data-factory/database/trust_meta_schema.sql`
-- 测试：`/Users/huda/Code/spatial-intelligence-data-factory/services/trust_data_hub/tests/test_trust_data_hub_api.py`
+  - `./services/trust_data_hub/ops/worker.py`
+  - `./services/trust_data_hub/ops/scheduler.py`
+- 数据库 DDL：`./database/trust_meta_schema.sql`
+- 测试：`./services/trust_data_hub/tests/test_trust_data_hub_api.py`
 
 ## 3. 快速启动（单机 Docker Compose）
 

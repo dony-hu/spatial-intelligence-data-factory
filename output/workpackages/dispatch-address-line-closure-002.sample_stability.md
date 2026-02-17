@@ -8,9 +8,9 @@
 - failure_categories: {'CLEANING_INVALID_OUTPUT': 10}
 
 ## Fixed Demo Samples
-- success: `/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-14_114036_180784.json`
-- failure: `/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_single_run_2026-02-15_210228_402132.json`
-- replay: `/Users/huda/Code/spatial-intelligence-data-factory/output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json`
+- success: `./output/line_runs/tc06_single_run_2026-02-14_114036_180784.json`
+- failure: `./output/line_runs/tc06_single_run_2026-02-15_210228_402132.json`
+- replay: `./output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json`
 
 ## Rule Fix Suggestions
 - R-001 清洗阶段兜底输出: 当 cleaning 产物为空时，回退到 normalize(raw_address) 作为最小可用输出，避免直接 CLEANING_INVALID_OUTPUT。 (risk: 可能引入低质量候选，需结合质量阈值过滤。)

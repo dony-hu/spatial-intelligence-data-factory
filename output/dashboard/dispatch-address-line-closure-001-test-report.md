@@ -37,7 +37,7 @@
 
 ## Failure Localization and Retry Suggestions
 - Localization
-  - Timeout source: `/Users/huda/Code/spatial-intelligence-data-factory/tests/web_e2e/conftest.py` (`_http_post(..., timeout=10)`)
+  - Timeout source: `./tests/web_e2e/conftest.py` (`_http_post(..., timeout=10)`)
   - Endpoint under pressure: `/v1/governance/lab/optimize/web-e2e-batch`
 - Retry suggestions
   1. Increase optimize call timeout to `30s` in `tests/web_e2e/conftest.py`.

@@ -4,7 +4,7 @@
 
 ## 目录
 固定输出目录：
-- `/Users/huda/Code/spatial-intelligence-data-factory/output/dashboard/`
+- `./output/dashboard/`
 
 ## 文件清单
 - `project_overview.json`
@@ -17,12 +17,12 @@
 ## 生成脚本
 全量构建：
 ```bash
-python3 /Users/huda/Code/spatial-intelligence-data-factory/scripts/build_dashboard_data.py
+python3 ./scripts/build_dashboard_data.py
 ```
 
 事件增量更新：
 ```bash
-python3 /Users/huda/Code/spatial-intelligence-data-factory/scripts/update_dashboard_on_event.py \
+python3 ./scripts/update_dashboard_on_event.py \
   --event-type task_dispatched \
   --workpackage-id wp-core-engine-p0-stabilization-v0.1.0 \
   --summary "下发P0稳定化工作包" \

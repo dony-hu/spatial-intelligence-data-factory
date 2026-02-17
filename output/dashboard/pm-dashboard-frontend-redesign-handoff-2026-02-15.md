@@ -71,9 +71,9 @@
 
 ## 7. 研发线落地清单
 - 以本地原型代码为准同步实现：
-  - `/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/index.html`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/styles.css`
-  - `/Users/huda/Code/spatial-intelligence-data-factory/web/dashboard/app.js`
+  - `./web/dashboard/index.html`
+  - `./web/dashboard/styles.css`
+  - `./web/dashboard/app.js`
 - 实现要求：
   - 保留原有数据读取流程
   - 保持无第三方 CDN 依赖
