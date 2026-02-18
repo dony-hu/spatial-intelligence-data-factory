@@ -28,16 +28,22 @@ class FactoryAgent:
         """对话接口 - 支持确定数据源、存储 API Key、生成工作包、workpackage 生命周期管理"""
         prompt_lower = prompt.lower()
         
-        if ("api" in prompt_lower and "key" in prompt_lower) or ("存储" in prompt and ("密钥" in prompt or "API" in prompt)):
+        if ("存储" in prompt and ("密钥" in prompt or "API" in prompt)) or ("api" in prompt_lower and "key" in prompt_lower):
             return self._handle_store_api_key(prompt)
         
-        if ("list" in prompt_lower and ("workpackage" in prompt_lower or "工作包" in prompt)) or ("列出" in prompt and ("工作包" in prompt or "workpackage" in prompt)):
+        if ("列出" in prompt and "工作包" in prompt) or ("list" in prompt_lower and ("workpackage" in prompt_lower)):
             return self._handle_list_workpackages()
         
-        if "list" in prompt_lower or ("列出" in prompt and ("数据源" in prompt or "source" in prompt)):
+        if "查询" in prompt or ("query" in prompt_lower and ("workpackage" in prompt_lower)):
+            return self._handle_query_workpackage(prompt)
+        
+        if "试运行" in prompt or ("dryrun" in prompt_lower and ("workpackage" in prompt_lower)):
+            return self._handle_dryrun_workpackage(prompt)
+        
+        if ("列出" in prompt and "数据源" in prompt) or "list" in prompt_lower:
             return self._handle_list_sources()
         
-        if ("generate" in prompt_lower and ("workpackage" in prompt_lower or "work package" in prompt_lower)) or ("生成" in prompt and ("工作包" in prompt or "workpackage" in prompt)):
+        if ("生成" in prompt and "工作包" in prompt) or ("generate" in prompt_lower and ("workpackage" in prompt_lower or "work package" in prompt_lower)):
             return self._handle_generate_workpackage(prompt)
         
         return {
@@ -97,6 +103,79 @@ class FactoryAgent:
             "workpackages": workpackages,
             "message": f"已发布 {len(workpackages)} 个工作包"
         }
+
+    def _handle_query_workpackage(self, prompt):
+        """处理查询工作包的对话"""
+        bundles_dir = Path("workpackages/bundles")
+        bundle_name = self._extract_bundle_name(prompt)
+        
+        if not bundle_name:
+            return {
+                "status": "error",
+                "message": "请提供工作包名称，例如：'查询 poi-trust-verification-v1.0.0'"
+            }
+        
+        bundle_dir = bundles_dir / bundle_name
+        if not bundle_dir.exists():
+            return {
+                "status": "error",
+                "message": f"工作包 {bundle_name} 不存在"
+            }
+        
+        wp_config = {}
+        config_path = bundle_dir / "workpackage.json"
+        if config_path.exists():
+            import json
+            try:
+                wp_config = json.loads(config_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        
+        return {
+            "status": "ok",
+            "action": "query_workpackage",
+            "bundle_name": bundle_name,
+            "bundle_path": str(bundle_dir),
+            "workpackage_config": wp_config,
+            "message": f"已查询工作包 {bundle_name}"
+        }
+
+    def _handle_dryrun_workpackage(self, prompt):
+        """处理 dryrun 工作包的对话"""
+        bundles_dir = Path("workpackages/bundles")
+        bundle_name = self._extract_bundle_name(prompt)
+        
+        if not bundle_name:
+            return {
+                "status": "error",
+                "message": "请提供工作包名称，例如：'试运行 poi-trust-verification-v1.0.0'"
+            }
+        
+        bundle_dir = bundles_dir / bundle_name
+        if not bundle_dir.exists():
+            return {
+                "status": "error",
+                "message": f"工作包 {bundle_name} 不存在"
+            }
+        
+        return {
+            "status": "ok",
+            "action": "dryrun_workpackage",
+            "bundle_name": bundle_name,
+            "bundle_path": str(bundle_dir),
+            "message": f"工作包 {bundle_name} dryrun 准备就绪，请执行 entrypoint.sh 或 entrypoint.py"
+        }
+
+    def _extract_bundle_name(self, prompt: str) -> Optional[str]:
+        """从 prompt 中提取工作包名称"""
+        import re
+        match = re.search(r'([a-zA-Z0-9_-]+-v\d+\.\d+\.\d+)', prompt)
+        if match:
+            return match.group(1)
+        match = re.search(r'([a-zA-Z0-9_-]+)', prompt)
+        if match:
+            return match.group(1)
+        return None
 
     def _handle_generate_workpackage(self, prompt):
         """处理生成工作包的对话"""
