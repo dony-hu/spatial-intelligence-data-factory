@@ -1,0 +1,16 @@
+{
+  "高德": {
+    "name": "高德",
+    "provider": "amap",
+    "api_key": "_e2e_123",
+    "api_endpoint": "",
+    "is_active": true
+  },
+  "百度": {
+    "name": "百度",
+    "provider": "baidu",
+    "api_key": "_e2e_456",
+    "api_endpoint": "",
+    "is_active": true
+  }
+}

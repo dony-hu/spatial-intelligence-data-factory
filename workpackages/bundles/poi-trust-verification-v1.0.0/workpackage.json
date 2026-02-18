@@ -1,0 +1,8 @@
+{
+  "name": "poi-trust-verification",
+  "version": "v1.0.0",
+  "sources": [
+    "高德",
+    "百度"
+  ]
+}
