@@ -94,6 +94,86 @@
 
 ---
 
+## 分步操作指南
+
+### 操作前准备
+- 保留 `archive/` 作为备份，**不删除**
+- 每次操作后 Git 提交，便于回滚
+
+---
+
+### 第一步：迁移项目级文档（手动执行）
+使用以下命令迁移项目级文档到 `.trae/documents/`：
+```bash
+# 迁移 PRD 和产品简介
+cp archive/docs/prd-spatial-intelligence-data-factory-2026-02-10.md .trae/documents/
+cp archive/docs/product-brief-spatial-intelligence-data-factory-2026-02-10.md .trae/documents/
+
+# 迁移 kickoff 和 diagrams
+cp -r archive/docs/kickoff .trae/documents/
+cp -r archive/docs/diagrams .trae/documents/
+
+# 迁移架构文档
+cp archive/docs/architecture-alignment-spatial-intelligence-data-factory-2026-02-11.md .trae/documents/
+cp archive/docs/architecture-design-data-cleaning-pipeline-v2.md .trae/documents/
+cp archive/docs/architecture-enhancement-v2-2026-02-17.md .trae/documents/
+cp archive/docs/pg-only-global-database-architecture-v1-2026-02-16.md .trae/documents/
+```
+
+---
+
+### 第二步：合并技术设计文档（手动执行）
+把技术设计文档复制到对应 change-id 的 tech-design.md：
+```bash
+# 合并到 address-governance-e2e-suite
+cp archive/docs/address-governance-postgres-openhands-design-2026-02-14.md .trae/specs/address-governance-e2e-suite/
+cp archive/docs/address-governance-postgres-openhands-implementation-plan-2026-02-14.md .trae/specs/address-governance-e2e-suite/
+cp archive/docs/address-line-design-hypothesis-and-audit-cases-2026-02-14.md .trae/specs/address-governance-e2e-suite/
+
+# 合并到 real-db-integration-and-dashboard
+cp archive/docs/database-structure-design-and-validation-2026-02-16.md .trae/specs/real-db-integration-and-dashboard/
+
+# 合并到 poi-shop-trust-verification
+cp archive/docs/factory-closed-loop-address-verification-plan-2026-02-14.md .trae/specs/poi-shop-trust-verification/
+```
+
+---
+
+### 第三步：合并可观测性与看板文档（手动执行）
+```bash
+# 合并到 observability-and-docs-improvement
+cp archive/docs/address-line-observability-fields-2026-02-15.md .trae/specs/observability-and-docs-improvement/
+
+# 合并到 observability-dashboard-enhancement
+cp archive/docs/dashboard-data-contract.md .trae/specs/observability-dashboard-enhancement/
+cp archive/docs/dashboard-refresh-contract.md .trae/specs/observability-dashboard-enhancement/
+```
+
+---
+
+### 第四步：创建可信数据 HUB 的 change-id（手动执行）
+```bash
+# 创建 change-id 目录
+mkdir -p .trae/specs/trust-data-hub-phase1/
+
+# 复制文档
+cp archive/docs/trust-data-hub-phase1-3-执行计划-2026-02-15.md .trae/specs/trust-data-hub-phase1/
+cp archive/docs/trust-data-hub-v0.1-工作线启动说明.md .trae/specs/trust-data-hub-phase1/
+
+# 参考现有 spec 创建 spec.md、tasks.md、checklist.md
+```
+
+---
+
+### 第五步：Git 提交（每次操作后）
+```bash
+git add .trae/documents/ .trae/specs/
+git commit -m "docs: 融合 archive 文档到 .trae/documents 和 .trae/specs"
+```
+
+---
+
 ## 下一步
-1. 确认融合方案
-2. 逐步执行文档迁移
+1. 按上面的「分步操作指南」手动执行文档迁移
+2. 每次操作后 Git 提交
+3. 验证文档体系的一致性

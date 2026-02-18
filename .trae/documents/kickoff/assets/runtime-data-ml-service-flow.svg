@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="980" viewBox="0 0 1800 980">
+  <defs>
+    <style>
+      .title { font: 700 32px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .subtitle { font: 700 20px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .text { font: 600 16px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .small { font: 500 14px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #334155; }
+      .box { fill: #fff; stroke: #334155; stroke-width: 2; rx: 12; }
+      .stage { fill: #dcfce7; }
+      .line { stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1800" height="980" fill="#f8fafc"/>
+  <text x="900" y="54" text-anchor="middle" class="title">数据-标注-训练-推理-服务运行链路图</text>
+
+  <rect x="60" y="100" width="1680" height="810" class="box"/>
+  <text x="900" y="136" text-anchor="middle" class="subtitle">End-to-End Factory Runtime Pipeline</text>
+
+  <rect x="100" y="210" width="220" height="140" class="box stage"/>
+  <text x="210" y="250" text-anchor="middle" class="text">数据接入</text>
+  <text x="130" y="282" class="small">多源采集</text>
+  <text x="130" y="312" class="small">Schema 校验</text>
+
+  <rect x="370" y="210" width="220" height="140" class="box stage"/>
+  <text x="480" y="250" text-anchor="middle" class="text">Profiling 与治理</text>
+  <text x="400" y="282" class="small">质量规则</text>
+  <text x="400" y="312" class="small">口径对齐</text>
+
+  <rect x="640" y="210" width="220" height="140" class="box stage"/>
+  <text x="750" y="250" text-anchor="middle" class="text">预标注与人工复核</text>
+  <text x="670" y="282" class="small">主动学习</text>
+  <text x="670" y="312" class="small">冲突回流</text>
+
+  <rect x="910" y="210" width="220" height="140" class="box stage"/>
+  <text x="1020" y="250" text-anchor="middle" class="text">训练与评测</text>
+  <text x="940" y="282" class="small">Pipeline 自动化</text>
+  <text x="940" y="312" class="small">回归评测</text>
+
+  <rect x="1180" y="210" width="220" height="140" class="box stage"/>
+  <text x="1290" y="250" text-anchor="middle" class="text">推理部署</text>
+  <text x="1210" y="282" class="small">灰度发布</text>
+  <text x="1210" y="312" class="small">性能压测</text>
+
+  <rect x="1450" y="210" width="220" height="140" class="box stage"/>
+  <text x="1560" y="250" text-anchor="middle" class="text">服务消费与反馈</text>
+  <text x="1480" y="282" class="small">API/看板/应用</text>
+  <text x="1480" y="312" class="small">在线反馈回流</text>
+
+  <line x1="320" y1="280" x2="370" y2="280" class="line"/>
+  <line x1="590" y1="280" x2="640" y2="280" class="line"/>
+  <line x1="860" y1="280" x2="910" y2="280" class="line"/>
+  <line x1="1130" y1="280" x2="1180" y2="280" class="line"/>
+  <line x1="1400" y1="280" x2="1450" y2="280" class="line"/>
+
+  <rect x="140" y="430" width="1520" height="180" class="box"/>
+  <text x="900" y="468" text-anchor="middle" class="text">横向保障能力</text>
+  <text x="180" y="505" class="small">• 合约与口径门禁（Schema/API/Metric）</text>
+  <text x="180" y="535" class="small">• 审批门禁（口径、合规、发布、标签、SLA）</text>
+  <text x="180" y="565" class="small">• 可观测（质量/性能/成本/可用性）</text>
+  <text x="180" y="595" class="small">• 审计留痕（责任人、时间、上下文、版本）</text>
+
+  <line x1="900" y1="350" x2="900" y2="430" class="line"/>
+
+  <rect x="140" y="660" width="1520" height="200" class="box"/>
+  <text x="900" y="708" text-anchor="middle" class="text">运行结果</text>
+  <text x="180" y="745" class="small">• 两大业务基座持续交付：地址治理基座、城市调度基座</text>
+  <text x="180" y="775" class="small">• Agent 执行内核持续优化：策略学习、工具路由、状态记忆</text>
+  <text x="180" y="805" class="small">• 多地区版本窗口化接入：平台复用率持续提升</text>
+  <text x="180" y="835" class="small">• 人参与环节：客户参与口径确认/标签裁决/业务验收；丰图参与训练评审/发布审批/异常处置</text>
+</svg>

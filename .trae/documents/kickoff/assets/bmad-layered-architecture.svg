@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1060" viewBox="0 0 1800 1060">
+  <defs>
+    <style>
+      .title { font: 700 32px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .subtitle { font: 600 20px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .text { font: 500 16px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #0f172a; }
+      .small { font: 500 14px 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #334155; }
+      .box { fill: #ffffff; stroke: #334155; stroke-width: 2; rx: 14; }
+      .core { fill: #e0f2fe; }
+      .sub { fill: #f0fdf4; }
+      .step { fill: #f8fafc; }
+      .line { stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1800" height="1060" fill="#f8fafc"/>
+  <text x="900" y="58" text-anchor="middle" class="title">BMAD 分层架构图（1 核心仓 + 5 子仓）</text>
+
+  <rect x="60" y="100" width="760" height="560" class="box core"/>
+  <text x="440" y="140" text-anchor="middle" class="subtitle">核心平台层（spatial-intelligence-data-factory）</text>
+
+  <rect x="100" y="180" width="300" height="70" class="box step"/>
+  <text x="250" y="222" text-anchor="middle" class="text">/workflow-status（总控）</text>
+
+  <rect x="100" y="280" width="300" height="70" class="box step"/>
+  <text x="250" y="322" text-anchor="middle" class="text">Analysis: /product-brief</text>
+
+  <rect x="100" y="380" width="300" height="70" class="box step"/>
+  <text x="250" y="422" text-anchor="middle" class="text">Planning: /prd /tech-spec</text>
+
+  <rect x="100" y="480" width="300" height="70" class="box step"/>
+  <text x="250" y="522" text-anchor="middle" class="text">Solutioning: /architecture</text>
+
+  <rect x="100" y="580" width="300" height="70" class="box step"/>
+  <text x="250" y="622" text-anchor="middle" class="text">Implementation: sprint/story/dev/review</text>
+
+  <line x1="250" y1="250" x2="250" y2="280" class="line"/>
+  <line x1="250" y1="350" x2="250" y2="380" class="line"/>
+  <line x1="250" y1="450" x2="250" y2="480" class="line"/>
+  <line x1="250" y1="550" x2="250" y2="580" class="line"/>
+
+  <rect x="450" y="220" width="330" height="290" class="box"/>
+  <text x="615" y="255" text-anchor="middle" class="subtitle">核心产物</text>
+  <text x="475" y="295" class="small">• bmad/config.yaml</text>
+  <text x="475" y="330" class="small">• docs/bmm-workflow-status.yaml</text>
+  <text x="475" y="365" class="small">• product-brief / prd / governance docs</text>
+  <text x="475" y="400" class="small">• 平台能力契约（数据/API/质量）</text>
+  <text x="475" y="435" class="small">• 跨项目 PRD 补齐计划</text>
+
+  <rect x="910" y="100" width="830" height="560" class="box sub"/>
+  <text x="1325" y="140" text-anchor="middle" class="subtitle">子项目执行层（5 个地区仓）</text>
+
+  <rect x="950" y="180" width="340" height="90" class="box"/>
+  <text x="1120" y="215" text-anchor="middle" class="text">上海地址治理</text>
+  <text x="1120" y="245" text-anchor="middle" class="small">project-shanghai-address-governance</text>
+
+  <rect x="1360" y="180" width="340" height="90" class="box"/>
+  <text x="1530" y="215" text-anchor="middle" class="text">昆山空间智能（全景/街景/3DGS）</text>
+  <text x="1530" y="245" text-anchor="middle" class="small">project-kunshan-panorama-3dgs-labeling</text>
+
+  <rect x="950" y="300" width="340" height="90" class="box"/>
+  <text x="1120" y="335" text-anchor="middle" class="text">吴江公安治理</text>
+  <text x="1120" y="365" text-anchor="middle" class="small">project-wujiang-public-security-governance</text>
+
+  <rect x="1360" y="300" width="340" height="90" class="box"/>
+  <text x="1530" y="335" text-anchor="middle" class="text">北京公安治理</text>
+  <text x="1530" y="365" text-anchor="middle" class="small">project-beijing-public-security-governance</text>
+
+  <rect x="1155" y="420" width="340" height="90" class="box"/>
+  <text x="1325" y="455" text-anchor="middle" class="text">深圳宝安城市调度</text>
+  <text x="1325" y="485" text-anchor="middle" class="small">project-baoan-city-command</text>
+
+  <rect x="950" y="540" width="750" height="90" class="box"/>
+  <text x="1325" y="575" text-anchor="middle" class="text">每个子仓执行本地 BMAD：Analysis → Planning → Solutioning → Implementation</text>
+  <text x="1325" y="605" text-anchor="middle" class="small">并通过周报/月报/能力回流机制反馈核心仓</text>
+
+  <line x1="820" y1="380" x2="950" y2="225" class="line"/>
+  <line x1="820" y1="380" x2="1360" y2="225" class="line"/>
+  <line x1="820" y1="380" x2="950" y2="345" class="line"/>
+  <line x1="820" y1="380" x2="1360" y2="345" class="line"/>
+  <line x1="820" y1="380" x2="1155" y2="465" class="line"/>
+
+  <rect x="60" y="700" width="1680" height="300" class="box"/>
+  <text x="900" y="745" text-anchor="middle" class="subtitle">治理边界（必须遵守）</text>
+  <text x="110" y="790" class="text">1. 核心仓只沉淀可复用能力（至少可被 2 个地区复用）。</text>
+  <text x="110" y="830" class="text">2. 子仓只承载本地定制交付，不反向污染平台范围。</text>
+  <text x="110" y="870" class="text">3. 通过版本窗口接入核心能力，禁止手工复制核心代码。</text>
+  <text x="110" y="910" class="text">4. 每周状态盘点、双周架构评审、月度复用率复盘。</text>
+  <text x="110" y="950" class="text">5. 每条交付必须有日志与证据链接，满足可追踪审计要求。</text>
+</svg>

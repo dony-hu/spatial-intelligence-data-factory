@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="980" viewBox="0 0 1800 980">
+  <defs>
+    <style>
+      .title { font: 700 32px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .subtitle { font: 700 20px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .text { font: 600 16px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #0f172a; }
+      .small { font: 500 14px 'PingFang SC','Microsoft YaHei',sans-serif; fill: #334155; }
+      .box { fill: #fff; stroke: #334155; stroke-width: 2; rx: 12; }
+      .ctrl { fill: #dbeafe; }
+      .agent { fill: #dcfce7; }
+      .line { stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1800" height="980" fill="#f8fafc"/>
+  <text x="900" y="54" text-anchor="middle" class="title">Agent 控制平面运行图（Goal-Reason-Act）</text>
+
+  <rect x="70" y="100" width="1660" height="810" class="box"/>
+  <text x="900" y="138" text-anchor="middle" class="subtitle">Control Plane Runtime Loop</text>
+
+  <rect x="120" y="190" width="410" height="180" class="box ctrl"/>
+  <text x="325" y="225" text-anchor="middle" class="text">Goal Intake</text>
+  <text x="150" y="260" class="small">• 需求目标输入</text>
+  <text x="150" y="290" class="small">• KPI/约束提取</text>
+  <text x="150" y="320" class="small">• 优先级与场景映射</text>
+
+  <rect x="650" y="160" width="500" height="230" class="box ctrl"/>
+  <text x="900" y="195" text-anchor="middle" class="text">Reasoning Core</text>
+  <text x="680" y="230" class="small">• 策略路由（Policy + Context）</text>
+  <text x="680" y="260" class="small">• 决策循环（Plan/Check/Adjust）</text>
+  <text x="680" y="290" class="small">• 工具选择与执行计划生成</text>
+  <text x="680" y="320" class="small">• 风险评分与审批判断</text>
+  <text x="680" y="350" class="small">• 执行状态更新与记忆写入</text>
+
+  <rect x="1270" y="190" width="410" height="180" class="box ctrl"/>
+  <text x="1475" y="225" text-anchor="middle" class="text">Actuation Layer</text>
+  <text x="1300" y="260" class="small">• Tool Invocation</text>
+  <text x="1300" y="290" class="small">• DAG / Job Dispatch</text>
+  <text x="1300" y="320" class="small">• API / Service Trigger</text>
+
+  <rect x="170" y="470" width="1460" height="240" class="box agent"/>
+  <text x="900" y="505" text-anchor="middle" class="text">Agent Domain Roles</text>
+  <text x="210" y="545" class="small">• 需求理解 Agent</text>
+  <text x="210" y="575" class="small">• 数据探索 Agent</text>
+  <text x="210" y="605" class="small">• 建模 Agent</text>
+  <text x="470" y="545" class="small">• 质量 Agent</text>
+  <text x="470" y="575" class="small">• 编排 Agent</text>
+  <text x="470" y="605" class="small">• 影响分析 Agent</text>
+  <text x="790" y="545" class="small">• 执行 Agent</text>
+  <text x="790" y="575" class="small">• 审计 Agent</text>
+  <text x="790" y="605" class="small">• 推理服务 Agent</text>
+  <text x="1120" y="545" class="small">• 共享能力：Tool Registry</text>
+  <text x="1120" y="575" class="small">• 共享能力：State &amp; Memory</text>
+  <text x="1120" y="605" class="small">• 共享能力：Approval Gate</text>
+
+  <rect x="170" y="748" width="1460" height="140" class="box"/>
+  <text x="900" y="800" text-anchor="middle" class="text">审批与审计闭环</text>
+  <text x="220" y="832" class="small">关键动作（口径、合规、发布、标签、SLA）进入人审；审批结果回写策略与状态；全链路保留责任人与上下文。</text>
+  <text x="220" y="862" class="small">人参与角色：客户（业务口径、验收、优先级裁决）；丰图（技术评审、合规校验、发布与回滚授权）。</text>
+
+  <line x1="530" y1="280" x2="650" y2="280" class="line"/>
+  <line x1="1150" y1="280" x2="1270" y2="280" class="line"/>
+  <line x1="900" y1="390" x2="900" y2="470" class="line"/>
+  <line x1="1475" y1="370" x2="1475" y2="470" class="line"/>
+  <line x1="325" y1="370" x2="325" y2="470" class="line"/>
+  <line x1="900" y1="710" x2="900" y2="760" class="line"/>
+</svg>
