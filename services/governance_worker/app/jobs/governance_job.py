@@ -10,6 +10,34 @@ from services.governance_worker.app.jobs.ingest_job import run as ingest_run
 from services.governance_worker.app.jobs.result_persist_job import persist_results
 
 
+def _resolve_ruleset_context(ruleset_id: str) -> dict:
+    context = {"ruleset_id": ruleset_id}
+    ruleset = REPOSITORY.get_ruleset(ruleset_id)
+    config = ruleset.get("config_json") if isinstance(ruleset, dict) else None
+    if isinstance(config, dict):
+        context.update(config)
+    return context
+
+
+def _new_trust_provider():
+    from services.trust_data_hub.app.repositories.trustdb_persister import TrustDbPersister
+
+    return TrustDbPersister()
+
+
+def _resolve_trust_provider(ruleset_context: dict):
+    trust_required = bool(ruleset_context.get("require_trust_enhancement", False))
+    trust_namespace = str(ruleset_context.get("trust_namespace") or "").strip()
+    if not trust_required and not trust_namespace:
+        return None
+    provider = _new_trust_provider()
+    if provider.enabled():
+        return provider
+    if trust_required:
+        raise RuntimeError("blocked: trust provider unavailable")
+    return None
+
+
 def run(task_payload: dict) -> dict:
     task_id = task_payload.get("task_id")
     trace_id = str(task_payload.get("trace_id") or f"trace_{task_id or 'unknown'}")
@@ -28,10 +56,19 @@ def run(task_payload: dict) -> dict:
         os.environ["OPENHANDS_STRICT"] = "1"
     try:
         processed = ingest_run(task_payload)
-        pipeline_outputs = run_address_pipeline(
-            processed.get("records", []),
-            {"ruleset_id": processed.get("ruleset_id", "default")},
-        )
+        ruleset_context = _resolve_ruleset_context(str(processed.get("ruleset_id", "default")))
+        trust_provider = _resolve_trust_provider(ruleset_context)
+        if trust_provider is None:
+            pipeline_outputs = run_address_pipeline(
+                processed.get("records", []),
+                ruleset_context,
+            )
+        else:
+            pipeline_outputs = run_address_pipeline(
+                processed.get("records", []),
+                ruleset_context,
+                trust_provider=trust_provider,
+            )
         runtime = get_runtime()
         runtime_result = runtime.run_task(
             task_context={

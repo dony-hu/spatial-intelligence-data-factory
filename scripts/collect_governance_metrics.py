@@ -71,16 +71,16 @@ def collect_table_data(conn, table_name, limit=100):
 
 def collect_db_metrics():
     db_url = os.getenv("DATABASE_URL")
-    if not db_url or (not db_url.startswith("postgresql") and not db_url.startswith("sqlite")):
-        print("DATABASE_URL not set or not postgres/sqlite, skipping DB metrics.")
+    if not db_url or (not db_url.startswith("postgresql")):
+        print("DATABASE_URL not set or not postgresql, skipping DB metrics.")
         return {"status": "skipped", "reason": "no_db_connection"}
 
     try:
         engine = create_engine(db_url)
         with engine.connect() as conn:
-            raw_count = conn.execute(text("SELECT count(*) FROM addr_raw")).scalar()
-            canonical_count = conn.execute(text("SELECT count(*) FROM addr_canonical")).scalar()
-            task_success_count = conn.execute(text("SELECT count(*) FROM addr_task_run WHERE status='SUCCEEDED'")).scalar()
+            raw_count = conn.execute(text("SELECT count(*) FROM governance.raw_record")).scalar()
+            canonical_count = conn.execute(text("SELECT count(*) FROM governance.canonical_record")).scalar()
+            task_success_count = conn.execute(text("SELECT count(*) FROM governance.task_run WHERE status='SUCCEEDED'")).scalar()
             
             samples = []
             rows = conn.execute(text("""
@@ -89,8 +89,8 @@ def collect_db_metrics():
                     c.canon_text, 
                     c.confidence, 
                     c.strategy 
-                FROM addr_canonical c
-                JOIN addr_raw r ON c.raw_id = r.raw_id
+                FROM governance.canonical_record c
+                JOIN governance.raw_record r ON c.raw_id = r.raw_id
                 ORDER BY c.created_at DESC 
                 LIMIT 5
             """)).mappings().all()
@@ -105,20 +105,20 @@ def collect_db_metrics():
             
             table_data = {
                 "task_batch": {
-                    "addr_batch": collect_table_data(conn, "addr_batch"),
-                    "addr_task_run": collect_table_data(conn, "addr_task_run")
+                    "governance_batch": collect_table_data(conn, "governance.batch"),
+                    "governance_task_run": collect_table_data(conn, "governance.task_run")
                 },
                 "data_governance": {
-                    "addr_raw": collect_table_data(conn, "addr_raw"),
-                    "addr_canonical": collect_table_data(conn, "addr_canonical"),
-                    "addr_review": collect_table_data(conn, "addr_review")
+                    "governance_raw_record": collect_table_data(conn, "governance.raw_record"),
+                    "governance_canonical_record": collect_table_data(conn, "governance.canonical_record"),
+                    "governance_review": collect_table_data(conn, "governance.review")
                 },
                 "rules_changes": {
-                    "addr_ruleset": collect_table_data(conn, "addr_ruleset"),
-                    "addr_change_request": collect_table_data(conn, "addr_change_request")
+                    "governance_ruleset": collect_table_data(conn, "governance.ruleset"),
+                    "governance_change_request": collect_table_data(conn, "governance.change_request")
                 },
                 "audit_logs": {
-                    "addr_audit_event": collect_table_data(conn, "addr_audit_event"),
+                    "audit_event_log": collect_table_data(conn, "audit.event_log"),
                     "api_audit_log": collect_table_data(conn, "api_audit_log"),
                     "agent_execution_log": collect_table_data(conn, "agent_execution_log")
                 }
@@ -127,8 +127,8 @@ def collect_db_metrics():
             return {
                 "status": "connected",
                 "counts": {
-                    "addr_raw": raw_count,
-                    "addr_canonical": canonical_count,
+                    "governance_raw_record": raw_count,
+                    "governance_canonical_record": canonical_count,
                     "successful_tasks": task_success_count
                 },
                 "samples": samples,

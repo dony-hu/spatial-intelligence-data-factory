@@ -63,7 +63,7 @@ def main() -> int:
             conn.execute(
                 text(
                     """
-                    INSERT INTO addr_batch (batch_id, batch_name, status, created_at, updated_at)
+                    INSERT INTO governance.batch (batch_id, batch_name, status, created_at, updated_at)
                     VALUES (:batch_id, :batch_name, 'SUCCEEDED', NOW(), NOW())
                     ON CONFLICT (batch_id)
                     DO UPDATE SET batch_name = EXCLUDED.batch_name, status = EXCLUDED.status, updated_at = NOW();
@@ -74,7 +74,7 @@ def main() -> int:
             conn.execute(
                 text(
                     """
-                    INSERT INTO addr_task_run (task_id, batch_id, status, runtime, created_at, updated_at)
+                    INSERT INTO governance.task_run (task_id, batch_id, status, runtime, created_at, updated_at)
                     VALUES (:task_id, :batch_id, 'SUCCEEDED', 'seed_script', NOW(), NOW())
                     ON CONFLICT (task_id)
                     DO UPDATE SET batch_id = EXCLUDED.batch_id, status = EXCLUDED.status, runtime = EXCLUDED.runtime, updated_at = NOW();
@@ -85,7 +85,7 @@ def main() -> int:
             conn.execute(
                 text(
                     """
-                    INSERT INTO addr_raw (raw_id, batch_id, raw_text, province, city, district, street, detail, raw_hash, ingested_at)
+                    INSERT INTO governance.raw_record (raw_id, batch_id, raw_text, province, city, district, street, detail, raw_hash, ingested_at)
                     VALUES (:raw_id, :batch_id, :raw_text, :province, :city, :district, :street, :detail, :raw_hash, NOW())
                     ON CONFLICT (raw_id)
                     DO UPDATE SET batch_id = EXCLUDED.batch_id, raw_text = EXCLUDED.raw_text, province = EXCLUDED.province,
@@ -107,7 +107,7 @@ def main() -> int:
             conn.execute(
                 text(
                     """
-                    INSERT INTO addr_canonical (canonical_id, raw_id, canon_text, confidence, strategy, evidence, ruleset_version, created_at, updated_at)
+                    INSERT INTO governance.canonical_record (canonical_id, raw_id, canon_text, confidence, strategy, evidence, ruleset_version, created_at, updated_at)
                     VALUES (:canonical_id, :raw_id, :canon_text, :confidence, :strategy, CAST(:evidence AS jsonb), 'default', NOW(), NOW())
                     ON CONFLICT (canonical_id)
                     DO UPDATE SET canon_text = EXCLUDED.canon_text, confidence = EXCLUDED.confidence,
@@ -129,7 +129,7 @@ def main() -> int:
         conn.execute(
             text(
                 """
-                INSERT INTO addr_review (review_id, raw_id, review_status, reviewer, comment, reviewed_at, created_at, updated_at)
+                INSERT INTO governance.review (review_id, raw_id, review_status, reviewer, comment, reviewed_at, created_at, updated_at)
                 VALUES ('seed_review_001', :raw_id, 'approved', 'seed-bot', 'seed reviewed sample', NOW(), NOW(), NOW())
                 ON CONFLICT (review_id)
                 DO UPDATE SET raw_id = EXCLUDED.raw_id, review_status = EXCLUDED.review_status, reviewer = EXCLUDED.reviewer,
@@ -140,7 +140,12 @@ def main() -> int:
         )
 
         counts = {}
-        for table in ["addr_task_run", "addr_raw", "addr_canonical", "addr_review"]:
+        for table in [
+            "governance.task_run",
+            "governance.raw_record",
+            "governance.canonical_record",
+            "governance.review",
+        ]:
             counts[table] = int(conn.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() or 0)
 
     print(json.dumps({"ok": True, "database_url": db_url, "counts": counts}, ensure_ascii=False, indent=2))

@@ -16,6 +16,7 @@ class OpenCodeRuntime:
     def __init__(self, config_path=None):
         self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", "config/llm_api.json")
         self._opencode_bin = os.getenv("OPENCODE_BIN", "opencode")
+        self._timeout_sec = int(os.getenv("OPENCODE_TIMEOUT_SEC", "300"))
 
     def _ensure_opencode_available(self):
         try:
@@ -28,11 +29,18 @@ class OpenCodeRuntime:
     def _run_opencode_prompt(self, prompt):
         cmd = [
             self._opencode_bin,
-            "-p", prompt,
-            "-f", "json",
-            "-q"
+            "run",
+            prompt,
+            "--format",
+            "json",
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=120)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=self._timeout_sec,
+        )
         return result.stdout
 
     def run_task(self, task_context, ruleset):
@@ -63,10 +71,83 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
 """.strip()
 
     def _parse_opencode_output(self, raw):
+        raw_text = raw.strip()
         try:
-            return json.loads(raw)
-        except Exception as exc:
-            raise RuntimeError(f"blocked: opencode output is not valid json: {exc}") from exc
+            parsed = json.loads(raw_text)
+            if isinstance(parsed, dict):
+                if "strategy" in parsed and "confidence" in parsed:
+                    return parsed
+                embedded = self._extract_json_from_event(parsed)
+                if embedded is not None:
+                    return embedded
+            raise RuntimeError("blocked: opencode output must be a json object")
+        except json.JSONDecodeError:
+            pass
+        except RuntimeError:
+            raise
+
+        event_objects = []
+        for line in raw_text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                event = json.loads(line)
+            except Exception as exc:
+                raise RuntimeError(f"blocked: opencode output contains invalid json line: {exc}") from exc
+            if not isinstance(event, dict):
+                raise RuntimeError("blocked: opencode event output must be json objects")
+            event_objects.append(event)
+
+        for event in reversed(event_objects):
+            embedded = self._extract_json_from_event(event)
+            if embedded is not None:
+                return embedded
+        raise RuntimeError("blocked: opencode output missing structured json payload")
+
+    def _extract_json_from_event(self, event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        text_candidates = []
+        part = event.get("part")
+        if isinstance(part, dict):
+            text = part.get("text")
+            if isinstance(text, str):
+                text_candidates.append(text.strip())
+        message = event.get("message")
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, str):
+                text_candidates.append(content.strip())
+
+        for text in text_candidates:
+            payload = self._extract_json_payload_text(text)
+            if not payload:
+                continue
+            try:
+                parsed = json.loads(payload)
+            except Exception:
+                continue
+            if isinstance(parsed, dict) and "strategy" in parsed and "confidence" in parsed:
+                return parsed
+        return None
+
+    def _extract_json_payload_text(self, text: str) -> Optional[str]:
+        stripped = text.strip()
+        if not stripped:
+            return None
+        if stripped.startswith("```"):
+            first_newline = stripped.find("\n")
+            if first_newline >= 0:
+                stripped = stripped[first_newline + 1:]
+            if stripped.endswith("```"):
+                stripped = stripped[:-3].strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            return stripped
+
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start >= 0 and end > start:
+            return stripped[start : end + 1]
+        return None
 
     def _validate_llm_output(self, parsed: Dict[str, Any]) -> None:
         if not isinstance(parsed, dict):

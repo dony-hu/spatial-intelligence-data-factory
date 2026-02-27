@@ -54,7 +54,7 @@ def _ensure_address_line_merged_schema(conn) -> None:
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.batch AS
-        SELECT * FROM public.addr_batch
+        SELECT * FROM governance.batch
         """
     )
     conn.exec_driver_sql(
@@ -71,7 +71,7 @@ def _ensure_address_line_merged_schema(conn) -> None:
             detail,
             raw_hash,
             ingested_at AS created_at
-        FROM public.addr_raw
+        FROM governance.raw_record
         """
     )
     conn.exec_driver_sql(
@@ -98,37 +98,37 @@ def _ensure_address_line_merged_schema(conn) -> None:
             agent_run_id,
             created_at,
             updated_at
-        FROM public.addr_canonical
+        FROM governance.canonical_record
         """
     )
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.review AS
-        SELECT * FROM public.addr_review
+        SELECT * FROM governance.review
         """
     )
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.ruleset AS
-        SELECT * FROM public.addr_ruleset
+        SELECT * FROM governance.ruleset
         """
     )
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.change_request AS
-        SELECT * FROM public.addr_change_request
+        SELECT * FROM governance.change_request
         """
     )
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.task_run AS
-        SELECT * FROM public.addr_task_run
+        SELECT * FROM governance.task_run
         """
     )
     conn.exec_driver_sql(
         """
         CREATE OR REPLACE VIEW address_line.audit_event AS
-        SELECT * FROM public.addr_audit_event
+        SELECT * FROM audit.event_log
         """
     )
     conn.exec_driver_sql(

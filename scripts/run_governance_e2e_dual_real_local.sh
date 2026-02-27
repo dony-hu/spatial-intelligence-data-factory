@@ -63,8 +63,8 @@ chmod +x scripts/run_governance_e2e_dual_real.sh
 ./scripts/run_governance_e2e_dual_real.sh "$@"
 
 echo "[INFO] PostgreSQL acceptance snapshot"
-"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select status, count(*) from addr_task_run group by status order by status;"
-"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select count(*) as raw_rows from addr_raw;"
-"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select count(*) as canonical_rows from addr_canonical;"
+"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select status, count(*) from governance.task_run group by status order by status;"
+"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select count(*) as raw_rows from governance.raw_record;"
+"$PG_BIN_DIR/psql" "$DATABASE_URL" -c "select count(*) as canonical_rows from governance.canonical_record;"
 
 echo "[DONE] dual real e2e completed"

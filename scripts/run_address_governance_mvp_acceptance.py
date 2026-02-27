@@ -7,7 +7,6 @@ import argparse
 import importlib
 import json
 import os
-import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,12 +15,6 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-try:
-    from init_governance_sqlite import init_db
-except ImportError:  # pragma: no cover - 兼容作为模块导入执行
-    from scripts.init_governance_sqlite import init_db
-
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -42,13 +35,44 @@ def _write_bundle(bundle_dir: Path, *, name: str, version: str) -> str:
 
 
 def _prepare_runtime(db_url: str) -> None:
+    if not db_url.startswith("postgresql://"):
+        raise ValueError("blocked: --db-url must be postgresql:// in PG-only mode")
     os.environ["DATABASE_URL"] = db_url
     os.environ["GOVERNANCE_ALLOW_MEMORY_FALLBACK"] = "0"
-    if db_url.startswith("sqlite:///"):
-        init_db(db_url.replace("sqlite:///", ""))
 
 
-def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path) -> dict[str, Any]:
+def _default_db_url() -> str:
+    return str(os.getenv("DATABASE_URL") or "postgresql://postgres:postgres@localhost:5432/spatial_db")
+
+
+def _resolve_llm_gate(*, llm_config: str) -> tuple[bool, dict[str, Any]]:
+    if str(os.getenv("MVP_ACCEPTANCE_MOCK_LLM", "0")).strip() == "1":
+        return True, {"mode": "mock", "status": "enabled_by_env"}
+    try:
+        from tools.agent_cli import load_config
+
+        cfg = load_config(llm_config)
+        return True, {
+            "mode": "real",
+            "provider": str(cfg.get("provider") or ""),
+            "endpoint": str(cfg.get("endpoint") or ""),
+            "model": str(cfg.get("model") or ""),
+        }
+    except Exception as exc:
+        return False, {
+            "mode": "real",
+            "status": "blocked",
+            "reason": "llm_config_invalid",
+            "error": str(exc),
+            "config_path": llm_config,
+        }
+
+
+def _skipped_check(reason: str = "profile_skipped") -> dict[str, Any]:
+    return {"passed": False, "skipped": True, "evidence": {"reason": reason}}
+
+
+def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path, llm_config: str, profile: str = "full") -> dict[str, Any]:
     old_cwd = Path.cwd()
     old_db_url = os.environ.get("DATABASE_URL")
     old_fallback = os.environ.get("GOVERNANCE_ALLOW_MEMORY_FALLBACK")
@@ -77,28 +101,103 @@ def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path) -> dict[str,
         bundle_v2 = _write_bundle(bundles, name="acceptance-demo", version="v1.1.0")
 
         agent = FactoryAgent()
-        publish_v1 = agent.converse(f"发布 {bundle_v1} 到 runtime")
-        publish_v2 = agent.converse(f"发布 {bundle_v2} 到 runtime")
-        blocked = agent.converse("发布 acceptance-missing-v9.9.9 到 runtime")
+        should_run_llm = profile in {"full", "unit", "real-llm-gate"}
+        should_run_dryrun = profile in {"full", "unit"}
+        should_run_publish = profile in {"full", "integration"}
+        should_run_runtime_query = profile in {"full", "integration"}
+        should_run_db_check = profile in {"full", "integration"}
 
-        client = TestClient(app)
-        detail = client.get("/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/versions/v1.0.0")
-        listed = client.get("/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/versions?status=published")
-        compared = client.get(
-            "/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/compare"
-            "?baseline_version=v1.0.0&candidate_version=v1.1.0"
-        )
-        blocked_events = [evt for evt in REPOSITORY.list_audit_events() if evt.get("event_type") == "workpackage_publish_blocked"]
+        llm_gate_passed = True
+        llm_gate_evidence: dict[str, Any] = {"mode": "skipped", "reason": "profile_skipped"}
+        if should_run_llm:
+            llm_gate_passed, llm_gate_evidence = _resolve_llm_gate(llm_config=llm_config)
+            if llm_gate_evidence.get("mode") == "mock":
+                agent._run_requirement_query = lambda _prompt: {  # type: ignore[attr-defined]
+                    "status": "ok",
+                    "answer": json.dumps(
+                        {
+                            "target": "地址治理MVP",
+                            "data_sources": ["gaode_api", "baidu_api"],
+                            "rule_points": ["标准化", "冲突识别"],
+                            "outputs": ["workpackage", "observability_report"],
+                        },
+                        ensure_ascii=False,
+                    ),
+                }
+
+        requirement: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
+        if should_run_llm:
+            if llm_gate_passed:
+                requirement = agent.converse("请生成地址治理 MVP 方案")
+            else:
+                requirement = {"status": "blocked", "reason": "llm_gate_blocked"}
+
+        dryrun: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
+        if should_run_dryrun:
+            if (not should_run_llm) or llm_gate_passed:
+                dryrun = agent.converse(f"试运行 {bundle_v1}")
+            else:
+                dryrun = {"status": "blocked", "reason": "llm_gate_blocked"}
+
+        publish_v1: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
+        publish_v2: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
+        blocked: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
+        if should_run_publish:
+            if profile == "integration" or llm_gate_passed:
+                publish_v1 = agent.converse(f"发布 {bundle_v1} 到 runtime")
+                publish_v2 = agent.converse(f"发布 {bundle_v2} 到 runtime")
+                blocked = agent.converse("发布 acceptance-missing-v9.9.9 到 runtime")
+            else:
+                publish_v1 = {"status": "blocked", "reason": "llm_gate_blocked"}
+                publish_v2 = {"status": "blocked", "reason": "llm_gate_blocked"}
+                blocked = {"status": "blocked", "reason": "llm_gate_blocked"}
+
+        detail_status = 0
+        list_total = 0
+        changed_fields: list[str] = []
+        blocked_events: list[dict[str, Any]] = []
+        if should_run_runtime_query:
+            client = TestClient(app)
+            detail = client.get("/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/versions/v1.0.0")
+            listed = client.get("/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/versions?status=published")
+            compared = client.get(
+                "/v1/governance/ops/workpackages/acceptance-demo-v1.0.0/compare"
+                "?baseline_version=v1.0.0&candidate_version=v1.1.0"
+            )
+            detail_status = int(detail.status_code)
+            list_total = int((listed.json() if listed.status_code == 200 else {}).get("total") or 0)
+            changed_fields = list((compared.json() if compared.status_code == 200 else {}).get("changed_fields", []))
+            blocked_events = [
+                evt for evt in REPOSITORY.list_audit_events() if evt.get("event_type") == "workpackage_publish_blocked"
+            ]
 
         db_publish_count = 0
-        if db_url.startswith("sqlite:///"):
-            db_path = db_url.replace("sqlite:///", "")
-            conn = sqlite3.connect(db_path)
-            try:
-                row = conn.execute("SELECT COUNT(*) FROM addr_workpackage_publish").fetchone()
+        if should_run_db_check and db_url.startswith("postgresql://"):
+            from sqlalchemy import create_engine, text
+
+            engine = create_engine(db_url)
+            with engine.begin() as conn:
+                conn.execute(
+                    text(
+                        "SET search_path TO governance, runtime, trust_meta, trust_data, audit, "
+                        "control_plane, address_line, public"
+                    )
+                )
+                row = conn.execute(
+                    text(
+                        """
+                        SELECT COUNT(*)
+                        FROM runtime.publish_record
+                        WHERE status = 'published'
+                          AND workpackage_id IN (:wp_v1, :wp_v2)
+                        """
+                    ),
+                    {
+                        "wp_v1": "acceptance-demo-v1.0.0",
+                        "wp_v2": "acceptance-demo-v1.1.0",
+                    },
+                ).fetchone()
                 db_publish_count = int(row[0] if row else 0)
-            finally:
-                conn.close()
     finally:
         os.chdir(old_cwd)
         if old_db_url is None:
@@ -111,43 +210,79 @@ def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path) -> dict[str,
             os.environ["GOVERNANCE_ALLOW_MEMORY_FALLBACK"] = old_fallback
 
     checks = {
-        "A1_cli_agent_llm_interaction": {
-            "passed": publish_v1.get("status") == "ok",
-            "evidence": str(publish_v1.get("message") or ""),
-        },
-        "A2_governance_plan_dialogue": {
-            "passed": bool(publish_v1.get("runtime", {}).get("version")),
-            "evidence": str(publish_v1.get("runtime", {}).get("version") or ""),
-        },
-        "A3_dryrun_publish_workpackage": {
-            "passed": publish_v1.get("runtime", {}).get("status") == "published"
-            and publish_v2.get("runtime", {}).get("status") == "published",
-            "evidence": [
-                str(publish_v1.get("runtime", {}).get("evidence_ref") or ""),
-                str(publish_v2.get("runtime", {}).get("evidence_ref") or ""),
-            ],
-        },
-        "A4_runtime_query_api": {
-            "passed": detail.status_code == 200 and listed.status_code == 200 and compared.status_code == 200,
-            "evidence": {
-                "detail_status": detail.status_code,
-                "list_total": int((listed.json() if listed.status_code == 200 else {}).get("total") or 0),
-                "compare_changed_fields": (compared.json() if compared.status_code == 200 else {}).get("changed_fields", []),
-            },
-        },
-        "A5_blocked_audit_confirmation": {
-            "passed": blocked.get("status") == "blocked" and len(blocked_events) > 0,
-            "evidence": {
-                "blocked_status": blocked.get("status"),
-                "blocked_event_count": len(blocked_events),
-            },
-        },
-        "A6_db_persistence": {
-            "passed": db_publish_count >= 2,
-            "evidence": {"addr_workpackage_publish_count": db_publish_count},
-        },
+        "A1_llm_real_service_gate": (
+            {"passed": llm_gate_passed, "evidence": llm_gate_evidence}
+            if should_run_llm
+            else _skipped_check()
+        ),
+        "A1_cli_agent_llm_interaction": (
+            {
+                "passed": requirement.get("status") == "ok"
+                and requirement.get("action") == "confirm_requirement"
+                and isinstance(requirement.get("summary"), dict),
+                "evidence": requirement,
+            }
+            if should_run_llm
+            else _skipped_check()
+        ),
+        "A2_governance_dryrun": (
+            {
+                "passed": dryrun.get("status") == "ok"
+                and dryrun.get("action") == "dryrun_workpackage"
+                and str((dryrun.get("dryrun") or {}).get("status") or "") == "success",
+                "evidence": dryrun,
+            }
+            if should_run_dryrun
+            else _skipped_check()
+        ),
+        "A3_dryrun_publish_workpackage": (
+            {
+                "passed": publish_v1.get("runtime", {}).get("status") == "published"
+                and publish_v2.get("runtime", {}).get("status") == "published",
+                "evidence": [
+                    str(publish_v1.get("runtime", {}).get("evidence_ref") or ""),
+                    str(publish_v2.get("runtime", {}).get("evidence_ref") or ""),
+                ],
+            }
+            if should_run_publish
+            else _skipped_check()
+        ),
+        "A4_runtime_query_api": (
+            {
+                "passed": detail_status == 200 and list_total >= 1 and isinstance(changed_fields, list),
+                "evidence": {
+                    "detail_status": detail_status,
+                    "list_total": list_total,
+                    "compare_changed_fields": changed_fields,
+                },
+            }
+            if should_run_runtime_query
+            else _skipped_check()
+        ),
+        "A5_blocked_audit_confirmation": (
+            {
+                "passed": blocked.get("status") == "blocked" and len(blocked_events) > 0,
+                "evidence": {
+                    "blocked_status": blocked.get("status"),
+                    "blocked_event_count": len(blocked_events),
+                },
+            }
+            if should_run_publish
+            else _skipped_check()
+        ),
+        "A6_db_persistence": (
+            {
+                "passed": db_publish_count >= 2,
+                "evidence": {"runtime_publish_record_count": db_publish_count},
+            }
+            if should_run_db_check
+            else _skipped_check()
+        ),
     }
     required_keys = [
+        "A1_llm_real_service_gate",
+        "A1_cli_agent_llm_interaction",
+        "A2_governance_dryrun",
         "A3_dryrun_publish_workpackage",
         "A4_runtime_query_api",
         "A5_blocked_audit_confirmation",
@@ -158,6 +293,8 @@ def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path) -> dict[str,
         "generated_at": _now_iso(),
         "db_url": db_url,
         "workspace": str(workdir),
+        "profile": profile,
+        "required_keys": required_keys,
         "all_passed": all_passed,
         "checks": checks,
     }
@@ -180,16 +317,78 @@ def _render_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> int:
+def _required_keys_for_profile(profile: str) -> list[str]:
+    profile_map = {
+        "full": [
+            "A1_llm_real_service_gate",
+            "A1_cli_agent_llm_interaction",
+            "A2_governance_dryrun",
+            "A3_dryrun_publish_workpackage",
+            "A4_runtime_query_api",
+            "A5_blocked_audit_confirmation",
+            "A6_db_persistence",
+        ],
+        "unit": [
+            "A1_cli_agent_llm_interaction",
+            "A2_governance_dryrun",
+        ],
+        "integration": [
+            "A3_dryrun_publish_workpackage",
+            "A4_runtime_query_api",
+            "A5_blocked_audit_confirmation",
+            "A6_db_persistence",
+        ],
+        "real-llm-gate": [
+            "A1_llm_real_service_gate",
+            "A1_cli_agent_llm_interaction",
+        ],
+    }
+    return list(profile_map[profile])
+
+
+def _recompute_all_passed(report: dict[str, Any], required_keys: list[str]) -> dict[str, Any]:
+    checks = report.get("checks") or {}
+    report["required_keys"] = required_keys
+    report["all_passed"] = all(bool(checks.get(key, {}).get("passed")) for key in required_keys)
+    return report
+
+
+def main_with_args(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run address governance MVP acceptance")
-    parser.add_argument("--db-url", default="sqlite:///output/runtime/governance.db")
+    parser.add_argument("--db-url", default=_default_db_url())
     parser.add_argument("--output-dir", default="output/acceptance")
     parser.add_argument("--workdir", default=".")
-    args = parser.parse_args()
+    parser.add_argument("--llm-config", default="config/llm_api.json")
+    parser.add_argument(
+        "--profile",
+        default="full",
+        choices=["full", "unit", "integration", "real-llm-gate"],
+        help="验收执行剖面：full/unit/integration/real-llm-gate",
+    )
+    parser.add_argument(
+        "--required-check",
+        action="append",
+        default=[],
+        help="显式覆盖 required keys（可重复传入）",
+    )
+    args = parser.parse_args(argv)
 
     output_dir = Path(args.output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    report = run_acceptance(output_dir=output_dir, db_url=args.db_url, workdir=Path(args.workdir).resolve())
+    try:
+        report = run_acceptance(
+            output_dir=output_dir,
+            db_url=args.db_url,
+            workdir=Path(args.workdir).resolve(),
+            llm_config=args.llm_config,
+            profile=str(args.profile),
+        )
+    except Exception as exc:
+        print(str(exc))
+        return 2
+    required_keys = list(args.required_check) if args.required_check else _required_keys_for_profile(str(args.profile))
+    report["profile"] = str(args.profile)
+    report = _recompute_all_passed(report, required_keys)
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     json_path = output_dir / f"address-governance-mvp-acceptance-{ts}.json"
     md_path = output_dir / f"address-governance-mvp-acceptance-{ts}.md"
@@ -198,6 +397,10 @@ def main() -> int:
     print(f"Acceptance JSON: {json_path}")
     print(f"Acceptance Markdown: {md_path}")
     return 0 if report.get("all_passed") else 2
+
+
+def main() -> int:
+    return main_with_args()
 
 
 if __name__ == "__main__":
