@@ -11,10 +11,7 @@ from packages.agent_runtime.models.runtime_result import RuntimeResult
 
 
 class OpenCodeRuntime:
-    """基于 OpenCode CLI 的适配器
-    
-    如果 OpenCode 不可用，使用现有 LLM 调用逻辑
-    """
+    """基于 OpenCode CLI 的适配器（严格模式，无 fallback）。"""
 
     def __init__(self, config_path=None):
         self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", "config/llm_api.json")
@@ -40,16 +37,18 @@ class OpenCodeRuntime:
 
     def run_task(self, task_context, ruleset):
         prompt = self._build_prompt(task_context, ruleset)
-        
-        if self._ensure_opencode_available():
-            try:
-                raw_output = self._run_opencode_prompt(prompt)
-                parsed = self._parse_opencode_output(raw_output)
-                return self._build_runtime_result(parsed, ruleset, source="opencode")
-            except Exception:
-                pass
-        
-        return self._fallback_result(task_context, ruleset)
+
+        if not self._ensure_opencode_available():
+            raise RuntimeError("blocked: opencode unavailable")
+        try:
+            raw_output = self._run_opencode_prompt(prompt)
+            parsed = self._parse_opencode_output(raw_output)
+            self._validate_llm_output(parsed)
+            return self._build_runtime_result(parsed, ruleset, source="opencode")
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(f"blocked: opencode call failed: {exc}") from exc
 
     def _build_prompt(self, task_context, ruleset):
         return f"""
@@ -66,8 +65,18 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
     def _parse_opencode_output(self, raw):
         try:
             return json.loads(raw)
-        except Exception:
-            return {}
+        except Exception as exc:
+            raise RuntimeError(f"blocked: opencode output is not valid json: {exc}") from exc
+
+    def _validate_llm_output(self, parsed: Dict[str, Any]) -> None:
+        if not isinstance(parsed, dict):
+            raise RuntimeError("blocked: opencode output must be a json object")
+        missing = []
+        for key in ("strategy", "confidence"):
+            if key not in parsed:
+                missing.append(key)
+        if missing:
+            raise RuntimeError(f"blocked: opencode output missing fields: {','.join(missing)}")
 
     def _build_runtime_result(self, parsed, ruleset, source="unknown"):
         strategy = str(parsed.get("strategy", "human_required"))
@@ -108,36 +117,18 @@ ruleset: {json.dumps(ruleset, ensure_ascii=False)}
             raw_response=parsed,
         )
 
-    def _fallback_result(self, task_context, ruleset):
-        return RuntimeResult(
-            strategy="human_required",
-            confidence=0.3,
-            evidence={
-                "items": [
-                    {
-                        "runtime": "opencode",
-                        "source": "fallback",
-                        "message": "no_opencode_available",
-                        "ruleset": ruleset.get("ruleset_id", "default"),
-                    }
-                ]
-            },
-            agent_run_id=f"fallback_{uuid4().hex[:10]}",
-            raw_response={},
-        )
-
     def generate_governance_script(self, description):
         prompt = f"""
 你是工厂工艺Agent。
 请根据以下需求生成地址治理脚本，输出到 scripts/ 目录：
 {description}
 """.strip()
-        if self._ensure_opencode_available():
-            try:
-                return self._run_opencode_prompt(prompt)
-            except Exception:
-                pass
-        return "OpenCode 不可用，脚本生成功能待实现"
+        if not self._ensure_opencode_available():
+            raise RuntimeError("blocked: opencode unavailable")
+        try:
+            return self._run_opencode_prompt(prompt)
+        except Exception as exc:
+            raise RuntimeError(f"blocked: script generation failed: {exc}") from exc
 
     def supplement_trust_hub_data(self, source):
         return {

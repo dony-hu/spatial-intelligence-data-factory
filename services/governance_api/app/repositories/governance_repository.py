@@ -15,7 +15,11 @@ class _MemoryStore:
     reviews: dict[str, dict[str, Any]] = field(default_factory=dict)
     rulesets: dict[str, dict[str, Any]] = field(default_factory=dict)
     change_requests: dict[str, dict[str, Any]] = field(default_factory=dict)
+    workpackage_publishes: dict[str, dict[str, Any]] = field(default_factory=dict)
     audit_events: list[dict[str, Any]] = field(default_factory=list)
+    observation_events: list[dict[str, Any]] = field(default_factory=list)
+    observation_metrics: list[dict[str, Any]] = field(default_factory=list)
+    observation_alerts: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 class GovernanceGateError(Exception):
@@ -29,6 +33,7 @@ class GovernanceGateError(Exception):
 class GovernanceRepository:
     def __init__(self) -> None:
         self._allow_memory_fallback = str(os.getenv("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "0")).strip() == "1"
+        self._auto_ddl = str(os.getenv("GOVERNANCE_AUTO_DDL", "0")).strip() == "1"
         db_url = str(os.getenv("DATABASE_URL") or "").strip()
         
         # Allow SQLite for local "real DB" simulation when Docker is unavailable
@@ -47,6 +52,9 @@ class GovernanceRepository:
                 }
             }
         )
+        if self._db_enabled() and self._auto_ddl:
+            self._ensure_workpackage_publish_table()
+            self._ensure_observability_tables()
 
     def _database_url(self) -> str | None:
         return os.getenv("DATABASE_URL")
@@ -75,7 +83,7 @@ class GovernanceRepository:
         with engine.begin() as conn:
             # Postgres specific search path, skip for SQLite
             if self._database_url().startswith("postgresql"):
-                conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
+                conn.execute(text("SET search_path TO governance, runtime, trust_meta, trust_data, audit, public"))
             conn.execute(text(sql), params)
         return True
 
@@ -89,9 +97,301 @@ class GovernanceRepository:
         with engine.begin() as conn:
             # Postgres specific search path, skip for SQLite
             if self._database_url().startswith("postgresql"):
-                conn.execute(text("SET search_path TO address_line, control_plane, trust_meta, trust_db, public"))
+                conn.execute(text("SET search_path TO governance, runtime, trust_meta, trust_data, audit, public"))
             rows = conn.execute(text(sql), params).mappings().all()
         return [dict(item) for item in rows]
+
+    def _ensure_workpackage_publish_table(self) -> None:
+        now_func = self._sql_now()
+        self._execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS addr_workpackage_publish (
+                publish_id VARCHAR(64) PRIMARY KEY,
+                workpackage_id VARCHAR(128) NOT NULL,
+                version VARCHAR(64) NOT NULL,
+                status VARCHAR(32) NOT NULL,
+                evidence_ref TEXT NOT NULL,
+                published_at TIMESTAMPTZ,
+                bundle_path TEXT,
+                published_by VARCHAR(128),
+                confirmation_user VARCHAR(128),
+                confirmation_decision VARCHAR(128),
+                confirmation_timestamp TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
+                UNIQUE(workpackage_id, version)
+            );
+            """,
+            {},
+        )
+
+    def _ensure_observability_tables(self) -> None:
+        now_func = self._sql_now()
+        labels_type = "TEXT" if (self._database_url() or "").startswith("sqlite") else "JSONB"
+        payload_cast_type = "TEXT" if (self._database_url() or "").startswith("sqlite") else "JSONB"
+        self._execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS addr_observation_event (
+                event_id VARCHAR(64) PRIMARY KEY,
+                trace_id VARCHAR(128) NOT NULL,
+                span_id VARCHAR(128),
+                source_service VARCHAR(64) NOT NULL,
+                event_type VARCHAR(64) NOT NULL,
+                status VARCHAR(32) NOT NULL,
+                severity VARCHAR(16) NOT NULL,
+                task_id VARCHAR(64),
+                workpackage_id VARCHAR(128),
+                ruleset_id VARCHAR(64),
+                payload_json {payload_cast_type} NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
+            );
+            """,
+            {},
+        )
+        self._execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS addr_observation_metric (
+                metric_id VARCHAR(64) PRIMARY KEY,
+                metric_name VARCHAR(128) NOT NULL,
+                metric_value DOUBLE PRECISION NOT NULL,
+                labels_json {labels_type} NOT NULL,
+                window_start TIMESTAMPTZ,
+                window_end TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
+            );
+            """,
+            {},
+        )
+        self._execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS addr_alert_event (
+                alert_id VARCHAR(64) PRIMARY KEY,
+                alert_rule VARCHAR(128) NOT NULL,
+                severity VARCHAR(16) NOT NULL,
+                status VARCHAR(32) NOT NULL,
+                trigger_value DOUBLE PRECISION NOT NULL,
+                threshold_value DOUBLE PRECISION NOT NULL,
+                trace_id VARCHAR(128),
+                task_id VARCHAR(64),
+                workpackage_id VARCHAR(128),
+                owner VARCHAR(128),
+                ack_by VARCHAR(128),
+                ack_at TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
+            );
+            """,
+            {},
+        )
+
+    def upsert_workpackage_publish(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        status: str,
+        evidence_ref: str,
+        bundle_path: str = "",
+        published_by: str = "",
+        confirmation_user: str = "",
+        confirmation_decision: str = "",
+        confirmation_timestamp: str = "",
+    ) -> dict[str, Any]:
+        if not str(workpackage_id).strip():
+            raise ValueError("workpackage_id is required")
+        if not str(version).strip():
+            raise ValueError("version is required")
+        if not str(status).strip():
+            raise ValueError("status is required")
+        if not str(evidence_ref).strip():
+            raise ValueError("evidence_ref is required")
+        key = f"{workpackage_id}::{version}"
+        existing = self._memory.workpackage_publishes.get(key)
+        created_at = (existing or {}).get("created_at") or self._now_iso()
+        published_at = (existing or {}).get("published_at") or self._now_iso()
+        if str(status).lower() == "published":
+            published_at = self._now_iso()
+        item = {
+            "publish_id": (existing or {}).get("publish_id") or f"wpp_{uuid4().hex[:16]}",
+            "workpackage_id": workpackage_id,
+            "version": version,
+            "status": status,
+            "evidence_ref": evidence_ref,
+            "published_at": published_at,
+            "bundle_path": bundle_path,
+            "published_by": published_by,
+            "confirmation_user": confirmation_user,
+            "confirmation_decision": confirmation_decision,
+            "confirmation_timestamp": confirmation_timestamp,
+            "created_at": created_at,
+            "updated_at": self._now_iso(),
+        }
+        self._memory.workpackage_publishes[key] = item
+        if self._db_enabled() and self._auto_ddl:
+            self._ensure_workpackage_publish_table()
+        now_func = self._sql_now()
+        self._execute(
+            f"""
+            INSERT INTO addr_workpackage_publish (
+                publish_id, workpackage_id, version, status, evidence_ref, published_at, bundle_path, published_by,
+                confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
+            ) VALUES (
+                :publish_id, :workpackage_id, :version, :status, :evidence_ref, :published_at, :bundle_path, :published_by,
+                :confirmation_user, :confirmation_decision, :confirmation_timestamp, {now_func}, {now_func}
+            )
+            ON CONFLICT (workpackage_id, version)
+            DO UPDATE SET
+                status = EXCLUDED.status,
+                evidence_ref = EXCLUDED.evidence_ref,
+                published_at = EXCLUDED.published_at,
+                bundle_path = EXCLUDED.bundle_path,
+                published_by = EXCLUDED.published_by,
+                confirmation_user = EXCLUDED.confirmation_user,
+                confirmation_decision = EXCLUDED.confirmation_decision,
+                confirmation_timestamp = EXCLUDED.confirmation_timestamp,
+                updated_at = {now_func};
+            """,
+            {
+                "publish_id": item["publish_id"],
+                "workpackage_id": item["workpackage_id"],
+                "version": item["version"],
+                "status": item["status"],
+                "evidence_ref": item["evidence_ref"],
+                "published_at": item["published_at"],
+                "bundle_path": item["bundle_path"],
+                "published_by": item["published_by"],
+                "confirmation_user": item["confirmation_user"],
+                "confirmation_decision": item["confirmation_decision"],
+                "confirmation_timestamp": item["confirmation_timestamp"],
+            },
+        )
+        return dict(item)
+
+    def get_workpackage_publish(self, workpackage_id: str, version: str) -> dict[str, Any] | None:
+        key = f"{workpackage_id}::{version}"
+        item = self._memory.workpackage_publishes.get(key)
+        if item:
+            return dict(item)
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT publish_id, workpackage_id, version, status, evidence_ref, bundle_path, published_by,
+                       published_at, confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
+                FROM addr_workpackage_publish
+                WHERE workpackage_id = :workpackage_id AND version = :version
+                LIMIT 1;
+                """,
+                {"workpackage_id": workpackage_id, "version": version},
+            )
+            if rows:
+                row = rows[0]
+                self._memory.workpackage_publishes[key] = row
+                return dict(row)
+        return None
+
+    def _serialize_record(self, item: dict[str, Any]) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        for key, value in item.items():
+            if isinstance(value, datetime):
+                out[key] = value.astimezone(timezone.utc).isoformat()
+            elif value is None:
+                out[key] = ""
+            else:
+                out[key] = value
+        return out
+
+    def _normalize_json_value(self, value: Any) -> Any:
+        if isinstance(value, (dict, list)):
+            return value
+        if isinstance(value, str):
+            text = value.strip()
+            if (text.startswith("{") and text.endswith("}")) or (text.startswith("[") and text.endswith("]")):
+                try:
+                    return json.loads(text)
+                except Exception:
+                    return value
+        return value
+
+    def list_workpackage_publishes(
+        self,
+        *,
+        workpackage_id: str,
+        status: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        if not str(workpackage_id).strip():
+            raise ValueError("workpackage_id is required")
+        normalized_status = str(status or "").strip().lower()
+        safe_limit = max(1, min(int(limit), 1000))
+
+        memory_items = []
+        for item in self._memory.workpackage_publishes.values():
+            if str(item.get("workpackage_id") or "") != workpackage_id:
+                continue
+            if normalized_status and str(item.get("status") or "").lower() != normalized_status:
+                continue
+            memory_items.append(self._serialize_record(dict(item)))
+
+        if self._db_enabled():
+            sql = """
+                SELECT publish_id, workpackage_id, version, status, evidence_ref, published_at, bundle_path, published_by,
+                       confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
+                FROM addr_workpackage_publish
+                WHERE workpackage_id = :workpackage_id
+            """
+            params: dict[str, Any] = {"workpackage_id": workpackage_id, "limit": safe_limit}
+            if normalized_status:
+                sql += " AND LOWER(status) = :status"
+                params["status"] = normalized_status
+            sql += " ORDER BY COALESCE(published_at, created_at) DESC, version DESC LIMIT :limit"
+            rows = self._query(sql, params)
+            if rows:
+                memory_items = [self._serialize_record(row) for row in rows]
+                for row in memory_items:
+                    key = f"{row.get('workpackage_id')}::{row.get('version')}"
+                    self._memory.workpackage_publishes[key] = dict(row)
+
+        memory_items.sort(key=lambda x: str(x.get("published_at") or x.get("created_at") or ""), reverse=True)
+        return memory_items[:safe_limit]
+
+    def compare_workpackage_publish_versions(
+        self,
+        *,
+        workpackage_id: str,
+        baseline_version: str,
+        candidate_version: str,
+    ) -> dict[str, Any] | None:
+        baseline = self.get_workpackage_publish(workpackage_id, baseline_version)
+        candidate = self.get_workpackage_publish(workpackage_id, candidate_version)
+        if (not baseline or not candidate) and str(workpackage_id).endswith(f"-{baseline_version}"):
+            prefix = str(workpackage_id)[: -len(f"-{baseline_version}")]
+            baseline_id = f"{prefix}-{baseline_version}"
+            candidate_id = f"{prefix}-{candidate_version}"
+            baseline = baseline or self.get_workpackage_publish(baseline_id, baseline_version)
+            candidate = candidate or self.get_workpackage_publish(candidate_id, candidate_version)
+        if not baseline or not candidate:
+            return None
+        baseline_item = self._serialize_record(dict(baseline))
+        candidate_item = self._serialize_record(dict(candidate))
+        compare_fields = [
+            "status",
+            "evidence_ref",
+            "published_at",
+            "bundle_path",
+            "published_by",
+            "confirmation_user",
+            "confirmation_decision",
+            "confirmation_timestamp",
+        ]
+        changed_fields = [field for field in compare_fields if baseline_item.get(field) != candidate_item.get(field)]
+        return {
+            "workpackage_id": workpackage_id,
+            "baseline_version": baseline_version,
+            "candidate_version": candidate_version,
+            "baseline": baseline_item,
+            "candidate": candidate_item,
+            "changed_fields": changed_fields,
+        }
 
     def create_task(
         self,
@@ -101,6 +401,7 @@ class GovernanceRepository:
         status: str,
         queue_backend: str,
         queue_message: str,
+        trace_id: str = "",
     ) -> None:
         batch_id = task_id
         created_at = datetime.now(timezone.utc)
@@ -113,6 +414,7 @@ class GovernanceRepository:
             "ruleset_id": ruleset_id,
             "queue_backend": queue_backend,
             "queue_message": queue_message,
+            "trace_id": trace_id,
         }
         now_func = self._sql_now()
         self._execute(
@@ -130,11 +432,11 @@ class GovernanceRepository:
         )
         self._execute(
             f"""
-            INSERT INTO addr_task_run (task_id, batch_id, status, error_message, runtime, created_at, updated_at)
-            VALUES (:task_id, :batch_id, :status, :error_message, :runtime, {now_func}, {now_func})
+            INSERT INTO addr_task_run (task_id, batch_id, status, error_message, runtime, trace_id, created_at, updated_at)
+            VALUES (:task_id, :batch_id, :status, :error_message, :runtime, :trace_id, {now_func}, {now_func})
             ON CONFLICT (task_id)
             DO UPDATE SET batch_id = EXCLUDED.batch_id, status = EXCLUDED.status, error_message = EXCLUDED.error_message,
-                          runtime = EXCLUDED.runtime, updated_at = {now_func};
+                          runtime = EXCLUDED.runtime, trace_id = EXCLUDED.trace_id, updated_at = {now_func};
             """,
             {
                 "task_id": task_id,
@@ -142,6 +444,7 @@ class GovernanceRepository:
                 "status": status,
                 "error_message": queue_message,
                 "runtime": queue_backend,
+                "trace_id": trace_id,
             },
         )
 
@@ -155,7 +458,7 @@ class GovernanceRepository:
         self._execute(
             f"""
             UPDATE addr_task_run
-            SET status = :status, updated_at = {now_func}, finished_at = CASE WHEN :status IN ('SUCCEEDED','FAILED') THEN {now_func} ELSE finished_at END
+            SET status = :status, updated_at = {now_func}, finished_at = CASE WHEN :status IN ('SUCCEEDED','FAILED','BLOCKED') THEN {now_func} ELSE finished_at END
             WHERE task_id = :task_id;
             """,
             {"task_id": task_id, "status": status},
@@ -655,6 +958,286 @@ class GovernanceRepository:
         )
         return event
 
+    def record_observation_event(
+        self,
+        *,
+        source_service: str,
+        event_type: str,
+        status: str,
+        trace_id: str,
+        severity: str = "info",
+        span_id: str = "",
+        task_id: str = "",
+        workpackage_id: str = "",
+        ruleset_id: str = "",
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if not str(trace_id).strip():
+            raise ValueError("trace_id is required")
+        event = {
+            "event_id": f"obsevt_{uuid4().hex[:12]}",
+            "trace_id": str(trace_id),
+            "span_id": str(span_id or ""),
+            "source_service": str(source_service or "unknown"),
+            "event_type": str(event_type or "unknown"),
+            "status": str(status or "unknown"),
+            "severity": str(severity or "info"),
+            "task_id": str(task_id or ""),
+            "workpackage_id": str(workpackage_id or ""),
+            "ruleset_id": str(ruleset_id or ""),
+            "payload_json": payload or {},
+            "created_at": self._now_iso(),
+        }
+        self._memory.observation_events.append(event)
+        now_func = self._sql_now()
+        payload_cast = self._sql_json_cast(":payload_json")
+        self._execute(
+            f"""
+            INSERT INTO addr_observation_event (
+                event_id, trace_id, span_id, source_service, event_type, status, severity,
+                task_id, workpackage_id, ruleset_id, payload_json, created_at
+            ) VALUES (
+                :event_id, :trace_id, :span_id, :source_service, :event_type, :status, :severity,
+                :task_id, :workpackage_id, :ruleset_id, {payload_cast}, {now_func}
+            );
+            """,
+            {
+                "event_id": event["event_id"],
+                "trace_id": event["trace_id"],
+                "span_id": event["span_id"],
+                "source_service": event["source_service"],
+                "event_type": event["event_type"],
+                "status": event["status"],
+                "severity": event["severity"],
+                "task_id": event["task_id"],
+                "workpackage_id": event["workpackage_id"],
+                "ruleset_id": event["ruleset_id"],
+                "payload_json": json.dumps(event["payload_json"], ensure_ascii=False),
+            },
+        )
+        return dict(event)
+
+    def list_observation_events(
+        self,
+        *,
+        trace_id: str = "",
+        task_id: str = "",
+        status: str = "",
+        event_type: str = "",
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        rows = [dict(item) for item in self._memory.observation_events]
+        if self._db_enabled():
+            db_rows = self._query(
+                """
+                SELECT event_id, trace_id, span_id, source_service, event_type, status, severity,
+                       task_id, workpackage_id, ruleset_id, payload_json, created_at
+                FROM addr_observation_event
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """,
+                {"limit": safe_limit},
+            )
+            if db_rows:
+                rows = []
+                for item in db_rows:
+                    normalized = self._serialize_record(item)
+                    normalized["payload_json"] = self._normalize_json_value(normalized.get("payload_json") or {})
+                    rows.append(normalized)
+        if trace_id:
+            rows = [item for item in rows if str(item.get("trace_id") or "") == trace_id]
+        if task_id:
+            rows = [item for item in rows if str(item.get("task_id") or "") == task_id]
+        if status:
+            rows = [item for item in rows if str(item.get("status") or "").lower() == str(status).lower()]
+        if event_type:
+            rows = [item for item in rows if str(item.get("event_type") or "") == event_type]
+        rows.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+        return rows[:safe_limit]
+
+    def get_trace_replay(self, trace_id: str, limit: int = 500) -> list[dict[str, Any]]:
+        items = self.list_observation_events(trace_id=trace_id, limit=limit)
+        items.sort(key=lambda item: str(item.get("created_at") or ""))
+        return items
+
+    def upsert_observation_metric(
+        self,
+        *,
+        metric_name: str,
+        metric_value: float,
+        labels: dict[str, Any] | None = None,
+        window_start: str = "",
+        window_end: str = "",
+    ) -> dict[str, Any]:
+        item = {
+            "metric_id": f"obsmet_{uuid4().hex[:12]}",
+            "metric_name": str(metric_name or "").strip(),
+            "metric_value": float(metric_value),
+            "labels_json": labels or {},
+            "window_start": str(window_start or ""),
+            "window_end": str(window_end or ""),
+            "created_at": self._now_iso(),
+        }
+        if not item["metric_name"]:
+            raise ValueError("metric_name is required")
+        self._memory.observation_metrics.append(item)
+        now_func = self._sql_now()
+        labels_cast = self._sql_json_cast(":labels_json")
+        self._execute(
+            f"""
+            INSERT INTO addr_observation_metric (
+                metric_id, metric_name, metric_value, labels_json, window_start, window_end, created_at
+            ) VALUES (
+                :metric_id, :metric_name, :metric_value, {labels_cast}, :window_start, :window_end, {now_func}
+            );
+            """,
+            {
+                "metric_id": item["metric_id"],
+                "metric_name": item["metric_name"],
+                "metric_value": item["metric_value"],
+                "labels_json": json.dumps(item["labels_json"], ensure_ascii=False),
+                "window_start": item["window_start"] or None,
+                "window_end": item["window_end"] or None,
+            },
+        )
+        return dict(item)
+
+    def query_observation_metric_series(self, metric_name: str, limit: int = 200) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        rows = [dict(item) for item in self._memory.observation_metrics if str(item.get("metric_name") or "") == metric_name]
+        if self._db_enabled():
+            db_rows = self._query(
+                """
+                SELECT metric_id, metric_name, metric_value, labels_json, window_start, window_end, created_at
+                FROM addr_observation_metric
+                WHERE metric_name = :metric_name
+                ORDER BY COALESCE(window_end, created_at) DESC
+                LIMIT :limit
+                """,
+                {"metric_name": metric_name, "limit": safe_limit},
+            )
+            if db_rows:
+                rows = []
+                for item in db_rows:
+                    normalized = self._serialize_record(item)
+                    normalized["labels_json"] = self._normalize_json_value(normalized.get("labels_json") or {})
+                    rows.append(normalized)
+        rows.sort(key=lambda item: str(item.get("window_end") or item.get("created_at") or ""), reverse=True)
+        return rows[:safe_limit]
+
+    def create_observation_alert(
+        self,
+        *,
+        alert_rule: str,
+        severity: str,
+        trigger_value: float,
+        threshold_value: float,
+        trace_id: str = "",
+        task_id: str = "",
+        workpackage_id: str = "",
+        owner: str = "",
+    ) -> dict[str, Any]:
+        if not str(alert_rule).strip():
+            raise ValueError("alert_rule is required")
+        item = {
+            "alert_id": f"obsalt_{uuid4().hex[:12]}",
+            "alert_rule": str(alert_rule),
+            "severity": str(severity or "warn"),
+            "status": "open",
+            "trigger_value": float(trigger_value),
+            "threshold_value": float(threshold_value),
+            "trace_id": str(trace_id or ""),
+            "task_id": str(task_id or ""),
+            "workpackage_id": str(workpackage_id or ""),
+            "owner": str(owner or ""),
+            "ack_by": "",
+            "ack_at": "",
+            "created_at": self._now_iso(),
+            "updated_at": self._now_iso(),
+        }
+        self._memory.observation_alerts[item["alert_id"]] = item
+        now_func = self._sql_now()
+        self._execute(
+            f"""
+            INSERT INTO addr_alert_event (
+                alert_id, alert_rule, severity, status, trigger_value, threshold_value,
+                trace_id, task_id, workpackage_id, owner, ack_by, ack_at, created_at, updated_at
+            ) VALUES (
+                :alert_id, :alert_rule, :severity, :status, :trigger_value, :threshold_value,
+                :trace_id, :task_id, :workpackage_id, :owner, :ack_by, :ack_at, {now_func}, {now_func}
+            );
+            """,
+            item,
+        )
+        return dict(item)
+
+    def list_observation_alerts(self, status: str = "", limit: int = 200) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        rows = [dict(item) for item in self._memory.observation_alerts.values()]
+        if self._db_enabled():
+            db_rows = self._query(
+                """
+                SELECT alert_id, alert_rule, severity, status, trigger_value, threshold_value, trace_id,
+                       task_id, workpackage_id, owner, ack_by, ack_at, created_at, updated_at
+                FROM addr_alert_event
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """,
+                {"limit": safe_limit},
+            )
+            if db_rows:
+                rows = [self._serialize_record(item) for item in db_rows]
+        if status:
+            rows = [item for item in rows if str(item.get("status") or "").lower() == str(status).lower()]
+        rows.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+        return rows[:safe_limit]
+
+    def ack_observation_alert(self, alert_id: str, actor: str) -> dict[str, Any] | None:
+        item = self._memory.observation_alerts.get(alert_id)
+        if not item:
+            return None
+        item["status"] = "acked"
+        item["ack_by"] = str(actor or "")
+        item["ack_at"] = self._now_iso()
+        item["updated_at"] = self._now_iso()
+        now_func = self._sql_now()
+        self._execute(
+            f"""
+            UPDATE addr_alert_event
+            SET status = :status, ack_by = :ack_by, ack_at = :ack_at, updated_at = {now_func}
+            WHERE alert_id = :alert_id;
+            """,
+            {
+                "alert_id": alert_id,
+                "status": item["status"],
+                "ack_by": item["ack_by"],
+                "ack_at": item["ack_at"],
+            },
+        )
+        return dict(item)
+
+    def get_observability_snapshot(self, env: str = "dev") -> dict[str, Any]:
+        tasks = list(self._memory.tasks.values())
+        total_tasks = len(tasks)
+        succeeded = sum(1 for item in tasks if str(item.get("status") or "").upper() == "SUCCEEDED")
+        blocked = sum(1 for item in tasks if str(item.get("status") or "").upper() == "BLOCKED")
+        failed = sum(1 for item in tasks if str(item.get("status") or "").upper() == "FAILED")
+        success_rate = float(succeeded) / float(total_tasks) if total_tasks else 0.0
+        open_alerts = self.list_observation_alerts(status="open", limit=500)
+        latest_metrics = self._memory.observation_metrics[-20:]
+        return {
+            "environment": str(env or "dev"),
+            "kpis": {
+                "total_tasks": total_tasks,
+                "success_rate": round(success_rate, 6),
+                "blocked_tasks": blocked,
+                "failed_tasks": failed,
+            },
+            "metrics": [dict(item) for item in latest_metrics],
+            "alerts": open_alerts,
+        }
+
     def get_ops_summary(
         self,
         task_id: str | None = None,
@@ -1004,6 +1587,24 @@ class GovernanceRepository:
         payload: dict[str, Any],
         related_change_id: str | None = None,
     ) -> dict[str, Any]:
+        return self._append_audit_event(
+            event_type=event_type,
+            caller=caller,
+            payload=payload,
+            related_change_id=related_change_id,
+        )
+
+    def log_blocked_confirmation(
+        self,
+        event_type: str,
+        caller: str,
+        payload: dict[str, Any],
+        related_change_id: str | None = None,
+    ) -> dict[str, Any]:
+        required = ["reason", "confirmation_user", "confirmation_decision", "confirmation_timestamp"]
+        missing = [field for field in required if not str(payload.get(field) or "").strip()]
+        if missing:
+            raise ValueError(f"missing blocked confirmation fields: {','.join(missing)}")
         return self._append_audit_event(
             event_type=event_type,
             caller=caller,

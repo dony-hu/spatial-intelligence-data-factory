@@ -284,6 +284,7 @@ def _build_observability_snapshot(env: str = "all", include_events: bool = True)
         },
         "alerts": alerts,
         "address_line": _address_line_metrics(),
+        "observation_foundation": REPOSITORY.get_observability_snapshot(env=env),
         "metric_explanations": {
             "l1.success_rate": "(SUCCEEDED + REVIEWED) / total_tasks，反映任务闭环完成率。",
             "l2.avg_confidence": "运营摘要中的平均置信度，范围[0,1]。",
@@ -421,7 +422,7 @@ def _execute_lab_postgres_readonly(sql: str, timeout_sec: float) -> tuple[list[s
         timeout_ms = int(float(timeout_sec) * 1000)
         with conn.cursor() as cur:
             cur.execute(f"SET statement_timeout = {timeout_ms}")
-            cur.execute("SET search_path TO control_plane, address_line, trust_meta, trust_db, public")
+            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, trust_db, public")
             cur.execute(sql)
             fetched = cur.fetchall()
             columns = [str(getattr(col, "name", col[0])) for col in (cur.description or [])]
@@ -684,6 +685,13 @@ def _build_management_observability_data(owner_line: str = "", workpackage_id: s
             "chain": ["任务下发", "执行", "回传", "回放", "门槛判定"],
             "rows": execution_rows,
             "timeline": timeline[: max(20, min(50, len(timeline)))],
+        },
+        "observation_foundation": {
+            "snapshot_ref": "/v1/governance/observability/snapshot",
+            "events_ref": "/v1/governance/observability/events",
+            "timeseries_ref": "/v1/governance/observability/timeseries",
+            "alerts_ref": "/v1/governance/observability/alerts",
+            "trace_replay_ref_template": "/v1/governance/observability/traces/{trace_id}/replay",
         },
         "sql_capability": {
             "templates": _sql_templates(),

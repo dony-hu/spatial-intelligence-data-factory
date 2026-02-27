@@ -11,7 +11,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from packages.factory_cli.session import FactorySession
 
 
-def main():
+def _execute_command(args: argparse.Namespace, session: FactorySession) -> int:
+    if args.command == "generate":
+        result = session.chat(args.prompt)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if str(result.get("status", "")).lower() in {"blocked", "error"}:
+            return 2
+        return 0
+    if args.command == "list-skills":
+        skills_dir = Path("workpackages/skills")
+        if skills_dir.exists():
+            skills = list(skills_dir.glob("*.md"))
+            print(f"找到 {len(skills)} 个技能:")
+            for skill in skills:
+                print(f"  - {skill.stem}")
+        else:
+            print("暂无技能")
+        return 0
+    if args.command == "run-skill":
+        print(f"运行技能: {args.skill_name}")
+        print("(功能待实现)")
+        return 0
+    return 0
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="空间智能数据工厂 - 工厂 CLI"
     )
@@ -31,24 +55,11 @@ def main():
     args = parser.parse_args()
     session = FactorySession()
 
-    if args.command == "generate":
-        result = session.chat(args.prompt)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-    elif args.command == "list-skills":
-        skills_dir = Path("workpackages/skills")
-        if skills_dir.exists():
-            skills = list(skills_dir.glob("*.md"))
-            print(f"找到 {len(skills)} 个技能:")
-            for skill in skills:
-                print(f"  - {skill.stem}")
-        else:
-            print("暂无技能")
-    elif args.command == "run-skill":
-        print(f"运行技能: {args.skill_name}")
-        print("(功能待实现)")
-    else:
+    if not args.command:
         parser.print_help()
+        return 0
+    return _execute_command(args, session)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

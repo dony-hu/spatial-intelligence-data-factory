@@ -25,6 +25,7 @@ class TaskSubmitRequest(BaseModel):
 class TaskSubmitResponse(BaseModel):
     task_id: str
     status: str
+    trace_id: str
 
 
 class EvidenceSummary(BaseModel):

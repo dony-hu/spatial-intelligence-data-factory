@@ -54,3 +54,35 @@ class ReadOnlySqlQueryResponse(BaseModel):
     row_count: int = Field(ge=0)
     elapsed_ms: int = Field(ge=0)
     applied_limit: int = Field(ge=1)
+
+
+class WorkpackagePublishRecordResponse(BaseModel):
+    publish_id: str
+    workpackage_id: str
+    version: str
+    status: str
+    evidence_ref: str
+    published_at: str
+    bundle_path: str = ""
+    published_by: str = ""
+    confirmation_user: str = ""
+    confirmation_decision: str = ""
+    confirmation_timestamp: str = ""
+    created_at: str
+    updated_at: str
+
+
+class WorkpackagePublishVersionsResponse(BaseModel):
+    workpackage_id: str
+    status_filter: str = ""
+    total: int = Field(ge=0)
+    items: List[WorkpackagePublishRecordResponse] = Field(default_factory=list)
+
+
+class WorkpackagePublishCompareResponse(BaseModel):
+    workpackage_id: str
+    baseline_version: str
+    candidate_version: str
+    baseline: WorkpackagePublishRecordResponse
+    candidate: WorkpackagePublishRecordResponse
+    changed_fields: List[str] = Field(default_factory=list)

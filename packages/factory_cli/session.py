@@ -15,7 +15,7 @@ class FactorySession:
                 from packages.factory_agent.agent import FactoryAgent
                 self._agent = FactoryAgent()
             except ImportError:
-                pass
+                self._agent = None
         return self._agent
 
     def chat(self, prompt):
@@ -24,9 +24,11 @@ class FactorySession:
         if agent:
             return agent.converse(prompt)
         return {
-            "status": "pending",
-            "message": "工厂 Agent 尚未实现",
-            "prompt": prompt
+            "status": "blocked",
+            "reason": "agent_unavailable",
+            "requires_user_confirmation": True,
+            "message": "工厂 Agent 不可用，流程已阻塞，等待人工确认方案",
+            "prompt": prompt,
         }
 
     def generate_governance_script(self, description):
@@ -35,9 +37,11 @@ class FactorySession:
         if agent:
             return agent.generate_script(description)
         return {
-            "status": "pending",
-            "message": "工厂 Agent 尚未实现",
-            "description": description
+            "status": "blocked",
+            "reason": "agent_unavailable",
+            "requires_user_confirmation": True,
+            "message": "工厂 Agent 不可用，脚本生成已阻塞，等待人工确认方案",
+            "description": description,
         }
 
     def supplement_trust_hub(self, source):
@@ -46,7 +50,9 @@ class FactorySession:
         if agent:
             return agent.supplement_trust_hub(source)
         return {
-            "status": "pending",
-            "message": "工厂 Agent 尚未实现",
-            "source": source
+            "status": "blocked",
+            "reason": "agent_unavailable",
+            "requires_user_confirmation": True,
+            "message": "工厂 Agent 不可用，Trust Hub 补充已阻塞，等待人工确认方案",
+            "source": source,
         }

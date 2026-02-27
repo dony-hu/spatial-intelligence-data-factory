@@ -1,9 +1,13 @@
 import json
+import os
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from packages.address_core.trusted_fengtu import FengtuTrustedClient
+
+os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
+
 from services.governance_api.app.main import app
 
 
@@ -518,6 +522,7 @@ def test_lab_observability_snapshot_api() -> None:
     data = resp.json()
     assert data["environment"] == "dev"
     assert "l1" in data and "l2" in data and "l3" in data
+    assert "observation_foundation" in data
     assert "alerts" in data
     assert isinstance(data["alerts"], list)
 
@@ -549,6 +554,7 @@ def test_lab_observability_management_data_contract() -> None:
     assert "gate_layers" in data
     assert "failure_classification" in data
     assert "execution_process" in data
+    assert "observation_foundation" in data
     assert "sql_capability" in data
     assert "timeline" in data["execution_process"]
     assert len(data["execution_process"]["timeline"]) >= 20

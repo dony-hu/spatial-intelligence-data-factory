@@ -5,6 +5,11 @@ CREATE INDEX IF NOT EXISTS idx_addr_task_run_status ON addr_task_run(task_id, st
 CREATE INDEX IF NOT EXISTS idx_addr_change_request_status ON addr_change_request(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_addr_change_request_to_ruleset ON addr_change_request(to_ruleset_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_addr_audit_event_change ON addr_audit_event(related_change_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_addr_workpackage_publish_key ON addr_workpackage_publish(workpackage_id, version);
+CREATE INDEX IF NOT EXISTS idx_addr_observation_event_trace ON addr_observation_event(trace_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_addr_observation_event_type ON addr_observation_event(source_service, event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_addr_observation_metric_name_window ON addr_observation_metric(metric_name, window_end DESC);
+CREATE INDEX IF NOT EXISTS idx_addr_alert_event_status_created ON addr_alert_event(status, created_at DESC);
 
 DO $$
 BEGIN

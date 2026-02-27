@@ -180,6 +180,77 @@ def init_db(db_path: str = "governance.db"):
     );
     """)
 
+    # 11. addr_workpackage_publish
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS addr_workpackage_publish (
+        publish_id VARCHAR(64) PRIMARY KEY,
+        workpackage_id VARCHAR(128) NOT NULL,
+        version VARCHAR(64) NOT NULL,
+        status VARCHAR(32) NOT NULL,
+        evidence_ref TEXT NOT NULL,
+        published_at TIMESTAMP,
+        bundle_path TEXT,
+        published_by VARCHAR(128),
+        confirmation_user VARCHAR(128),
+        confirmation_decision VARCHAR(128),
+        confirmation_timestamp TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(workpackage_id, version)
+    );
+    """)
+
+    # 12. addr_observation_event
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS addr_observation_event (
+        event_id VARCHAR(64) PRIMARY KEY,
+        trace_id VARCHAR(128) NOT NULL,
+        span_id VARCHAR(128),
+        source_service VARCHAR(64) NOT NULL,
+        event_type VARCHAR(64) NOT NULL,
+        status VARCHAR(32) NOT NULL,
+        severity VARCHAR(16) NOT NULL,
+        task_id VARCHAR(64),
+        workpackage_id VARCHAR(128),
+        ruleset_id VARCHAR(64),
+        payload_json TEXT NOT NULL DEFAULT '{}',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 13. addr_observation_metric
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS addr_observation_metric (
+        metric_id VARCHAR(64) PRIMARY KEY,
+        metric_name VARCHAR(128) NOT NULL,
+        metric_value DOUBLE PRECISION NOT NULL,
+        labels_json TEXT NOT NULL DEFAULT '{}',
+        window_start TIMESTAMP,
+        window_end TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 14. addr_alert_event
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS addr_alert_event (
+        alert_id VARCHAR(64) PRIMARY KEY,
+        alert_rule VARCHAR(128) NOT NULL,
+        severity VARCHAR(16) NOT NULL,
+        status VARCHAR(32) NOT NULL,
+        trigger_value DOUBLE PRECISION NOT NULL,
+        threshold_value DOUBLE PRECISION NOT NULL,
+        trace_id VARCHAR(128),
+        task_id VARCHAR(64),
+        workpackage_id VARCHAR(128),
+        owner VARCHAR(128),
+        ack_by VARCHAR(128),
+        ack_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     conn.close()
     print("SQLite DB initialized successfully.")

@@ -12,6 +12,9 @@ from services.governance_api.app.models.ops_models import (
     ReadOnlySqlQueryRequest,
     ReadOnlySqlQueryResponse,
     ScorecardCompareResponse,
+    WorkpackagePublishCompareResponse,
+    WorkpackagePublishRecordResponse,
+    WorkpackagePublishVersionsResponse,
 )
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 
@@ -50,6 +53,7 @@ def _whitelist_tables() -> set[str]:
         "task_output_json",
         "operation_audit",
         "confirmation_record",
+        "addr_workpackage_publish",
     }
 
 
@@ -109,7 +113,7 @@ def _execute_postgres_readonly(sql: str, timeout_ms: int) -> tuple[list[str], li
     try:
         with conn.cursor() as cur:
             cur.execute(f"SET statement_timeout = {int(timeout_ms)}")
-            cur.execute("SET search_path TO control_plane, address_line, trust_meta, trust_db, public")
+            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, trust_db, public")
             cur.execute(sql)
             rows = cur.fetchall()
             columns = [str(getattr(col, "name", col[0])) for col in (cur.description or [])]
@@ -208,3 +212,58 @@ def run_readonly_sql_query(payload: ReadOnlySqlQueryRequest) -> ReadOnlySqlQuery
         elapsed_ms=elapsed_ms,
         applied_limit=payload.limit,
     )
+
+
+@router.get(
+    "/ops/workpackages/{workpackage_id}/versions",
+    response_model=WorkpackagePublishVersionsResponse,
+)
+def list_workpackage_publish_versions(
+    workpackage_id: str,
+    status: Optional[str] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=1000),
+) -> WorkpackagePublishVersionsResponse:
+    items = REPOSITORY.list_workpackage_publishes(workpackage_id=workpackage_id, status=status, limit=limit)
+    return WorkpackagePublishVersionsResponse(
+        workpackage_id=workpackage_id,
+        status_filter=str(status or ""),
+        total=len(items),
+        items=[WorkpackagePublishRecordResponse(**item) for item in items],
+    )
+
+
+@router.get(
+    "/ops/workpackages/{workpackage_id}/compare",
+    response_model=WorkpackagePublishCompareResponse,
+)
+def compare_workpackage_publish_versions(
+    workpackage_id: str,
+    baseline_version: str = Query(..., min_length=1),
+    candidate_version: str = Query(..., min_length=1),
+) -> WorkpackagePublishCompareResponse:
+    compared = REPOSITORY.compare_workpackage_publish_versions(
+        workpackage_id=workpackage_id,
+        baseline_version=baseline_version,
+        candidate_version=candidate_version,
+    )
+    if not compared:
+        raise HTTPException(status_code=404, detail="workpackage versions not found")
+    return WorkpackagePublishCompareResponse(
+        workpackage_id=workpackage_id,
+        baseline_version=baseline_version,
+        candidate_version=candidate_version,
+        baseline=WorkpackagePublishRecordResponse(**(compared.get("baseline") or {})),
+        candidate=WorkpackagePublishRecordResponse(**(compared.get("candidate") or {})),
+        changed_fields=list(compared.get("changed_fields") or []),
+    )
+
+
+@router.get(
+    "/ops/workpackages/{workpackage_id}/versions/{version}",
+    response_model=WorkpackagePublishRecordResponse,
+)
+def get_workpackage_publish_record(workpackage_id: str, version: str) -> WorkpackagePublishRecordResponse:
+    item = REPOSITORY.get_workpackage_publish(workpackage_id, version)
+    if not item:
+        raise HTTPException(status_code=404, detail="workpackage publish record not found")
+    return WorkpackagePublishRecordResponse(**item)

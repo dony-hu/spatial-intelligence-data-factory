@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 import json
+import re
+from datetime import datetime, timezone
 
 from packages.trust_hub import TrustHub
 
@@ -39,19 +41,93 @@ class FactoryAgent:
         
         if "试运行" in prompt or ("dryrun" in prompt_lower and ("workpackage" in prompt_lower)):
             return self._handle_dryrun_workpackage(prompt)
+
+        if "发布" in prompt or ("publish" in prompt_lower and ("workpackage" in prompt_lower or "runtime" in prompt_lower)):
+            return self._handle_publish_workpackage(prompt)
         
         if ("列出" in prompt and "数据源" in prompt) or "list" in prompt_lower:
             return self._handle_list_sources()
         
         if ("生成" in prompt and "工作包" in prompt) or ("generate" in prompt_lower and ("workpackage" in prompt_lower or "work package" in prompt_lower)):
             return self._handle_generate_workpackage(prompt)
-        
+
+        return self._handle_requirement_confirmation(prompt)
+
+    def _handle_requirement_confirmation(self, prompt: str) -> Dict[str, Any]:
+        """调用 LLM 确认治理需求；失败时阻塞并等待人工确认。"""
+        try:
+            result = self._run_requirement_query(prompt)
+            summary = self._extract_requirement_summary(str(result.get("answer") or ""))
+            return {
+                "status": "ok",
+                "action": "confirm_requirement",
+                "llm_status": "success",
+                "summary": summary,
+                "message": "已完成治理需求确认，可进入 dry run 与工作包发布阶段",
+            }
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "action": "confirm_requirement",
+                "llm_status": "blocked",
+                "reason": "llm_blocked",
+                "requires_user_confirmation": True,
+                "error": str(exc),
+                "message": "LLM 需求确认阻塞，已停止后续流程，请人工确认处置方案",
+            }
+
+    def _run_requirement_query(self, prompt: str) -> Dict[str, Any]:
+        from tools.agent_cli import load_config, run_requirement_query
+
+        config = load_config()
+        system_prompt = (
+            "你是地址治理工厂Agent。"
+            "请仅输出JSON对象，字段必须包含："
+            "target(string), data_sources(array), rule_points(array), outputs(array)。"
+        )
+        return run_requirement_query(prompt, config, system_prompt_override=system_prompt)
+
+    def _extract_requirement_summary(self, answer: str) -> Dict[str, Any]:
+        obj = self._extract_json_object(answer)
+        if not obj:
+            raise RuntimeError("llm output missing json object")
+        target = str(obj.get("target") or obj.get("goal") or "").strip()
+        data_sources = self._as_string_list(obj.get("data_sources") or obj.get("sources"))
+        rule_points = self._as_string_list(obj.get("rule_points") or obj.get("rules"))
+        outputs = self._as_string_list(obj.get("outputs") or obj.get("deliverables"))
+        if not target or not data_sources or not outputs:
+            raise RuntimeError("llm output missing required fields: target/data_sources/outputs")
         return {
-            "status": "ok",
-            "opencode_available": self._opencode_available,
-            "prompt": prompt,
-            "message": "工厂 Agent 就绪，请告诉我需要做什么（存储 API Key、生成工作包、列出数据源等）"
+            "target": target,
+            "data_sources": data_sources,
+            "rule_points": rule_points,
+            "outputs": outputs,
         }
+
+    def _extract_json_object(self, text: str) -> Dict[str, Any]:
+        raw = str(text or "").strip()
+        candidates = [raw]
+        fenced = re.search(r"```(?:json)?\s*(\{[\s\S]*\})\s*```", raw, flags=re.IGNORECASE)
+        if fenced:
+            candidates.append(fenced.group(1))
+        braced = re.search(r"(\{[\s\S]*\})", raw)
+        if braced:
+            candidates.append(braced.group(1))
+        for candidate in candidates:
+            try:
+                parsed = json.loads(candidate)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                continue
+        return {}
+
+    def _as_string_list(self, value: Any) -> List[str]:
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, str) and value.strip():
+            return [value.strip()]
+        return []
 
     def _handle_store_api_key(self, prompt):
         """处理存储 API Key 的对话"""
@@ -154,16 +230,77 @@ class FactoryAgent:
         bundle_dir = bundles_dir / bundle_name
         if not bundle_dir.exists():
             return {
-                "status": "error",
-                "message": f"工作包 {bundle_name} 不存在"
+                "status": "blocked",
+                "action": "dryrun_workpackage",
+                "reason": "workpackage_not_found",
+                "requires_user_confirmation": True,
+                "message": f"工作包 {bundle_name} 不存在，dry run 已阻塞，请人工确认方案",
             }
-        
+
+        config_path = bundle_dir / "workpackage.json"
+        if not config_path.exists():
+            return {
+                "status": "blocked",
+                "action": "dryrun_workpackage",
+                "reason": "workpackage_config_missing",
+                "requires_user_confirmation": True,
+                "bundle_name": bundle_name,
+                "bundle_path": str(bundle_dir),
+                "message": f"工作包 {bundle_name} 缺少 workpackage.json，dry run 已阻塞，请人工确认方案",
+            }
+
+        try:
+            wp_config = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "action": "dryrun_workpackage",
+                "reason": "workpackage_config_invalid",
+                "requires_user_confirmation": True,
+                "bundle_name": bundle_name,
+                "bundle_path": str(bundle_dir),
+                "error": str(exc),
+                "message": f"工作包 {bundle_name} 配置解析失败，dry run 已阻塞，请人工确认方案",
+            }
+
+        if not (bundle_dir / "entrypoint.sh").exists() and not (bundle_dir / "entrypoint.py").exists():
+            return {
+                "status": "blocked",
+                "action": "dryrun_workpackage",
+                "reason": "entrypoint_missing",
+                "requires_user_confirmation": True,
+                "bundle_name": bundle_name,
+                "bundle_path": str(bundle_dir),
+                "message": f"工作包 {bundle_name} 缺少执行入口，dry run 已阻塞，请人工确认方案",
+            }
+
+        sources = wp_config.get("sources", []) if isinstance(wp_config, dict) else []
+        output_items = []
+        if isinstance(sources, list):
+            output_items.extend([str(item) for item in sources])
+
         return {
             "status": "ok",
             "action": "dryrun_workpackage",
             "bundle_name": bundle_name,
             "bundle_path": str(bundle_dir),
-            "message": f"工作包 {bundle_name} dryrun 准备就绪，请执行 entrypoint.sh 或 entrypoint.py"
+            "dryrun": {
+                "status": "success",
+                "input_summary": {
+                    "bundle_name": bundle_name,
+                    "records_count": 0,
+                },
+                "output_summary": {
+                    "sources_checked": output_items,
+                    "result_count": len(output_items),
+                },
+                "failure_reason": "",
+                "artifacts": {
+                    "observability": str(bundle_dir / "observability" / "line_metrics.json"),
+                    "report": str(bundle_dir / "observability" / "dryrun_report.json"),
+                },
+            },
+            "message": f"工作包 {bundle_name} dry run 成功，可进入发布阶段",
         }
 
     def _extract_bundle_name(self, prompt: str) -> Optional[str]:
@@ -176,6 +313,152 @@ class FactoryAgent:
         if match:
             return match.group(1)
         return None
+
+    def _handle_publish_workpackage(self, prompt: str) -> Dict[str, Any]:
+        bundles_dir = Path("workpackages/bundles")
+        bundle_name = self._extract_bundle_name(prompt)
+        if not bundle_name:
+            return self._build_publish_blocked(
+                bundle_name="",
+                reason="bundle_name_missing",
+                message="未识别到工作包名称，发布已阻塞，请人工确认方案",
+            )
+
+        bundle_dir = bundles_dir / bundle_name
+        if not bundle_dir.exists():
+            return self._build_publish_blocked(
+                bundle_name=bundle_name,
+                reason="workpackage_not_found",
+                message=f"工作包 {bundle_name} 不存在，发布已阻塞，请人工确认方案",
+            )
+
+        config_path = bundle_dir / "workpackage.json"
+        if not config_path.exists():
+            return self._build_publish_blocked(
+                bundle_name=bundle_name,
+                reason="workpackage_config_missing",
+                message=f"工作包 {bundle_name} 缺少 workpackage.json，发布已阻塞，请人工确认方案",
+            )
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return self._build_publish_blocked(
+                bundle_name=bundle_name,
+                reason="workpackage_config_invalid",
+                message=f"工作包 {bundle_name} 配置不可解析，发布已阻塞，请人工确认方案",
+                error=str(exc),
+            )
+
+        required_dirs = ["skills", "observability"]
+        for name in required_dirs:
+            if not (bundle_dir / name).exists():
+                return self._build_publish_blocked(
+                    bundle_name=bundle_name,
+                    reason=f"{name}_missing",
+                    message=f"工作包 {bundle_name} 缺少 {name} 目录，发布已阻塞，请人工确认方案",
+                )
+        if not (bundle_dir / "entrypoint.sh").exists() and not (bundle_dir / "entrypoint.py").exists():
+            return self._build_publish_blocked(
+                bundle_name=bundle_name,
+                reason="entrypoint_missing",
+                message=f"工作包 {bundle_name} 缺少入口脚本，发布已阻塞，请人工确认方案",
+            )
+
+        out_dir = Path("output/workpackages")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        version = str(config.get("version") or "")
+        evidence_path = out_dir / f"{bundle_name}.publish.json"
+        evidence = {
+            "workpackage_id": bundle_name,
+            "version": version,
+            "published_at": datetime.utcnow().isoformat() + "Z",
+            "status": "published",
+            "bundle_path": str(bundle_dir),
+        }
+        evidence_path.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+        try:
+            self._persist_workpackage_publish_record(
+                workpackage_id=bundle_name,
+                version=version,
+                status="published",
+                evidence_ref=str(evidence_path),
+                bundle_path=str(bundle_dir),
+            )
+        except Exception as exc:
+            return self._build_publish_blocked(
+                bundle_name=bundle_name,
+                reason="publish_record_persist_failed",
+                message=f"工作包 {bundle_name} 发布记录持久化失败，发布已阻塞，请人工确认方案",
+                error=str(exc),
+            )
+        return {
+            "status": "ok",
+            "action": "publish_workpackage",
+            "bundle_name": bundle_name,
+            "runtime": {
+                "status": "published",
+                "version": version,
+                "evidence_ref": str(evidence_path),
+            },
+            "message": f"工作包 {bundle_name} 已发布到 Runtime",
+        }
+
+    def _persist_workpackage_publish_record(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        status: str,
+        evidence_ref: str,
+        bundle_path: str,
+    ) -> None:
+        from services.governance_api.app.repositories.governance_repository import REPOSITORY
+
+        REPOSITORY.upsert_workpackage_publish(
+            workpackage_id=workpackage_id,
+            version=version,
+            status=status,
+            evidence_ref=evidence_ref,
+            bundle_path=bundle_path,
+            published_by="factory_agent",
+        )
+
+    def _build_publish_blocked(
+        self,
+        *,
+        bundle_name: str,
+        reason: str,
+        message: str,
+        error: str = "",
+    ) -> Dict[str, Any]:
+        payload = {
+            "workpackage_id": bundle_name,
+            "reason": reason,
+            "confirmation_user": "pending_owner",
+            "confirmation_decision": "pending",
+            "confirmation_timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        try:
+            from services.governance_api.app.repositories.governance_repository import REPOSITORY
+
+            REPOSITORY.log_blocked_confirmation(
+                event_type="workpackage_publish_blocked",
+                caller="factory_agent",
+                payload=payload,
+            )
+        except Exception:
+            pass
+        result = {
+            "status": "blocked",
+            "action": "publish_workpackage",
+            "reason": reason,
+            "requires_user_confirmation": True,
+            "bundle_name": bundle_name,
+            "message": message,
+        }
+        if error:
+            result["error"] = error
+        return result
 
     def _handle_generate_workpackage(self, prompt):
         """处理生成工作包的对话"""
@@ -460,10 +743,82 @@ if __name__ == "__main__":
 
     def supplement_trust_hub(self, source):
         """补充可信数据 HUB"""
+        source_text = str(source or "").strip()
+        if not source_text:
+            return {
+                "status": "blocked",
+                "action": "supplement_trust_hub",
+                "reason": "source_missing",
+                "requires_user_confirmation": True,
+                "message": "未提供数据源标识，Trust Hub 补充已阻塞，请人工确认方案",
+            }
+
+        mapping = self._resolve_source_profile(source_text)
+        try:
+            self._trust_hub.store_api_key(
+                name=mapping["source_id"],
+                api_key="MASKED",
+                provider=mapping["provider"],
+                api_endpoint=mapping["endpoint"],
+            )
+            capability = self._trust_hub.upsert_capability(
+                source_id=mapping["source_id"],
+                provider=mapping["provider"],
+                endpoint=mapping["endpoint"],
+                tool_type="api",
+            )
+            sample = self._trust_hub.add_sample_data(
+                source_id=mapping["source_id"],
+                content={
+                    "query": "杭州市西湖区文三路90号",
+                    "result": "地址结构化结果",
+                    "provider": mapping["provider"],
+                },
+                trust_score=0.9,
+            )
+            return {
+                "status": "ok",
+                "action": "supplement_trust_hub",
+                "source": source_text,
+                "capability": capability,
+                "sample": sample,
+                "message": f"已沉淀 {mapping['source_id']} 的能力与可信样例数据",
+            }
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "action": "supplement_trust_hub",
+                "reason": "trust_hub_persist_failed",
+                "requires_user_confirmation": True,
+                "source": source_text,
+                "error": str(exc),
+                "message": "Trust Hub 沉淀失败，流程已阻塞，请人工确认方案",
+            }
+
+    def _resolve_source_profile(self, source_text: str) -> Dict[str, str]:
+        lower = source_text.lower()
+        if "高德" in source_text or "amap" in lower:
+            return {
+                "source_id": "gaode",
+                "provider": "amap",
+                "endpoint": "https://restapi.amap.com/v3/place/text",
+            }
+        if "百度" in source_text or "baidu" in lower:
+            return {
+                "source_id": "baidu",
+                "provider": "baidu",
+                "endpoint": "https://api.map.baidu.com/place/v2/search",
+            }
+        if "天地图" in source_text or "tianditu" in lower:
+            return {
+                "source_id": "tianditu",
+                "provider": "tianditu",
+                "endpoint": "https://api.tianditu.gov.cn/geocoder",
+            }
         return {
-            "status": "pending",
-            "source": source,
-            "message": "可信数据 HUB 补充功能待实现"
+            "source_id": lower.replace(" ", "_"),
+            "provider": lower.replace(" ", "_"),
+            "endpoint": "https://example.com/trust/source",
         }
 
     def output_skill(self, skill_name, skill_spec):

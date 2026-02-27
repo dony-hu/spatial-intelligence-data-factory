@@ -1,0 +1,71 @@
+version: "6.0.0"
+last_updated: "2026-02-27"
+project:
+  name: "spatial-intelligence-data-factory"
+  type: "other"
+  level: 4
+
+current_phase: "solutioning"
+current_workflow: "architecture"
+overall_status: "in_progress"
+
+phases:
+  analysis:
+    status: "not_started"
+    workflows:
+      product-brief:
+        required: false
+        status: "not_started"
+        output: ""
+      brainstorm:
+        required: false
+        status: "not_started"
+        output: ""
+      research:
+        required: false
+        status: "not_started"
+        output: ""
+
+  planning:
+    status: "completed"
+    workflows:
+      prd:
+        required: true
+        status: "completed"
+        output: "docs/prd-spatial-intelligence-data-factory-2026-02-27.md"
+      tech-spec:
+        required: false
+        status: "not_started"
+        output: ""
+
+  solutioning:
+    status: "completed"
+    workflows:
+      architecture:
+        required: true
+        status: "completed"
+        output: "docs/architecture-spatial-intelligence-data-factory-2026-02-27.md; docs/architecture-address-governance-mvp-refresh-2026-02-27.md; docs/architecture-unified-pg-multi-schema-v1-2026-02-27.md"
+
+  implementation:
+    status: "in_progress"
+    workflows:
+      sprint-planning:
+        required: true
+        status: "completed"
+        output: "docs/sprint-planning-spatial-intelligence-data-factory-2026-02-27.md"
+      create-story:
+        required: true
+        status: "completed"
+        output: "docs/stories/S1-A1-治理任务状态机稳定化.md; docs/stories/S1-A2-结果契约强校验.md; docs/stories/S1-A3-人工审核闭环补齐.md"
+      dev-story:
+        required: true
+        status: "in_progress"
+        output: "docs/epic-address-governance-mvp-2026-02-27.md; docs/stories/MVP-A1-CLI-Agent-LLM-对话确认治理需求.md; docs/stories/MVP-A2-地址治理流程试运行.md; docs/stories/MVP-A3-工作包发布到数据治理Runtime.md; docs/stories/MVP-A4-地址治理流水线最小构建.md; docs/stories/MVP-A5-可信数据Hub能力沉淀.md; docs/stories/MVP-A6-数据库模型与持久化闭环补齐.md"
+      code-review:
+        required: true
+        status: "not_started"
+        output: ""
+
+recommendation:
+  next_workflow: "create-story"
+  reason: "已完成“统一 PostgreSQL + 多 schema”架构方案，下一步基于该方案拆解数据库迁移与仓储改造 Story（基线 schema、数据迁移、切流、回归）。"

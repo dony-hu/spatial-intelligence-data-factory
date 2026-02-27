@@ -10,10 +10,17 @@ from packages.address_core.score import score_confidence
 
 
 def run(records: List[Dict[str, Any]], ruleset: Dict[str, Any]) -> List[Dict[str, Any]]:
+    if not records:
+        raise ValueError("blocked: input records are empty")
     unique_records = dedup_records(records)
+    if not unique_records:
+        raise ValueError("blocked: no valid unique records")
     outputs: List[Dict[str, Any]] = []
     for item in unique_records:
-        normalized = normalize_text(str(item.get("raw_text", "")))
+        raw_text = str(item.get("raw_text", "")).strip()
+        if not raw_text:
+            raise ValueError(f"blocked: raw_text empty for raw_id={item.get('raw_id')}")
+        normalized = normalize_text(raw_text)
         parsed = parse_components(normalized)
         candidates = recall_candidates(normalized)
         confidence, strategy = score_confidence(parsed, candidates)

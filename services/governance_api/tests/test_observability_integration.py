@@ -1,10 +1,27 @@
+import os
+
 from fastapi.testclient import TestClient
 
 from services.governance_api.app.main import app
 from services.governance_worker.app.core.queue import run_in_memory_all
 
 
-def test_observability_snapshot_reflects_task_lifecycle() -> None:
+class _DummyRuntimeResult:
+    def model_dump(self) -> dict:
+        return {"strategy": "auto_accept", "confidence": 0.93, "evidence": {"items": []}}
+
+
+class _DummyRuntime:
+    def run_task(self, task_context: dict, ruleset: dict):
+        return _DummyRuntimeResult()
+
+
+def test_observability_snapshot_reflects_task_lifecycle(monkeypatch) -> None:
+    os.environ["ALLOW_IN_MEMORY_QUEUE"] = "1"
+    monkeypatch.setattr(
+        "services.governance_worker.app.jobs.governance_job.get_runtime",
+        lambda: _DummyRuntime(),
+    )
     client = TestClient(app)
 
     submit = client.post(

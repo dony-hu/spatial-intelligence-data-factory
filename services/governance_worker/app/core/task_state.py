@@ -6,6 +6,7 @@ from enum import Enum
 class TaskState(str, Enum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
+    BLOCKED = "BLOCKED"
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
     RETRYING = "RETRYING"
@@ -13,8 +14,9 @@ class TaskState(str, Enum):
 
 
 VALID_TRANSITIONS: dict[TaskState, set[TaskState]] = {
-    TaskState.PENDING: {TaskState.RUNNING, TaskState.FAILED},
-    TaskState.RUNNING: {TaskState.SUCCEEDED, TaskState.FAILED},
+    TaskState.PENDING: {TaskState.RUNNING, TaskState.FAILED, TaskState.BLOCKED},
+    TaskState.RUNNING: {TaskState.SUCCEEDED, TaskState.FAILED, TaskState.BLOCKED},
+    TaskState.BLOCKED: set(),
     TaskState.FAILED: {TaskState.RETRYING, TaskState.DEAD_LETTER},
     TaskState.RETRYING: {TaskState.RUNNING, TaskState.FAILED},
     TaskState.SUCCEEDED: set(),

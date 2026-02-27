@@ -237,6 +237,12 @@ def _ensure_address_line_merged_schema(conn) -> None:
 
 
 def main() -> int:
+    if str(os.getenv("ALLOW_LEGACY_DDL_INIT", "0")).strip() != "1":
+        print("[blocked] Legacy unified SQL init is disabled by default.")
+        print("Use Alembic instead: alembic upgrade head")
+        print("If you must run this script, set ALLOW_LEGACY_DDL_INIT=1 explicitly.")
+        return 2
+
     try:
         from sqlalchemy import create_engine
     except Exception:

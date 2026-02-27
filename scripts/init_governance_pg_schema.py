@@ -6,6 +6,12 @@ import sys
 from pathlib import Path
 
 def main() -> int:
+    if str(os.getenv("ALLOW_LEGACY_DDL_INIT", "0")).strip() != "1":
+        print("[blocked] Legacy SQL init is disabled by default.")
+        print("Use Alembic instead: alembic upgrade head")
+        print("If you must run this script, set ALLOW_LEGACY_DDL_INIT=1 explicitly.")
+        return 2
+
     try:
         from sqlalchemy import create_engine, text
     except Exception:
