@@ -18,7 +18,15 @@ def test_run_prompt_uses_run_subcommand_and_json_format(monkeypatch) -> None:
     monkeypatch.setattr("subprocess.run", _fake_run)
 
     runtime._run_opencode_prompt("hello")
-    assert captured["cmd"] == [runtime._opencode_bin, "run", "hello", "--format", "json"]
+    assert captured["cmd"] == [
+        runtime._opencode_bin,
+        "run",
+        "hello",
+        "--format",
+        "json",
+        "--model",
+        "opencode/gpt-5-nano",
+    ]
     assert captured["kwargs"]["check"] is True
     assert captured["kwargs"]["capture_output"] is True
     assert captured["kwargs"]["text"] is True
@@ -40,6 +48,23 @@ def test_run_prompt_timeout_can_be_overridden_by_env(monkeypatch) -> None:
     monkeypatch.setattr("subprocess.run", _fake_run)
     runtime._run_opencode_prompt("hello")
     assert captured["timeout"] == 480
+
+
+def test_run_prompt_model_can_be_overridden_by_env(monkeypatch) -> None:
+    monkeypatch.setenv("OPENCODE_MODEL", "alibaba-cn/qwen-plus")
+    runtime = OpenCodeRuntime()
+    captured = {}
+
+    class _FakeResult:
+        stdout = '{"strategy":"auto_accept","confidence":0.9}'
+
+    def _fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return _FakeResult()
+
+    monkeypatch.setattr("subprocess.run", _fake_run)
+    runtime._run_opencode_prompt("hello")
+    assert captured["cmd"][-2:] == ["--model", "alibaba-cn/qwen-plus"]
 
 
 def test_parse_output_supports_ndjson_text_events() -> None:

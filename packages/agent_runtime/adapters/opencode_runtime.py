@@ -17,6 +17,7 @@ class OpenCodeRuntime:
         self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", "config/llm_api.json")
         self._opencode_bin = os.getenv("OPENCODE_BIN", "opencode")
         self._timeout_sec = int(os.getenv("OPENCODE_TIMEOUT_SEC", "300"))
+        self._model = str(os.getenv("OPENCODE_MODEL", "opencode/gpt-5-nano"))
 
     def _ensure_opencode_available(self):
         try:
@@ -33,6 +34,8 @@ class OpenCodeRuntime:
             prompt,
             "--format",
             "json",
+            "--model",
+            self._model,
         ]
         result = subprocess.run(
             cmd,
