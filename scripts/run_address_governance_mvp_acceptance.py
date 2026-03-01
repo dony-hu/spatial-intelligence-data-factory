@@ -48,7 +48,12 @@ def _resolve_llm_gate(*, llm_config: str) -> tuple[bool, dict[str, Any]]:
     try:
         from tools.agent_cli import load_config
 
-        cfg = load_config(llm_config)
+        config_path = Path(llm_config)
+        if not config_path.is_absolute() and not config_path.exists():
+            repo_candidate = REPO_ROOT / config_path
+            if repo_candidate.exists():
+                config_path = repo_candidate
+        cfg = load_config(str(config_path))
         return True, {
             "mode": "real",
             "provider": str(cfg.get("provider") or ""),
@@ -61,7 +66,7 @@ def _resolve_llm_gate(*, llm_config: str) -> tuple[bool, dict[str, Any]]:
             "status": "blocked",
             "reason": "llm_config_invalid",
             "error": str(exc),
-            "config_path": llm_config,
+            "config_path": str(llm_config),
         }
 
 

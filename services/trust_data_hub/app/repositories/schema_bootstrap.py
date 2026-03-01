@@ -23,6 +23,47 @@ def _split_sql_statements(sql_text: str) -> list[str]:
     return statements
 
 
+def _is_base_table(conn, schema_name: str, table_name: str) -> bool:
+    row = conn.exec_driver_sql(
+        """
+        SELECT c.relkind
+        FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = %s AND c.relname = %s
+        LIMIT 1
+        """,
+        (schema_name, table_name),
+    ).fetchone()
+    if not row:
+        return False
+    relkind = str(row[0] or "")
+    return relkind in {"r", "p"}
+
+
+def _get_relation_kind(conn, schema_name: str, table_name: str) -> str:
+    row = conn.exec_driver_sql(
+        """
+        SELECT c.relkind
+        FROM pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = %s AND c.relname = %s
+        LIMIT 1
+        """,
+        (schema_name, table_name),
+    ).fetchone()
+    return str((row[0] if row else "") or "")
+
+
+def _ensure_table_relation(conn, schema_name: str, table_name: str, create_sql: str) -> None:
+    relkind = _get_relation_kind(conn, schema_name, table_name)
+    fq_name = f"{schema_name}.{table_name}"
+    if relkind == "v":
+        conn.exec_driver_sql(f"DROP VIEW IF EXISTS {fq_name} CASCADE")
+    elif relkind == "m":
+        conn.exec_driver_sql(f"DROP MATERIALIZED VIEW IF EXISTS {fq_name} CASCADE")
+    conn.exec_driver_sql(create_sql)
+
+
 def _reconcile_trust_meta_legacy(engine) -> None:
     # Legacy DB may have trust_meta.validation_replay_run without created_at.
     with engine.begin() as conn:
@@ -102,6 +143,20 @@ def _reconcile_trust_meta_legacy(engine) -> None:
             """
             ALTER TABLE IF EXISTS trust_meta.source_snapshot
             ADD COLUMN IF NOT EXISTS row_count BIGINT NOT NULL DEFAULT 0
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE IF NOT EXISTS trust_meta.capability_registry (
+                capability_id TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                tool_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL,
+                UNIQUE (source_id, endpoint)
+            )
             """
         )
         conn.exec_driver_sql(
@@ -381,24 +436,172 @@ def _reconcile_trust_meta_legacy(engine) -> None:
             ADD COLUMN IF NOT EXISTS adcode TEXT
             """
         )
-        conn.exec_driver_sql(
+        if _is_base_table(conn, "trust_db", "admin_division"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_admin_division_ns_name
+                ON trust_db.admin_division(namespace_id, name)
+                """
+            )
+        if _is_base_table(conn, "trust_db", "road_index"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_road_index_ns_name
+                ON trust_db.road_index(namespace_id, normalized_name)
+                """
+            )
+        if _is_base_table(conn, "trust_db", "poi_index"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_poi_index_ns_name
+                ON trust_db.poi_index(namespace_id, normalized_name)
+                """
+            )
+        # Canonical trust_data schema for runtime queries/persistence.
+        conn.exec_driver_sql("CREATE SCHEMA IF NOT EXISTS trust_data")
+        _ensure_table_relation(
+            conn,
+            "trust_data",
+            "admin_division",
             """
-            CREATE INDEX IF NOT EXISTS idx_admin_division_ns_name
-            ON trust_db.admin_division(namespace_id, name)
-            """
+            CREATE TABLE IF NOT EXISTS trust_data.admin_division (
+                namespace_id TEXT NOT NULL,
+                adcode TEXT NOT NULL,
+                name TEXT NOT NULL,
+                level TEXT NOT NULL,
+                parent_adcode TEXT,
+                name_aliases JSONB NOT NULL DEFAULT '[]'::jsonb,
+                valid_from TIMESTAMPTZ NOT NULL,
+                valid_to TIMESTAMPTZ,
+                source_id TEXT NOT NULL,
+                snapshot_id TEXT NOT NULL,
+                division_id TEXT,
+                parent_id TEXT,
+                PRIMARY KEY (namespace_id, adcode, source_id, snapshot_id)
+            )
+            """,
         )
-        conn.exec_driver_sql(
+        _ensure_table_relation(
+            conn,
+            "trust_data",
+            "road_index",
             """
-            CREATE INDEX IF NOT EXISTS idx_road_index_ns_name
-            ON trust_db.road_index(namespace_id, normalized_name)
-            """
+            CREATE TABLE IF NOT EXISTS trust_data.road_index (
+                namespace_id TEXT NOT NULL,
+                road_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                normalized_name TEXT NOT NULL,
+                admin_adcode TEXT,
+                geometry_ref TEXT,
+                source_id TEXT NOT NULL,
+                snapshot_id TEXT NOT NULL,
+                alias_names JSONB NOT NULL DEFAULT '[]'::jsonb,
+                adcode TEXT,
+                PRIMARY KEY (namespace_id, road_id, source_id, snapshot_id)
+            )
+            """,
         )
-        conn.exec_driver_sql(
+        _ensure_table_relation(
+            conn,
+            "trust_data",
+            "poi_index",
             """
-            CREATE INDEX IF NOT EXISTS idx_poi_index_ns_name
-            ON trust_db.poi_index(namespace_id, normalized_name)
-            """
+            CREATE TABLE IF NOT EXISTS trust_data.poi_index (
+                namespace_id TEXT NOT NULL,
+                poi_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                normalized_name TEXT NOT NULL,
+                category TEXT,
+                admin_adcode TEXT,
+                centroid TEXT,
+                source_id TEXT NOT NULL,
+                snapshot_id TEXT NOT NULL,
+                adcode TEXT,
+                lon DOUBLE PRECISION,
+                lat DOUBLE PRECISION,
+                PRIMARY KEY (namespace_id, poi_id, source_id, snapshot_id)
+            )
+            """,
         )
+        _ensure_table_relation(
+            conn,
+            "trust_data",
+            "place_name_index",
+            """
+            CREATE TABLE IF NOT EXISTS trust_data.place_name_index (
+                namespace_id TEXT NOT NULL,
+                place_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                normalized_name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                admin_adcode TEXT,
+                centroid TEXT,
+                confidence_hint DOUBLE PRECISION,
+                source_id TEXT NOT NULL,
+                snapshot_id TEXT NOT NULL,
+                alias_names JSONB NOT NULL DEFAULT '[]'::jsonb,
+                category TEXT,
+                adcode TEXT,
+                PRIMARY KEY (namespace_id, place_id, source_id, snapshot_id)
+            )
+            """,
+        )
+        _ensure_table_relation(
+            conn,
+            "trust_data",
+            "sample_data",
+            """
+            CREATE TABLE IF NOT EXISTS trust_data.sample_data (
+                sample_id TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL,
+                trust_score DOUBLE PRECISION NOT NULL,
+                content_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+                collected_at TIMESTAMPTZ NOT NULL
+            )
+            """,
+        )
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.admin_division ADD COLUMN IF NOT EXISTS parent_adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.admin_division ADD COLUMN IF NOT EXISTS name_aliases JSONB NOT NULL DEFAULT '[]'::jsonb")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.admin_division ADD COLUMN IF NOT EXISTS division_id TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.admin_division ADD COLUMN IF NOT EXISTS parent_id TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.road_index ADD COLUMN IF NOT EXISTS normalized_name TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.road_index ADD COLUMN IF NOT EXISTS admin_adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.road_index ADD COLUMN IF NOT EXISTS alias_names JSONB NOT NULL DEFAULT '[]'::jsonb")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.road_index ADD COLUMN IF NOT EXISTS adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.poi_index ADD COLUMN IF NOT EXISTS normalized_name TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.poi_index ADD COLUMN IF NOT EXISTS admin_adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.poi_index ADD COLUMN IF NOT EXISTS adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.poi_index ADD COLUMN IF NOT EXISTS lon DOUBLE PRECISION")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.poi_index ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS normalized_name TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS type TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS admin_adcode TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS centroid TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS confidence_hint DOUBLE PRECISION")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS alias_names JSONB NOT NULL DEFAULT '[]'::jsonb")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS category TEXT")
+        conn.exec_driver_sql("ALTER TABLE IF EXISTS trust_data.place_name_index ADD COLUMN IF NOT EXISTS adcode TEXT")
+        if _is_base_table(conn, "trust_data", "admin_division"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_trust_data_admin_division_ns_name
+                ON trust_data.admin_division(namespace_id, name)
+                """
+            )
+        if _is_base_table(conn, "trust_data", "road_index"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_trust_data_road_index_ns_name
+                ON trust_data.road_index(namespace_id, normalized_name)
+                """
+            )
+        if _is_base_table(conn, "trust_data", "poi_index"):
+            conn.exec_driver_sql(
+                """
+                CREATE INDEX IF NOT EXISTS idx_trust_data_poi_index_ns_name
+                ON trust_data.poi_index(namespace_id, normalized_name)
+                """
+            )
 
 
 def ensure_trust_pg_schema(dsn: str | None) -> None:

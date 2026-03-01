@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -471,7 +472,7 @@ class GovernanceRepository:
                               strategy = EXCLUDED.strategy, evidence = EXCLUDED.evidence, updated_at = {now_func};
                 """,
                 {
-                    "canonical_id": f"canon_{raw_id}",
+                    "canonical_id": self._canonical_id(str(raw_id)),
                     "raw_id": raw_id,
                     "canon_text": item.get("canon_text", ""),
                     "confidence": float(item.get("confidence", 0.0)),
@@ -724,8 +725,7 @@ class GovernanceRepository:
                 {"ruleset_id": ruleset_id},
             )
             if not rows:
-                cached = self._memory.rulesets.get(ruleset_id)
-                return dict(cached) if cached else None
+                return None
             row = self._serialize_record(rows[0])
             row["config_json"] = self._normalize_json_value(row.get("config_json"))
             self._memory.rulesets[ruleset_id] = dict(row)
@@ -990,6 +990,11 @@ class GovernanceRepository:
 
     def _now_iso(self) -> str:
         return datetime.now(timezone.utc).isoformat()
+
+    def _canonical_id(self, raw_id: str) -> str:
+        raw = str(raw_id or "").strip()
+        digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+        return f"canon_{raw[:40]}_{digest}"
 
     def _append_audit_event(
         self,
@@ -1667,7 +1672,7 @@ class GovernanceRepository:
             if related_change_id:
                 sql += " WHERE related_change_id = :related_change_id"
                 params["related_change_id"] = related_change_id
-            sql += " ORDER BY created_at DESC LIMIT 5000"
+            sql += " ORDER BY created_at ASC LIMIT 20000"
             rows = self._query(sql, params)
             normalized: list[dict[str, Any]] = []
             for row in rows:
@@ -1675,7 +1680,7 @@ class GovernanceRepository:
                 item["payload"] = self._normalize_json_value(item.get("payload") or {})
                 normalized.append(item)
             # Keep memory cache warm for in-process reads.
-            self._memory.audit_events = list(reversed(normalized))
+            self._memory.audit_events = list(normalized)
             return normalized
         if not related_change_id:
             return list(self._memory.audit_events)

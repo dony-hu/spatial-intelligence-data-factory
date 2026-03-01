@@ -6,6 +6,8 @@ Manages the complete workflow from product requirement to delivery
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 import json
+import os
+from pathlib import Path
 
 from tools.factory_framework import (
     FactoryState, ProductRequirement, ProcessSpec, ProductionLine,
@@ -37,6 +39,47 @@ class FactoryWorkflow:
     )
 
     def __init__(self, factory_name: str = "Data Factory", db_path: str = "database/factory.db", init_production_lines: bool = True):
+        configured_toolpack = str(os.getenv("FACTORY_ADDRESS_TOOLPACK_PATH") or "").strip()
+        runtime_default_toolpack = Path(__file__).resolve().parents[1] / "output" / "toolpacks" / "factory_default_shanghai.json"
+        runtime_default_toolpack.parent.mkdir(parents=True, exist_ok=True)
+        if not runtime_default_toolpack.exists():
+            runtime_default_toolpack.write_text(
+                json.dumps(
+                    {
+                        "version": "runtime-default",
+                        "generation_mode": "factory_default",
+                        "cities": [
+                            {
+                                "name": "上海市",
+                                "aliases": ["上海"],
+                                "districts": [
+                                    {"name": "黄浦区", "aliases": ["黄浦"]},
+                                    {"name": "浦东新区", "aliases": ["浦东"]},
+                                    {"name": "徐汇区", "aliases": ["徐汇"]},
+                                    {"name": "静安区", "aliases": ["静安"]},
+                                    {"name": "虹口区", "aliases": ["虹口"]},
+                                    {"name": "闵行区", "aliases": ["闵行"]},
+                                    {"name": "杨浦区", "aliases": ["杨浦"]},
+                                    {"name": "青浦区", "aliases": ["青浦"]},
+                                ],
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+        use_default = True
+        if configured_toolpack and Path(configured_toolpack).exists():
+            try:
+                loaded = json.loads(Path(configured_toolpack).read_text(encoding="utf-8"))
+                if isinstance(loaded, dict) and isinstance(loaded.get("cities"), list) and loaded.get("cities"):
+                    use_default = False
+            except Exception:
+                use_default = True
+        if use_default:
+            os.environ["FACTORY_ADDRESS_TOOLPACK_PATH"] = str(runtime_default_toolpack)
         self.factory_state = FactoryState(factory_name)
         self.db = FactoryDB(db_path)
         self.production_lines_initialized = False

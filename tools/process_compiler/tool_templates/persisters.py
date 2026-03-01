@@ -30,7 +30,7 @@ class DBPersister:
             'success': False,
             'inserted': 0,
             'failed': len(records),
-            'errors': ['blocked: generated persister requires explicit PG implementation']
+            'errors': [f'blocked: generated persister requires explicit PG implementation for {{self.table_name}}']
         }}
 
 

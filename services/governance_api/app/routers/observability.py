@@ -418,7 +418,7 @@ def list_runtime_compliance_audit(
     _require_role(resolved_role, {"admin"})
     events = GOVERNANCE_SERVICE.list_audit_events()
     filtered = []
-    for event in events:
+    for event in reversed(events):
         event_type = str(event.get("event_type") or "")
         if event_type.startswith("runtime_") or event_type.startswith("observation_alert_"):
             filtered.append(event)

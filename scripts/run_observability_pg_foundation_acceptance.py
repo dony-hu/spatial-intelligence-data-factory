@@ -26,6 +26,7 @@ def _now_tag() -> str:
 
 
 def run_acceptance() -> dict[str, Any]:
+    os.environ.setdefault("OBSERVABILITY_ONCALL_TOKEN", "oncall-token-local")
     trace_id = "trace_obs_acceptance_001"
     REPOSITORY.record_observation_event(
         source_service="governance_api",
@@ -57,7 +58,8 @@ def run_acceptance() -> dict[str, Any]:
     timeseries = client.get("/v1/governance/observability/timeseries?metric_name=task.success_rate&limit=20")
     alerts = client.get("/v1/governance/observability/alerts?status=open")
     ack = client.post(
-        f"/v1/governance/observability/alerts/{created_alert['alert_id']}/ack",
+        f"/v1/governance/observability/alerts/{created_alert['alert_id']}/ack?role=oncall&actor=obs_owner",
+        headers={"x-observability-token": "oncall-token-local"},
         json={"actor": "obs_owner"},
     )
     management = client.get("/v1/governance/lab/observability/management/data")

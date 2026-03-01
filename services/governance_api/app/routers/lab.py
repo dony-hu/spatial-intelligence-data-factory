@@ -2064,7 +2064,14 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
     active_ruleset_id = GOVERNANCE_SERVICE.get_ops_summary().get("active_ruleset_id", "default")
     active_ruleset = GOVERNANCE_SERVICE.get_ruleset(active_ruleset_id)
     if not active_ruleset:
-        raise HTTPException(status_code=404, detail="active ruleset not found")
+        # PG-only mode may start with empty ruleset table; use deterministic default baseline.
+        active_ruleset_id = "default"
+        active_ruleset = {
+            "ruleset_id": "default",
+            "version": "v0",
+            "is_active": True,
+            "config_json": {"thresholds": {"t_high": 0.85, "t_low": 0.6}},
+        }
 
     GOVERNANCE_SERVICE.log_audit_event(
         "agent_run_start",

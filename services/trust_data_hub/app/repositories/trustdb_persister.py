@@ -40,19 +40,19 @@ class TrustDbPersister:
 
         with engine.begin() as conn:
             conn.execute(
-                text("DELETE FROM trust_db.admin_division WHERE namespace_id=:ns AND source_id=:sid"),
+                text("DELETE FROM trust_data.admin_division WHERE namespace_id=:ns AND source_id=:sid"),
                 {"ns": namespace, "sid": source_id},
             )
             conn.execute(
-                text("DELETE FROM trust_db.road_index WHERE namespace_id=:ns AND source_id=:sid"),
+                text("DELETE FROM trust_data.road_index WHERE namespace_id=:ns AND source_id=:sid"),
                 {"ns": namespace, "sid": source_id},
             )
             conn.execute(
-                text("DELETE FROM trust_db.poi_index WHERE namespace_id=:ns AND source_id=:sid"),
+                text("DELETE FROM trust_data.poi_index WHERE namespace_id=:ns AND source_id=:sid"),
                 {"ns": namespace, "sid": source_id},
             )
             conn.execute(
-                text("DELETE FROM trust_db.place_name_index WHERE namespace_id=:ns AND source_id=:sid"),
+                text("DELETE FROM trust_data.place_name_index WHERE namespace_id=:ns AND source_id=:sid"),
                 {"ns": namespace, "sid": source_id},
             )
 
@@ -60,7 +60,7 @@ class TrustDbPersister:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO trust_db.admin_division
+                        INSERT INTO trust_data.admin_division
                         (namespace_id, adcode, name, level, parent_adcode, name_aliases, valid_from, valid_to, source_id, snapshot_id,
                          division_id, parent_id)
                         VALUES
@@ -88,7 +88,7 @@ class TrustDbPersister:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO trust_db.road_index
+                        INSERT INTO trust_data.road_index
                         (namespace_id, road_id, name, normalized_name, admin_adcode, geometry_ref, source_id, snapshot_id, alias_names, adcode)
                         VALUES
                         (:ns, :road_id, :name, :normalized_name, :admin_adcode, :geometry_ref, :source_id, :snapshot_id, CAST(:alias_names AS jsonb), :adcode)
@@ -123,7 +123,7 @@ class TrustDbPersister:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO trust_db.poi_index
+                        INSERT INTO trust_data.poi_index
                         (namespace_id, poi_id, name, normalized_name, category, admin_adcode, centroid, source_id, snapshot_id, adcode, lon, lat)
                         VALUES
                         (:ns, :poi_id, :name, :normalized_name, :category, :admin_adcode, :centroid, :source_id, :snapshot_id, :adcode, :lon, :lat)
@@ -149,7 +149,7 @@ class TrustDbPersister:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO trust_db.place_name_index
+                        INSERT INTO trust_data.place_name_index
                         (namespace_id, place_id, name, normalized_name, type, admin_adcode, centroid, confidence_hint, source_id, snapshot_id, alias_names, category, adcode)
                         VALUES
                         (:ns, :place_id, :name, :normalized_name, :type, :admin_adcode, :centroid, :confidence_hint, :source_id, :snapshot_id, CAST(:alias_names AS jsonb), :category, :adcode)
@@ -181,7 +181,7 @@ class TrustDbPersister:
         sql = """
             SELECT d.adcode, d.name, d.level, d.parent_adcode, d.name_aliases,
                    d.source_id, d.snapshot_id
-            FROM trust_db.admin_division d
+            FROM trust_data.admin_division d
             JOIN trust_meta.active_release ar
               ON ar.namespace_id = d.namespace_id
              AND ar.source_id = d.source_id
@@ -207,7 +207,7 @@ class TrustDbPersister:
         sql = """
             SELECT r.road_id, r.name, r.normalized_name, r.admin_adcode, r.geometry_ref,
                    r.source_id, r.snapshot_id
-            FROM trust_db.road_index r
+            FROM trust_data.road_index r
             JOIN trust_meta.active_release ar
               ON ar.namespace_id = r.namespace_id
              AND ar.source_id = r.source_id
@@ -239,7 +239,7 @@ class TrustDbPersister:
         sql = """
             SELECT p.poi_id, p.name, p.normalized_name, p.category, p.admin_adcode, p.centroid,
                    p.source_id, p.snapshot_id
-            FROM trust_db.poi_index p
+            FROM trust_data.poi_index p
             JOIN trust_meta.active_release ar
               ON ar.namespace_id = p.namespace_id
              AND ar.source_id = p.source_id

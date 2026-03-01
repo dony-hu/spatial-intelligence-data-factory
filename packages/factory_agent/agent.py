@@ -490,9 +490,9 @@ class FactoryAgent:
         payload: Dict[str, Any] | None = None,
     ) -> None:
         try:
-            from services.governance_api.app.repositories.governance_repository import REPOSITORY
+            from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
-            REPOSITORY.record_observation_event(
+            GOVERNANCE_SERVICE.record_observation_event(
                 source_service=source_service,
                 event_type=event_type,
                 status=status,
@@ -545,9 +545,9 @@ class FactoryAgent:
         evidence_ref: str,
         bundle_path: str,
     ) -> None:
-        from services.governance_api.app.repositories.governance_repository import REPOSITORY
+        from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
-        REPOSITORY.upsert_workpackage_publish(
+        GOVERNANCE_SERVICE.upsert_workpackage_publish(
             workpackage_id=workpackage_id,
             version=version,
             status=status,
@@ -557,9 +557,9 @@ class FactoryAgent:
         )
 
     def _log_publish_blocked_event(self, payload: Dict[str, Any]) -> None:
-        from services.governance_api.app.repositories.governance_repository import REPOSITORY
+        from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
-        REPOSITORY.log_blocked_confirmation(
+        GOVERNANCE_SERVICE.log_blocked_confirmation(
             event_type="workpackage_publish_blocked",
             caller="factory_agent",
             payload=payload,

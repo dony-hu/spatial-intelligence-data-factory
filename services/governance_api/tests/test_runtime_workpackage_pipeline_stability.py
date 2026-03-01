@@ -16,17 +16,17 @@ def test_runtime_workpackage_pipeline_multi_batch_stability() -> None:
     payload = resp.json()
     assert int(payload.get("total_seeded") or 0) == 80
 
-    pipeline_resp = client.get("/v1/governance/observability/runtime/workpackage-pipeline?window=24h")
+    pipeline_resp = client.get("/v1/governance/observability/runtime/workpackage-pipeline?window=24h&client_type=test_client")
     assert pipeline_resp.status_code == 200
     pipeline = pipeline_resp.json()
-    assert int(pipeline.get("total_workpackages") or 0) >= 80
+    # Seed data alternates client_type between user/test_client.
+    assert int(pipeline.get("total_workpackages") or 0) >= 40
     stage_counts = pipeline.get("stage_counts") or {}
-    assert int(stage_counts.get("created") or 0) >= 80
-    assert int(stage_counts.get("finished") or 0) >= 80
+    assert int(stage_counts.get("created") or 0) >= 40
+    assert int(stage_counts.get("finished") or 0) >= 40
     assert float(pipeline.get("runtime_submit_success_rate") or 0.0) >= 0.99
     items = pipeline.get("items") or []
     assert items
     first = items[0]
     for key in ("runtime_receipt_id", "submit_status", "checksum", "skills_count", "artifact_count"):
         assert key in first
-

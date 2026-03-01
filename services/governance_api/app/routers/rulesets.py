@@ -11,7 +11,7 @@ from services.governance_api.app.models.ruleset_models import (
     RulesetPublishRequest,
     RulesetResponse,
 )
-from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE, GovernanceGateError
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
 router = APIRouter()
 
@@ -105,14 +105,21 @@ def activate_ruleset(ruleset_id: str, payload: RulesetActivateRequest) -> Rulese
             caller=payload.caller,
             reason=payload.reason,
         )
-    except GovernanceGateError as exc:
-        raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "message": exc.message}) from exc
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        # Repository module may be reloaded in tests, which changes exception class identity.
+        # Use structural mapping to keep API behavior stable (409/403 with gate details).
+        code = getattr(exc, "code", None)
+        status_code = getattr(exc, "status_code", None)
+        message = getattr(exc, "message", None)
+        if isinstance(code, str) and isinstance(status_code, int) and isinstance(message, str):
+            raise HTTPException(status_code=status_code, detail={"code": code, "message": message}) from exc
+        raise
     return RulesetActivateResponse(
         ruleset_id=ruleset_id,
         change_id=payload.change_id,

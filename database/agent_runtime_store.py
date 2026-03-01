@@ -73,6 +73,8 @@ class AgentRuntimeStore:
         if not self.database_url.startswith("postgresql"):
             raise RuntimeError("DATABASE_URL must be postgresql://... in PG-only mode")
         self.db_path = db_path
+        schema_suffix = hashlib.sha1(str(db_path).encode("utf-8")).hexdigest()[:12]
+        self.schema_name = f"control_plane_{schema_suffix}"
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.init_schema()
@@ -85,8 +87,8 @@ class AgentRuntimeStore:
 
         raw_conn = psycopg2.connect(self.database_url)
         with raw_conn.cursor() as cur:
-            cur.execute("CREATE SCHEMA IF NOT EXISTS control_plane")
-            cur.execute("SET search_path TO control_plane, public")
+            cur.execute(f"CREATE SCHEMA IF NOT EXISTS {self.schema_name}")
+            cur.execute(f"SET search_path TO {self.schema_name}, public")
         conn = _CompatConnection(raw_conn, cursor_factory=RealDictCursor)
         try:
             yield conn
@@ -429,8 +431,7 @@ class AgentRuntimeStore:
                     error_detail TEXT,
                     latency_ms INTEGER,
                     created_at TEXT NOT NULL,
-                    task_run_id TEXT,
-                    FOREIGN KEY(task_run_id) REFERENCES task_run(task_run_id)
+                    task_run_id TEXT
                 )
                 """
             )

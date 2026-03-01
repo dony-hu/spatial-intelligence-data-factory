@@ -19,7 +19,6 @@ def _apply_schema(database_url: str) -> None:
     sql_paths = [
         root / "database" / "postgres" / "sql" / "001_enable_extensions.sql",
         root / "database" / "postgres" / "sql" / "002_init_tables.sql",
-        root / "database" / "postgres" / "sql" / "003_init_indexes.sql",
     ]
     engine = create_engine(database_url)
     with engine.begin() as conn:

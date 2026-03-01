@@ -1,0 +1,62 @@
+{
+  "version": "runtime-default",
+  "generation_mode": "factory_default",
+  "cities": [
+    {
+      "name": "上海市",
+      "aliases": [
+        "上海"
+      ],
+      "districts": [
+        {
+          "name": "黄浦区",
+          "aliases": [
+            "黄浦"
+          ]
+        },
+        {
+          "name": "浦东新区",
+          "aliases": [
+            "浦东"
+          ]
+        },
+        {
+          "name": "徐汇区",
+          "aliases": [
+            "徐汇"
+          ]
+        },
+        {
+          "name": "静安区",
+          "aliases": [
+            "静安"
+          ]
+        },
+        {
+          "name": "虹口区",
+          "aliases": [
+            "虹口"
+          ]
+        },
+        {
+          "name": "闵行区",
+          "aliases": [
+            "闵行"
+          ]
+        },
+        {
+          "name": "杨浦区",
+          "aliases": [
+            "杨浦"
+          ]
+        },
+        {
+          "name": "青浦区",
+          "aliases": [
+            "青浦"
+          ]
+        }
+      ]
+    }
+  ]
+}

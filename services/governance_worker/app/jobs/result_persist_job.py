@@ -4,11 +4,18 @@ from services.governance_api.app.models.task_models import CanonicalAddressResul
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 
 
+def _normalize_strategy(value: str) -> str:
+    text = str(value or "").strip()
+    if text in {"rule_only", "match_dict", "human_required"}:
+        return text
+    return "human_required"
+
+
 def persist_results(task_payload: dict, runtime_result: dict, pipeline_outputs: list[dict] | None = None) -> dict:
     task_id = task_payload["task_id"]
     records = task_payload.get("records", [])
     pipeline_outputs = pipeline_outputs or []
-    strategy = runtime_result.get("strategy", "human_required")
+    strategy = _normalize_strategy(str(runtime_result.get("strategy", "human_required")))
     runtime_confidence = float(runtime_result.get("confidence", 0.5))
     runtime_evidence_items = runtime_result.get("evidence", {}).get("items", [])
 
@@ -21,7 +28,7 @@ def persist_results(task_payload: dict, runtime_result: dict, pipeline_outputs: 
             raw_id=item.get("raw_id"),
             canon_text=by_raw_id.get(item.get("raw_id"), {}).get("canon_text", item.get("raw_text", "").strip()),
             confidence=float(by_raw_id.get(item.get("raw_id"), {}).get("confidence", runtime_confidence)),
-            strategy=by_raw_id.get(item.get("raw_id"), {}).get("strategy", strategy),
+            strategy=_normalize_strategy(str(by_raw_id.get(item.get("raw_id"), {}).get("strategy", strategy))),
             evidence=EvidenceSummary(
                 items=by_raw_id.get(item.get("raw_id"), {}).get("evidence", {}).get("items", [])
                 + runtime_evidence_items

@@ -33,6 +33,7 @@ def test_mvp_acceptance_unit_script_runs_with_real_gate(tmp_path) -> None:
     db_url = _postgres_db_url()
     out_dir = tmp_path / "output" / "acceptance"
     env = os.environ.copy()
+    env["AGENT_RUNTIME"] = "opencode"
     proc = _run(
             [
                 str(repo_root / ".venv" / "bin" / "python"),
@@ -56,6 +57,7 @@ def test_mvp_acceptance_integration_script_runs_with_real_gate(tmp_path) -> None
     db_url = _postgres_db_url()
     out_dir = tmp_path / "output" / "acceptance"
     env = os.environ.copy()
+    env["AGENT_RUNTIME"] = "opencode"
     proc = _run(
             [
                 str(repo_root / ".venv" / "bin" / "python"),
@@ -79,6 +81,7 @@ def test_mvp_acceptance_integration_script_isolated_from_llm_gate(tmp_path) -> N
     db_url = _postgres_db_url()
     out_dir = tmp_path / "output" / "acceptance"
     env = os.environ.copy()
+    env["AGENT_RUNTIME"] = "opencode"
     env.pop("LLM_MODEL", None)
     env.pop("LLM_API_KEY", None)
     env.pop("LLM_ENDPOINT", None)
@@ -108,6 +111,7 @@ def test_mvp_acceptance_real_llm_gate_script_fail_fast_without_config(tmp_path) 
     db_url = _postgres_db_url()
     out_dir = tmp_path / "output" / "acceptance"
     env = os.environ.copy()
+    env["AGENT_RUNTIME"] = "opencode"
     env.pop("LLM_MODEL", None)
     env.pop("LLM_API_KEY", None)
     env.pop("LLM_ENDPOINT", None)

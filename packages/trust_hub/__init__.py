@@ -23,10 +23,18 @@ class TrustHub:
 
     def __init__(self, storage_path: Optional[Path] = None, database_url: Optional[str] = None):
         self._storage_path = storage_path or Path("data/trust_hub.json")
-        self._database_url = str(database_url if database_url is not None else os.getenv("DATABASE_URL", "")).strip()
+        if database_url is None and storage_path is not None:
+            # Explicit file path implies isolated local persistence (used by tests/tools).
+            self._database_url = ""
+        else:
+            self._database_url = str(database_url if database_url is not None else os.getenv("DATABASE_URL", "")).strip()
         self._sources: Dict[str, DataSource] = {}
         self._capabilities: List[Dict[str, str]] = []
         self._samples: List[Dict[str, object]] = []
+        if self._db_enabled():
+            from services.trust_data_hub.app.repositories.schema_bootstrap import ensure_trust_pg_schema
+
+            ensure_trust_pg_schema(self._database_url)
         self._load()
 
     def _load(self):

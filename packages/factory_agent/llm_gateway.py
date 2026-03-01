@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict
 
 
@@ -9,7 +10,12 @@ class RequirementLLMGateway:
     def query(self, prompt: str) -> Dict[str, Any]:
         from tools.agent_cli import load_config, run_requirement_query
 
-        config = load_config()
+        config_path = Path(__file__).resolve().parents[2] / "config" / "llm_api.json"
+        try:
+            config = load_config(str(config_path))
+        except TypeError:
+            # Backward-compatible with mocks or legacy wrappers that accept no args.
+            config = load_config()
         system_prompt = (
             "你是地址治理工厂Agent。"
             "请仅输出JSON对象，字段必须包含："

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -14,7 +15,9 @@ def test_run_observability_foundation_acceptance_script() -> None:
         "--output-dir",
         "output/acceptance",
     ]
-    proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False)
+    env = os.environ.copy()
+    env["AGENT_RUNTIME"] = "opencode"
+    proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False, env=env)
     assert proc.returncode == 0, proc.stderr or proc.stdout
 
     json_files = sorted(output_dir.glob("observability-pg-foundation-acceptance-*.json"))
