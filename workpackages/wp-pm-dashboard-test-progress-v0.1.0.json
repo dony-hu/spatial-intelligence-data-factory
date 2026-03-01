@@ -8,7 +8,7 @@
     "released_at": "2026-02-15T19:45:00+08:00",
     "released_by": "orchestrator",
     "rollback_target_version": "dashboard-web-baseline",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-pm-dashboard-test-progress-v0.1.0"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-pm-dashboard-test-progress-v0.1.0"
   },
   "line_spec": {
     "line_type": "pm_dashboard",

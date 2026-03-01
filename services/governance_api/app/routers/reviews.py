@@ -1,20 +1,18 @@
 from fastapi import APIRouter, HTTPException
 
 from services.governance_api.app.models.review_models import ReviewDecisionRequest, ReviewDecisionResponse
-from services.governance_api.app.repositories.governance_repository import REPOSITORY
-from services.governance_worker.app.jobs.review_reconcile_job import run as run_review_reconcile
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
 router = APIRouter()
 
 
 @router.post("/reviews/{task_id}/decision", response_model=ReviewDecisionResponse)
 def submit_review_decision(task_id: str, payload: ReviewDecisionRequest) -> ReviewDecisionResponse:
-    task = REPOSITORY.get_task(task_id)
+    task = GOVERNANCE_SERVICE.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="task not found")
     review_data = payload.model_dump()
-    REPOSITORY.upsert_review(task_id, review_data)
-    reconcile_result = run_review_reconcile({"task_id": task_id, "review_data": review_data})
+    reconcile_result = GOVERNANCE_SERVICE.submit_review_decision(task_id, review_data)
     return ReviewDecisionResponse(
         task_id=task_id,
         review_status=payload.review_status,

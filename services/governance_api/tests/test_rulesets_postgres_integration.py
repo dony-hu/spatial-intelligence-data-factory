@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 
@@ -16,12 +15,6 @@ def _database_url() -> str:
 
 
 def _apply_schema(database_url: str) -> None:
-    if database_url.startswith("sqlite"):
-        from scripts.init_governance_sqlite import init_db
-        path = database_url.replace("sqlite:///", "")
-        init_db(path)
-        return
-
     root = Path(__file__).resolve().parents[3]
     sql_paths = [
         root / "database" / "postgres" / "sql" / "001_enable_extensions.sql",
@@ -36,14 +29,24 @@ def _apply_schema(database_url: str) -> None:
 
 def test_activate_ruleset_requires_approved_change_request_postgres() -> None:
     database_url = _database_url()
-    if not database_url.startswith("postgresql") and not database_url.startswith("sqlite"):
-        pytest.skip("requires DATABASE_URL=postgresql://... or sqlite://... for real DB integration")
+    assert database_url.startswith("postgresql"), "requires DATABASE_URL=postgresql://... for real DB integration"
 
     _apply_schema(database_url)
-    client = TestClient(app)
+    client = TestClient(app, raise_server_exceptions=False)
 
     case_suffix = uuid4().hex[:8]
     target_ruleset_id = f"rule-pg-{case_suffix}"
+    default_ruleset_id = "default"
+
+    ensure_default_resp = client.put(
+        f"/v1/governance/rulesets/{default_ruleset_id}",
+        json={
+            "version": "v0",
+            "is_active": True,
+            "config_json": {"thresholds": {"t_high": 0.85, "t_low": 0.6}},
+        },
+    )
+    assert ensure_default_resp.status_code == 200
 
     create_ruleset_resp = client.put(
         f"/v1/governance/rulesets/{target_ruleset_id}",
@@ -94,7 +97,7 @@ def test_activate_ruleset_requires_approved_change_request_postgres() -> None:
     engine = create_engine(database_url)
     with engine.begin() as conn:
         stored_change = conn.execute(
-            text("SELECT status, approved_by FROM addr_change_request WHERE change_id = :change_id"),
+            text("SELECT status, approved_by FROM governance.change_request WHERE change_id = :change_id"),
             {"change_id": change_id},
         ).mappings().first()
         assert stored_change is not None
@@ -102,7 +105,7 @@ def test_activate_ruleset_requires_approved_change_request_postgres() -> None:
         assert stored_change["approved_by"] == "admin-reviewer"
 
         target_ruleset = conn.execute(
-            text("SELECT is_active FROM addr_ruleset WHERE ruleset_id = :ruleset_id"),
+            text("SELECT is_active FROM governance.ruleset WHERE ruleset_id = :ruleset_id"),
             {"ruleset_id": target_ruleset_id},
         ).mappings().first()
         assert target_ruleset is not None
@@ -112,7 +115,7 @@ def test_activate_ruleset_requires_approved_change_request_postgres() -> None:
             text(
                 """
                 SELECT event_type, caller
-                FROM addr_audit_event
+                FROM audit.event_log
                 WHERE related_change_id = :change_id
                   AND event_type = 'ruleset_activated'
                 ORDER BY created_at DESC

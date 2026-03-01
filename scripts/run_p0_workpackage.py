@@ -6,7 +6,6 @@ import hashlib
 import json
 import os
 import re
-import sqlite3
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -22,7 +21,6 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "output" / "workpackages" / "wp-core-engine-p0-s
 DEFAULT_LINE_FEEDBACK = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.json"
 DEFAULT_LINE_FEEDBACK_HASH = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.sha256"
 
-SQLITE_REF_RE = re.compile(r"^sqlite://(?P<path>[^#]+)#(?P<table>[A-Za-z_][A-Za-z0-9_]*)$")
 PG_REF_RE = re.compile(r"^pg://(?P<schema>[A-Za-z_][A-Za-z0-9_]*)\.(?P<table>[A-Za-z_][A-Za-z0-9_]*)$")
 MIN_RUNTIME = (3, 11)
 
@@ -92,32 +90,11 @@ def _run_command(command: list[str]) -> dict[str, Any]:
     }
 
 
-def _is_valid_sqlite_ref(ref: str, expected_table: str) -> bool:
-    match = SQLITE_REF_RE.match(ref)
-    if not match:
-        return False
-    return match.group("table") == expected_table
-
-
 def _is_valid_pg_ref(ref: str, expected_table: str) -> bool:
     match = PG_REF_RE.match(ref)
     if not match:
         return False
     return match.group("table") == expected_table
-
-
-def _parse_sqlite_ref(ref: str, expected_table: str, project_root: Path = PROJECT_ROOT) -> tuple[Path | None, str | None]:
-    match = SQLITE_REF_RE.match(ref)
-    if not match:
-        return None, None
-    table = match.group("table")
-    if table != expected_table:
-        return None, None
-    path_part = match.group("path")
-    db_path = Path(path_part)
-    if not db_path.is_absolute():
-        db_path = project_root / db_path
-    return db_path, table
 
 
 def _parse_pg_ref(ref: str, expected_table: str) -> tuple[str | None, str | None]:
@@ -149,10 +126,10 @@ def _validate_line_feedback_payload(
     if replay_ref != expected_replay_ref:
         errors.append("replay_result_ref does not match line_feedback_contract")
 
-    if not (_is_valid_sqlite_ref(failure_ref, "failure_queue") or _is_valid_pg_ref(failure_ref, "failure_queue")):
-        errors.append("failure_queue_snapshot_ref must be sqlite://...#failure_queue or pg://<schema>.failure_queue")
-    if not (_is_valid_sqlite_ref(replay_ref, "replay_runs") or _is_valid_pg_ref(replay_ref, "replay_runs")):
-        errors.append("replay_result_ref must be sqlite://...#replay_runs or pg://<schema>.replay_runs")
+    if not _is_valid_pg_ref(failure_ref, "failure_queue"):
+        errors.append("failure_queue_snapshot_ref must be pg://<schema>.failure_queue")
+    if not _is_valid_pg_ref(replay_ref, "replay_runs"):
+        errors.append("replay_result_ref must be pg://<schema>.replay_runs")
 
     return len(errors) == 0, errors
 
@@ -222,33 +199,8 @@ def _validate_replay_store(
             details["errors"].append(f"postgres replay validation error: {exc}")
             return False, details
     else:
-        failure_db_path, failure_table = _parse_sqlite_ref(failure_ref, "failure_queue", project_root=project_root)
-        replay_db_path, replay_table = _parse_sqlite_ref(replay_ref, "replay_runs", project_root=project_root)
-        if not failure_db_path or not replay_db_path or not failure_table or not replay_table:
-            details["errors"].append("invalid sqlite ref format")
-            return False, details
-
-        if not failure_db_path.exists() or not replay_db_path.exists():
-            details["errors"].append("replay database path does not exist")
-            return False, details
-
-        with sqlite3.connect(str(failure_db_path)) as conn:
-            has_failure_table = conn.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-                (failure_table,),
-            ).fetchone()
-            details["failure_queue_table_exists"] = bool(has_failure_table)
-            if has_failure_table:
-                details["failure_queue_rows"] = int(conn.execute(f"SELECT COUNT(*) FROM {failure_table}").fetchone()[0])
-
-        with sqlite3.connect(str(replay_db_path)) as conn:
-            has_replay_table = conn.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-                (replay_table,),
-            ).fetchone()
-            details["replay_runs_table_exists"] = bool(has_replay_table)
-            if has_replay_table:
-                details["replay_runs_rows"] = int(conn.execute(f"SELECT COUNT(*) FROM {replay_table}").fetchone()[0])
+        details["errors"].append("invalid pg ref format")
+        return False, details
 
     if not details["failure_queue_table_exists"]:
         details["errors"].append("failure_queue table missing")

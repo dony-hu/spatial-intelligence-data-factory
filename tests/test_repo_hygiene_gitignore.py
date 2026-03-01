@@ -21,9 +21,9 @@ def test_repo_hygiene_script_keeps_basic_hygiene_header() -> None:
     assert "[check] repo hygiene" in script
 
 
-def test_repo_hygiene_script_has_sqlite_reflow_guard() -> None:
+def test_repo_hygiene_script_has_local_file_db_guard() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     script = (repo_root / "scripts" / "check_repo_hygiene.sh").read_text(encoding="utf-8")
-    assert "sqlite://" in script
-    assert "init_governance_sqlite" in script
+    assert "filedb://" in script
+    assert "init_governance_filedb" in script
     assert "services packages scripts tests" in script

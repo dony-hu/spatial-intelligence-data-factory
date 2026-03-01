@@ -1,4 +1,4 @@
-.PHONY: up down test-integration report install-opencode factory-cli test-e2e
+.PHONY: up down test-integration report install-opencode factory-cli test-e2e check-repo-hygiene
 
 up:
 	docker compose up -d
@@ -24,3 +24,5 @@ factory-cli:
 test-e2e:
 	.venv/bin/python scripts/test_end_to_end.py
 
+check-repo-hygiene:
+	./scripts/check_repo_hygiene.sh

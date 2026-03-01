@@ -66,21 +66,21 @@
         "required_fields": {"type": "array", "items": {"type": "string"}},
         "failure_queue_snapshot_ref": {
           "type": "string",
-          "pattern": "^(sqlite://[^#]+#failure_queue|pg://[A-Za-z0-9_.-]+\\.failure_queue)$"
+          "pattern": "^pg://[A-Za-z0-9_.-]+\\.failure_queue$"
         },
         "replay_result_ref": {
           "type": "string",
-          "pattern": "^(sqlite://[^#]+#replay_runs|pg://[A-Za-z0-9_.-]+\\.replay_runs)$"
+          "pattern": "^pg://[A-Za-z0-9_.-]+\\.replay_runs$"
         }
       },
       "additionalProperties": false
     },
     "rollback": {
       "type": "object",
-      "required": ["from_version", "fallback_version", "instructions"],
+      "required": ["from_version", "rollback_version", "instructions"],
       "properties": {
         "from_version": {"type": "string"},
-        "fallback_version": {"type": "string"},
+        "rollback_version": {"type": "string"},
         "instructions": {"type": "array", "items": {"type": "string"}}
       }
     }

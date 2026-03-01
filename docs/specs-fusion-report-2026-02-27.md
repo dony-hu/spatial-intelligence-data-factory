@@ -1,0 +1,65 @@
+# Specs 融合报告（.trae → 当前主线）
+
+## 1. 架构结论
+
+`.trae/specs` 与当前 `docs/` 并存导致“历史规格”和“当前实现规格”双轨。  
+本次已完成融合映射，形成统一基线：
+
+1. `specs/README.md`：统一入口
+2. `docs/spec-fusion-status-2026-02-27.yaml`：机器可读融合状态
+3. 本报告：人工可读融合结论与后续动作
+
+## 2. 融合范围
+
+1. `.trae/specs/address-governance-e2e-suite`
+2. `.trae/specs/observability-dashboard-enhancement`
+3. `.trae/specs/observability-and-docs-improvement`
+4. `.trae/specs/real-db-integration-and-dashboard`
+5. `.trae/specs/workpackage-structure-design`
+6. `.trae/specs/poi-shop-trust-verification`
+7. `.trae/specs/system-status-planning`
+8. `.trae/documents/doc-spec-fusion-plan.md`
+9. `.trae/documents/智能体架构增强实施计划.md`
+
+## 3. 融合结果矩阵
+
+1. `poi-shop-trust-verification` -> 已融合
+- 映射到 `MVP-A1~A6` Story 与 `epic-address-governance-mvp`。
+
+2. `workpackage-structure-design` -> 已融合
+- 映射到 `MVP-A3/MVP-A4` 与地址治理架构刷新文档。
+
+3. `real-db-integration-and-dashboard` -> 已融合
+- 映射到统一 PG 多 schema 架构、`OBS-PG-S1`。
+
+4. `observability-dashboard-enhancement` -> 部分融合
+- 可观测性主架构与 Story 已覆盖主干，但“能力面板细节指标”仍需继续并表。
+
+5. `observability-and-docs-improvement` -> 已融合
+- `.venv` 治理与文档改进已进入当前主线执行。
+
+6. `address-governance-e2e-suite` -> 已融合
+- E2E 主线与验收脚本已有对应覆盖。
+
+7. `system-status-planning` -> 已融合
+- 任务优先级与状态管理已归并到 sprint 与 workflow status。
+
+## 4. 对当前 specs 体系的统一规则
+
+1. 当前事实源：`docs/`（PRD/Epic/Architecture/Stories/Reports）。
+2. 历史规格源：`.trae/specs`（保留，不作为唯一当前事实）。
+3. 所有新变更先更新 `docs/`，再同步 `docs/spec-fusion-status-2026-02-27.yaml`。
+
+## 5. 尚未完成的融合项
+
+1. 可观测性“能力面板”指标全量并表（P1）
+- 需把 Trae 规格中的能力可视化指标全部映射到当前 `lab/observability` 页面契约和 API 字段。
+
+2. 单一事实源治理（P1）
+- 后续新增 specs 禁止只落 `.trae/specs` 不落 `docs/`。
+
+## 6. 建议下一步
+
+1. 已新增 `OBS-PG-S1` 子任务：能力面板字段契约化（API + 页面 + 测试），进入开发序列（`OBS-PG-S1-T1`）。
+2. 已在 `docs/bmm-workflow-status.yaml` 增加 `spec_fusion` 输出引用。
+3. 下一步执行重点：按 TDD 落地 `OBS-PG-S1-T1/T2`，并在验收证据中补齐能力面板字段契约测试结果。

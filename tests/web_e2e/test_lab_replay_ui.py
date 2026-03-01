@@ -1,6 +1,6 @@
 import pytest
 
-sync_api = pytest.importorskip("playwright.sync_api")
+from playwright import sync_api
 expect = sync_api.expect
 
 

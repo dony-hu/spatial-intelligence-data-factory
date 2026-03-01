@@ -1,17 +1,17 @@
 import os
 
-from packages.agent_runtime.adapters.legacy_runtime import LegacyRuntime
-from packages.agent_runtime.adapters.openhands_runtime import OpenHandsRuntime
+import pytest
+
 from packages.agent_runtime.runtime_selector import get_runtime
 
 
-def test_runtime_selector_openhands_default() -> None:
+def test_runtime_selector_opencode_default() -> None:
     os.environ.pop("AGENT_RUNTIME", None)
     runtime = get_runtime()
-    assert isinstance(runtime, OpenHandsRuntime)
+    assert runtime.__class__.__name__ == "OpenCodeRuntime"
 
 
-def test_runtime_selector_legacy() -> None:
+def test_runtime_selector_rejects_legacy() -> None:
     os.environ["AGENT_RUNTIME"] = "legacy"
-    runtime = get_runtime()
-    assert isinstance(runtime, LegacyRuntime)
+    with pytest.raises(ValueError, match="unsupported runtime"):
+        get_runtime()

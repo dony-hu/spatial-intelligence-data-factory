@@ -12,6 +12,7 @@ def main():
     
     with engine.begin() as conn:
         conn.execute(text("DROP SCHEMA IF EXISTS trust_meta CASCADE"))
+        conn.execute(text("DROP SCHEMA IF EXISTS trust_data CASCADE"))
         conn.execute(text("DROP SCHEMA IF EXISTS trust_db CASCADE"))
         print("Dropped existing schemas")
     

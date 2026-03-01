@@ -246,34 +246,10 @@ def run_continuous_demo(total_addresses: int = 10000, demo_iterations: int = 2):
             print("="*80 + "\n")
 
             import os
-            import sqlite3
 
             db_path = "database/factory.db"
             if os.path.exists(db_path):
-                # 清理数据库中的数据
-                try:
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-
-                    tables = [
-                        'factory_products',
-                        'factory_processes',
-                        'production_lines',
-                        'workers',
-                        'work_orders',
-                        'task_executions',
-                        'quality_checks',
-                        'factory_metrics'
-                    ]
-
-                    for table in tables:
-                        cursor.execute(f'DELETE FROM {table}')
-
-                    conn.commit()
-                    conn.close()
-                    print("✓ 数据库已清理\n")
-                except Exception as e:
-                    print(f"✗ 清理数据库失败: {e}\n")
+                print("! 已跳过本地数据库清理，请通过 PG 环境执行统一清理脚本\n")
 
             # 等待5秒后开始下一次迭代
             print("⏳ 5秒后开始下一次迭代...\n")
@@ -285,7 +261,7 @@ def run_continuous_demo(total_addresses: int = 10000, demo_iterations: int = 2):
     print("="*80 + "\n")
 
     print("最终输出文件:")
-    print("  📄 database/factory.db - SQLite数据库")
+    print("  📄 database/factory.db - Demo runtime 数据库文件")
     print("  📊 output/factory_dashboard.html - 交互式看板")
     print("  📄 README_FACTORY_DEMO.md - 完整文档\n")
 

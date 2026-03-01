@@ -8,7 +8,7 @@
     "released_at": "<AUTO_GENERATED>",
     "released_by": "factory-workpackage-line",
     "rollback_target_version": "0.1.x",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-public-security-address-v0.2.0"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-public-security-address-v0.2.0"
   },
   "line_spec": {
     "line_type": "public_security_address_governance",
@@ -21,10 +21,17 @@
   },
   "input_contract": {
     "type": "object",
-    "required": ["raw_address"],
+    "required": [
+      "raw_address"
+    ],
     "properties": {
-      "raw_address": {"type": "string", "minLength": 3},
-      "trace_id": {"type": "string"}
+      "raw_address": {
+        "type": "string",
+        "minLength": 3
+      },
+      "trace_id": {
+        "type": "string"
+      }
     }
   },
   "output_contract": {
@@ -37,25 +44,66 @@
       "quality_score"
     ],
     "properties": {
-      "normalized_address": {"type": "string"},
+      "normalized_address": {
+        "type": "string"
+      },
       "verification_status": {
         "type": "string",
-        "enum": ["VERIFIED_EXISTS", "VERIFIED_NOT_EXISTS", "UNVERIFIABLE_ONLINE"]
+        "enum": [
+          "VERIFIED_EXISTS",
+          "VERIFIED_NOT_EXISTS",
+          "UNVERIFIABLE_ONLINE"
+        ]
       },
-      "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-      "evidence_pack": {"type": "array", "items": {"type": "object"}},
-      "reason_codes": {"type": "array", "items": {"type": "string"}},
-      "quality_score": {"type": "number", "minimum": 0, "maximum": 1},
-      "degraded": {"type": "boolean"}
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "evidence_pack": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        }
+      },
+      "reason_codes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "quality_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "degraded": {
+        "type": "boolean"
+      }
     }
   },
   "process_spec": {
     "steps": [
-      {"code": "parse", "name": "地址解析"},
-      {"code": "normalize", "name": "地址标准化"},
-      {"code": "verify_online", "name": "在线真实核实"},
-      {"code": "adjudicate", "name": "冲突仲裁"},
-      {"code": "quality", "name": "质量评估"}
+      {
+        "code": "parse",
+        "name": "地址解析"
+      },
+      {
+        "code": "normalize",
+        "name": "地址标准化"
+      },
+      {
+        "code": "verify_online",
+        "name": "在线真实核实"
+      },
+      {
+        "code": "adjudicate",
+        "name": "冲突仲裁"
+      },
+      {
+        "code": "quality",
+        "name": "质量评估"
+      }
     ]
   },
   "tool_bundle": {
@@ -77,9 +125,13 @@
     ]
   },
   "line_feedback_contract": {
-    "required_fields": ["status", "reason_codes", "evidence_pack"],
-    "failure_queue_snapshot_ref": "sqlite://database/agent_runtime.db#failure_queue",
-    "replay_result_ref": "sqlite://database/agent_runtime.db#replay_runs"
+    "required_fields": [
+      "status",
+      "reason_codes",
+      "evidence_pack"
+    ],
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
   },
   "rollback": {
     "from_version": "0.2.0",

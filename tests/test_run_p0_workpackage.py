@@ -32,14 +32,11 @@ class RunP0WorkpackageGateTests(unittest.TestCase):
             self.assertFalse(ok)
             self.assertNotEqual(details["expected_sha256"], details["actual_sha256"])
 
-    def test_validate_sqlite_ref_requires_fixed_table(self):
-        self.assertTrue(run_p0_workpackage._is_valid_sqlite_ref("sqlite://database/tc06_line_execution.db#failure_queue", "failure_queue"))
-        self.assertTrue(run_p0_workpackage._is_valid_sqlite_ref("sqlite://database/tc06_line_execution.db#replay_runs", "replay_runs"))
-        self.assertFalse(run_p0_workpackage._is_valid_sqlite_ref("sqlite://database/tc06_line_execution.db#unexpected", "replay_runs"))
-        self.assertFalse(run_p0_workpackage._is_valid_sqlite_ref("file://database/tc06_line_execution.db#replay_runs", "replay_runs"))
+    def test_validate_ref_requires_pg_scheme(self):
         self.assertTrue(run_p0_workpackage._is_valid_pg_ref("pg://address_line.failure_queue", "failure_queue"))
         self.assertTrue(run_p0_workpackage._is_valid_pg_ref("pg://address_line.replay_runs", "replay_runs"))
         self.assertFalse(run_p0_workpackage._is_valid_pg_ref("pg://address_line.unknown", "replay_runs"))
+        self.assertFalse(run_p0_workpackage._is_valid_pg_ref("mysql://localhost/failure_queue", "failure_queue"))
 
     def test_validate_line_feedback_payload_requires_contract_match(self):
         payload = {
@@ -49,8 +46,8 @@ class RunP0WorkpackageGateTests(unittest.TestCase):
             "blocker": "",
             "eta": "2026-02-15T19:00:00+08:00",
             "test_report_ref": "output/line_runs/tc06_failure_replay_2026-02-15_190000_000000.json",
-            "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
-            "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+            "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+            "replay_result_ref": "pg://address_line.replay_runs",
             "release_decision": "GO",
         }
         required_fields = [
@@ -67,18 +64,18 @@ class RunP0WorkpackageGateTests(unittest.TestCase):
         ok, errors = run_p0_workpackage._validate_line_feedback_payload(
             payload,
             required_fields,
-            expected_failure_ref="sqlite://database/tc06_line_execution.db#failure_queue",
-            expected_replay_ref="sqlite://database/tc06_line_execution.db#replay_runs",
+            expected_failure_ref="pg://address_line.failure_queue",
+            expected_replay_ref="pg://address_line.replay_runs",
         )
         self.assertTrue(ok)
         self.assertEqual(errors, [])
 
-        payload["replay_result_ref"] = "sqlite://database/tc06_line_execution.db#replay_run"
+        payload["replay_result_ref"] = "pg://address_line.replay_run"
         ok, errors = run_p0_workpackage._validate_line_feedback_payload(
             payload,
             required_fields,
-            expected_failure_ref="sqlite://database/tc06_line_execution.db#failure_queue",
-            expected_replay_ref="sqlite://database/tc06_line_execution.db#replay_runs",
+            expected_failure_ref="pg://address_line.failure_queue",
+            expected_replay_ref="pg://address_line.replay_runs",
         )
         self.assertFalse(ok)
         self.assertTrue(errors)
@@ -115,22 +112,18 @@ class RunP0WorkpackageGateTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(errors, [])
 
-    def test_validate_replay_store_requires_tables_and_rows(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            db_path = Path(tmp_dir) / "tc06.db"
-            with run_p0_workpackage.sqlite3.connect(str(db_path)) as conn:
-                conn.execute("CREATE TABLE failure_queue (failure_id TEXT PRIMARY KEY)")
-                conn.execute("CREATE TABLE replay_runs (replay_id TEXT PRIMARY KEY)")
-                conn.commit()
-
-            ok, details = run_p0_workpackage._validate_replay_store(
-                "sqlite://" + str(db_path.relative_to(Path(tmp_dir).parent)) + "#failure_queue",
-                "sqlite://" + str(db_path.relative_to(Path(tmp_dir).parent)) + "#replay_runs",
-                project_root=Path(tmp_dir).parent,
-            )
-            self.assertFalse(ok)
-            self.assertEqual(details["failure_queue_rows"], 0)
-            self.assertEqual(details["replay_runs_rows"], 0)
+    def test_validate_replay_store_requires_pg_database_url(self):
+        ok, details = run_p0_workpackage._validate_replay_store(
+            "pg://address_line.failure_queue",
+            "pg://address_line.replay_runs",
+            project_root=Path.cwd(),
+        )
+        self.assertFalse(ok)
+        joined = " | ".join(details["errors"])
+        self.assertTrue(
+            ("DATABASE_URL must be postgresql://... for pg replay validation" in joined)
+            or ("failure_queue table missing" in joined)
+        )
 
 
 if __name__ == "__main__":

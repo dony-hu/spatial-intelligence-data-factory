@@ -1,5 +1,5 @@
 """
-Factory Database - SQLite persistence layer for factory state and operations
+Factory Database - PostgreSQL persistence layer for factory state and operations
 """
 
 import os
@@ -39,7 +39,7 @@ class FactoryDB:
             conn = psycopg2.connect(driver_dsn)
             cursor_factory = RealDictCursor
         except Exception:
-            # Fallback to psycopg v3 when psycopg2 is unavailable.
+            # Use psycopg v3 when psycopg2 is unavailable.
             import psycopg
 
             conn = psycopg.connect(driver_dsn)

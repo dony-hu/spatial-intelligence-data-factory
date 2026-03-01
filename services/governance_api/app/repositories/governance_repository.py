@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from sqlalchemy import create_engine, text
+
 
 @dataclass
 class _MemoryStore:
@@ -32,15 +34,11 @@ class GovernanceGateError(Exception):
 
 class GovernanceRepository:
     def __init__(self) -> None:
-        self._allow_memory_fallback = str(os.getenv("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "0")).strip() == "1"
-        self._auto_ddl = str(os.getenv("GOVERNANCE_AUTO_DDL", "0")).strip() == "1"
         db_url = str(os.getenv("DATABASE_URL") or "").strip()
-        
-        # Allow SQLite for local "real DB" simulation when Docker is unavailable
-        if not self._allow_memory_fallback and not db_url.startswith("postgresql") and not db_url.startswith("sqlite"):
+
+        if not db_url.startswith("postgresql://"):
             raise RuntimeError(
-                "DATABASE_URL must be postgresql:// or sqlite:// in persistent runtime mode. "
-                "Set GOVERNANCE_ALLOW_MEMORY_FALLBACK=1 for temporary local fallback."
+                "DATABASE_URL must be postgresql:// in persistent runtime mode."
             )
         self._memory = _MemoryStore(
             rulesets={
@@ -52,36 +50,45 @@ class GovernanceRepository:
                 }
             }
         )
-        if self._db_enabled() and self._auto_ddl:
-            self._ensure_workpackage_publish_table()
-            self._ensure_observability_tables()
+        self._engine = None
+        self._engine = self._build_engine()
 
     def _database_url(self) -> str | None:
         return os.getenv("DATABASE_URL")
 
+    def _build_engine(self):
+        pool_size = max(1, int(str(os.getenv("PG_POOL_SIZE") or "10")))
+        max_overflow = max(0, int(str(os.getenv("PG_MAX_OVERFLOW") or "20")))
+        return create_engine(
+            self._database_url(),
+            pool_pre_ping=True,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+            pool_recycle=1800,
+            future=True,
+        )
+
+    def _get_engine(self):
+        if self._engine is None:
+            self._engine = self._build_engine()
+        return self._engine
+
     def _db_enabled(self) -> bool:
-        if self._allow_memory_fallback:
-            return False
-        url = self._database_url()
-        return bool(url and (url.startswith("postgresql") or url.startswith("sqlite")))
+        return True
 
     def _sql_now(self) -> str:
-        url = self._database_url() or ""
-        return "CURRENT_TIMESTAMP" if url.startswith("sqlite") else "NOW()"
+        return "NOW()"
 
     def _sql_json_cast(self, param: str) -> str:
-        url = self._database_url() or ""
-        return param if url.startswith("sqlite") else f"CAST({param} AS jsonb)"
+        return f"CAST({param} AS jsonb)"
 
     def _execute(self, sql: str, params: dict[str, Any]) -> bool:
         if not self._db_enabled():
             return False
         # If DB is enabled, we expect strict consistency. Failures should propagate.
-        from sqlalchemy import create_engine, text
-
-        engine = create_engine(self._database_url())
+        engine = self._get_engine()
         with engine.begin() as conn:
-            # Postgres specific search path, skip for SQLite
+            # Postgres search path setup
             if self._database_url().startswith("postgresql"):
                 conn.execute(text("SET search_path TO governance, runtime, trust_meta, trust_data, audit, public"))
             conn.execute(text(sql), params)
@@ -91,98 +98,13 @@ class GovernanceRepository:
         if not self._db_enabled():
             return []
         # If DB is enabled, we expect strict consistency. Failures should propagate.
-        from sqlalchemy import create_engine, text
-
-        engine = create_engine(self._database_url())
+        engine = self._get_engine()
         with engine.begin() as conn:
-            # Postgres specific search path, skip for SQLite
+            # Postgres search path setup
             if self._database_url().startswith("postgresql"):
                 conn.execute(text("SET search_path TO governance, runtime, trust_meta, trust_data, audit, public"))
             rows = conn.execute(text(sql), params).mappings().all()
         return [dict(item) for item in rows]
-
-    def _ensure_workpackage_publish_table(self) -> None:
-        now_func = self._sql_now()
-        self._execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS addr_workpackage_publish (
-                publish_id VARCHAR(64) PRIMARY KEY,
-                workpackage_id VARCHAR(128) NOT NULL,
-                version VARCHAR(64) NOT NULL,
-                status VARCHAR(32) NOT NULL,
-                evidence_ref TEXT NOT NULL,
-                published_at TIMESTAMPTZ,
-                bundle_path TEXT,
-                published_by VARCHAR(128),
-                confirmation_user VARCHAR(128),
-                confirmation_decision VARCHAR(128),
-                confirmation_timestamp TEXT,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
-                UNIQUE(workpackage_id, version)
-            );
-            """,
-            {},
-        )
-
-    def _ensure_observability_tables(self) -> None:
-        now_func = self._sql_now()
-        labels_type = "TEXT" if (self._database_url() or "").startswith("sqlite") else "JSONB"
-        payload_cast_type = "TEXT" if (self._database_url() or "").startswith("sqlite") else "JSONB"
-        self._execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS addr_observation_event (
-                event_id VARCHAR(64) PRIMARY KEY,
-                trace_id VARCHAR(128) NOT NULL,
-                span_id VARCHAR(128),
-                source_service VARCHAR(64) NOT NULL,
-                event_type VARCHAR(64) NOT NULL,
-                status VARCHAR(32) NOT NULL,
-                severity VARCHAR(16) NOT NULL,
-                task_id VARCHAR(64),
-                workpackage_id VARCHAR(128),
-                ruleset_id VARCHAR(64),
-                payload_json {payload_cast_type} NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
-            );
-            """,
-            {},
-        )
-        self._execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS addr_observation_metric (
-                metric_id VARCHAR(64) PRIMARY KEY,
-                metric_name VARCHAR(128) NOT NULL,
-                metric_value DOUBLE PRECISION NOT NULL,
-                labels_json {labels_type} NOT NULL,
-                window_start TIMESTAMPTZ,
-                window_end TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
-            );
-            """,
-            {},
-        )
-        self._execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS addr_alert_event (
-                alert_id VARCHAR(64) PRIMARY KEY,
-                alert_rule VARCHAR(128) NOT NULL,
-                severity VARCHAR(16) NOT NULL,
-                status VARCHAR(32) NOT NULL,
-                trigger_value DOUBLE PRECISION NOT NULL,
-                threshold_value DOUBLE PRECISION NOT NULL,
-                trace_id VARCHAR(128),
-                task_id VARCHAR(64),
-                workpackage_id VARCHAR(128),
-                owner VARCHAR(128),
-                ack_by VARCHAR(128),
-                ack_at TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT {now_func},
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT {now_func}
-            );
-            """,
-            {},
-        )
 
     def upsert_workpackage_publish(
         self,
@@ -227,12 +149,10 @@ class GovernanceRepository:
             "updated_at": self._now_iso(),
         }
         self._memory.workpackage_publishes[key] = item
-        if self._db_enabled() and self._auto_ddl:
-            self._ensure_workpackage_publish_table()
         now_func = self._sql_now()
         self._execute(
             f"""
-            INSERT INTO addr_workpackage_publish (
+            INSERT INTO runtime.publish_record (
                 publish_id, workpackage_id, version, status, evidence_ref, published_at, bundle_path, published_by,
                 confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
             ) VALUES (
@@ -269,24 +189,25 @@ class GovernanceRepository:
 
     def get_workpackage_publish(self, workpackage_id: str, version: str) -> dict[str, Any] | None:
         key = f"{workpackage_id}::{version}"
-        item = self._memory.workpackage_publishes.get(key)
-        if item:
-            return dict(item)
         if self._db_enabled():
             rows = self._query(
                 """
                 SELECT publish_id, workpackage_id, version, status, evidence_ref, bundle_path, published_by,
                        published_at, confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
-                FROM addr_workpackage_publish
+                FROM runtime.publish_record
                 WHERE workpackage_id = :workpackage_id AND version = :version
                 LIMIT 1;
                 """,
                 {"workpackage_id": workpackage_id, "version": version},
             )
             if rows:
-                row = rows[0]
-                self._memory.workpackage_publishes[key] = row
+                row = self._serialize_record(rows[0])
+                self._memory.workpackage_publishes[key] = dict(row)
                 return dict(row)
+            return None
+        item = self._memory.workpackage_publishes.get(key)
+        if item:
+            return self._serialize_record(dict(item))
         return None
 
     def _serialize_record(self, item: dict[str, Any]) -> dict[str, Any]:
@@ -324,19 +245,11 @@ class GovernanceRepository:
         normalized_status = str(status or "").strip().lower()
         safe_limit = max(1, min(int(limit), 1000))
 
-        memory_items = []
-        for item in self._memory.workpackage_publishes.values():
-            if str(item.get("workpackage_id") or "") != workpackage_id:
-                continue
-            if normalized_status and str(item.get("status") or "").lower() != normalized_status:
-                continue
-            memory_items.append(self._serialize_record(dict(item)))
-
         if self._db_enabled():
             sql = """
                 SELECT publish_id, workpackage_id, version, status, evidence_ref, published_at, bundle_path, published_by,
                        confirmation_user, confirmation_decision, confirmation_timestamp, created_at, updated_at
-                FROM addr_workpackage_publish
+                FROM runtime.publish_record
                 WHERE workpackage_id = :workpackage_id
             """
             params: dict[str, Any] = {"workpackage_id": workpackage_id, "limit": safe_limit}
@@ -345,12 +258,20 @@ class GovernanceRepository:
                 params["status"] = normalized_status
             sql += " ORDER BY COALESCE(published_at, created_at) DESC, version DESC LIMIT :limit"
             rows = self._query(sql, params)
-            if rows:
-                memory_items = [self._serialize_record(row) for row in rows]
-                for row in memory_items:
-                    key = f"{row.get('workpackage_id')}::{row.get('version')}"
-                    self._memory.workpackage_publishes[key] = dict(row)
+            db_items = [self._serialize_record(row) for row in rows]
+            for row in db_items:
+                key = f"{row.get('workpackage_id')}::{row.get('version')}"
+                self._memory.workpackage_publishes[key] = dict(row)
+            db_items.sort(key=lambda x: str(x.get("published_at") or x.get("created_at") or ""), reverse=True)
+            return db_items[:safe_limit]
 
+        memory_items = []
+        for item in self._memory.workpackage_publishes.values():
+            if str(item.get("workpackage_id") or "") != workpackage_id:
+                continue
+            if normalized_status and str(item.get("status") or "").lower() != normalized_status:
+                continue
+            memory_items.append(self._serialize_record(dict(item)))
         memory_items.sort(key=lambda x: str(x.get("published_at") or x.get("created_at") or ""), reverse=True)
         return memory_items[:safe_limit]
 
@@ -419,7 +340,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            INSERT INTO addr_batch (batch_id, batch_name, status, created_at, updated_at)
+            INSERT INTO governance.batch (batch_id, batch_name, status, created_at, updated_at)
             VALUES (:batch_id, :batch_name, :status, {now_func}, {now_func})
             ON CONFLICT (batch_id)
             DO UPDATE SET batch_name = EXCLUDED.batch_name, status = EXCLUDED.status, updated_at = {now_func};
@@ -432,7 +353,7 @@ class GovernanceRepository:
         )
         self._execute(
             f"""
-            INSERT INTO addr_task_run (task_id, batch_id, status, error_message, runtime, trace_id, created_at, updated_at)
+            INSERT INTO governance.task_run (task_id, batch_id, status, error_message, runtime, trace_id, created_at, updated_at)
             VALUES (:task_id, :batch_id, :status, :error_message, :runtime, :trace_id, {now_func}, {now_func})
             ON CONFLICT (task_id)
             DO UPDATE SET batch_id = EXCLUDED.batch_id, status = EXCLUDED.status, error_message = EXCLUDED.error_message,
@@ -449,7 +370,67 @@ class GovernanceRepository:
         )
 
     def get_task(self, task_id: str) -> dict[str, Any] | None:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT
+                    tr.task_id,
+                    tr.batch_id,
+                    tr.status,
+                    tr.created_at,
+                    b.batch_name,
+                    tr.runtime AS queue_backend,
+                    tr.error_message AS queue_message,
+                    tr.trace_id
+                FROM governance.task_run tr
+                LEFT JOIN governance.batch b
+                    ON b.batch_id = tr.batch_id
+                WHERE tr.task_id = :task_id
+                LIMIT 1;
+                """,
+                {"task_id": task_id},
+            )
+            if not rows:
+                return None
+            row = self._serialize_record(rows[0])
+            self._memory.tasks[task_id] = dict(row)
+            return dict(row)
         return self._memory.tasks.get(task_id)
+
+    def list_tasks(self, *, status: str = "", limit: int = 200) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(1000, int(limit)))
+        status_filter = str(status or "").strip().upper()
+        if self._db_enabled():
+            sql = """
+                SELECT
+                    tr.task_id,
+                    tr.batch_id,
+                    tr.status,
+                    tr.created_at,
+                    b.batch_name,
+                    tr.runtime AS queue_backend,
+                    tr.error_message AS queue_message,
+                    tr.trace_id
+                FROM governance.task_run tr
+                LEFT JOIN governance.batch b
+                    ON b.batch_id = tr.batch_id
+                WHERE (:status = '' OR UPPER(tr.status) = :status)
+                ORDER BY tr.created_at DESC
+                LIMIT :limit;
+            """
+            rows = self._query(sql, {"status": status_filter, "limit": safe_limit})
+            normalized = [self._serialize_record(item) for item in rows]
+            for row in normalized:
+                task_id = str(row.get("task_id") or "")
+                if task_id:
+                    self._memory.tasks[task_id] = dict(row)
+            return normalized
+
+        rows = [dict(item) for item in self._memory.tasks.values()]
+        if status_filter:
+            rows = [item for item in rows if str(item.get("status") or "").upper() == status_filter]
+        rows.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+        return rows[:safe_limit]
 
     def set_task_status(self, task_id: str, status: str) -> None:
         if task_id in self._memory.tasks:
@@ -457,7 +438,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            UPDATE addr_task_run
+            UPDATE governance.task_run
             SET status = :status, updated_at = {now_func}, finished_at = CASE WHEN :status IN ('SUCCEEDED','FAILED','BLOCKED') THEN {now_func} ELSE finished_at END
             WHERE task_id = :task_id;
             """,
@@ -472,20 +453,48 @@ class GovernanceRepository:
     ) -> None:
         self._memory.results[task_id] = results
         task = self._memory.tasks.get(task_id, {})
-        batch_id = task.get("batch_id", task_id)
-        raw_by_id = {item.get("raw_id"): item for item in (raw_records or [])}
+        self.save_raw_records(task_id=task_id, raw_records=(raw_records or []))
         now_func = self._sql_now()
         evidence_cast = self._sql_json_cast(":evidence")
-        
+
         for item in results:
             raw_id = item.get("raw_id")
             if not raw_id:
                 continue
-            raw_input = raw_by_id.get(raw_id, {})
-            raw_text = raw_input.get("raw_text") or item.get("canon_text", "")
+            evidence_json = json.dumps(item.get("evidence", {"items": []}), ensure_ascii=False)
             self._execute(
                 f"""
-                INSERT INTO addr_raw (raw_id, batch_id, raw_text, province, city, district, street, detail, raw_hash, ingested_at)
+                INSERT INTO governance.canonical_record (canonical_id, raw_id, canon_text, confidence, strategy, evidence, ruleset_version, created_at, updated_at)
+                VALUES (:canonical_id, :raw_id, :canon_text, :confidence, :strategy, {evidence_cast}, :ruleset_version, {now_func}, {now_func})
+                ON CONFLICT (canonical_id)
+                DO UPDATE SET canon_text = EXCLUDED.canon_text, confidence = EXCLUDED.confidence,
+                              strategy = EXCLUDED.strategy, evidence = EXCLUDED.evidence, updated_at = {now_func};
+                """,
+                {
+                    "canonical_id": f"canon_{raw_id}",
+                    "raw_id": raw_id,
+                    "canon_text": item.get("canon_text", ""),
+                    "confidence": float(item.get("confidence", 0.0)),
+                    "strategy": item.get("strategy", "human_required"),
+                    "evidence": evidence_json,
+                    "ruleset_version": task.get("ruleset_id", "default"),
+                },
+            )
+
+    def save_raw_records(self, *, task_id: str, raw_records: list[dict[str, Any]]) -> None:
+        if not raw_records:
+            return
+        task = self._memory.tasks.get(task_id, {})
+        batch_id = task.get("batch_id", task_id)
+        now_func = self._sql_now()
+        for raw_input in raw_records:
+            raw_id = raw_input.get("raw_id")
+            if not raw_id:
+                continue
+            raw_text = raw_input.get("raw_text") or ""
+            self._execute(
+                f"""
+                INSERT INTO governance.raw_record (raw_id, batch_id, raw_text, province, city, district, street, detail, raw_hash, ingested_at)
                 VALUES (:raw_id, :batch_id, :raw_text, :province, :city, :district, :street, :detail, :raw_hash, {now_func})
                 ON CONFLICT (raw_id)
                 DO UPDATE SET batch_id = EXCLUDED.batch_id, raw_text = EXCLUDED.raw_text,
@@ -505,28 +514,54 @@ class GovernanceRepository:
                 },
             )
 
-            evidence_json = json.dumps(item.get("evidence", {"items": []}), ensure_ascii=False)
-            self._execute(
-                f"""
-                INSERT INTO addr_canonical (canonical_id, raw_id, canon_text, confidence, strategy, evidence, ruleset_version, created_at, updated_at)
-                VALUES (:canonical_id, :raw_id, :canon_text, :confidence, :strategy, {evidence_cast}, :ruleset_version, {now_func}, {now_func})
-                ON CONFLICT (canonical_id)
-                DO UPDATE SET canon_text = EXCLUDED.canon_text, confidence = EXCLUDED.confidence,
-                              strategy = EXCLUDED.strategy, evidence = EXCLUDED.evidence, updated_at = {now_func};
-                """,
-                {
-                    "canonical_id": f"canon_{raw_id}",
-                    "raw_id": raw_id,
-                    "canon_text": item.get("canon_text", ""),
-                    "confidence": float(item.get("confidence", 0.0)),
-                    "strategy": item.get("strategy", "human_required"),
-                    "evidence": evidence_json,
-                    "ruleset_version": task.get("ruleset_id", "default"),
-                },
-            )
-
     def get_results(self, task_id: str) -> list[dict[str, Any]]:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT
+                    raw.raw_id,
+                    canon.canon_text,
+                    canon.confidence,
+                    canon.strategy,
+                    canon.evidence
+                FROM governance.task_run tr
+                JOIN governance.raw_record raw
+                    ON raw.batch_id = tr.batch_id
+                JOIN governance.canonical_record canon
+                    ON canon.raw_id = raw.raw_id
+                WHERE tr.task_id = :task_id
+                ORDER BY raw.raw_id ASC;
+                """,
+                {"task_id": task_id},
+            )
+            normalized: list[dict[str, Any]] = []
+            for row in rows:
+                item = dict(row)
+                item["evidence"] = self._normalize_json_value(item.get("evidence"))
+                normalized.append(item)
+            self._memory.results[task_id] = normalized
+            return normalized
         return self._memory.results.get(task_id, [])
+
+    def list_raw_records_by_task(self, task_id: str) -> list[dict[str, Any]]:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT raw.raw_id, raw.raw_text
+                FROM governance.task_run tr
+                JOIN governance.raw_record raw
+                    ON raw.batch_id = tr.batch_id
+                WHERE tr.task_id = :task_id
+                ORDER BY raw.raw_id ASC;
+                """,
+                {"task_id": task_id},
+            )
+            normalized = [{"raw_id": str(row.get("raw_id") or ""), "raw_text": str(row.get("raw_text") or "")} for row in rows]
+            return normalized
+        records: list[dict[str, Any]] = []
+        for item in self._memory.results.get(task_id, []):
+            records.append({"raw_id": str(item.get("raw_id") or ""), "raw_text": str(item.get("canon_text") or "")})
+        return records
 
     def upsert_review(self, task_id: str, review_data: dict[str, Any]) -> None:
         self._memory.reviews[task_id] = review_data
@@ -541,7 +576,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            INSERT INTO addr_review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
+            INSERT INTO governance.review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
             VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, :reviewed_at, {now_func}, {now_func})
             ON CONFLICT (review_id)
             DO UPDATE SET review_status = EXCLUDED.review_status, final_canon_text = EXCLUDED.final_canon_text, reviewer = EXCLUDED.reviewer,
@@ -559,6 +594,22 @@ class GovernanceRepository:
         )
 
     def get_review(self, task_id: str) -> dict[str, Any] | None:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT raw_id, review_status, final_canon_text, reviewer, comment
+                FROM governance.review
+                WHERE review_id = :review_id
+                ORDER BY COALESCE(reviewed_at, updated_at, created_at) DESC
+                LIMIT 1;
+                """,
+                {"review_id": f"review_{task_id}"},
+            )
+            if not rows:
+                return None
+            row = self._serialize_record(rows[0])
+            self._memory.reviews[task_id] = dict(row)
+            return dict(row)
         return self._memory.reviews.get(task_id)
 
     def _increment_ruleset_feedback(self, ruleset_id: str, review_status: str) -> dict[str, int]:
@@ -577,7 +628,7 @@ class GovernanceRepository:
         config_cast = self._sql_json_cast(":config_json")
         self._execute(
             f"""
-            UPDATE addr_ruleset
+            UPDATE governance.ruleset
             SET config_json = {config_cast}, updated_at = {now_func}
             WHERE ruleset_id = :ruleset_id;
             """,
@@ -630,7 +681,7 @@ class GovernanceRepository:
             evidence_cast = self._sql_json_cast(":evidence")
             self._execute(
                 f"""
-                UPDATE addr_canonical
+                UPDATE governance.canonical_record
                 SET canon_text = :canon_text,
                     confidence = :confidence,
                     strategy = :strategy,
@@ -662,6 +713,23 @@ class GovernanceRepository:
         }
 
     def get_ruleset(self, ruleset_id: str) -> dict[str, Any] | None:
+        if self._db_enabled():
+            rows = self._query(
+                """
+                SELECT ruleset_id, version, is_active, config_json
+                FROM governance.ruleset
+                WHERE ruleset_id = :ruleset_id
+                LIMIT 1;
+                """,
+                {"ruleset_id": ruleset_id},
+            )
+            if not rows:
+                cached = self._memory.rulesets.get(ruleset_id)
+                return dict(cached) if cached else None
+            row = self._serialize_record(rows[0])
+            row["config_json"] = self._normalize_json_value(row.get("config_json"))
+            self._memory.rulesets[ruleset_id] = dict(row)
+            return dict(row)
         return self._memory.rulesets.get(ruleset_id)
 
     def list_manual_review_items(self, *, pending_only: bool = True, limit: int = 200) -> list[dict[str, Any]]:
@@ -676,7 +744,7 @@ class GovernanceRepository:
                         comment,
                         reviewed_at,
                         updated_at
-                    FROM addr_review
+                    FROM governance.review
                     ORDER BY raw_id, COALESCE(reviewed_at, updated_at, created_at) DESC
                 )
                 SELECT
@@ -694,15 +762,15 @@ class GovernanceRepository:
                     rl.reviewer,
                     rl.comment AS review_comment,
                     rl.reviewed_at
-                FROM addr_task_run tr
-                JOIN addr_raw raw
+                FROM governance.task_run tr
+                JOIN governance.raw_record raw
                     ON raw.batch_id = tr.batch_id
-                JOIN addr_canonical canon
+                JOIN governance.canonical_record canon
                     ON canon.raw_id = raw.raw_id
                 LEFT JOIN review_latest rl
                     ON rl.raw_id = raw.raw_id
                 WHERE (
-                        canon.strategy IN ('human_required', 'human_rejected', 'low_confidence', 'fallback')
+                        canon.strategy IN ('human_required', 'human_rejected', 'low_confidence')
                         OR canon.confidence < :confidence_gate
                         OR tr.status IN ('SUCCEEDED', 'REVIEWED')
                     )
@@ -821,7 +889,7 @@ class GovernanceRepository:
             now_func = self._sql_now()
             self._execute(
                 f"""
-                INSERT INTO addr_review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
+                INSERT INTO governance.review (review_id, raw_id, review_status, final_canon_text, reviewer, comment, reviewed_at, created_at, updated_at)
                 VALUES (:review_id, :raw_id, :review_status, :final_canon_text, :reviewer, :comment, {now_func}, {now_func}, {now_func});
                 """,
                 {
@@ -836,7 +904,7 @@ class GovernanceRepository:
             if normalized_status == "approved":
                 self._execute(
                     f"""
-                    UPDATE addr_canonical
+                    UPDATE governance.canonical_record
                     SET
                         canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
                         confidence = GREATEST(confidence, 0.90),
@@ -849,7 +917,7 @@ class GovernanceRepository:
             elif normalized_status == "rejected":
                 self._execute(
                     f"""
-                    UPDATE addr_canonical
+                    UPDATE governance.canonical_record
                     SET
                         confidence = LEAST(confidence, 0.50),
                         strategy = 'human_rejected',
@@ -861,7 +929,7 @@ class GovernanceRepository:
             else:
                 self._execute(
                     f"""
-                    UPDATE addr_canonical
+                    UPDATE governance.canonical_record
                     SET
                         canon_text = CASE WHEN :final_canon_text IS NOT NULL AND :final_canon_text <> '' THEN :final_canon_text ELSE canon_text END,
                         confidence = GREATEST(confidence, 0.95),
@@ -873,7 +941,7 @@ class GovernanceRepository:
                 )
             self._execute(
                 f"""
-                UPDATE addr_task_run
+                UPDATE governance.task_run
                 SET status = CASE WHEN status = 'FAILED' THEN status ELSE 'REVIEWED' END,
                     updated_at = {now_func}
                 WHERE task_id = :task_id;
@@ -944,7 +1012,7 @@ class GovernanceRepository:
         payload_cast = self._sql_json_cast(":payload")
         self._execute(
             f"""
-            INSERT INTO addr_audit_event (event_id, event_type, caller, payload, related_change_id, created_at)
+            INSERT INTO audit.event_log (event_id, event_type, caller, payload, related_change_id, created_at)
             VALUES (:event_id, :event_type, :caller, {payload_cast}, :related_change_id, {now_func})
             ON CONFLICT (event_id) DO NOTHING;
             """,
@@ -993,7 +1061,7 @@ class GovernanceRepository:
         payload_cast = self._sql_json_cast(":payload_json")
         self._execute(
             f"""
-            INSERT INTO addr_observation_event (
+            INSERT INTO governance.observation_event (
                 event_id, trace_id, span_id, source_service, event_type, status, severity,
                 task_id, workpackage_id, ruleset_id, payload_json, created_at
             ) VALUES (
@@ -1033,7 +1101,7 @@ class GovernanceRepository:
                 """
                 SELECT event_id, trace_id, span_id, source_service, event_type, status, severity,
                        task_id, workpackage_id, ruleset_id, payload_json, created_at
-                FROM addr_observation_event
+                FROM governance.observation_event
                 ORDER BY created_at DESC
                 LIMIT :limit
                 """,
@@ -1086,7 +1154,7 @@ class GovernanceRepository:
         labels_cast = self._sql_json_cast(":labels_json")
         self._execute(
             f"""
-            INSERT INTO addr_observation_metric (
+            INSERT INTO governance.observation_metric (
                 metric_id, metric_name, metric_value, labels_json, window_start, window_end, created_at
             ) VALUES (
                 :metric_id, :metric_name, :metric_value, {labels_cast}, :window_start, :window_end, {now_func}
@@ -1110,7 +1178,7 @@ class GovernanceRepository:
             db_rows = self._query(
                 """
                 SELECT metric_id, metric_name, metric_value, labels_json, window_start, window_end, created_at
-                FROM addr_observation_metric
+                FROM governance.observation_metric
                 WHERE metric_name = :metric_name
                 ORDER BY COALESCE(window_end, created_at) DESC
                 LIMIT :limit
@@ -1152,7 +1220,7 @@ class GovernanceRepository:
             "workpackage_id": str(workpackage_id or ""),
             "owner": str(owner or ""),
             "ack_by": "",
-            "ack_at": "",
+            "ack_at": None,
             "created_at": self._now_iso(),
             "updated_at": self._now_iso(),
         }
@@ -1160,7 +1228,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            INSERT INTO addr_alert_event (
+            INSERT INTO governance.alert_event (
                 alert_id, alert_rule, severity, status, trigger_value, threshold_value,
                 trace_id, task_id, workpackage_id, owner, ack_by, ack_at, created_at, updated_at
             ) VALUES (
@@ -1180,7 +1248,7 @@ class GovernanceRepository:
                 """
                 SELECT alert_id, alert_rule, severity, status, trigger_value, threshold_value, trace_id,
                        task_id, workpackage_id, owner, ack_by, ack_at, created_at, updated_at
-                FROM addr_alert_event
+                FROM governance.alert_event
                 ORDER BY created_at DESC
                 LIMIT :limit
                 """,
@@ -1195,6 +1263,20 @@ class GovernanceRepository:
 
     def ack_observation_alert(self, alert_id: str, actor: str) -> dict[str, Any] | None:
         item = self._memory.observation_alerts.get(alert_id)
+        if not item and self._db_enabled():
+            rows = self._query(
+                """
+                SELECT alert_id, alert_rule, severity, status, trigger_value, threshold_value, trace_id,
+                       task_id, workpackage_id, owner, ack_by, ack_at, created_at, updated_at
+                FROM governance.alert_event
+                WHERE alert_id = :alert_id
+                LIMIT 1
+                """,
+                {"alert_id": alert_id},
+            )
+            if rows:
+                item = self._serialize_record(rows[0])
+                self._memory.observation_alerts[alert_id] = dict(item)
         if not item:
             return None
         item["status"] = "acked"
@@ -1204,7 +1286,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            UPDATE addr_alert_event
+            UPDATE governance.alert_event
             SET status = :status, ack_by = :ack_by, ack_at = :ack_at, updated_at = {now_func}
             WHERE alert_id = :alert_id;
             """,
@@ -1348,7 +1430,7 @@ class GovernanceRepository:
         config_cast = self._sql_json_cast(":config_json")
         self._execute(
             f"""
-            INSERT INTO addr_ruleset (ruleset_id, version, is_active, config_json, created_at, updated_at)
+            INSERT INTO governance.ruleset (ruleset_id, version, is_active, config_json, created_at, updated_at)
             VALUES (:ruleset_id, :version, :is_active, {config_cast}, {now_func}, {now_func})
             ON CONFLICT (ruleset_id)
             DO UPDATE SET version = EXCLUDED.version, is_active = EXCLUDED.is_active, config_json = EXCLUDED.config_json, updated_at = {now_func};
@@ -1389,7 +1471,7 @@ class GovernanceRepository:
         evidence_cast = self._sql_json_cast(":evidence_bullets")
         self._execute(
             f"""
-            INSERT INTO addr_change_request (
+            INSERT INTO governance.change_request (
                 change_id, from_ruleset_id, to_ruleset_id, baseline_task_id, candidate_task_id,
                 diff_json, scorecard_json, recommendation, status, approved_by, approved_at,
                 review_comment, evidence_bullets, created_at, updated_at
@@ -1473,7 +1555,7 @@ class GovernanceRepository:
         now_func = self._sql_now()
         self._execute(
             f"""
-            UPDATE addr_change_request
+            UPDATE governance.change_request
             SET status = :status,
                 approved_by = :approved_by,
                 approved_at = :approved_at,
@@ -1557,9 +1639,9 @@ class GovernanceRepository:
         target["published_reason"] = reason or f"activated via change {change_id}"
 
         now_func = self._sql_now()
-        self._execute("UPDATE addr_ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
+        self._execute("UPDATE governance.ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
         self._execute(
-            f"UPDATE addr_ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
+            f"UPDATE governance.ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
             {"ruleset_id": ruleset_id},
         )
         self._append_audit_event(
@@ -1576,6 +1658,25 @@ class GovernanceRepository:
         return target
 
     def list_audit_events(self, related_change_id: str | None = None) -> list[dict[str, Any]]:
+        if self._db_enabled():
+            sql = """
+                SELECT event_id, event_type, caller, payload, related_change_id, created_at
+                FROM audit.event_log
+            """
+            params: dict[str, Any] = {}
+            if related_change_id:
+                sql += " WHERE related_change_id = :related_change_id"
+                params["related_change_id"] = related_change_id
+            sql += " ORDER BY created_at DESC LIMIT 5000"
+            rows = self._query(sql, params)
+            normalized: list[dict[str, Any]] = []
+            for row in rows:
+                item = self._serialize_record(row)
+                item["payload"] = self._normalize_json_value(item.get("payload") or {})
+                normalized.append(item)
+            # Keep memory cache warm for in-process reads.
+            self._memory.audit_events = list(reversed(normalized))
+            return normalized
         if not related_change_id:
             return list(self._memory.audit_events)
         return [evt for evt in self._memory.audit_events if evt.get("related_change_id") == related_change_id]
@@ -1622,9 +1723,9 @@ class GovernanceRepository:
         target["published_by"] = operator
         target["published_reason"] = reason
         now_func = self._sql_now()
-        self._execute("UPDATE addr_ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
+        self._execute("UPDATE governance.ruleset SET is_active = FALSE WHERE is_active = TRUE;", {})
         self._execute(
-            f"UPDATE addr_ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
+            f"UPDATE governance.ruleset SET is_active = TRUE, updated_at = {now_func} WHERE ruleset_id = :ruleset_id;",
             {"ruleset_id": ruleset_id},
         )
         return target

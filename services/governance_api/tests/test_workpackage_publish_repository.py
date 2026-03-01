@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
 
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 

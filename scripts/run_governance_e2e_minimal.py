@@ -11,8 +11,7 @@ from services.governance_api.app.main import app
 
 
 def ensure_env(workspace_root: Path) -> None:
-    os.environ.setdefault("AGENT_RUNTIME", "openhands")
-    os.environ.setdefault("OPENHANDS_STRICT", "1")
+    os.environ.setdefault("AGENT_RUNTIME", "opencode")
     os.environ.setdefault("GOVERNANCE_QUEUE_MODE", "sync")
     config_path = workspace_root / "config" / "llm_api.json"
     os.environ.setdefault("LLM_CONFIG_PATH", str(config_path))

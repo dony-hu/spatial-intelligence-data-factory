@@ -4,11 +4,13 @@ import json
 import os
 from typing import Any, Optional
 
+from services.trust_data_hub.app.repositories.schema_bootstrap import ensure_trust_pg_schema
 
 class MetaDbPersister:
     def __init__(self) -> None:
         # Unified PG mode: use DATABASE_URL as the primary DSN.
         self._dsn = os.getenv("DATABASE_URL") or os.getenv("TRUST_META_DATABASE_URL")
+        ensure_trust_pg_schema(self._dsn)
 
     def enabled(self) -> bool:
         return bool(self._dsn and str(self._dsn).startswith("postgresql"))
@@ -154,10 +156,12 @@ class MetaDbPersister:
                     """
                     INSERT INTO trust_meta.source_snapshot
                     (namespace_id, snapshot_id, source_id, version_tag, fetched_at, etag, last_modified,
-                     content_hash, raw_uri, parsed_uri, parsed_payload, status, row_count)
+                     content_hash, raw_uri, parsed_uri, parsed_payload, status, row_count,
+                     source_name, record_count, size_bytes, checksum, storage_path, format, created_at, meta_info)
                     VALUES
                     (:namespace_id, :snapshot_id, :source_id, :version_tag, :fetched_at, :etag, :last_modified,
-                     :content_hash, :raw_uri, :parsed_uri, CAST(:parsed_payload AS jsonb), :status, :row_count)
+                     :content_hash, :raw_uri, :parsed_uri, CAST(:parsed_payload AS jsonb), :status, :row_count,
+                     :source_name, :record_count, :size_bytes, :checksum, :storage_path, :format, :created_at, CAST(:meta_info AS jsonb))
                     ON CONFLICT (namespace_id, snapshot_id)
                     DO UPDATE SET
                       source_id = EXCLUDED.source_id,
@@ -170,7 +174,15 @@ class MetaDbPersister:
                       parsed_uri = EXCLUDED.parsed_uri,
                       parsed_payload = EXCLUDED.parsed_payload,
                       status = EXCLUDED.status,
-                      row_count = EXCLUDED.row_count
+                      row_count = EXCLUDED.row_count,
+                      source_name = EXCLUDED.source_name,
+                      record_count = EXCLUDED.record_count,
+                      size_bytes = EXCLUDED.size_bytes,
+                      checksum = EXCLUDED.checksum,
+                      storage_path = EXCLUDED.storage_path,
+                      format = EXCLUDED.format,
+                      created_at = EXCLUDED.created_at,
+                      meta_info = EXCLUDED.meta_info
                     """
                 ),
                 {
@@ -187,6 +199,14 @@ class MetaDbPersister:
                     "parsed_payload": json.dumps(snapshot.get("payload") or {}, ensure_ascii=False),
                     "status": snapshot.get("status"),
                     "row_count": int(snapshot.get("row_count") or 0),
+                    "source_name": snapshot.get("source_id") or "",
+                    "record_count": int(snapshot.get("row_count") or 0),
+                    "size_bytes": int(snapshot.get("size_bytes") or 0),
+                    "checksum": snapshot.get("content_hash"),
+                    "storage_path": snapshot.get("raw_uri"),
+                    "format": "json",
+                    "created_at": snapshot.get("fetched_at"),
+                    "meta_info": json.dumps({"compat": True}, ensure_ascii=False),
                 },
             )
 
@@ -260,14 +280,22 @@ class MetaDbPersister:
                 text(
                     """
                     INSERT INTO trust_meta.snapshot_quality_report
-                    (namespace_id, snapshot_id, report_json, quality_score, validator_version)
+                    (namespace_id, snapshot_id, report_json, quality_score, validator_version,
+                     report_id, ruleset_version, total_records, valid_records, error_records, score, details, created_at)
                     VALUES
-                    (:namespace_id, :snapshot_id, CAST(:report_json AS jsonb), :quality_score, :validator_version)
+                    (:namespace_id, :snapshot_id, CAST(:report_json AS jsonb), :quality_score, :validator_version,
+                     :report_id, :ruleset_version, :total_records, :valid_records, :error_records, :score, CAST(:details AS jsonb), NOW())
                     ON CONFLICT (namespace_id, snapshot_id)
                     DO UPDATE SET
                       report_json = EXCLUDED.report_json,
                       quality_score = EXCLUDED.quality_score,
-                      validator_version = EXCLUDED.validator_version
+                      validator_version = EXCLUDED.validator_version,
+                      ruleset_version = EXCLUDED.ruleset_version,
+                      total_records = EXCLUDED.total_records,
+                      valid_records = EXCLUDED.valid_records,
+                      error_records = EXCLUDED.error_records,
+                      score = EXCLUDED.score,
+                      details = EXCLUDED.details
                     """
                 ),
                 {
@@ -276,6 +304,13 @@ class MetaDbPersister:
                     "report_json": json.dumps(report.get("report_json") or {}, ensure_ascii=False),
                     "quality_score": int(report.get("quality_score") or 0),
                     "validator_version": report.get("validator_version") or "v0.1",
+                    "report_id": f"qr_{snapshot_id}",
+                    "ruleset_version": report.get("validator_version") or "v0.1",
+                    "total_records": int(report.get("total_records") or 0),
+                    "valid_records": int(report.get("valid_records") or 0),
+                    "error_records": int(report.get("error_records") or 0),
+                    "score": float(report.get("quality_score") or 0),
+                    "details": json.dumps(report.get("report_json") or {}, ensure_ascii=False),
                 },
             )
 
@@ -307,14 +342,20 @@ class MetaDbPersister:
                 text(
                     """
                     INSERT INTO trust_meta.snapshot_diff_report
-                    (namespace_id, base_snapshot_id, new_snapshot_id, diff_json, diff_severity)
+                    (namespace_id, base_snapshot_id, new_snapshot_id, diff_json, diff_severity,
+                     diff_id, added_count, removed_count, modified_count, diff_summary, created_at)
                     VALUES
-                    (:namespace_id, :base_snapshot_id, :new_snapshot_id, CAST(:diff_json AS jsonb), :diff_severity)
+                    (:namespace_id, :base_snapshot_id, :new_snapshot_id, CAST(:diff_json AS jsonb), :diff_severity,
+                     :diff_id, :added_count, :removed_count, :modified_count, CAST(:diff_summary AS jsonb), NOW())
                     ON CONFLICT (namespace_id, new_snapshot_id)
                     DO UPDATE SET
                       base_snapshot_id = EXCLUDED.base_snapshot_id,
                       diff_json = EXCLUDED.diff_json,
-                      diff_severity = EXCLUDED.diff_severity
+                      diff_severity = EXCLUDED.diff_severity,
+                      added_count = EXCLUDED.added_count,
+                      removed_count = EXCLUDED.removed_count,
+                      modified_count = EXCLUDED.modified_count,
+                      diff_summary = EXCLUDED.diff_summary
                     """
                 ),
                 {
@@ -323,6 +364,11 @@ class MetaDbPersister:
                     "new_snapshot_id": report.get("new_snapshot_id"),
                     "diff_json": json.dumps(report.get("diff_json") or {}, ensure_ascii=False),
                     "diff_severity": report.get("diff_severity") or "low",
+                    "diff_id": f"diff_{report.get('new_snapshot_id')}",
+                    "added_count": int(report.get("added_count") or 0),
+                    "removed_count": int(report.get("removed_count") or 0),
+                    "modified_count": int(report.get("modified_count") or 0),
+                    "diff_summary": json.dumps(report.get("diff_json") or {}, ensure_ascii=False),
                 },
             )
 
@@ -353,16 +399,21 @@ class MetaDbPersister:
             conn.execute(
                 text(
                     """
+                    DELETE FROM trust_meta.active_release
+                    WHERE namespace_id = :namespace_id
+                    """
+                ),
+                {"namespace_id": namespace},
+            )
+            conn.execute(
+                text(
+                    """
                     INSERT INTO trust_meta.active_release
-                    (namespace_id, source_id, active_snapshot_id, activated_by, activated_at, activation_note)
+                    (namespace_id, source_id, active_snapshot_id, activated_by, activated_at, activation_note,
+                     release_tag, promoted_at, promoted_by)
                     VALUES
-                    (:namespace_id, :source_id, :active_snapshot_id, :activated_by, :activated_at, :activation_note)
-                    ON CONFLICT (namespace_id, source_id)
-                    DO UPDATE SET
-                      active_snapshot_id = EXCLUDED.active_snapshot_id,
-                      activated_by = EXCLUDED.activated_by,
-                      activated_at = EXCLUDED.activated_at,
-                      activation_note = EXCLUDED.activation_note
+                    (:namespace_id, :source_id, :active_snapshot_id, :activated_by, :activated_at, :activation_note,
+                     :release_tag, :promoted_at, :promoted_by)
                     """
                 ),
                 {
@@ -372,6 +423,9 @@ class MetaDbPersister:
                     "activated_by": row.get("activated_by"),
                     "activated_at": row.get("activated_at"),
                     "activation_note": row.get("activation_note"),
+                    "release_tag": row.get("active_snapshot_id"),
+                    "promoted_at": row.get("activated_at"),
+                    "promoted_by": row.get("activated_by"),
                 },
             )
 
@@ -449,16 +503,23 @@ class MetaDbPersister:
                 text(
                     """
                     INSERT INTO trust_meta.validation_replay_run
-                    (namespace_id, replay_id, snapshot_id, request_payload, replay_result, schema_version, created_at)
+                    (namespace_id, replay_id, snapshot_id, request_payload, replay_result, schema_version, created_at,
+                     run_id, ruleset_id, status, started_at, completed_at, result_summary)
                     VALUES
-                    (:namespace_id, :replay_id, :snapshot_id, CAST(:request_payload AS jsonb), CAST(:replay_result AS jsonb), :schema_version, :created_at)
+                    (:namespace_id, :replay_id, :snapshot_id, CAST(:request_payload AS jsonb), CAST(:replay_result AS jsonb), :schema_version, :created_at,
+                     :run_id, :ruleset_id, :status, :started_at, :completed_at, CAST(:result_summary AS jsonb))
                     ON CONFLICT (replay_id)
                     DO UPDATE SET
                       snapshot_id = EXCLUDED.snapshot_id,
                       request_payload = EXCLUDED.request_payload,
                       replay_result = EXCLUDED.replay_result,
                       schema_version = EXCLUDED.schema_version,
-                      created_at = EXCLUDED.created_at
+                      created_at = EXCLUDED.created_at,
+                      ruleset_id = EXCLUDED.ruleset_id,
+                      status = EXCLUDED.status,
+                      started_at = EXCLUDED.started_at,
+                      completed_at = EXCLUDED.completed_at,
+                      result_summary = EXCLUDED.result_summary
                     """
                 ),
                 {
@@ -469,6 +530,12 @@ class MetaDbPersister:
                     "replay_result": json.dumps(replay_run.get("replay_result") or {}, ensure_ascii=False),
                     "schema_version": replay_run.get("schema_version") or "trust.validation.v1",
                     "created_at": replay_run.get("created_at"),
+                    "run_id": replay_run.get("replay_id"),
+                    "ruleset_id": replay_run.get("schema_version") or "trust.validation.v1",
+                    "status": "completed",
+                    "started_at": replay_run.get("created_at"),
+                    "completed_at": replay_run.get("created_at"),
+                    "result_summary": json.dumps(replay_run.get("replay_result") or {}, ensure_ascii=False),
                 },
             )
 

@@ -19,6 +19,19 @@ method:
     - solutioning
     - implementation
 
+method_repository:
+  enabled: true
+  source_type: "local_path"
+  path: "/Users/01411043/code/BMAD-METHOD"
+  env_fallback: "BMAD_METHOD_REPO"
+  required_assets:
+    - "_bmad"
+    - "docs"
+  resolution_order:
+    - "project_overrides"
+    - "project_config"
+    - "method_repo_templates"
+
 defaults:
   language: "zh-CN"
   status_command: "/workflow-status"

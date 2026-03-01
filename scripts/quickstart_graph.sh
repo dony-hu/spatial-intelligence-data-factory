@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ "${ALLOW_DEMO_SCRIPTS:-0}" != "1" ]]; then
-    echo "[blocked] scripts/quickstart_graph.sh 已默认禁用（sample/mock流程）"
+    echo "[blocked] scripts/quickstart_graph.sh 已默认禁用（样例流程）"
     echo "如需强制运行请设置: ALLOW_DEMO_SCRIPTS=1"
     echo "建议使用真实最小链路: ./scripts/run_governance_e2e_minimal.sh"
     exit 2
@@ -70,7 +70,7 @@ echo "  1. Open visualization in browser:"
 echo -e "     ${BLUE}open output/entity_relationship_graph.html${NC}"
 echo ""
 echo "  2. Query the database:"
-echo -e "     ${BLUE}sqlite3 database/entity_graph.db${NC}"
+echo -e "     ${BLUE}psql \"\$DATABASE_URL\" -c \"SELECT now();\"${NC}"
 echo ""
 echo "  3. View JSON graph:"
 echo -e "     ${BLUE}cat output/graph.json | jq . | head -50${NC}"

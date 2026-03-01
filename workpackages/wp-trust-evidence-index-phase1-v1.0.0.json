@@ -9,13 +9,13 @@
     "released_by": "project-manager",
     "dispatch_time_local": "2026-02-16 11:22:20 CST",
     "rollback_target_version": "wp-core-engine-trust-data-hub-p0-v0.1.0",
-    "runtime_record_ref": "pg://address_line.addr_audit_event"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-trust-evidence-index-phase1-v1.0.0"
   },
   "line_spec": {
     "line_type": "trust_data_hub_phase1",
     "goal": "在PG统一架构下完成证据索引体系设计并形成可执行交付，支撑地址治理产线的可追踪、可回放、可审计闭环",
     "constraints": [
-      "数据库权威源仅允许Postgres，SQLite仅可作为历史兼容读取，不可作为写入与发布依据",
+      "数据库权威源仅允许PostgreSQL，不允许非PG作为写入与发布依据",
       "必须覆盖 addr_batch/addr_task_run/addr_raw/addr_canonical/addr_review/addr_ruleset/addr_change_request/addr_audit_event/api_audit_log/agent_execution_log/failure_queue/replay_runs",
       "必须定义 trace_id 与 agent_run_id 在任务、标准化结果、API审计、Agent审计四层透传规则",
       "必须提供 schema_version 字段规范，覆盖 evidence/diff_json/scorecard_json",
@@ -141,7 +141,7 @@
         "name": "PG统一基线与边界定义",
         "deliverables": [
           "文档: docs/architecture/trust_evidence_pg_baseline.md",
-          "明确声明: SQLite不再作为运行时权威源",
+          "明确声明: 非PG不作为运行时权威源",
           "表级覆盖矩阵: docs/architecture/trust_evidence_table_coverage.csv"
         ],
         "done_definition": [

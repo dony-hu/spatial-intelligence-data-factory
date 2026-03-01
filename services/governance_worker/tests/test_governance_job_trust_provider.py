@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
 
 from services.governance_worker.app.jobs import governance_job
 
 
-class _DummyRuntime:
+class _RuntimeStub:
     def run_task(self, task_context: dict, ruleset: dict):
         return _DummyResult()
 
@@ -46,7 +45,7 @@ def test_governance_job_passes_trust_provider_when_ruleset_declares_trust(monkey
 
     monkeypatch.setattr(governance_job, "ingest_run", lambda payload: payload)
     monkeypatch.setattr(governance_job, "run_address_pipeline", _fake_run)
-    monkeypatch.setattr(governance_job, "get_runtime", lambda: _DummyRuntime())
+    monkeypatch.setattr(governance_job, "get_runtime", lambda: _RuntimeStub())
     monkeypatch.setattr(governance_job, "persist_results", lambda *_args, **_kwargs: {"status": "SUCCEEDED"})
     monkeypatch.setattr(
         governance_job.REPOSITORY,
@@ -65,7 +64,7 @@ def test_governance_job_passes_trust_provider_when_ruleset_declares_trust(monkey
 def test_governance_job_blocks_when_trust_required_but_provider_unavailable(monkeypatch) -> None:
     monkeypatch.setattr(governance_job, "ingest_run", lambda payload: payload)
     monkeypatch.setattr(governance_job, "run_address_pipeline", lambda *_args, **_kwargs: [])
-    monkeypatch.setattr(governance_job, "get_runtime", lambda: _DummyRuntime())
+    monkeypatch.setattr(governance_job, "get_runtime", lambda: _RuntimeStub())
     monkeypatch.setattr(governance_job, "persist_results", lambda *_args, **_kwargs: {"status": "SUCCEEDED"})
     monkeypatch.setattr(
         governance_job.REPOSITORY,

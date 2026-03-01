@@ -1,0 +1,1304 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="27" skipped="0" tests="327" time="65.518" timestamp="2026-03-01T11:28:38.987537+08:00" hostname="SF01411043MACHC"><testcase classname="packages.address_core.tests.test_dedup" name="test_dedup_records_removes_exact_duplicates" time="0.000" /><testcase classname="packages.address_core.tests.test_dedup" name="test_dedup_records_merges_normalized_variants" time="0.000" /><testcase classname="packages.address_core.tests.test_match" name="test_recall_candidates_returns_multiple_ranked_items" time="0.001" /><testcase classname="packages.address_core.tests.test_match" name="test_recall_candidates_truncate_invalid_road_tail" time="0.000" /><testcase classname="packages.address_core.tests.test_match" name="test_recall_candidates_normalizes_raw_input" time="0.000" /><testcase classname="packages.address_core.tests.test_normalize" name="test_normalize_text_basic" time="0.000" /><testcase classname="packages.address_core.tests.test_normalize" name="test_normalize_text_municipality_prefix" time="0.000" /><testcase classname="packages.address_core.tests.test_normalize" name="test_normalize_text_convert_building_suffix" time="0.000" /><testcase classname="packages.address_core.tests.test_parse" name="test_parse_components_partial_fields" time="0.000" /><testcase classname="packages.address_core.tests.test_parse" name="test_parse_components_municipality" time="0.000" /><testcase classname="packages.address_core.tests.test_parse" name="test_parse_components_normalizes_raw_input_before_parse" time="0.000" /><testcase classname="packages.address_core.tests.test_pipeline_no_fallback" name="test_pipeline_blocks_when_records_empty" time="0.000" /><testcase classname="packages.address_core.tests.test_pipeline_no_fallback" name="test_pipeline_blocks_when_raw_text_empty" time="0.000" /><testcase classname="packages.address_core.tests.test_pipeline_smoke" name="test_pipeline_smoke" time="0.000" /><testcase classname="packages.address_core.tests.test_pipeline_trust_provider" name="test_pipeline_appends_trust_query_evidence" time="0.000" /><testcase classname="packages.address_core.tests.test_pipeline_trust_provider" name="test_pipeline_blocks_when_trust_required_and_provider_fails" time="0.000" /><testcase classname="packages.address_core.tests.test_score" name="test_score_confidence_rejects_invalid_road" time="0.000" /><testcase classname="packages.address_core.tests.test_score" name="test_score_confidence_accepts_complete_address" time="0.000" /><testcase classname="packages.address_core.tests.test_score" name="test_score_confidence_marks_building_room_without_unit_as_review" time="0.000" /><testcase classname="packages.address_core.tests.test_trusted_fengtu" name="test_fengtu_client_disabled_by_default" time="0.000" /><testcase classname="packages.address_core.tests.test_trusted_fengtu" name="test_fengtu_client_can_be_disabled_explicitly" time="0.000" /><testcase classname="packages.address_core.tests.test_trusted_fengtu" name="test_fengtu_client_disabled_returns_none_on_real_check" time="0.000" /><testcase classname="packages.address_core.tests.test_trusted_fengtu" name="test_fengtu_network_error_requires_user_confirmation" time="0.298" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_prompt_uses_run_subcommand_and_json_format" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_prompt_timeout_can_be_overridden_by_env" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_prompt_model_can_be_overridden_by_env" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_prompt_model_can_be_loaded_from_config_file" time="0.011" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_parse_output_supports_ndjson_text_events" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_parse_output_supports_fenced_json_in_text_event" time="0.000" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_task_blocks_when_opencode_unavailable" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_opencode_runtime_contract" name="test_run_task_blocks_when_response_invalid" time="0.000" /><testcase classname="packages.agent_runtime.tests.test_runtime_fallback" name="test_legacy_runtime_contract" time="0.000" /><testcase classname="packages.agent_runtime.tests.test_runtime_selector" name="test_runtime_selector_opencode_default" time="0.000" /><testcase classname="packages.agent_runtime.tests.test_runtime_selector" name="test_runtime_selector_rejects_legacy" time="0.001" /><testcase classname="packages.agent_runtime.tests.test_runtime_selector_contract" name="test_runtime_selector_returns_opencode_by_default" time="0.000" /><testcase classname="packages.agent_runtime.tests.test_runtime_selector_contract" name="test_runtime_selector_rejects_unsupported_runtime" time="0.000" /><testcase classname="services.governance_api.tests.test_blocked_confirmation_audit" name="test_log_blocked_confirmation_contains_required_fields" time="0.023" /><testcase classname="services.governance_api.tests.test_e2e_pending_to_succeeded" name="test_e2e_pending_to_succeeded" time="0.443" /><testcase classname="services.governance_api.tests.test_governance_domain_table_guard" name="test_repository_no_longer_references_public_addr_tables" time="0.001" /><testcase classname="services.governance_api.tests.test_governance_schema_physical_migration_guard" name="test_governance_audit_physical_migration_exists_and_materializes_tables" time="0.001" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_optimize_creates_pending_change_request" time="5.457" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_fengtu_network_confirmation_flow" time="0.005" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_fengtu_conflicts_list_and_decision" time="0.009" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_coverage_dashboard_view" time="0.003" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_coverage_data_filters_and_status" time="0.004" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_coverage_view_shows_all_execution_statistics" time="0.002" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_coverage_view_case_details_query_with_result_type_city_filters" time="0.004" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_snapshot_api" time="0.103" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_stream_sse" time="0.061" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_live_view" time="0.001" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_management_data_contract" time="0.034" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_output_evidence_is_reachable" time="0.005" /><testcase classname="services.governance_api.tests.test_lab_api" name="test_lab_observability_management_data_not_dependent_on_dashboard_files" time="0.036" /><testcase classname="services.governance_api.tests.test_lab_sql_api" name="test_lab_sql_templates_and_history_empty" time="0.003" /><testcase classname="services.governance_api.tests.test_lab_sql_api" name="test_lab_sql_query_enforces_readonly_whitelist_and_limit" time="0.011" /><testcase classname="services.governance_api.tests.test_migration_bootstrap_guard" name="test_init_migration_contains_observability_and_publish_tables" time="0.000" /><testcase classname="services.governance_api.tests.test_migration_bootstrap_guard" name="test_trust_meta_migration_bootstraps_trust_db_tables" time="0.000" /><testcase classname="services.governance_api.tests.test_migration_bootstrap_guard" name="test_runtime_publish_migration_handles_view_or_table_cleanup" time="0.001" /><testcase classname="services.governance_api.tests.test_no_runtime_ddl_guard" name="test_governance_repository_has_no_runtime_auto_ddl_logic" time="0.000" /><testcase classname="services.governance_api.tests.test_no_runtime_ddl_guard" name="test_trust_hub_has_no_runtime_auto_create_table_logic" time="0.001" /><testcase classname="services.governance_api.tests.test_no_runtime_ddl_guard" name="test_tc06_line_execution_has_no_runtime_auto_create_table_logic" time="0.001" /><testcase classname="services.governance_api.tests.test_observability_foundation_api" name="test_observability_events_and_trace_replay_contract" time="0.019" /><testcase classname="services.governance_api.tests.test_observability_foundation_api" name="test_observability_snapshot_timeseries_and_alert_ack_contract" time="0.019" /><testcase classname="services.governance_api.tests.test_observability_integration" name="test_observability_snapshot_reflects_task_lifecycle" time="0.395" /><testcase classname="services.governance_api.tests.test_observability_integration" name="test_observability_snapshot_includes_recent_audit_events" time="0.065" /><testcase classname="services.governance_api.tests.test_observability_integration" name="test_observability_stream_emits_connected_and_snapshot_events" time="1.172" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_summary_includes_task_review_metrics" time="0.340" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_summary_supports_filters_and_threshold_override" time="0.794" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_summary_supports_ruleset_filter" time="0.617" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_summary_supports_status_filter" time="0.320" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_summary_supports_recent_hours_filter" time="0.323" /><testcase classname="services.governance_api.tests.test_ops_api" name="test_ops_scorecard_compare_schema" time="1.219" /><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_accepts_select_with_limit_and_audit" time="0.068"><failure message="assert False&#10; +  where False = any(&lt;generator object test_readonly_sql_query_accepts_select_with_limit_and_audit.&lt;locals&gt;.&lt;genexpr&gt; at 0x1070a7c10&gt;)">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10e8605b0&gt;
+
+    def test_readonly_sql_query_accepts_select_with_limit_and_audit(monkeypatch) -&gt; None:
+        monkeypatch.setattr(
+            ops,
+            "_execute_postgres_readonly",
+            lambda _sql, _timeout_ms: (["value"], [{"value": 1}], 12),
+        )
+        client = TestClient(app)
+        before = len(REPOSITORY.list_audit_events())
+        response = client.post(
+            "/v1/governance/ops/sql/read-only-query",
+            json={
+                "caller": "panel-qa",
+                "limit": 1,
+                "timeout_ms": 1200,
+                "sql": "WITH t AS (SELECT 1 AS value UNION ALL SELECT 2 AS value) SELECT value FROM t",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["datasource"] == "postgres"
+        assert data["row_count"] == 1
+        assert data["applied_limit"] == 1
+        assert "value" in data["columns"]
+        after_events = REPOSITORY.list_audit_events()
+        assert len(after_events) &gt;= before + 1
+&gt;       assert any(event.get("event_type") == "readonly_sql_query_executed" for event in after_events[before:])
+E       assert False
+E        +  where False = any(&lt;generator object test_readonly_sql_query_accepts_select_with_limit_and_audit.&lt;locals&gt;.&lt;genexpr&gt; at 0x1070a7c10&gt;)
+
+services/governance_api/tests/test_ops_sql_readonly_api.py:34: AssertionError</failure></testcase><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_rejects_non_select_statement" time="0.004" /><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_rejects_non_whitelisted_table" time="0.103"><failure message="assert False&#10; +  where False = any(&lt;generator object test_readonly_sql_query_rejects_non_whitelisted_table.&lt;locals&gt;.&lt;genexpr&gt; at 0x10e0e49e0&gt;)">def test_readonly_sql_query_rejects_non_whitelisted_table() -&gt; None:
+        client = TestClient(app)
+        before = len(REPOSITORY.list_audit_events())
+        response = client.post(
+            "/v1/governance/ops/sql/read-only-query",
+            json={
+                "caller": "panel-qa",
+                "sql": "SELECT tablename FROM pg_catalog.pg_tables",
+            },
+        )
+        assert response.status_code == 403
+        detail = response.json().get("detail", {})
+        assert detail.get("code") == "SQL_TABLE_NOT_ALLOWED"
+        after_events = REPOSITORY.list_audit_events()
+        assert len(after_events) &gt;= before + 1
+&gt;       assert any(event.get("event_type") == "readonly_sql_query_blocked" for event in after_events[before:])
+E       assert False
+E        +  where False = any(&lt;generator object test_readonly_sql_query_rejects_non_whitelisted_table.&lt;locals&gt;.&lt;genexpr&gt; at 0x10e0e49e0&gt;)
+
+services/governance_api/tests/test_ops_sql_readonly_api.py:66: AssertionError</failure></testcase><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_timeout_is_enforced" time="0.004" /><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_accepts_governance_schema_table" time="0.004" /><testcase classname="services.governance_api.tests.test_ops_sql_readonly_api" name="test_readonly_sql_query_rejects_legacy_addr_table_name" time="0.003" /><testcase classname="services.governance_api.tests.test_repository_pg_only_guard" name="test_repository_rejects_non_pg_url_when_non_pg_url" time="0.004" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_get_workpackage_publish_uses_pg_only_path_in_pg_mode" time="0.001" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_list_workpackage_publishes_uses_pg_only_path_in_pg_mode" time="0.001" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_get_task_uses_pg_only_path_in_pg_mode" time="0.002" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_list_tasks_uses_pg_only_path_in_pg_mode" time="0.002" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_get_results_uses_pg_only_path_in_pg_mode" time="0.002" /><testcase classname="services.governance_api.tests.test_repository_pg_only_path_in_pg_mode" name="test_get_review_and_ruleset_use_pg_only_path_in_pg_mode" time="0.001"><failure message="AssertionError: assert {'ruleset_id': 'rule-x'} is None&#10; +  where {'ruleset_id': 'rule-x'} = get_ruleset('rule-x')&#10; +    where get_ruleset = &lt;services.governance_api.app.repositories.governance_repository.GovernanceRepository object at 0x10e0d8a30&gt;.get_ruleset">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10e0d8460&gt;
+
+    def test_get_review_and_ruleset_use_pg_only_path_in_pg_mode(monkeypatch) -&gt; None:
+        monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
+        mod = importlib.import_module("services.governance_api.app.repositories.governance_repository")
+        mod = importlib.reload(mod)
+        GovernanceRepository = mod.GovernanceRepository
+        repo = GovernanceRepository()
+        repo._memory.reviews["task-4"] = {"review_status": "approved"}
+        repo._memory.rulesets["rule-x"] = {"ruleset_id": "rule-x"}
+        monkeypatch.setattr(repo, "_query", lambda *_args, **_kwargs: [])
+        assert repo.get_review("task-4") is None
+&gt;       assert repo.get_ruleset("rule-x") is None
+E       AssertionError: assert {'ruleset_id': 'rule-x'} is None
+E        +  where {'ruleset_id': 'rule-x'} = get_ruleset('rule-x')
+E        +    where get_ruleset = &lt;services.governance_api.app.repositories.governance_repository.GovernanceRepository object at 0x10e0d8a30&gt;.get_ruleset
+
+services/governance_api/tests/test_repository_pg_only_path_in_pg_mode.py:81: AssertionError</failure></testcase><testcase classname="services.governance_api.tests.test_reviews_api" name="test_review_decision" time="0.310" /><testcase classname="services.governance_api.tests.test_reviews_api" name="test_review_decision_target_raw_id_only_updates_one_record" time="0.769" /><testcase classname="services.governance_api.tests.test_router_boundary_enforcement" name="test_core_routers_should_not_directly_use_repository_singleton" time="0.004" /><testcase classname="services.governance_api.tests.test_router_boundary_enforcement" name="test_lab_router_should_not_access_repository_memory_internal" time="0.001" /><testcase classname="services.governance_api.tests.test_rulesets_api" name="test_ruleset_update_and_publish_is_blocked_without_approval_gate" time="0.011" /><testcase classname="services.governance_api.tests.test_rulesets_api" name="test_change_request_and_activation_hard_gate" time="0.027"><failure message="services.governance_api.app.repositories.governance_repository.GovernanceGateError: change request is not approved">def test_change_request_and_activation_hard_gate() -&gt; None:
+        client = TestClient(app)
+    
+        create_ruleset_resp = client.put(
+            "/v1/governance/rulesets/rule-b",
+            json={
+                "version": "v2",
+                "is_active": False,
+                "config_json": {"thresholds": {"t_high": 0.82, "t_low": 0.58}},
+            },
+        )
+        assert create_ruleset_resp.status_code == 200
+    
+        create_change_resp = client.post(
+            "/v1/governance/change-requests",
+            json={
+                "from_ruleset_id": "default",
+                "to_ruleset_id": "rule-b",
+                "baseline_task_id": "task-baseline-1",
+                "candidate_task_id": "task-candidate-1",
+                "diff": {"thresholds": {"t_high": 0.82, "t_low": 0.58}},
+                "scorecard": {"delta": {"auto_pass_rate": 0.01}},
+                "recommendation": "accept",
+                "evidence_bullets": ["auto pass up", "human required stable", "consistency stable"],
+            },
+        )
+        assert create_change_resp.status_code == 200
+        change_id = create_change_resp.json()["change_id"]
+        assert create_change_resp.json()["status"] == "pending"
+    
+&gt;       activate_before_approval = client.post(
+            "/v1/governance/rulesets/rule-b/activate",
+            json={"change_id": change_id, "caller": "admin", "reason": "promote"},
+        )
+
+services/governance_api/tests/test_rulesets_api.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.9/site-packages/starlette/testclient.py:593: in post
+    return super().post(
+.venv/lib/python3.9/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+.venv/lib/python3.9/site-packages/starlette/testclient.py:484: in request
+    return super().request(
+.venv/lib/python3.9/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+.venv/lib/python3.9/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+.venv/lib/python3.9/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv/lib/python3.9/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+.venv/lib/python3.9/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+.venv/lib/python3.9/site-packages/starlette/testclient.py:377: in handle_request
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/testclient.py:374: in handle_request
+    portal.call(self.app, scope, receive, send)
+.venv/lib/python3.9/site-packages/anyio/from_thread.py:334: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py:445: in result
+    return self.__get_result()
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py:390: in __get_result
+    raise self._exception
+.venv/lib/python3.9/site-packages/anyio/from_thread.py:259: in _call_func
+    retval = await retval_or_awaitable
+.venv/lib/python3.9/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/middleware/errors.py:187: in __call__
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/middleware/errors.py:165: in __call__
+    await self.app(scope, receive, _send)
+.venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py:62: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv/lib/python3.9/site-packages/starlette/routing.py:715: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:735: in app
+    await route.handle(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:288: in handle
+    await self.app(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:76: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv/lib/python3.9/site-packages/starlette/routing.py:73: in app
+    response = await f(request)
+.venv/lib/python3.9/site-packages/fastapi/routing.py:301: in app
+    raw_response = await run_endpoint_function(
+.venv/lib/python3.9/site-packages/fastapi/routing.py:214: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+.venv/lib/python3.9/site-packages/starlette/concurrency.py:39: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func, *args)
+.venv/lib/python3.9/site-packages/anyio/to_thread.py:63: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+.venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:2502: in run_sync_in_worker_thread
+    return await future
+.venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:986: in run
+    result = context.run(func, *args)
+services/governance_api/app/routers/rulesets.py:102: in activate_ruleset
+    activated = GOVERNANCE_SERVICE.activate_ruleset(
+services/governance_api/app/repositories/governance_repository.py:1626: in activate_ruleset
+    _block("APPROVAL_PENDING", "change request is not approved", 409, "approval_not_ready")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'APPROVAL_PENDING', message = 'change request is not approved'
+status_code = 409, gate_reason = 'approval_not_ready'
+
+    def _block(code: str, message: str, status_code: int, gate_reason: str) -&gt; None:
+        task_run_id = None
+        if isinstance(change, dict):
+            task_run_id = change.get("candidate_task_id")
+        self._append_audit_event(
+            event_type="ruleset_activation_blocked",
+            caller=caller,
+            payload={
+                "ruleset_id": ruleset_id,
+                "change_id": change_id,
+                "task_run_id": task_run_id,
+                "reason": reason,
+                "gate_reason": gate_reason,
+                "gate_code": code,
+            },
+            related_change_id=change_id if isinstance(change, dict) else None,
+        )
+&gt;       raise GovernanceGateError(code=code, message=message, status_code=status_code)
+E       services.governance_api.app.repositories.governance_repository.GovernanceGateError: change request is not approved
+
+services/governance_api/app/repositories/governance_repository.py:1615: GovernanceGateError</failure></testcase><testcase classname="services.governance_api.tests.test_rulesets_api" name="test_activate_ruleset_rejects_unknown_change_request" time="0.006"><failure message="services.governance_api.app.repositories.governance_repository.GovernanceGateError: change request not found">def test_activate_ruleset_rejects_unknown_change_request() -&gt; None:
+        client = TestClient(app)
+    
+        create_ruleset_resp = client.put(
+            "/v1/governance/rulesets/rule-c",
+            json={"version": "v3", "is_active": False, "config_json": {"thresholds": {"t_high": 0.83, "t_low": 0.57}}},
+        )
+        assert create_ruleset_resp.status_code == 200
+    
+&gt;       activate_missing_change = client.post(
+            "/v1/governance/rulesets/rule-c/activate",
+            json={"change_id": "chg_not_exists", "caller": "admin"},
+        )
+
+services/governance_api/tests/test_rulesets_api.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.9/site-packages/starlette/testclient.py:593: in post
+    return super().post(
+.venv/lib/python3.9/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+.venv/lib/python3.9/site-packages/starlette/testclient.py:484: in request
+    return super().request(
+.venv/lib/python3.9/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+.venv/lib/python3.9/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+.venv/lib/python3.9/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv/lib/python3.9/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+.venv/lib/python3.9/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+.venv/lib/python3.9/site-packages/starlette/testclient.py:377: in handle_request
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/testclient.py:374: in handle_request
+    portal.call(self.app, scope, receive, send)
+.venv/lib/python3.9/site-packages/anyio/from_thread.py:334: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py:445: in result
+    return self.__get_result()
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py:390: in __get_result
+    raise self._exception
+.venv/lib/python3.9/site-packages/anyio/from_thread.py:259: in _call_func
+    retval = await retval_or_awaitable
+.venv/lib/python3.9/site-packages/fastapi/applications.py:1054: in __call__
+    await super().__call__(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/middleware/errors.py:187: in __call__
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/middleware/errors.py:165: in __call__
+    await self.app(scope, receive, _send)
+.venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py:62: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv/lib/python3.9/site-packages/starlette/routing.py:715: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:735: in app
+    await route.handle(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:288: in handle
+    await self.app(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/routing.py:76: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv/lib/python3.9/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv/lib/python3.9/site-packages/starlette/routing.py:73: in app
+    response = await f(request)
+.venv/lib/python3.9/site-packages/fastapi/routing.py:301: in app
+    raw_response = await run_endpoint_function(
+.venv/lib/python3.9/site-packages/fastapi/routing.py:214: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+.venv/lib/python3.9/site-packages/starlette/concurrency.py:39: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func, *args)
+.venv/lib/python3.9/site-packages/anyio/to_thread.py:63: in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+.venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:2502: in run_sync_in_worker_thread
+    return await future
+.venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:986: in run
+    result = context.run(func, *args)
+services/governance_api/app/routers/rulesets.py:102: in activate_ruleset
+    activated = GOVERNANCE_SERVICE.activate_ruleset(
+services/governance_api/app/repositories/governance_repository.py:1621: in activate_ruleset
+    _block("APPROVAL_MISSING", "change request not found", 409, "missing_change_request")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'APPROVAL_MISSING', message = 'change request not found'
+status_code = 409, gate_reason = 'missing_change_request'
+
+    def _block(code: str, message: str, status_code: int, gate_reason: str) -&gt; None:
+        task_run_id = None
+        if isinstance(change, dict):
+            task_run_id = change.get("candidate_task_id")
+        self._append_audit_event(
+            event_type="ruleset_activation_blocked",
+            caller=caller,
+            payload={
+                "ruleset_id": ruleset_id,
+                "change_id": change_id,
+                "task_run_id": task_run_id,
+                "reason": reason,
+                "gate_reason": gate_reason,
+                "gate_code": code,
+            },
+            related_change_id=change_id if isinstance(change, dict) else None,
+        )
+&gt;       raise GovernanceGateError(code=code, message=message, status_code=status_code)
+E       services.governance_api.app.repositories.governance_repository.GovernanceGateError: change request not found
+
+services/governance_api/app/repositories/governance_repository.py:1615: GovernanceGateError</failure></testcase><testcase classname="services.governance_api.tests.test_rulesets_postgres_integration" name="test_activate_ruleset_requires_approved_change_request_postgres" time="0.046"><failure message="sqlalchemy.exc.ProgrammingError: (psycopg2.errors.WrongObjectType) cannot create index on relation &quot;addr_workpackage_publish&quot;&#10;DETAIL:  This operation is not supported for views.&#10;&#10;[SQL: CREATE INDEX IF NOT EXISTS idx_addr_raw_hash ON addr_raw(raw_hash);&#10;CREATE INDEX IF NOT EXISTS idx_addr_raw_text_trgm ON addr_raw USING gin(raw_text gin_trgm_ops);&#10;CREATE INDEX IF NOT EXISTS idx_addr_canonical_text_trgm ON addr_canonical USING gin(canon_text gin_trgm_ops);&#10;CREATE INDEX IF NOT EXISTS idx_addr_task_run_status ON addr_task_run(task_id, status);&#10;CREATE INDEX IF NOT EXISTS idx_addr_change_request_status ON addr_change_request(status, created_at DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_change_request_to_ruleset ON addr_change_request(to_ruleset_id, created_at DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_audit_event_change ON addr_audit_event(related_change_id, created_at DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_workpackage_publish_key ON addr_workpackage_publish(workpackage_id, version);&#10;CREATE INDEX IF NOT EXISTS idx_addr_observation_event_trace ON addr_observation_event(trace_id, created_at DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_observation_event_type ON addr_observation_event(source_service, event_type, created_at DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_observation_metric_name_window ON addr_observation_metric(metric_name, window_end DESC);&#10;CREATE INDEX IF NOT EXISTS idx_addr_alert_event_status_created ON addr_alert_event(status, created_at DESC);&#10;&#10;DO $$&#10;BEGIN&#10;    IF NOT EXISTS (&#10;        SELECT 1&#10;        FROM pg_constraint&#10;        WHERE conname = 'chk_addr_review_status'&#10;    ) THEN&#10;        ALTER TABLE addr_review&#10;            ADD CONSTRAINT chk_addr_review_status&#10;            CHECK (review_status IN ('approved', 'rejected', 'edited'));&#10;    END IF;&#10;END $$;&#10;&#10;DO $$&#10;BEGIN&#10;    IF NOT EXISTS (&#10;        SELECT 1&#10;        FROM pg_constraint&#10;        WHERE conname = 'chk_addr_change_request_status'&#10;    ) THEN&#10;        ALTER TABLE addr_change_request&#10;            ADD CONSTRAINT chk_addr_change_request_status&#10;            CHECK (status IN ('pending', 'approved', 'rejected'));&#10;    END IF;&#10;END $$;&#10;&#10;DO $$&#10;BEGIN&#10;    IF NOT EXISTS (&#10;        SELECT 1&#10;        FROM pg_constraint&#10;        WHERE conname = 'chk_addr_task_retry_count'&#10;    ) THEN&#10;        ALTER TABLE addr_task_run&#10;            ADD CONSTRAINT chk_addr_task_retry_count&#10;            CHECK (retry_count &gt;= 0);&#10;    END IF;&#10;END $$;&#10;]&#10;(Background on this error at: https://sqlalche.me/e/20/f405)">self = &lt;sqlalchemy.engine.base.Connection object at 0x10f82e490&gt;
+dialect = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10f82e700&gt;
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10f869b20&gt;
+statement = &lt;sqlalchemy.dialects.postgresql.base.PGCompiler object at 0x10f869d30&gt;
+parameters = [{}]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -&gt; CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+&gt;                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10f82e700&gt;
+cursor = &lt;cursor object at 0x10e88c5e0; closed: -1&gt;
+statement = 'CREATE INDEX IF NOT EXISTS idx_addr_raw_hash ON addr_raw(raw_hash);\nCREATE INDEX IF NOT EXISTS idx_addr_raw_text_trg...n\n            ADD CONSTRAINT chk_addr_task_retry_count\n            CHECK (retry_count &gt;= 0);\n    END IF;\nEND $$;\n'
+parameters = {}
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10f869b20&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       psycopg2.errors.WrongObjectType: cannot create index on relation "addr_workpackage_publish"
+E       DETAIL:  This operation is not supported for views.
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py:941: WrongObjectType
+
+The above exception was the direct cause of the following exception:
+
+    def test_activate_ruleset_requires_approved_change_request_postgres() -&gt; None:
+        database_url = _database_url()
+        assert database_url.startswith("postgresql"), "requires DATABASE_URL=postgresql://... for real DB integration"
+    
+&gt;       _apply_schema(database_url)
+
+services/governance_api/tests/test_rulesets_postgres_integration.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/governance_api/tests/test_rulesets_postgres_integration.py:27: in _apply_schema
+    conn.execute(text(sql_path.read_text(encoding="utf-8")))
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1418: in execute
+    return meth(
+.venv/lib/python3.9/site-packages/sqlalchemy/sql/elements.py:515: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1640: in _execute_clauseelement
+    ret = self._execute_context(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context
+    return self._exec_single_context(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10f82e700&gt;
+cursor = &lt;cursor object at 0x10e88c5e0; closed: -1&gt;
+statement = 'CREATE INDEX IF NOT EXISTS idx_addr_raw_hash ON addr_raw(raw_hash);\nCREATE INDEX IF NOT EXISTS idx_addr_raw_text_trg...n\n            ADD CONSTRAINT chk_addr_task_retry_count\n            CHECK (retry_count &gt;= 0);\n    END IF;\nEND $$;\n'
+parameters = {}
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10f869b20&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.ProgrammingError: (psycopg2.errors.WrongObjectType) cannot create index on relation "addr_workpackage_publish"
+E       DETAIL:  This operation is not supported for views.
+E       
+E       [SQL: CREATE INDEX IF NOT EXISTS idx_addr_raw_hash ON addr_raw(raw_hash);
+E       CREATE INDEX IF NOT EXISTS idx_addr_raw_text_trgm ON addr_raw USING gin(raw_text gin_trgm_ops);
+E       CREATE INDEX IF NOT EXISTS idx_addr_canonical_text_trgm ON addr_canonical USING gin(canon_text gin_trgm_ops);
+E       CREATE INDEX IF NOT EXISTS idx_addr_task_run_status ON addr_task_run(task_id, status);
+E       CREATE INDEX IF NOT EXISTS idx_addr_change_request_status ON addr_change_request(status, created_at DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_change_request_to_ruleset ON addr_change_request(to_ruleset_id, created_at DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_audit_event_change ON addr_audit_event(related_change_id, created_at DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_workpackage_publish_key ON addr_workpackage_publish(workpackage_id, version);
+E       CREATE INDEX IF NOT EXISTS idx_addr_observation_event_trace ON addr_observation_event(trace_id, created_at DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_observation_event_type ON addr_observation_event(source_service, event_type, created_at DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_observation_metric_name_window ON addr_observation_metric(metric_name, window_end DESC);
+E       CREATE INDEX IF NOT EXISTS idx_addr_alert_event_status_created ON addr_alert_event(status, created_at DESC);
+E       
+E       DO $$
+E       BEGIN
+E           IF NOT EXISTS (
+E               SELECT 1
+E               FROM pg_constraint
+E               WHERE conname = 'chk_addr_review_status'
+E           ) THEN
+E               ALTER TABLE addr_review
+E                   ADD CONSTRAINT chk_addr_review_status
+E                   CHECK (review_status IN ('approved', 'rejected', 'edited'));
+E           END IF;
+E       END $$;
+E       
+E       DO $$
+E       BEGIN
+E           IF NOT EXISTS (
+E               SELECT 1
+E               FROM pg_constraint
+E               WHERE conname = 'chk_addr_change_request_status'
+E           ) THEN
+E               ALTER TABLE addr_change_request
+E                   ADD CONSTRAINT chk_addr_change_request_status
+E                   CHECK (status IN ('pending', 'approved', 'rejected'));
+E           END IF;
+E       END $$;
+E       
+E       DO $$
+E       BEGIN
+E           IF NOT EXISTS (
+E               SELECT 1
+E               FROM pg_constraint
+E               WHERE conname = 'chk_addr_task_retry_count'
+E           ) THEN
+E               ALTER TABLE addr_task_run
+E                   ADD CONSTRAINT chk_addr_task_retry_count
+E                   CHECK (retry_count &gt;= 0);
+E           END IF;
+E       END $$;
+E       ]
+E       (Background on this error at: https://sqlalche.me/e/20/f405)
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py:941: ProgrammingError</failure></testcase><testcase classname="services.governance_api.tests.test_runtime_compliance_rbac" name="test_viewer_can_read_detail_but_data_is_masked_and_audited" time="0.084" /><testcase classname="services.governance_api.tests.test_runtime_compliance_rbac" name="test_ack_requires_oncall_or_admin" time="0.007" /><testcase classname="services.governance_api.tests.test_runtime_compliance_rbac" name="test_export_requires_admin_and_audit_query_requires_admin" time="0.083" /><testcase classname="services.governance_api.tests.test_runtime_freshness_latency" name="test_runtime_freshness_latency_summary_contract" time="0.046" /><testcase classname="services.governance_api.tests.test_runtime_freshness_latency" name="test_runtime_freshness_latency_evaluate_contract" time="0.072" /><testcase classname="services.governance_api.tests.test_runtime_llm_interactions_api_contract" name="test_runtime_llm_interactions_api_contract" time="0.023" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_summary_api_contract" time="0.073" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_risk_distribution_api_contract" time="0.027" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_version_compare_api_contract" time="0.002" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_tasks_api_contract" time="0.026" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_seed_demo_api_contract" time="1.975" /><testcase classname="services.governance_api.tests.test_runtime_observability_api_contract" name="test_runtime_task_detail_api_contract" time="0.057" /><testcase classname="services.governance_api.tests.test_runtime_observability_view" name="test_runtime_observability_view_renders_runtime_sections" time="0.002" /><testcase classname="services.governance_api.tests.test_runtime_performance_governance" name="test_runtime_performance_summary_contract" time="0.305" /><testcase classname="services.governance_api.tests.test_runtime_performance_governance" name="test_runtime_performance_evaluate_contract" time="0.332" /><testcase classname="services.governance_api.tests.test_runtime_publish_domain_guard" name="test_repository_uses_runtime_publish_record_as_primary_store" time="0.001" /><testcase classname="services.governance_api.tests.test_runtime_publish_domain_guard" name="test_acceptance_script_queries_runtime_publish_record" time="0.000" /><testcase classname="services.governance_api.tests.test_runtime_quality_drift" name="test_runtime_quality_drift_summary_contract" time="0.118" /><testcase classname="services.governance_api.tests.test_runtime_quality_drift" name="test_runtime_quality_drift_evaluate_contract" time="0.130" /><testcase classname="services.governance_api.tests.test_runtime_reliability_sli_slo" name="test_runtime_reliability_summary_and_evaluate_contract" time="0.378" /><testcase classname="services.governance_api.tests.test_runtime_reliability_sli_slo" name="test_runtime_reliability_alert_ack_writes_audit_log" time="0.205" /><testcase classname="services.governance_api.tests.test_runtime_upload_batch" name="test_runtime_upload_batch_creates_task_and_visible_in_runtime_tasks" time="0.116" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_events_api_contract" name="test_runtime_workpackage_events_api_contract" time="0.013" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_observability_rbac" name="test_runtime_llm_interactions_viewer_masked_and_admin_full" time="0.025" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_pipeline_api_contract" name="test_runtime_workpackage_pipeline_api_contract" time="0.017" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_pipeline_stability" name="test_runtime_workpackage_pipeline_multi_batch_stability" time="0.244" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_real_chain_from_factory_agent" name="test_runtime_pipeline_observable_from_factory_agent_publish" time="0.641"><failure message="assert None is not None">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10f4a5100&gt;
+
+    def test_runtime_pipeline_observable_from_factory_agent_publish(monkeypatch) -&gt; None:
+        agent = FactoryAgent()
+    
+        class _StubPublishWorkflow:
+            @staticmethod
+            def run(_prompt: str):
+                return {"status": "ok", "runtime": {"status": "published", "receipt_id": "receipt_real_chain"}}
+    
+        monkeypatch.setattr(agent, "_publish_workflow", _StubPublishWorkflow())
+        monkeypatch.setattr(
+            agent,
+            "_collect_workpackage_metadata",
+            lambda _bundle_name: {
+                "version": "v9.9.9",
+                "checksum": "realchainchecksum",
+                "skills_count": 3,
+                "artifact_count": 7,
+            },
+        )
+    
+        result = agent._handle_publish_workpackage("发布 realchain-v9.9.9 到 runtime")
+        assert result["status"] == "ok"
+    
+        client = TestClient(app)
+        resp = client.get("/v1/governance/observability/runtime/workpackage-pipeline?window=24h")
+        assert resp.status_code == 200
+        payload = resp.json()
+        rows = payload.get("items") or []
+        target = next((row for row in rows if str(row.get("workpackage_id") or "") == "realchain-v9.9.9"), None)
+&gt;       assert target is not None
+E       assert None is not None
+
+services/governance_api/tests/test_runtime_workpackage_real_chain_from_factory_agent.py:42: AssertionError</failure></testcase><testcase classname="services.governance_api.tests.test_runtime_workpackage_real_chain_from_factory_agent" name="test_runtime_llm_interactions_observable_from_factory_agent_confirmation" time="0.397" /><testcase classname="services.governance_api.tests.test_runtime_workpackage_seed_demo" name="test_runtime_seed_workpackage_demo_api_contract" time="0.060" /><testcase classname="services.governance_api.tests.test_schema_validation" name="test_schema_files_exist_and_have_required_keys" time="0.001" /><testcase classname="services.governance_api.tests.test_tasks_api" name="test_submit_task_and_query_result" time="0.375" /><testcase classname="services.governance_api.tests.test_tasks_api" name="test_submit_task_enqueue_failure_marks_blocked" time="0.014" /><testcase classname="services.governance_api.tests.test_trust_data_naming_guard" name="test_runtime_paths_use_trust_data_instead_of_trust_db" time="0.002" /><testcase classname="services.governance_api.tests.test_workpackage_publish_api" name="test_get_workpackage_publish_record_success" time="0.006" /><testcase classname="services.governance_api.tests.test_workpackage_publish_api" name="test_get_workpackage_publish_record_not_found" time="0.003" /><testcase classname="services.governance_api.tests.test_workpackage_publish_api" name="test_list_workpackage_publish_versions_with_status_filter" time="0.008" /><testcase classname="services.governance_api.tests.test_workpackage_publish_api" name="test_compare_workpackage_publish_versions_api" time="0.006" /><testcase classname="services.governance_api.tests.test_workpackage_publish_e2e_flow" name="test_agent_publish_then_query_api_end_to_end" time="0.539"><failure message="AssertionError: assert 'blocked' == 'ok'&#10;  &#10;  - ok&#10;  + blocked">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_agent_publish_then_query_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10e40d8b0&gt;
+
+    def test_agent_publish_then_query_api_end_to_end(tmp_path, monkeypatch) -&gt; None:
+        monkeypatch.chdir(tmp_path)
+        bundle_v300 = Path("workpackages/bundles/e2e-demo-v3.0.0")
+        bundle_v300.mkdir(parents=True, exist_ok=True)
+        (bundle_v300 / "workpackage.json").write_text(
+            '{"name":"e2e-demo","version":"v3.0.0","sources":["gaode","baidu"]}',
+            encoding="utf-8",
+        )
+        (bundle_v300 / "entrypoint.sh").write_text("#!/usr/bin/env bash\necho ok\n", encoding="utf-8")
+        (bundle_v300 / "skills").mkdir(exist_ok=True)
+        (bundle_v300 / "observability").mkdir(exist_ok=True)
+        bundle_v310 = Path("workpackages/bundles/e2e-demo-v3.1.0")
+        bundle_v310.mkdir(parents=True, exist_ok=True)
+        (bundle_v310 / "workpackage.json").write_text(
+            '{"name":"e2e-demo","version":"v3.1.0","sources":["gaode","baidu","amap"]}',
+            encoding="utf-8",
+        )
+        (bundle_v310 / "entrypoint.sh").write_text("#!/usr/bin/env bash\necho ok\n", encoding="utf-8")
+        (bundle_v310 / "skills").mkdir(exist_ok=True)
+        (bundle_v310 / "observability").mkdir(exist_ok=True)
+    
+        agent = FactoryAgent()
+        publish_v300 = agent.converse("发布 e2e-demo-v3.0.0 到 runtime")
+        publish_v310 = agent.converse("发布 e2e-demo-v3.1.0 到 runtime")
+        blocked = agent.converse("发布 e2e-missing-v9.9.9 到 runtime")
+&gt;       assert publish_v300["status"] == "ok"
+E       AssertionError: assert 'blocked' == 'ok'
+E         
+E         - ok
+E         + blocked
+
+/Users/01411043/code/spatial-intelligence-data-factory/services/governance_api/tests/test_workpackage_publish_e2e_flow.py:39: AssertionError</failure></testcase><testcase classname="services.governance_api.tests.test_workpackage_publish_repository" name="test_upsert_and_get_workpackage_publish_record" time="0.003" /><testcase classname="services.governance_api.tests.test_workpackage_publish_repository" name="test_upsert_workpackage_publish_updates_existing_version" time="0.003" /><testcase classname="services.governance_api.tests.test_workpackage_publish_repository" name="test_list_workpackage_publish_records_with_filters" time="0.005" /><testcase classname="services.governance_api.tests.test_workpackage_publish_repository" name="test_compare_workpackage_publish_versions" time="0.004" /><testcase classname="services.governance_worker.tests.test_governance_job_blocked_audit" name="test_governance_job_marks_blocked_and_logs_audit" time="0.003" /><testcase classname="services.governance_worker.tests.test_governance_job_flow" name="test_governance_job_run_updates_task_status" time="0.410" /><testcase classname="services.governance_worker.tests.test_governance_job_runtime_gate" name="test_governance_job_runs_without_runtime_strict_env_side_effect" time="0.005" /><testcase classname="services.governance_worker.tests.test_governance_job_trust_provider" name="test_governance_job_passes_trust_provider_when_ruleset_declares_trust" time="0.004" /><testcase classname="services.governance_worker.tests.test_governance_job_trust_provider" name="test_governance_job_blocks_when_trust_required_but_provider_unavailable" time="0.005" /><testcase classname="services.governance_worker.tests.test_retry_and_deadletter" name="test_enqueue_without_queue_mode_fails_fast" time="0.001" /><testcase classname="services.governance_worker.tests.test_retry_and_deadletter" name="test_enqueue_unknown_mode_is_unsupported" time="0.001" /><testcase classname="services.governance_worker.tests.test_retry_and_deadletter" name="test_enqueue_rq_mode_returns_error_when_rq_unavailable" time="0.090" /><testcase classname="services.governance_worker.tests.test_task_state_machine" name="test_valid_state_transition" time="0.000" /><testcase classname="services.governance_worker.tests.test_task_state_machine" name="test_invalid_state_transition" time="0.000" /><testcase classname="services.governance_worker.tests.test_task_state_machine" name="test_blocked_state_transition" time="0.000" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_four_buttons_workflow_and_audit_chain" time="0.406" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_publish_requires_validation" time="0.206" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_query_and_validation_api_include_evidence_refs" time="0.498" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_high_diff_requires_manual_confirmation" time="0.793" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_namespace_isolation_for_query" time="0.449" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_phase1_schedule_and_reports_and_replay" time="0.574" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_phase2_bootstrap_sample_sources" time="0.135" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_phase2_file_fetcher_and_parser_profiles" time="0.433" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_phase2_osm_parser_profile" time="0.406" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_phase2_publish_calls_trustdb_persister_when_enabled" time="0.293" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_meta_db_persister_path_and_replay_schema_version" time="0.427" /><testcase classname="services.trust_data_hub.tests.test_trust_data_hub_api" name="test_replay_persistence_and_governance_mapping_contract" time="0.344" /><testcase classname="services.trust_data_hub.tests.test_trust_data_schema_naming_guard" name="test_trustdb_persister_uses_trust_data_schema" time="0.001"><failure message="assert 'trust_db.' not in 'from __futu...r in rows]\n'&#10;  &#10;  'trust_db.' is contained here:&#10;    LETE FROM trust_db.admin_division WHERE namespace_id=:ns AND source_id=:sid&quot;),&#10;  ?           +++++++++&#10;                    {&quot;ns&quot;: namespace, &quot;sid&quot;: source_id},&#10;                )&#10;                conn.execute(...&#10;  &#10;  ...Full output truncated (212 lines hidden), use '-vv' to show">def test_trustdb_persister_uses_trust_data_schema() -&gt; None:
+        content = (
+            PROJECT_ROOT / "services/trust_data_hub/app/repositories/trustdb_persister.py"
+        ).read_text(encoding="utf-8")
+&gt;       assert "trust_db." not in content
+E       assert 'trust_db.' not in 'from __futu...r in rows]\n'
+E         
+E         'trust_db.' is contained here:
+E           LETE FROM trust_db.admin_division WHERE namespace_id=:ns AND source_id=:sid"),
+E         ?           +++++++++
+E                           {"ns": namespace, "sid": source_id},
+E                       )
+E                       conn.execute(...
+E         
+E         ...Full output truncated (212 lines hidden), use '-vv' to show
+
+services/trust_data_hub/tests/test_trust_data_schema_naming_guard.py:11: AssertionError</failure></testcase><testcase classname="tests.e2e.test_address_governance_full_cycle" name="test_happy_path_clean_address" time="0.349"><failure message="AssertionError: assert 'FAILED' == 'SUCCEEDED'&#10;  &#10;  - SUCCEEDED&#10;  + FAILED">client = &lt;starlette.testclient.TestClient object at 0x10ed9b9a0&gt;
+clean_db = None
+db_engine = Engine(postgresql://si_factory_user:***@127.0.0.1:5432/si_factory)
+
+    def test_happy_path_clean_address(client, clean_db, db_engine):
+        """
+        Task 4: Happy Path E2E Test Case
+        1. Submit a batch of clean addresses.
+        2. Verify status is SUCCEEDED.
+        4. Verify status is SUCCEEDED.
+        5. Verify data persistence in DB.
+        """
+        # 1. Submit task
+        payload = TestDataGenerator.generate_task_submit_request(batch_size=5, scenario="clean")
+        response = client.post("/v1/governance/tasks", json=payload)
+        assert response.status_code == 200
+        task_id = response.json()["task_id"]
+    
+        # 2. Verify SUCCEEDED status
+        status_resp = client.get(f"/v1/governance/tasks/{task_id}")
+        assert status_resp.status_code == 200
+&gt;       assert status_resp.json()["status"] == "SUCCEEDED"
+E       AssertionError: assert 'FAILED' == 'SUCCEEDED'
+E         
+E         - SUCCEEDED
+E         + FAILED
+
+tests/e2e/test_address_governance_full_cycle.py:64: AssertionError</failure></testcase><testcase classname="tests.e2e.test_address_governance_full_cycle" name="test_manual_review_flow" time="0.428"><failure message="assert 0 == 1&#10; +  where 0 = len([])">client = &lt;starlette.testclient.TestClient object at 0x10ed42a90&gt;
+clean_db = None
+db_engine = Engine(postgresql://si_factory_user:***@127.0.0.1:5432/si_factory)
+
+    def test_manual_review_flow(client, clean_db, db_engine):
+        """
+        Task 5: Manual Review E2E Test Case
+        1. Submit a batch of low confidence addresses.
+        2. Run worker logic.
+        3. Verify status (might be SUCCEEDED but flagged for review, or needs specific status).
+           *Note: Current implementation marks task as SUCCEEDED even if review needed, strategy field indicates review.*
+        4. Verify strategy is 'human_required' or similar.
+        5. Submit manual review decision.
+        6. Verify review is persisted and audit log created.
+        """
+        # 1. Submit low confidence task
+        payload = TestDataGenerator.generate_task_submit_request(batch_size=1, scenario="low_confidence")
+        response = client.post("/v1/governance/tasks", json=payload)
+        assert response.status_code == 200
+        task_id = response.json()["task_id"]
+    
+        # 3. Verify result strategy
+        result_resp = client.get(f"/v1/governance/tasks/{task_id}/result")
+        assert result_resp.status_code == 200
+        results = result_resp.json()["results"]
+&gt;       assert len(results) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/e2e/test_address_governance_full_cycle.py:130: AssertionError</failure></testcase><testcase classname="tests.e2e.test_address_governance_full_cycle" name="test_edge_case_malformed_input" time="0.302" /><testcase classname="tests.e2e.test_address_governance_full_cycle" name="test_concurrent_batch_submissions" time="0.888"><failure message="AssertionError: assert 'FAILED' == 'SUCCEEDED'&#10;  &#10;  - SUCCEEDED&#10;  + FAILED">client = &lt;starlette.testclient.TestClient object at 0x10e2dbb20&gt;
+
+    def test_concurrent_batch_submissions(client):
+        """
+        Task 6.2: Concurrent Submission Test Case
+        1. Submit multiple batches in quick succession.
+        2. Verify all are accepted and get IDs.
+        3. Run worker to process all.
+        4. Verify all succeed.
+        """
+        batch_count = 3
+        task_ids = []
+    
+        # 1. Submit multiple batches
+        for i in range(batch_count):
+            payload = TestDataGenerator.generate_task_submit_request(batch_size=2, scenario="clean")
+            response = client.post("/v1/governance/tasks", json=payload)
+            assert response.status_code == 200
+            task_ids.append(response.json()["task_id"])
+    
+        assert len(set(task_ids)) == batch_count
+    
+        # 3. Verify all succeeded
+        for task_id in task_ids:
+            status_resp = client.get(f"/v1/governance/tasks/{task_id}")
+            assert status_resp.status_code == 200
+&gt;           assert status_resp.json()["status"] == "SUCCEEDED"
+E           AssertionError: assert 'FAILED' == 'SUCCEEDED'
+E             
+E             - SUCCEEDED
+E             + FAILED
+
+tests/e2e/test_address_governance_full_cycle.py:206: AssertionError</failure></testcase><testcase classname="tests.test_address_topology_contract_alignment.AddressTopologyContractAlignmentTests" name="test_fixed_demo_samples_cover_success_failure_replay" time="0.001" /><testcase classname="tests.test_address_topology_contract_alignment.AddressTopologyContractAlignmentTests" name="test_v101_v102_algorithm_and_contract_alignment" time="0.001" /><testcase classname="tests.test_agent_adapters.AgentAdapterTests" name="test_evaluator_returns_evalreport" time="0.001" /><testcase classname="tests.test_agent_adapters.AgentAdapterTests" name="test_executor_requires_approvals" time="0.037" /><testcase classname="tests.test_agent_adapters.AgentAdapterTests" name="test_planner_outputs_contracts" time="0.000" /><testcase classname="tests.test_agent_gates.AgentGateTests" name="test_gate_fail_when_missing_idempotency" time="0.000" /><testcase classname="tests.test_agent_gates.AgentGateTests" name="test_gate_pass_minimum_set" time="0.000" /><testcase classname="tests.test_agent_runtime.AgentRuntimeTests" name="test_approval_gate" time="0.000" /><testcase classname="tests.test_agent_runtime.AgentRuntimeTests" name="test_evidence_written" time="0.000" /><testcase classname="tests.test_agent_runtime.AgentRuntimeTests" name="test_invalid_transition" time="0.000" /><testcase classname="tests.test_agent_runtime.AgentRuntimeTests" name="test_submit_and_transition" time="0.000" /><testcase classname="tests.test_bmad_workflow_status_guard" name="test_bmad_workflow_last_updated_not_in_future" time="0.005" /><testcase classname="tests.test_continuous_demo_cleanup.ContinuousDemoCleanupTests" name="test_cleanup_each_cycle_clears_graph_change_log" time="0.082" /><testcase classname="tests.test_control_plane_services.ControlPlaneServicesTests" name="test_create_pending_confirmation_also_writes_audit" time="0.086" /><testcase classname="tests.test_dashboard_manifest_observability_fields" name="test_dashboard_manifest_exposes_observability_fields" time="0.000" /><testcase classname="tests.test_external_api_fallbacks.ExternalAPIStrictModeTests" name="test_review_platform_without_endpoint_returns_failure_payload" time="0.060" /><testcase classname="tests.test_external_api_fallbacks.ExternalAPIStrictModeTests" name="test_web_search_without_endpoint_returns_failure_payload" time="0.057" /><testcase classname="tests.test_factory_agent_contract" name="test_converse_returns_blocked_when_llm_fails" time="0.537" /><testcase classname="tests.test_factory_agent_contract" name="test_converse_returns_structured_summary_when_llm_ok" time="0.372" /><testcase classname="tests.test_factory_agent_dryrun_contract" name="test_dryrun_blocked_when_workpackage_missing" time="0.342" /><testcase classname="tests.test_factory_agent_dryrun_contract" name="test_dryrun_blocked_when_workpackage_config_missing" time="0.402" /><testcase classname="tests.test_factory_agent_dryrun_contract" name="test_dryrun_returns_summary_when_contract_valid" time="0.347" /><testcase classname="tests.test_factory_agent_dryrun_contract" name="test_dryrun_blocked_when_entrypoint_execution_failed" time="0.370" /><testcase classname="tests.test_factory_agent_dryrun_workflow" name="test_dryrun_workflow_blocked_when_workpackage_missing" time="0.001" /><testcase classname="tests.test_factory_agent_dryrun_workflow" name="test_dryrun_workflow_success_returns_summary" time="0.001" /><testcase classname="tests.test_factory_agent_llm_gateway" name="test_requirement_llm_gateway_calls_agent_cli" time="0.000" /><testcase classname="tests.test_factory_agent_observability_events" name="test_requirement_confirmation_emits_llm_observation_events" time="0.338" /><testcase classname="tests.test_factory_agent_observability_events" name="test_publish_workflow_emits_runtime_stages_with_metadata" time="0.344" /><testcase classname="tests.test_factory_agent_publish_blocked_audit" name="test_publish_blocked_should_log_blocked_confirmation_audit" time="0.460"><failure message="AssertionError: assert 3431 &gt;= (3431 + 1)&#10; +  where 3431 = len([{'caller': 'runtime-workpackage-seeder', 'created_at': '2026-03-01T03:28:59.506069+00:00', 'event_id': 'evt_aa7a37b26...1T03:28:59.492847+00:00', 'event_id': 'evt_a3228a700273', 'event_type': 'runtime_seed_workpackage_pipeline', ...}, ...])">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_publish_blocked_should_lo0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10e7c74f0&gt;
+
+    def test_publish_blocked_should_log_blocked_confirmation_audit(tmp_path, monkeypatch) -&gt; None:
+        monkeypatch.chdir(tmp_path)
+        before = len(REPOSITORY.list_audit_events())
+        agent = FactoryAgent()
+        result = agent.converse("发布 missing-demo-v9.9.9 到 runtime")
+        assert result["status"] == "blocked"
+    
+        after_events = REPOSITORY.list_audit_events()
+&gt;       assert len(after_events) &gt;= before + 1
+E       AssertionError: assert 3431 &gt;= (3431 + 1)
+E        +  where 3431 = len([{'caller': 'runtime-workpackage-seeder', 'created_at': '2026-03-01T03:28:59.506069+00:00', 'event_id': 'evt_aa7a37b26...1T03:28:59.492847+00:00', 'event_id': 'evt_a3228a700273', 'event_type': 'runtime_seed_workpackage_pipeline', ...}, ...])
+
+/Users/01411043/code/spatial-intelligence-data-factory/tests/test_factory_agent_publish_blocked_audit.py:18: AssertionError</failure></testcase><testcase classname="tests.test_factory_agent_publish_runtime" name="test_publish_blocked_when_bundle_missing" time="0.395" /><testcase classname="tests.test_factory_agent_publish_runtime" name="test_publish_success_with_version_and_evidence" time="0.424"><failure message="AssertionError: assert 'blocked' == 'ok'&#10;  &#10;  - ok&#10;  + blocked">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_publish_success_with_vers0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10f1f4700&gt;
+
+    def test_publish_success_with_version_and_evidence(tmp_path, monkeypatch) -&gt; None:
+        monkeypatch.chdir(tmp_path)
+        bundle = Path("workpackages/bundles/demo-v1.0.0")
+        bundle.mkdir(parents=True, exist_ok=True)
+        (bundle / "workpackage.json").write_text(
+            '{"name":"demo","version":"v1.0.0","sources":["gaode","baidu"]}',
+            encoding="utf-8",
+        )
+        (bundle / "entrypoint.sh").write_text("#!/usr/bin/env bash\necho ok\n", encoding="utf-8")
+        (bundle / "skills").mkdir(exist_ok=True)
+        (bundle / "observability").mkdir(exist_ok=True)
+    
+        agent = FactoryAgent()
+        result = agent.converse("发布 demo-v1.0.0 到 runtime")
+&gt;       assert result["status"] == "ok"
+E       AssertionError: assert 'blocked' == 'ok'
+E         
+E         - ok
+E         + blocked
+
+/Users/01411043/code/spatial-intelligence-data-factory/tests/test_factory_agent_publish_runtime.py:32: AssertionError</failure></testcase><testcase classname="tests.test_factory_agent_publish_runtime" name="test_publish_blocked_when_runtime_execution_failed" time="0.416"><failure message="assert None is not None">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_publish_blocked_when_runt0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10f2ee640&gt;
+
+    def test_publish_blocked_when_runtime_execution_failed(tmp_path, monkeypatch) -&gt; None:
+        monkeypatch.chdir(tmp_path)
+        bundle = Path("workpackages/bundles/demo-fail-v1.0.0")
+        bundle.mkdir(parents=True, exist_ok=True)
+        (bundle / "workpackage.json").write_text(
+            '{"name":"demo-fail","version":"v1.0.0","sources":["gaode"]}',
+            encoding="utf-8",
+        )
+        (bundle / "entrypoint.sh").write_text("#!/usr/bin/env bash\nexit 9\n", encoding="utf-8")
+        (bundle / "skills").mkdir(exist_ok=True)
+        (bundle / "observability").mkdir(exist_ok=True)
+    
+        agent = FactoryAgent()
+        result = agent.converse("发布 demo-fail-v1.0.0 到 runtime")
+        assert result["status"] == "blocked"
+        assert result["action"] == "publish_workpackage"
+        assert result["reason"] == "runtime_execution_failed"
+    
+        saved = REPOSITORY.get_workpackage_publish("demo-fail-v1.0.0", "v1.0.0")
+&gt;       assert saved is not None
+E       assert None is not None
+
+/Users/01411043/code/spatial-intelligence-data-factory/tests/test_factory_agent_publish_runtime.py:64: AssertionError</failure></testcase><testcase classname="tests.test_factory_agent_publish_workflow" name="test_publish_workflow_blocked_and_audited_when_bundle_missing" time="0.001" /><testcase classname="tests.test_factory_agent_publish_workflow" name="test_publish_workflow_success_should_persist_and_emit_evidence" time="0.001" /><testcase classname="tests.test_factory_agent_routing" name="test_detect_agent_intent_matrix" time="0.000" /><testcase classname="tests.test_factory_agent_routing" name="test_converse_dispatches_by_detected_intent" time="0.344" /><testcase classname="tests.test_factory_agent_trust_hub_mvp" name="test_supplement_trust_hub_returns_capability_and_sample" time="0.395"><failure message="AssertionError: assert 'blocked' == 'ok'&#10;  &#10;  - ok&#10;  + blocked">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_supplement_trust_hub_retu0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x10e316eb0&gt;
+
+    def test_supplement_trust_hub_returns_capability_and_sample(tmp_path, monkeypatch) -&gt; None:
+        monkeypatch.chdir(tmp_path)
+        agent = FactoryAgent()
+        result = agent.supplement_trust_hub("高德")
+&gt;       assert result["status"] == "ok"
+E       AssertionError: assert 'blocked' == 'ok'
+E         
+E         - ok
+E         + blocked
+
+/Users/01411043/code/spatial-intelligence-data-factory/tests/test_factory_agent_trust_hub_mvp.py:8: AssertionError</failure></testcase><testcase classname="tests.test_factory_cli_exit_code" name="test_generate_returns_nonzero_when_blocked" time="0.013" /><testcase classname="tests.test_factory_cli_exit_code" name="test_generate_returns_zero_when_ok" time="0.010" /><testcase classname="tests.test_factory_cli_exit_code" name="test_confirm_command_routes_to_chat_prompt" time="0.011" /><testcase classname="tests.test_factory_cli_exit_code" name="test_dryrun_command_returns_nonzero_when_blocked" time="0.011" /><testcase classname="tests.test_factory_cli_exit_code" name="test_publish_command_returns_zero_when_ok" time="0.012" /><testcase classname="tests.test_factory_cli_exit_code" name="test_publish_command_emits_cli_observation" time="0.000" /><testcase classname="tests.test_factory_cli_session_contract" name="test_session_chat_returns_blocked_when_agent_unavailable" time="0.000" /><testcase classname="tests.test_factory_cli_session_contract" name="test_session_generate_script_returns_blocked_when_agent_unavailable" time="0.000" /><testcase classname="tests.test_factory_process_expert_short_path.FactoryProcessExpertShortPathTests" name="test_real_mode_llm_and_map_api" time="0.001"><failure message="AssertionError: None != '1' : FACTORY_REAL_SHORT_PATH=1 is required">self = &lt;test_factory_process_expert_short_path.FactoryProcessExpertShortPathTests testMethod=test_real_mode_llm_and_map_api&gt;
+
+    def test_real_mode_llm_and_map_api(self):
+&gt;       self.assertEqual(os.getenv("FACTORY_REAL_SHORT_PATH"), "1", "FACTORY_REAL_SHORT_PATH=1 is required")
+E       AssertionError: None != '1' : FACTORY_REAL_SHORT_PATH=1 is required
+
+tests/test_factory_process_expert_short_path.py:58: AssertionError</failure></testcase><testcase classname="tests.test_factory_role_module_split.FactoryRoleModuleSplitTests" name="test_each_role_service_in_its_own_module" time="0.000" /><testcase classname="tests.test_graph_case_dataset_1000.GraphCaseDataset1000Tests" name="test_dataset_exists_and_has_1000_cases" time="0.006" /><testcase classname="tests.test_graph_case_dataset_1000.GraphCaseDataset1000Tests" name="test_dataset_matches_new_graph_model_contract" time="0.005" /><testcase classname="tests.test_graph_modeling_spec.GraphModelingSpecTests" name="test_graph_payload_has_no_address_or_alias_node" time="0.001" /><testcase classname="tests.test_graph_modeling_spec.GraphModelingSpecTests" name="test_graph_payload_supports_community_unit_room_hierarchy" time="0.001" /><testcase classname="tests.test_legacy_ddl_scripts_blocked" name="test_init_governance_pg_schema_blocked_by_default" time="0.042" /><testcase classname="tests.test_legacy_ddl_scripts_blocked" name="test_init_unified_pg_schema_blocked_by_default" time="0.031" /><testcase classname="tests.test_mvp_acceptance_pipeline_split" name="test_mvp_acceptance_unit_script_runs_with_real_gate" time="1.231"><failure message="AssertionError: Acceptance JSON: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.json&#10;  Acceptance Markdown: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.md&#10;  &#10;assert 2 == 0&#10; +  where 2 = CompletedProcess(args=['/Users/01411043/code/spatial-intelligence-data-factory/.venv/bin/python', 'scripts/run_address...9/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.md\n', stderr='').returncode">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_mvp_acceptance_unit_scrip0')
+
+    def test_mvp_acceptance_unit_script_runs_with_real_gate(tmp_path) -&gt; None:
+        assert _pg_available(), "requires reachable PostgreSQL for PG-only acceptance"
+        repo_root = Path(__file__).resolve().parents[1]
+        db_url = _postgres_db_url()
+        out_dir = tmp_path / "output" / "acceptance"
+        env = os.environ.copy()
+        proc = _run(
+                [
+                    str(repo_root / ".venv" / "bin" / "python"),
+                    "scripts/run_address_governance_mvp_acceptance_unit.py",
+                "--db-url",
+                db_url,
+                "--output-dir",
+                str(out_dir),
+                "--workdir",
+                str(tmp_path),
+            ],
+            cwd=repo_root,
+            env=env,
+        )
+&gt;       assert proc.returncode == 0, proc.stderr or proc.stdout
+E       AssertionError: Acceptance JSON: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.json
+E         Acceptance Markdown: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.md
+E         
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['/Users/01411043/code/spatial-intelligence-data-factory/.venv/bin/python', 'scripts/run_address...9/test_mvp_acceptance_unit_scrip0/output/acceptance/address-governance-mvp-acceptance-20260301-032915.md\n', stderr='').returncode
+
+tests/test_mvp_acceptance_pipeline_split.py:50: AssertionError</failure></testcase><testcase classname="tests.test_mvp_acceptance_pipeline_split" name="test_mvp_acceptance_integration_script_runs_with_real_gate" time="1.182" /><testcase classname="tests.test_mvp_acceptance_pipeline_split" name="test_mvp_acceptance_integration_script_isolated_from_llm_gate" time="1.012" /><testcase classname="tests.test_mvp_acceptance_pipeline_split" name="test_mvp_acceptance_real_llm_gate_script_fail_fast_without_config" time="0.873" /><testcase classname="tests.test_mvp_acceptance_pipeline_split" name="test_mvp_acceptance_unit_script_rejects_non_pg_db_url" time="0.031" /><testcase classname="tests.test_mvp_acceptance_script" name="test_run_acceptance_script_as_subprocess" time="0.982"><failure message="AssertionError: Acceptance JSON: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.json&#10;  Acceptance Markdown: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.md&#10;  &#10;assert 2 == 0&#10; +  where 2 = CompletedProcess(args=['/Users/01411043/code/spatial-intelligence-data-factory/.venv/bin/python', 'scripts/run_address...9/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.md\n', stderr='').returncode">tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_run_acceptance_script_as_0')
+
+    def test_run_acceptance_script_as_subprocess(tmp_path) -&gt; None:
+        assert _pg_available(), "requires reachable PostgreSQL for PG-only acceptance"
+        repo_root = Path(__file__).resolve().parents[1]
+        output_dir = tmp_path / "output" / "acceptance"
+        db_url = _postgres_db_url()
+        cmd = [
+            str(repo_root / ".venv" / "bin" / "python"),
+            "scripts/run_address_governance_mvp_acceptance.py",
+            "--db-url",
+            db_url,
+            "--output-dir",
+            str(output_dir),
+            "--workdir",
+            str(tmp_path),
+        ]
+        env = os.environ.copy()
+        proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False, env=env)
+&gt;       assert proc.returncode == 0, proc.stderr or proc.stdout
+E       AssertionError: Acceptance JSON: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.json
+E         Acceptance Markdown: /private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.md
+E         
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['/Users/01411043/code/spatial-intelligence-data-factory/.venv/bin/python', 'scripts/run_address...9/test_run_acceptance_script_as_0/output/acceptance/address-governance-mvp-acceptance-20260301-032919.md\n', stderr='').returncode
+
+tests/test_mvp_acceptance_script.py:44: AssertionError</failure></testcase><testcase classname="tests.test_mvp_acceptance_script" name="test_run_acceptance_script_real_llm_gate_blocked_without_config" time="0.963" /><testcase classname="tests.test_mvp_acceptance_script" name="test_run_acceptance_script_rejects_non_pg_db_url" time="0.031" /><testcase classname="tests.test_mvp_acceptance_script" name="test_run_acceptance_script_uses_env_database_url_when_db_url_not_provided" time="0.032" /><testcase classname="tests.test_next_iteration_gaps.TestNextIterationGaps" name="test_authoritative_registry_missing_endpoint_degrades" time="0.090" /><testcase classname="tests.test_next_iteration_gaps.TestNextIterationGaps" name="test_data_generation_tool_mapping_exists" time="0.000" /><testcase classname="tests.test_next_iteration_gaps.TestNextIterationGaps" name="test_output_persist_generator_uses_runtime_table_name" time="0.001"><failure message="AssertionError: '{self.table_name}' not found in '&quot;&quot;&quot;\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {\'table_name\': \'x\'}\n&quot;&quot;&quot;\n\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    &quot;&quot;&quot;数据库持久化器（PG-only 占位）。&quot;&quot;&quot;\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get(\'db_path\', \'process_results\')\n        self.table_name = config.get(\'table_name\', \'process_results\')\n        self.batch_size = config.get(\'batch_size\', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -&gt; Dict[str, Any]:\n        return {\n            \'success\': False,\n            \'inserted\': 0,\n            \'failed\': len(records),\n            \'errors\': [\'blocked: generated persister requires explicit PG implementation\']\n        }\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -&gt; Dict[str, Any]:\n    &quot;&quot;&quot;快速持久化函数（PG-only 占位）。&quot;&quot;&quot;\n    persister = DBPersister(**config)\n    return persister.persist(records)\n'">self = &lt;test_next_iteration_gaps.TestNextIterationGaps testMethod=test_output_persist_generator_uses_runtime_table_name&gt;
+
+    def test_output_persist_generator_uses_runtime_table_name(self) -&gt; None:
+        from tools.process_compiler.tool_templates.persisters import generate_db_persister
+    
+        result = generate_db_persister("address_governance", {"table_name": "x"})
+        code = result["code"]
+&gt;       self.assertIn("{self.table_name}", code)
+E       AssertionError: '{self.table_name}' not found in '"""\n数据库持久化器 - 自动生成\nDomain: address_governance\n参数: {\'table_name\': \'x\'}\n"""\n\nfrom typing import List, Dict, Any\n\n\nclass DBPersister:\n    """数据库持久化器（PG-only 占位）。"""\n\n    def __init__(self, db_path: str = None, **config):\n        self.db_path = db_path or config.get(\'db_path\', \'process_results\')\n        self.table_name = config.get(\'table_name\', \'process_results\')\n        self.batch_size = config.get(\'batch_size\', 1000)\n\n    def persist(self, records: List[Dict[str, Any]]) -&gt; Dict[str, Any]:\n        return {\n            \'success\': False,\n            \'inserted\': 0,\n            \'failed\': len(records),\n            \'errors\': [\'blocked: generated persister requires explicit PG implementation\']\n        }\n\n\ndef persist_to_db(records: List[Dict[str, Any]], **config) -&gt; Dict[str, Any]:\n    """快速持久化函数（PG-only 占位）。"""\n    persister = DBPersister(**config)\n    return persister.persist(records)\n'
+
+tests/test_next_iteration_gaps.py:29: AssertionError</failure></testcase><testcase classname="tests.test_next_iteration_gaps.TestNextIterationGaps" name="test_write_intents_always_pending_confirmation" time="0.000" /><testcase classname="tests.test_nightly_quality_gate_hardening.TestNightlyQualityGateHardening" name="test_build_gate_judgement_card_has_traceability_fields" time="0.000" /><testcase classname="tests.test_nightly_quality_gate_hardening.TestNightlyQualityGateHardening" name="test_classify_failures_contains_persistent_web_e2e" time="0.000" /><testcase classname="tests.test_nightly_quality_gate_hardening.TestNightlyQualityGateHardening" name="test_classify_failures_marks_recovered_transient" time="0.000" /><testcase classname="tests.test_observability_foundation_acceptance_script" name="test_run_observability_foundation_acceptance_script" time="0.646"><failure message="AssertionError: Acceptance JSON: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.json&#10;  Acceptance Markdown: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.md&#10;  &#10;assert 2 == 0&#10; +  where 2 = CompletedProcess(args=['python3', 'scripts/run_observability_pg_foundation_acceptance.py', '--output-dir', 'output/acc...al-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.md\n', stderr='').returncode">def test_run_observability_foundation_acceptance_script() -&gt; None:
+        repo_root = Path(__file__).resolve().parents[1]
+        output_dir = repo_root / "output" / "acceptance"
+        cmd = [
+            "python3",
+            "scripts/run_observability_pg_foundation_acceptance.py",
+            "--output-dir",
+            "output/acceptance",
+        ]
+        proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False)
+&gt;       assert proc.returncode == 0, proc.stderr or proc.stdout
+E       AssertionError: Acceptance JSON: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.json
+E         Acceptance Markdown: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.md
+E         
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['python3', 'scripts/run_observability_pg_foundation_acceptance.py', '--output-dir', 'output/acc...al-intelligence-data-factory/output/acceptance/observability-pg-foundation-acceptance-20260301-032921.md\n', stderr='').returncode
+
+tests/test_observability_foundation_acceptance_script.py:18: AssertionError</failure></testcase><testcase classname="tests.test_observability_integration_e2e.TestMandatory1VersionAutoReference" name="test_compile_result_includes_observability_bundle" time="0.003" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory1VersionAutoReference" name="test_observability_bundle_contains_version" time="0.001" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory1VersionAutoReference" name="test_observability_entrypoint_resolution" time="0.001" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory1VersionAutoReference" name="test_resolve_observability_entrypoint_from_workpackage" time="0.000" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory2RuntimeMetricsCollection" name="test_aggregate_runtime_metrics_exists_in_template" time="0.001" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory2RuntimeMetricsCollection" name="test_observability_module_loadable" time="0.001" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory2RuntimeMetricsCollection" name="test_step_error_rate_calculation_formula" time="0.000" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3NOGOVisualAlert" name="test_gate_alignment_structure" time="0.113" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3NOGOVisualAlert" name="test_metric_explanations_for_release_decision" time="0.074" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3NOGOVisualAlert" name="test_no_go_risk_alert_in_alerts_array" time="0.064" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3NOGOVisualAlert" name="test_observability_snapshot_includes_no_go_risk_field" time="0.098" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3RuntimeObservabilityInjection" name="test_runtime_metrics_payload_structure" time="0.001" /><testcase classname="tests.test_observability_integration_e2e.TestMandatory3RuntimeObservabilityInjection" name="test_step_events_collection_structure" time="0.000" /><testcase classname="tests.test_observability_integration_e2e.TestFollowUp1MetricExplanations" name="test_metric_explanations_are_not_empty" time="0.108" /><testcase classname="tests.test_observability_integration_e2e.TestFollowUp1MetricExplanations" name="test_metric_explanations_completeness" time="0.101" /><testcase classname="tests.test_observability_integration_e2e.TestFollowUp2StateEvidenceTracing" name="test_line_feedback_contract_with_runtime_observability" time="0.000" /><testcase classname="tests.test_observability_integration_e2e.TestIntegrationFlow" name="test_full_flow_version_to_feedback" time="0.066" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_graph_has_overlap_avoidance_layout" time="0.001" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_graph_has_visible_node_and_edge_labels" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_graph_panels_use_multiline_rendering" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_graph_supports_node_drag" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_has_dynamic_graph_runtime_state" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_has_graph_svg_renderer" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_has_manual_control_buttons" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_has_new_node_highlight_behavior" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_legend_matches_new_graph_model" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_legend_shows_run_based_new_node_highlight" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_removes_graph_change_panel_and_places_recent_details_next_to_graph" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_dashboard_template_has_no_cdn" time="0.000" /><testcase classname="tests.test_offline_assets.OfflineAssetTests" name="test_graph_visualizer_output_has_no_cdn" time="0.001" /><testcase classname="tests.test_operation_audit_framework.OperationAuditFrameworkTests" name="test_bulk_update_confirmation_status" time="0.102" /><testcase classname="tests.test_operation_audit_framework.OperationAuditFrameworkTests" name="test_expire_pending_confirmations" time="0.075"><failure message="AssertionError: 6 != 1">self = &lt;test_operation_audit_framework.OperationAuditFrameworkTests testMethod=test_expire_pending_confirmations&gt;
+
+    def test_expire_pending_confirmations(self):
+        expired_ts = (datetime.now() - timedelta(seconds=60)).isoformat()
+        future_ts = (datetime.now() + timedelta(seconds=3600)).isoformat()
+        c1 = self.store.create_confirmation_record(
+            session_id="sess_e1",
+            operation_type="publish_draft",
+            operation_params={"draft_id": "d1"},
+            expires_at=expired_ts,
+        )
+        _ = self.store.create_confirmation_record(
+            session_id="sess_e2",
+            operation_type="publish_draft",
+            operation_params={"draft_id": "d2"},
+            expires_at=future_ts,
+        )
+        affected = self.store.expire_pending_confirmations()
+&gt;       self.assertEqual(affected, 1)
+E       AssertionError: 6 != 1
+
+tests/test_operation_audit_framework.py:118: AssertionError</failure></testcase><testcase classname="tests.test_operation_audit_framework.OperationAuditFrameworkTests" name="test_list_confirmation_records_filters" time="0.136" /><testcase classname="tests.test_operation_audit_framework.OperationAuditFrameworkTests" name="test_log_and_list_operation_audit" time="0.097"><failure message="AssertionError: 2 != 1">self = &lt;test_operation_audit_framework.OperationAuditFrameworkTests testMethod=test_log_and_list_operation_audit&gt;
+
+    def test_log_and_list_operation_audit(self):
+        aid1 = self.store.log_operation_audit(
+            operation_type="publish_draft",
+            operation_status="ok",
+            actor="u1",
+            source="console",
+            confirmation_id="confirm_1",
+            confirmer_user_id="u1",
+            draft_id="d1",
+            process_definition_id="procdef_1",
+            process_version_id="procver_1",
+            detail={"k": "v"},
+        )
+        aid2 = self.store.log_operation_audit(
+            operation_type="publish_draft",
+            operation_status="rejected",
+            actor="u2",
+            source="confirmation_endpoint",
+            confirmation_id="confirm_2",
+            confirmer_user_id="u2",
+            draft_id="d2",
+            detail={"reason": "manual reject"},
+        )
+    
+        self.assertTrue(aid1.startswith("audit_"))
+        self.assertTrue(aid2.startswith("audit_"))
+    
+        only_ok = self.store.list_operation_audits(operation_type="publish_draft", operation_status="ok", limit=20)
+        by_confirm = self.store.list_operation_audits(confirmation_id="confirm_2", limit=20)
+    
+&gt;       self.assertEqual(len(only_ok), 1)
+E       AssertionError: 2 != 1
+
+tests/test_operation_audit_framework.py:77: AssertionError</failure></testcase><testcase classname="tests.test_phase2_tools" name="test_imports" time="0.001" /><testcase classname="tests.test_phase2_tools" name="test_instantiation" time="0.001" /><testcase classname="tests.test_phase2_tools" name="test_tool_metadata" time="0.001" /><testcase classname="tests.test_phase2_tools" name="test_validation" time="0.000" /><testcase classname="tests.test_phase2_tools" name="test_schema_format" time="0.000" /><testcase classname="tests.test_phase4_refactoring" name="test_imports" time="0.000" /><testcase classname="tests.test_phase4_refactoring" name="test_registry_initialization" time="0.000" /><testcase classname="tests.test_phase4_refactoring" name="test_session_state_integration" time="0.000" /><testcase classname="tests.test_phase4_refactoring" name="test_tool_execution" time="0.017" /><testcase classname="tests.test_phase4_refactoring" name="test_backward_compatibility" time="0.016" /><testcase classname="tests.test_phase4_refactoring" name="test_performance" time="1.062" /><testcase classname="tests.test_phase5_confirmation" name="test_confirmation_record_creation" time="0.083" /><testcase classname="tests.test_phase5_confirmation" name="test_confirmation_status_update" time="0.175" /><testcase classname="tests.test_phase5_confirmation" name="test_confirmation_listing_by_session" time="0.205" /><testcase classname="tests.test_phase5_confirmation" name="test_schema_validation" time="0.013" /><testcase classname="tests.test_phase5_confirmation" name="test_parsing_event_logging" time="0.082" /><testcase classname="tests.test_phase5_confirmation" name="test_confirmation_expiry" time="1.631" /><testcase classname="tests.test_process_compiler_observability.ProcessCompilerObservabilityTests" name="test_compile_generates_observability_bundle_and_error_codes" time="0.006" /><testcase classname="tests.test_process_drafts_listing.ProcessDraftListingTests" name="test_list_process_drafts_with_status_filter" time="0.137"><failure message="AssertionError: 2 != 1">self = &lt;test_process_drafts_listing.ProcessDraftListingTests testMethod=test_list_process_drafts_with_status_filter&gt;
+
+    def test_list_process_drafts_with_status_filter(self):
+        self.store.upsert_process_draft(
+            draft_id="draft_ut_1",
+            session_id="sess_1",
+            process_code="PROC_UT_1",
+            process_name="ut1",
+            domain="address_governance",
+            requirement="r1",
+            goal="g1",
+            plan={"a": 1},
+            process_doc_markdown="doc1",
+            llm_answer="ans1",
+            status="editable",
+        )
+        self.store.upsert_process_draft(
+            draft_id="draft_ut_2",
+            session_id="sess_2",
+            process_code="PROC_UT_2",
+            process_name="ut2",
+            domain="address_governance",
+            requirement="r2",
+            goal="g2",
+            plan={"a": 2},
+            process_doc_markdown="doc2",
+            llm_answer="ans2",
+            status="published",
+        )
+    
+        editable = self.store.list_process_drafts(status="editable", limit=20)
+        published = self.store.list_process_drafts(status="published", limit=20)
+        all_items = self.store.list_process_drafts(limit=20)
+    
+        self.assertEqual(len(editable), 1)
+        self.assertEqual(editable[0]["draft_id"], "draft_ut_1")
+&gt;       self.assertEqual(len(published), 1)
+E       AssertionError: 2 != 1
+
+tests/test_process_drafts_listing.py:57: AssertionError</failure></testcase><testcase classname="tests.test_process_expert_human_loop.ProcessExpertHumanLoopTests" name="test_human_loop_runner_applies_decision_change_request" time="0.006" /><testcase classname="tests.test_process_expert_human_loop.ProcessExpertHumanLoopTests" name="test_human_loop_runner_writes_decision_template" time="0.003" /><testcase classname="tests.test_process_iteration_events.ProcessIterationEventTests" name="test_agent_server_records_create_version_event" time="0.157" /><testcase classname="tests.test_process_iteration_events.ProcessIterationEventTests" name="test_agent_server_records_publish_draft_event" time="0.137" /><testcase classname="tests.test_process_iteration_events.ProcessIterationEventTests" name="test_attach_publish_audit_with_confirmation_fields" time="0.050" /><testcase classname="tests.test_process_iteration_events.ProcessIterationEventTests" name="test_publish_draft_returns_publish_audit" time="0.183" /><testcase classname="tests.test_process_iteration_events.ProcessIterationEventTests" name="test_record_and_list_iteration_event" time="0.088" /><testcase classname="tests.test_real_execution_input_compat.RealExecutionInputCompatTests" name="test_relationship_extraction_scenario_not_all_cleaning_fail" time="6.987" /><testcase classname="tests.test_real_execution_input_compat.RealExecutionInputCompatTests" name="test_standardization_supports_address_field" time="0.001" /><testcase classname="tests.test_real_execution_input_compat.RealExecutionInputCompatTests" name="test_standardization_without_toolpack_must_fail" time="0.001" /><testcase classname="tests.test_repo_hygiene_gitignore" name="test_gitignore_covers_local_env_noise_and_acceptance_outputs" time="0.001" /><testcase classname="tests.test_repo_hygiene_gitignore" name="test_repo_hygiene_script_keeps_basic_hygiene_header" time="0.001" /><testcase classname="tests.test_repo_hygiene_gitignore" name="test_repo_hygiene_script_has_local_file_db_guard" time="0.000" /><testcase classname="tests.test_router_decision.RouterDecisionTests" name="test_route_high_risk_prefers_process_expert" time="0.001" /><testcase classname="tests.test_router_decision.RouterDecisionTests" name="test_route_low_cost_prefers_planner" time="0.001" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_compute_sha256" time="0.001" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_validate_line_feedback_hash_requires_match" time="0.001" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_validate_line_feedback_payload_accepts_pg_refs" time="0.000" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_validate_line_feedback_payload_requires_contract_match" time="0.000" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_validate_ref_requires_pg_scheme" time="0.000" /><testcase classname="tests.test_run_p0_workpackage.RunP0WorkpackageGateTests" name="test_validate_replay_store_requires_pg_database_url" time="0.020" /><testcase classname="tests.test_script_domain_sql_guard" name="test_runtime_scripts_do_not_query_legacy_addr_tables" time="0.001" /><testcase classname="tests.test_specialist_metadata_and_api_logs.SpecialistMetadataAndAPILogTests" name="test_list_api_call_logs_filters" time="0.053"><failure message="psycopg2.errors.ForeignKeyViolation: insert or update on table &quot;api_call_log&quot; violates foreign key constraint &quot;api_call_log_task_run_id_fkey&quot;&#10;DETAIL:  Key (task_run_id)=(trun_1) is not present in table &quot;task_run&quot;.">self = &lt;test_specialist_metadata_and_api_logs.SpecialistMetadataAndAPILogTests testMethod=test_list_api_call_logs_filters&gt;
+
+    def test_list_api_call_logs_filters(self):
+&gt;       self.store.log_api_call(
+            api_name="web_search",
+            request_json='{"q":"a"}',
+            response_json='{"ok":true}',
+            latency_ms=100,
+            task_run_id="trun_1",
+        )
+
+tests/test_specialist_metadata_and_api_logs.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+database/agent_runtime_store.py:1476: in log_api_call
+    cur.execute(
+database/agent_runtime_store.py:30: in execute
+    self._raw.execute(sql, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;cursor object at 0x10f508040; closed: 0&gt;
+query = '\n                INSERT INTO api_call_log\n                (call_id, api_name, request_json, response_json, error_type, latency_ms, created_at, task_run_id)\n                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)\n                '
+vars = ('api_29e05834a27a', 'web_search', '{"q":"a"}', '{"ok":true}', None, 100, ...)
+
+    def execute(self, query, vars=None):
+        self.column_mapping = []
+        self._query_executed = True
+&gt;       return super().execute(query, vars)
+E       psycopg2.errors.ForeignKeyViolation: insert or update on table "api_call_log" violates foreign key constraint "api_call_log_task_run_id_fkey"
+E       DETAIL:  Key (task_run_id)=(trun_1) is not present in table "task_run".
+
+.venv/lib/python3.9/site-packages/psycopg2/extras.py:236: ForeignKeyViolation</failure></testcase><testcase classname="tests.test_specialist_metadata_and_api_logs.SpecialistMetadataAndAPILogTests" name="test_specialist_metadata_shape" time="0.033" /><testcase classname="tests.test_tc06_line_execution.Tc06LineExecutionTests" name="test_build_line_feedback_payload_consumes_contract_refs" time="0.000" /><testcase classname="tests.test_tc06_line_execution.Tc06LineExecutionTests" name="test_collect_failed_replay_cases_maps_raw_address" time="0.000" /><testcase classname="tests.test_tc06_line_execution.Tc06LineExecutionTests" name="test_replay_failed_queue_removes_succeeded_items" time="0.001" /><testcase classname="tests.test_tc06_line_execution.Tc06LineExecutionTests" name="test_save_and_load_failed_queue" time="0.001" /><testcase classname="tests.test_trust_hub_persistence_no_fallback" name="test_register_capability_blocks_on_invalid_endpoint" time="0.001" /><testcase classname="tests.test_trust_hub_persistence_no_fallback" name="test_capability_and_sample_persist_after_reload" time="0.015"><failure message="ValueError: blocked: trust write failed: (psycopg2.errors.UndefinedTable) relation &quot;trust_meta.capability_registry&quot; does not exist&#10;LINE 2:             INSERT INTO trust_meta.capability_registry (&#10;                                ^&#10;&#10;[SQL: &#10;            INSERT INTO trust_meta.capability_registry (&#10;                capability_id, source_id, provider, endpoint, tool_type, status, updated_at&#10;            ) VALUES (&#10;                %(capability_id)s, %(source_id)s, %(provider)s, %(endpoint)s, %(tool_type)s, %(status)s, %(updated_at)s&#10;            )&#10;            ON CONFLICT(source_id, endpoint)&#10;            DO UPDATE SET&#10;                provider = excluded.provider,&#10;                tool_type = excluded.tool_type,&#10;                status = excluded.status,&#10;                updated_at = excluded.updated_at;&#10;            ]&#10;[parameters: {'capability_id': 'cap_80afca32bd5a', 'source_id': 'gaode', 'provider': 'amap', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'tool_type': 'api', 'status': 'active', 'updated_at': '2026-03-01T03:29:33.367222+00:00'}]&#10;(Background on this error at: https://sqlalche.me/e/20/f405)">self = &lt;sqlalchemy.engine.base.Connection object at 0x10e7b7190&gt;
+dialect = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10deea250&gt;
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10e7d0af0&gt;
+statement = &lt;sqlalchemy.dialects.postgresql.base.PGCompiler object at 0x10e7d06d0&gt;
+parameters = [{'capability_id': 'cap_80afca32bd5a', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'provider': 'amap', 'source_id': 'gaode', ...}]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -&gt; CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+&gt;                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10deea250&gt;
+cursor = &lt;cursor object at 0x10e5288b0; closed: -1&gt;
+statement = '\n            INSERT INTO trust_meta.capability_registry (\n                capability_id, source_id, provider, endpo...tool_type,\n                status = excluded.status,\n                updated_at = excluded.updated_at;\n            '
+parameters = {'capability_id': 'cap_80afca32bd5a', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'provider': 'amap', 'source_id': 'gaode', ...}
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10e7d0af0&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       psycopg2.errors.UndefinedTable: relation "trust_meta.capability_registry" does not exist
+E       LINE 2:             INSERT INTO trust_meta.capability_registry (
+E                                       ^
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py:941: UndefinedTable
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;packages.trust_hub.TrustHub object at 0x10f2ee970&gt;
+sql = '\n            INSERT INTO trust_meta.capability_registry (\n                capability_id, source_id, provider, endpo...tool_type,\n                status = excluded.status,\n                updated_at = excluded.updated_at;\n            '
+params = {'capability_id': 'cap_80afca32bd5a', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'provider': 'amap', 'source_id': 'gaode', ...}
+
+    def _execute_db(self, sql: str, params: Dict[str, object]) -&gt; None:
+        if not self._db_enabled():
+            return
+        try:
+            from sqlalchemy import create_engine, text
+        except Exception as exc:  # pragma: no cover
+            raise ValueError(f"blocked: sqlalchemy unavailable: {exc}") from exc
+    
+        engine = create_engine(self._database_url)
+        try:
+            with engine.begin() as conn:
+                if self._database_url.startswith("postgresql"):
+                    conn.execute(text("SET search_path TO trust_meta, trust_data, public"))
+&gt;               conn.execute(text(sql), params)
+
+packages/trust_hub/__init__.py:214: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1418: in execute
+    return meth(
+.venv/lib/python3.9/site-packages/sqlalchemy/sql/elements.py:515: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1640: in _execute_clauseelement
+    ret = self._execute_context(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1846: in _execute_context
+    return self._exec_single_context(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:2355: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x10deea250&gt;
+cursor = &lt;cursor object at 0x10e5288b0; closed: -1&gt;
+statement = '\n            INSERT INTO trust_meta.capability_registry (\n                capability_id, source_id, provider, endpo...tool_type,\n                status = excluded.status,\n                updated_at = excluded.updated_at;\n            '
+parameters = {'capability_id': 'cap_80afca32bd5a', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'provider': 'amap', 'source_id': 'gaode', ...}
+context = &lt;sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x10e7d0af0&gt;
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+&gt;       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedTable) relation "trust_meta.capability_registry" does not exist
+E       LINE 2:             INSERT INTO trust_meta.capability_registry (
+E                                       ^
+E       
+E       [SQL: 
+E                   INSERT INTO trust_meta.capability_registry (
+E                       capability_id, source_id, provider, endpoint, tool_type, status, updated_at
+E                   ) VALUES (
+E                       %(capability_id)s, %(source_id)s, %(provider)s, %(endpoint)s, %(tool_type)s, %(status)s, %(updated_at)s
+E                   )
+E                   ON CONFLICT(source_id, endpoint)
+E                   DO UPDATE SET
+E                       provider = excluded.provider,
+E                       tool_type = excluded.tool_type,
+E                       status = excluded.status,
+E                       updated_at = excluded.updated_at;
+E                   ]
+E       [parameters: {'capability_id': 'cap_80afca32bd5a', 'source_id': 'gaode', 'provider': 'amap', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'tool_type': 'api', 'status': 'active', 'updated_at': '2026-03-01T03:29:33.367222+00:00'}]
+E       (Background on this error at: https://sqlalche.me/e/20/f405)
+
+.venv/lib/python3.9/site-packages/sqlalchemy/engine/default.py:941: ProgrammingError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/ly/16mz3gsd79x4g1c4y87r98f8gr4tlw/T/pytest-of-01411043/pytest-19/test_capability_and_sample_per0')
+
+    def test_capability_and_sample_persist_after_reload(tmp_path) -&gt; None:
+        storage = tmp_path / "trust_hub.json"
+        hub = TrustHub(storage_path=storage)
+        hub.store_api_key(name="gaode", api_key="k1", provider="amap", api_endpoint="https://restapi.amap.com")
+&gt;       cap = hub.upsert_capability(
+            source_id="gaode",
+            provider="amap",
+            endpoint="https://restapi.amap.com/v3/place/text",
+            tool_type="api",
+        )
+
+tests/test_trust_hub_persistence_no_fallback.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/trust_hub/__init__.py:130: in upsert_capability
+    self._upsert_capability_db(item)
+packages/trust_hub/__init__.py:219: in _upsert_capability_db
+    self._execute_db(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;packages.trust_hub.TrustHub object at 0x10f2ee970&gt;
+sql = '\n            INSERT INTO trust_meta.capability_registry (\n                capability_id, source_id, provider, endpo...tool_type,\n                status = excluded.status,\n                updated_at = excluded.updated_at;\n            '
+params = {'capability_id': 'cap_80afca32bd5a', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'provider': 'amap', 'source_id': 'gaode', ...}
+
+    def _execute_db(self, sql: str, params: Dict[str, object]) -&gt; None:
+        if not self._db_enabled():
+            return
+        try:
+            from sqlalchemy import create_engine, text
+        except Exception as exc:  # pragma: no cover
+            raise ValueError(f"blocked: sqlalchemy unavailable: {exc}") from exc
+    
+        engine = create_engine(self._database_url)
+        try:
+            with engine.begin() as conn:
+                if self._database_url.startswith("postgresql"):
+                    conn.execute(text("SET search_path TO trust_meta, trust_data, public"))
+                conn.execute(text(sql), params)
+        except Exception as exc:
+&gt;           raise ValueError(f"blocked: trust write failed: {exc}") from exc
+E           ValueError: blocked: trust write failed: (psycopg2.errors.UndefinedTable) relation "trust_meta.capability_registry" does not exist
+E           LINE 2:             INSERT INTO trust_meta.capability_registry (
+E                                           ^
+E           
+E           [SQL: 
+E                       INSERT INTO trust_meta.capability_registry (
+E                           capability_id, source_id, provider, endpoint, tool_type, status, updated_at
+E                       ) VALUES (
+E                           %(capability_id)s, %(source_id)s, %(provider)s, %(endpoint)s, %(tool_type)s, %(status)s, %(updated_at)s
+E                       )
+E                       ON CONFLICT(source_id, endpoint)
+E                       DO UPDATE SET
+E                           provider = excluded.provider,
+E                           tool_type = excluded.tool_type,
+E                           status = excluded.status,
+E                           updated_at = excluded.updated_at;
+E                       ]
+E           [parameters: {'capability_id': 'cap_80afca32bd5a', 'source_id': 'gaode', 'provider': 'amap', 'endpoint': 'https://restapi.amap.com/v3/place/text', 'tool_type': 'api', 'status': 'active', 'updated_at': '2026-03-01T03:29:33.367222+00:00'}]
+E           (Background on this error at: https://sqlalche.me/e/20/f405)
+
+packages/trust_hub/__init__.py:216: ValueError</failure></testcase><testcase classname="tests.test_trust_hub_trustdb_query" name="test_query_trust_tables_blocked_without_database_url" time="0.001" /><testcase classname="tests.test_trust_hub_trustdb_query" name="test_query_trust_tables_blocked_with_non_pg_url" time="0.000" /><testcase classname="tests.test_trust_hub_trustdb_query" name="test_capability_and_sample_strict_when_non_pg_url" time="0.001" /><testcase classname="tests.test_workflow_approvals.WorkflowApprovalTests" name="test_auto_execute_blocked_without_approvals" time="0.160" /><testcase classname="tests.test_workflow_approvals.WorkflowApprovalTests" name="test_auto_execute_runs_after_approvals" time="0.607"><failure message="AssertionError: 'failed' != 'completed'&#10;- failed&#10;+ completed">self = &lt;test_workflow_approvals.WorkflowApprovalTests testMethod=test_auto_execute_runs_after_approvals&gt;
+
+    def test_auto_execute_runs_after_approvals(self):
+        wf = FactoryWorkflow(factory_name="test-factory-approved")
+        wf.approve_all_required_gates(approver="unit-test", note="test")
+    
+        scenario = get_all_scenarios()["quick_test"]()
+        wf.submit_product_requirement(scenario)
+        result = wf.create_production_workflow(scenario, auto_execute=True)
+    
+&gt;       self.assertEqual(result["status"], "completed")
+E       AssertionError: 'failed' != 'completed'
+E       - failed
+E       + completed
+
+tests/test_workflow_approvals.py:31: AssertionError</failure></testcase><testcase classname="tests.web_e2e.test_lab_replay_ui" name="test_lab_replay_page_renders_core_sections[chromium]" time="4.700" /><testcase classname="tests.web_e2e.test_lab_replay_ui" name="test_lab_replay_page_reflects_approval_and_activation_path[chromium]" time="0.141" /><testcase classname="tests.web_e2e.test_observability_live_ui" name="test_observability_live_page_renders_core_sections[chromium]" time="0.104" /><testcase classname="tests.web_e2e.test_observability_live_ui" name="test_observability_live_page_updates_connection_state[chromium]" time="0.171" /><testcase classname="tests.web_e2e.test_runtime_observability_upload_ui" name="test_runtime_observability_upload_batch_from_csv[chromium]" time="0.312" /><testcase classname="tests.web_e2e.test_runtime_observability_workpackage_pipeline_ui" name="test_runtime_observability_workpackage_panel_visible[chromium]" time="4.766" /></testsuite></testsuites>

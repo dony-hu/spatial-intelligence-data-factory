@@ -89,3 +89,37 @@ def test_readonly_sql_query_timeout_is_enforced(monkeypatch) -> None:
     assert response.status_code == 408
     detail = response.json().get("detail", {})
     assert detail.get("code") == "SQL_TIMEOUT"
+
+
+def test_readonly_sql_query_accepts_governance_schema_table(monkeypatch) -> None:
+    monkeypatch.setattr(
+        ops,
+        "_execute_postgres_readonly",
+        lambda _sql, _timeout_ms: (["batch_id"], [{"batch_id": "task_x"}], 8),
+    )
+    client = TestClient(app)
+    response = client.post(
+        "/v1/governance/ops/sql/read-only-query",
+        json={
+            "caller": "panel-qa",
+            "sql": "SELECT batch_id FROM governance.batch LIMIT 1",
+            "limit": 10,
+            "timeout_ms": 1000,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json().get("row_count") == 1
+
+
+def test_readonly_sql_query_rejects_legacy_addr_table_name() -> None:
+    client = TestClient(app)
+    response = client.post(
+        "/v1/governance/ops/sql/read-only-query",
+        json={
+            "caller": "panel-qa",
+            "sql": "SELECT batch_id FROM addr_batch LIMIT 1",
+        },
+    )
+    assert response.status_code == 403
+    detail = response.json().get("detail", {})
+    assert detail.get("code") == "SQL_TABLE_NOT_ALLOWED"

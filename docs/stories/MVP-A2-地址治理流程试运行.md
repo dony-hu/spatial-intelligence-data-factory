@@ -21,3 +21,24 @@
 
 1. 有效样例地址输入时 dry run 成功并产出结果。
 2. 缺失关键配置时 dry run 失败并返回错误原因，同时记录 `blocked` 等待人工确认。
+
+## 对齐信息（PRD/架构）
+
+1. PRD 对齐：EPIC B（执行编排）+ EPIC C（证据回传与可观测）。
+2. 架构对齐：
+- `docs/architecture/system_overview.md` 中 Dryrun 流。
+- `docs/architecture/module_boundaries.md` 中 Agent <-> Runtime 边界。
+
+## 模块边界与 API 边界
+
+1. 所属模块：`factory_agent.dryrun_workflow`、`runtime_orchestrator/worker`、`observability`。
+2. 上游入口：CLI/Agent dryrun 指令。
+3. 下游依赖：Runtime Entrypoint、Repository、审计/观测事件。
+4. API 边界：dryrun 只通过工作包契约执行入口，不允许脚本绕过编排层直接写结果。
+
+## 依赖与禁止耦合
+
+1. 允许依赖：`dryrun_workflow -> runtime adapter -> repository/audit`。
+2. 禁止耦合：
+- worker 直接写页面缓存替代标准落库。
+- dryrun 失败后静默 fallback 为成功响应。

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlencode
 
@@ -78,50 +77,26 @@ class ReviewPlatformClient(ExternalAPIClient):
 
     def _call_impl(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Call review platform API if endpoint configured, otherwise return deterministic fallback.
+        Call review platform API with strict mode.
         """
-        if self.endpoint and requests:
-            headers = {}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
-            resp = requests.get(
-                f"{self.endpoint}?{urlencode(request, doseq=True)}",
-                headers=headers,
-                timeout=self.timeout_sec,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, dict):
-                return data
-            return {"results": []}
+        if not self.endpoint:
+            raise RuntimeError("review_platform endpoint is required")
+        if not requests:
+            raise RuntimeError("requests dependency is required")
 
-        name = str(request.get("business_name") or "").strip()
-        addr = str(request.get("address") or "").strip()
-        if not name and not addr:
-            return {"results": []}
-        if "注销" in addr or "已拆除" in addr:
-            return {
-                "results": [
-                    {
-                        "id": f"fallback_{abs(hash(name + addr)) % 10_000_000}",
-                        "rating": 1.0,
-                        "review_count": 3,
-                        "status": "closed",
-                        "verified_time": datetime.now().isoformat(),
-                    }
-                ]
-            }
-        return {
-            "results": [
-                {
-                    "id": f"fallback_{abs(hash(name + addr)) % 10_000_000}",
-                    "rating": 4.0,
-                    "review_count": 23,
-                    "status": "operating",
-                    "verified_time": datetime.now().isoformat(),
-                }
-            ]
-        }
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        resp = requests.get(
+            f"{self.endpoint}?{urlencode(request, doseq=True)}",
+            headers=headers,
+            timeout=self.timeout_sec,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if isinstance(data, dict):
+            return data
+        return {"results": []}
 
     def _validate_response(self, response: Dict[str, Any]) -> Tuple[bool, Optional[APIErrorType]]:
         """Validate response structure."""

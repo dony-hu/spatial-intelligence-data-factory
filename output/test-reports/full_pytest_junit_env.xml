@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="2" failures="0" skipped="0" tests="2" time="1.046" timestamp="2026-03-01T10:35:00.536443+08:00" hostname="SF01411043MACHC"><testcase classname="" name="tests.test_bmad_workflow_status_guard" time="0.000"><error message="collection failure">ImportError while importing test module '/Users/01411043/code/spatial-intelligence-data-factory/tests/test_bmad_workflow_status_guard.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_bmad_workflow_status_guard.py:6: in &lt;module&gt;
+    import yaml
+E   ModuleNotFoundError: No module named 'yaml'</error></testcase><testcase classname="" name="tests.test_continuous_demo_cleanup" time="0.000"><error message="collection failure">ImportError while importing test module '/Users/01411043/code/spatial-intelligence-data-factory/tests/test_continuous_demo_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_continuous_demo_cleanup.py:11: in &lt;module&gt;
+    from scripts.factory_continuous_demo_web import run_worker
+scripts/factory_continuous_demo_web.py:23: in &lt;module&gt;
+    from tools.factory_simple_server import start_server, factory_state, register_action_handlers
+E   ImportError: cannot import name 'start_server' from 'tools.factory_simple_server' (/Users/01411043/code/spatial-intelligence-data-factory/tools/factory_simple_server.py)</error></testcase></testsuite></testsuites>

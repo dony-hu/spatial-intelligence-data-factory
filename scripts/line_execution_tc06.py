@@ -29,7 +29,6 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "output" / "line_runs"
 DEFAULT_WORKPACKAGE = PROJECT_ROOT / "workpackages" / "wp-address-topology-v1.0.2.json"
 DEFAULT_LINE_FEEDBACK_OUT = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.json"
 
-SQLITE_REF_RE = re.compile(r"^sqlite://(?P<path>[^#]+)#(?P<table>[A-Za-z_][A-Za-z0-9_]*)$")
 PG_REF_RE = re.compile(r"^pg://(?P<schema>[A-Za-z_][A-Za-z0-9_]*)\.(?P<table>[A-Za-z_][A-Za-z0-9_]*)$")
 
 
@@ -58,9 +57,9 @@ def _resolve_observability_entrypoint(workpackage: Dict[str, Any]) -> Optional[P
     wp_version = str(workpackage.get("version") or "")
     if wp_id and wp_version:
         bundle_slug = wp_id.replace("wp-", "", 1)
-        fallback = PROJECT_ROOT / "workpackages" / "bundles" / bundle_slug / "observability" / "line_observe.py"
-        if fallback.exists():
-            return fallback
+        legacy_entry = PROJECT_ROOT / "workpackages" / "bundles" / bundle_slug / "observability" / "line_observe.py"
+        if legacy_entry.exists():
+            return legacy_entry
     return None
 
 
@@ -126,7 +125,7 @@ def _collect_runtime_observability_metrics(workflow_result: Dict[str, Any], work
             "step_total": total_steps,
             "step_failed": failed_steps,
             "step_error_rate": round(float(failed_steps) / float(total_steps), 6) if total_steps > 0 else 0.0,
-            "collector": "fallback_inline",
+            "collector": "inline_default",
         }
 
     observe_step = getattr(module, "observe_step", None)
@@ -314,13 +313,6 @@ def write_markdown(path: Path, lines: List[str]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _validate_sqlite_ref(ref: str, expected_table: str) -> bool:
-    match = SQLITE_REF_RE.match(ref)
-    if not match:
-        return False
-    return match.group("table") == expected_table
-
-
 def _validate_pg_ref(ref: str, expected_table: str) -> bool:
     match = PG_REF_RE.match(ref)
     if not match:
@@ -333,7 +325,7 @@ def _line_feedback_store_mode(contract: Dict[str, Any]) -> str:
     replay_ref = str(contract.get("replay_result_ref") or "")
     if _validate_pg_ref(failure_ref, "failure_queue") and _validate_pg_ref(replay_ref, "replay_runs"):
         return "pg"
-    return "sqlite"
+    raise ValueError("line feedback contract refs must be pg://<schema>.failure_queue and pg://<schema>.replay_runs")
 
 
 def _parse_pg_ref(ref: str, expected_table: str) -> tuple[str, str]:
@@ -356,39 +348,6 @@ def _pg_engine():
     return create_engine(database_url)
 
 
-def _ensure_pg_feedback_tables(schema: str) -> None:
-    from sqlalchemy import text
-
-    engine = _pg_engine()
-    with engine.begin() as conn:
-        conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
-        conn.execute(
-            text(
-                f"""
-                CREATE TABLE IF NOT EXISTS {schema}.failure_queue (
-                    failure_id TEXT PRIMARY KEY,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    status TEXT NOT NULL,
-                    payload_json JSONB NOT NULL DEFAULT '{{}}'::jsonb
-                )
-                """
-            )
-        )
-        conn.execute(
-            text(
-                f"""
-                CREATE TABLE IF NOT EXISTS {schema}.replay_runs (
-                    replay_id TEXT PRIMARY KEY,
-                    failure_id TEXT NOT NULL,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    status TEXT NOT NULL,
-                    result_json JSONB NOT NULL DEFAULT '{{}}'::jsonb
-                )
-                """
-            )
-        )
-
-
 def _failure_id(item: Dict[str, Any]) -> str:
     raw = str(item.get("raw_address") or "")
     stage = str(item.get("stage") or "")
@@ -400,7 +359,6 @@ def _load_failed_queue_pg(failure_ref: str) -> List[Dict[str, Any]]:
     from sqlalchemy import text
 
     schema, table = _parse_pg_ref(failure_ref, "failure_queue")
-    _ensure_pg_feedback_tables(schema)
     engine = _pg_engine()
     with engine.begin() as conn:
         rows = conn.execute(
@@ -418,7 +376,6 @@ def _save_failed_queue_pg(failure_ref: str, items: List[Dict[str, Any]]) -> None
     from sqlalchemy import text
 
     schema, table = _parse_pg_ref(failure_ref, "failure_queue")
-    _ensure_pg_feedback_tables(schema)
     engine = _pg_engine()
     with engine.begin() as conn:
         conn.execute(text(f"UPDATE {schema}.{table} SET status = 'resolved' WHERE status = 'pending'"))
@@ -441,7 +398,6 @@ def _append_replay_run_pg(replay_ref: str, report: Dict[str, Any]) -> None:
     from sqlalchemy import text
 
     schema, table = _parse_pg_ref(replay_ref, "replay_runs")
-    _ensure_pg_feedback_tables(schema)
     replay_id = f"replay_{uuid.uuid4().hex[:12]}"
     engine = _pg_engine()
     with engine.begin() as conn:
@@ -469,12 +425,12 @@ def build_line_feedback_payload(
 ) -> Dict[str, Any]:
     failure_ref = str(contract.get("failure_queue_snapshot_ref") or "")
     replay_ref = str(contract.get("replay_result_ref") or "")
-    valid_failure_ref = _validate_sqlite_ref(failure_ref, "failure_queue") or _validate_pg_ref(failure_ref, "failure_queue")
-    valid_replay_ref = _validate_sqlite_ref(replay_ref, "replay_runs") or _validate_pg_ref(replay_ref, "replay_runs")
+    valid_failure_ref = _validate_pg_ref(failure_ref, "failure_queue")
+    valid_replay_ref = _validate_pg_ref(replay_ref, "replay_runs")
     if not valid_failure_ref:
-        raise ValueError("line_feedback_contract.failure_queue_snapshot_ref 必须是 sqlite://...#failure_queue 或 pg://<schema>.failure_queue")
+        raise ValueError("line_feedback_contract.failure_queue_snapshot_ref 必须是 pg://<schema>.failure_queue")
     if not valid_replay_ref:
-        raise ValueError("line_feedback_contract.replay_result_ref 必须是 sqlite://...#replay_runs 或 pg://<schema>.replay_runs")
+        raise ValueError("line_feedback_contract.replay_result_ref 必须是 pg://<schema>.replay_runs")
 
     done_items = ["runtime_unify", "package_split", "r2_gate_closure"] if status == "done" else ["runtime_unify", "package_split"]
     next_items = [] if status == "done" else ["r2_gate_closure"]

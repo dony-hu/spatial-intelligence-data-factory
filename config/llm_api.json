@@ -1,7 +1,7 @@
 {
   "provider": "openai_compatible",
   "endpoint": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-  "model": "glm-4-7-251222",
+  "model": "doubao-seed-2-0-pro-260215",
   "api_key": "ce4dad5a-be7f-4870-9fb4-4b5b73000a37",
   "timeout_sec": 60,
   "temperature": 0.2,

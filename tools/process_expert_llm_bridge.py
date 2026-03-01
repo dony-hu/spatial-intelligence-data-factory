@@ -114,10 +114,10 @@ class RealProcessExpertLLMBridge(ProcessExpertLLMBridge):
 
     @staticmethod
     def _extract_change_request(answer: str, audit: Dict[str, Any]) -> str:
-        fallback = f"根据失败项 {audit.get('failed_checks') or []} 调整流程并补强工具脚本与审计策略"
+        default_request = f"根据失败项 {audit.get('failed_checks') or []} 调整流程并补强工具脚本与审计策略"
         text = str(answer or "").strip()
         if not text:
-            return fallback
+            return default_request
 
         def pick_from_obj(obj: Any) -> str:
             if isinstance(obj, dict):
@@ -178,7 +178,7 @@ class RealProcessExpertLLMBridge(ProcessExpertLLMBridge):
 
         if cleaned_lines:
             return " ".join(cleaned_lines)[:400]
-        return fallback
+        return default_request
 
     def recommend_trusted_sources(self, trusted_sources_config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
         prompt = (

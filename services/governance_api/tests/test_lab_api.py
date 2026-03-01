@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 
 from packages.address_core.trusted_fengtu import FengtuTrustedClient
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
 
 from services.governance_api.app.main import app
+from services.governance_api.app.routers import lab as lab_router
 
 
 def test_lab_optimize_creates_pending_change_request() -> None:
@@ -541,20 +541,58 @@ def test_lab_observability_live_view() -> None:
     page = client.get("/v1/governance/lab/observability/view?env=dev")
     assert page.status_code == 200
     assert "text/html" in page.headers.get("content-type", "")
-    assert "系统可观测性管理看板" in page.text
-    assert "SQL交互查询" in page.text
+    assert "可观测性总览" in page.text
+    assert "决策总览" in page.text
+    assert "域视图" in page.text
+    assert "诊断工具" in page.text
+    assert 'href="-"' not in page.text
 
 
 def test_lab_observability_management_data_contract() -> None:
     client = TestClient(app)
-    resp = client.get("/v1/governance/lab/observability/management/data")
+    resp = client.get("/v1/governance/lab/observability/management/data?env=dev")
     assert resp.status_code == 200
     data = resp.json()
+    assert data["environment"] == "dev"
+    assert "decision_overview" in data
+    assert "trends" in data
     assert "test_overview" in data
     assert "gate_layers" in data
     assert "failure_classification" in data
     assert "execution_process" in data
     assert "observation_foundation" in data
     assert "sql_capability" in data
+    assert "available" in data["sql_capability"]
+    assert "availability_message" in data["sql_capability"]
     assert "timeline" in data["execution_process"]
     assert len(data["execution_process"]["timeline"]) >= 20
+
+
+def test_lab_observability_output_evidence_is_reachable() -> None:
+    client = TestClient(app)
+    project_root = Path(__file__).resolve().parents[3]
+    sample_path = project_root / "output" / "dashboard" / "test_status_board.json"
+    assert sample_path.exists(), "missing fixture output/dashboard/test_status_board.json"
+
+    resp = client.get("/output/dashboard/test_status_board.json")
+    assert resp.status_code == 200
+    assert "overall_progress" in resp.text
+
+
+def test_lab_observability_management_data_not_dependent_on_dashboard_files(monkeypatch) -> None:
+    client = TestClient(app)
+    monkeypatch.setattr(
+        lab_router,
+        "_read_dashboard_json",
+        lambda _path: (_ for _ in ()).throw(RuntimeError("dashboard file should not be accessed")),
+    )
+    monkeypatch.setattr(
+        lab_router,
+        "_read_dashboard_events",
+        lambda _path, limit=200: (_ for _ in ()).throw(RuntimeError("dashboard events file should not be accessed")),
+    )
+    resp = client.get("/v1/governance/lab/observability/management/data?env=dev")
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert "decision_overview" in payload
+    assert "execution_process" in payload

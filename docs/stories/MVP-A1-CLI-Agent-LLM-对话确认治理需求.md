@@ -21,3 +21,25 @@
 
 1. 输入“请生成地址治理 MVP 方案”返回结构化摘要。
 2. 模拟 LLM 不可用时流程中止并记录 `blocked` 状态，禁止返回降级结果。
+
+## 对齐信息（PRD/架构）
+
+1. PRD 对齐：EPIC A（结果可信）+ EPIC B（编排可控）+ No-Fallback 要求。
+2. 架构对齐：
+- `docs/architecture/system_overview.md`
+- `docs/architecture/module_boundaries.md`
+- `docs/architecture/dependency_map.md`
+
+## 模块边界与 API 边界
+
+1. 所属模块：`factory_cli`、`factory_agent`、`llm_gateway`、`audit`。
+2. 上游入口：CLI 对话命令。
+3. 下游依赖：Agent 意图路由、LLM Gateway、审计写入。
+4. API 边界：仅允许 CLI -> Agent -> LLM Gateway，禁止 CLI 直连数据库。
+
+## 依赖与禁止耦合
+
+1. 允许依赖：`factory_cli -> factory_agent -> llm_gateway`。
+2. 禁止耦合：
+- `factory_cli -> PostgreSQL` 直连。
+- 在 Agent 中直接绑定具体 LLM SDK 客户端对象并跨模块透传。

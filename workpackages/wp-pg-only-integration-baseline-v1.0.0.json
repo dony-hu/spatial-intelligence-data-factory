@@ -9,14 +9,14 @@
     "released_by": "project-manager",
     "dispatch_time_local": "2026-02-16 11:22:20 CST",
     "rollback_target_version": "wp-test-panel-sql-query-readonly-v0.1.0",
-    "runtime_record_ref": "pg://address_line.addr_audit_event"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-pg-only-integration-baseline-v1.0.0"
   },
   "line_spec": {
     "line_type": "test_quality_gate_phase1",
-    "goal": "建立PG-only集成测试硬门并禁止SQLite回落",
+    "goal": "建立PG-only集成测试硬门并禁止非PG回流",
     "constraints": [
       "CI必须执行PG-only集成测试",
-      "检测到SQLite回落即NO_GO",
+      "检测到非PG回流即NO_GO",
       "输出门槛判定与失败分类"
     ]
   },
@@ -47,7 +47,7 @@
     "type": "object",
     "required": [
       "pg_only_test_report",
-      "sqlite_fallback_detection",
+      "non_pg_fallback_detection",
       "gate_decision_sheet",
       "failure_classification_report",
       "release_decision"
@@ -56,7 +56,7 @@
       "pg_only_test_report": {
         "type": "string"
       },
-      "sqlite_fallback_detection": {
+      "non_pg_fallback_detection": {
         "type": "string"
       },
       "gate_decision_sheet": {

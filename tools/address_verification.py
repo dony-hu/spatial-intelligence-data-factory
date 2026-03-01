@@ -593,7 +593,7 @@ class AddressVerificationOrchestrator:
                         "what_needed": missing_item,
                         "why_needed": "外部核实能力无法执行，影响线上核实收敛率。",
                         "expected_gain": "提升核实覆盖率并降低不可核实比例。",
-                        "fallback_if_missing": "进入不可核实池并等待能力补齐后重试。",
+                        "when_missing_plan": "进入不可核实池并等待能力补齐后重试。",
                     }
                 )
                 continue

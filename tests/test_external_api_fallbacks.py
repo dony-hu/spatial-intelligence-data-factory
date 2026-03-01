@@ -12,7 +12,7 @@ from tools.external_apis.review_platform import ReviewPlatformClient
 from tools.external_apis.web_search import WebSearchClient
 
 
-class ExternalAPIFallbackTests(unittest.TestCase):
+class ExternalAPIStrictModeTests(unittest.TestCase):
     def setUp(self):
         self._tmpdir = tempfile.mkdtemp(prefix="ext_api_test_")
         self.db_path = str(Path(self._tmpdir) / "agent_runtime.db")
@@ -22,21 +22,21 @@ class ExternalAPIFallbackTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
-    def test_web_search_fallback_returns_non_blocking_payload(self):
+    def test_web_search_without_endpoint_returns_failure_payload(self):
         client = WebSearchClient(runtime_store=self.store, config={})
         result = client.search_address_evidence(address="上海市浦东新区世纪大道100号", business_name="测试商户", limit=3)
-        self.assertIn("found", result)
-        self.assertIn("results", result)
-        self.assertIsInstance(result["results"], list)
+        self.assertFalse(result["found"])
+        self.assertEqual(result["verification_source"], "web_search")
+        self.assertIn("error_type", result)
 
-    def test_review_platform_fallback_returns_non_blocking_payload(self):
+    def test_review_platform_without_endpoint_returns_failure_payload(self):
         client = ReviewPlatformClient(runtime_store=self.store, config={})
         result = client.query_business_info(
             business_name="测试商户",
             city="上海",
             address="上海市浦东新区世纪大道100号",
         )
-        self.assertIn("found", result)
+        self.assertFalse(result["found"])
         self.assertIn("verification_source", result)
         self.assertEqual(result["verification_source"], "review_platform")
 

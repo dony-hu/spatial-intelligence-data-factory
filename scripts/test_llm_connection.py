@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from packages.agent_runtime.adapters.openhands_runtime import OpenHandsRuntime
+from packages.agent_runtime.adapters.opencode_runtime import OpenCodeRuntime
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     print(f"使用配置文件: {config_path}")
     print()
     
-    runtime = OpenHandsRuntime(config_path=config_path)
+    runtime = OpenCodeRuntime(config_path=config_path)
     
     print("正在发送测试请求...")
     print()

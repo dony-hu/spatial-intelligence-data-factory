@@ -118,6 +118,31 @@ Lakehouse 负责生长与试错，DW 负责权威输出与治理审计。
 - `scripts/testdata/`：测试数据拉取与校验脚本。
 - `docs/`：专题治理文档（如测试数据治理）。
 
+## BMAD 方法仓接入（强制）
+
+本项目采用“项目仓 + 方法仓”双层结构。当前默认方法仓路径：
+
+- `/Users/01411043/code/BMAD-METHOD`
+
+项目侧关键配置：
+
+- `AGENTS.md`：方法仓引用规则与优先级
+- `bmad/config.yaml`：方法仓路径、回退环境变量、资产要求
+- `docs/bmm-workflow-status.yaml`：BMAD 工作流状态
+
+当默认路径不可用时，可通过环境变量覆盖：
+
+```bash
+export BMAD_METHOD_REPO=/your/path/BMAD-METHOD
+```
+
+建议在启动新会话前执行一次检查：
+
+```bash
+test -d "${BMAD_METHOD_REPO:-/Users/01411043/code/BMAD-METHOD}/_bmad" \
+  && test -d "${BMAD_METHOD_REPO:-/Users/01411043/code/BMAD-METHOD}/docs"
+```
+
 ## 快速开始（测试数据）
 
 ```bash

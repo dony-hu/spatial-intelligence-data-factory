@@ -9,25 +9,48 @@ from src.runtime.orchestrator import Orchestrator
 from src.runtime.errors import InvalidTransitionError
 
 
+class _MemoryStateStore:
+    def __init__(self):
+        self._store = {}
+
+    def upsert(self, task_id, state, payload):
+        self._store[task_id] = {
+            "task_id": task_id,
+            "state": state,
+            "payload": payload,
+            "updated_at": "now",
+        }
+
+    def get(self, task_id):
+        return self._store.get(task_id)
+
+
+class _MemoryEvidenceStore:
+    def __init__(self):
+        self._rows = []
+
+    def append(self, task_id, actor, action, artifact_ref, result, metadata=None):
+        self._rows.append(
+            {
+                "task_id": task_id,
+                "actor": actor,
+                "action": action,
+                "artifact_ref": artifact_ref,
+                "result": result,
+                "metadata": metadata or {},
+            }
+        )
+
+    def list_by_task(self, task_id):
+        return [row for row in self._rows if row["task_id"] == task_id]
+
+
 class AgentRuntimeTests(unittest.TestCase):
     def setUp(self):
-        self.db = PROJECT_ROOT / "database" / "agent_runtime_test.db"
-        if self.db.exists():
-            self.db.unlink()
         self.o = Orchestrator(
-            state_store=None,
-            evidence_store=None,
+            state_store=_MemoryStateStore(),
+            evidence_store=_MemoryEvidenceStore(),
         )
-        # Override stores to use isolated test db
-        from src.runtime.state_store import SQLiteStateStore
-        from src.runtime.evidence_store import SQLiteEvidenceStore
-
-        self.o.state_store = SQLiteStateStore(str(self.db))
-        self.o.evidence_store = SQLiteEvidenceStore(str(self.db))
-
-    def tearDown(self):
-        if self.db.exists():
-            self.db.unlink()
 
     def test_submit_and_transition(self):
         self.o.submit("task_ut_1", approvals_required=["SECURITY"])

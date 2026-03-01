@@ -38,7 +38,6 @@ def _prepare_runtime(db_url: str) -> None:
     if not db_url.startswith("postgresql://"):
         raise ValueError("blocked: --db-url must be postgresql:// in PG-only mode")
     os.environ["DATABASE_URL"] = db_url
-    os.environ["GOVERNANCE_ALLOW_MEMORY_FALLBACK"] = "0"
 
 
 def _default_db_url() -> str:
@@ -46,8 +45,6 @@ def _default_db_url() -> str:
 
 
 def _resolve_llm_gate(*, llm_config: str) -> tuple[bool, dict[str, Any]]:
-    if str(os.getenv("MVP_ACCEPTANCE_MOCK_LLM", "0")).strip() == "1":
-        return True, {"mode": "mock", "status": "enabled_by_env"}
     try:
         from tools.agent_cli import load_config
 
@@ -75,7 +72,6 @@ def _skipped_check(reason: str = "profile_skipped") -> dict[str, Any]:
 def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path, llm_config: str, profile: str = "full") -> dict[str, Any]:
     old_cwd = Path.cwd()
     old_db_url = os.environ.get("DATABASE_URL")
-    old_fallback = os.environ.get("GOVERNANCE_ALLOW_MEMORY_FALLBACK")
     try:
         _prepare_runtime(db_url)
 
@@ -111,19 +107,6 @@ def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path, llm_config: 
         llm_gate_evidence: dict[str, Any] = {"mode": "skipped", "reason": "profile_skipped"}
         if should_run_llm:
             llm_gate_passed, llm_gate_evidence = _resolve_llm_gate(llm_config=llm_config)
-            if llm_gate_evidence.get("mode") == "mock":
-                agent._run_requirement_query = lambda _prompt: {  # type: ignore[attr-defined]
-                    "status": "ok",
-                    "answer": json.dumps(
-                        {
-                            "target": "地址治理MVP",
-                            "data_sources": ["gaode_api", "baidu_api"],
-                            "rule_points": ["标准化", "冲突识别"],
-                            "outputs": ["workpackage", "observability_report"],
-                        },
-                        ensure_ascii=False,
-                    ),
-                }
 
         requirement: dict[str, Any] = {"status": "skipped", "reason": "profile_skipped"}
         if should_run_llm:
@@ -204,10 +187,6 @@ def run_acceptance(*, output_dir: Path, db_url: str, workdir: Path, llm_config: 
             os.environ.pop("DATABASE_URL", None)
         else:
             os.environ["DATABASE_URL"] = old_db_url
-        if old_fallback is None:
-            os.environ.pop("GOVERNANCE_ALLOW_MEMORY_FALLBACK", None)
-        else:
-            os.environ["GOVERNANCE_ALLOW_MEMORY_FALLBACK"] = old_fallback
 
     checks = {
         "A1_llm_real_service_gate": (

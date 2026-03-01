@@ -1289,7 +1289,7 @@ def _run_orchestrated_workflow(payload: Dict[str, Any]) -> Dict[str, Any]:
         task_run_id=task_run_id,
         status=status,
         current_round=len(rounds),
-        output_snapshot_ref=f"sqlite://task_output_json/{final_output_id}",
+        output_snapshot_ref=f"pg://control_plane.task_output_json/{final_output_id}",
         ended=True,
     )
     workflow_runs[workflow_id] = final_payload
@@ -2325,7 +2325,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Agent Server（统一 Agent 入口）")
     parser.add_argument("--port", type=int, default=8081, help="服务端口")
     parser.add_argument("--config", default="config/llm_api.json", help="LLM 配置文件路径")
-    parser.add_argument("--runtime-db", default="database/agent_runtime.db", help="运行时SQLite")
+    parser.add_argument("--runtime-db", default="database/agent_runtime.db", help="运行时数据库文件名(历史参数，当前由DATABASE_URL控制)")
     parser.add_argument("--runtime-store", default="runtime_store", help="输入原始文件本地目录")
     args = parser.parse_args(argv)
 

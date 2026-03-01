@@ -27,3 +27,11 @@
 
 ## Recent Changes
 - 001-system-design-spec: Added Markdown 规范文档 + Shell 自动化脚本（仓库现状） + GitHub 仓库协作、Spec Kit 工作流、BMAD 方法文档资产
+
+## BMAD 方法仓引用（强制）
+
+1. 本项目默认引用外部 BMAD 方法仓：`/Users/01411043/code/BMAD-METHOD`。
+2. 执行 BMAD 工作流命令（如 `/workflow-status`、`/prd`、`/architecture`、`/create-story`、`/dev-story`）前，优先读取方法仓中的 `_bmad/` 与 `docs/` 资产。
+3. 项目内配置优先级高于方法仓默认值：`AGENTS.md` > `bmad/config.yaml` > 方法仓模板。
+4. 若本机路径不存在，使用环境变量 `BMAD_METHOD_REPO` 指定替代路径；若仍不可达，需在回复中明确“方法仓不可用并采用项目内回退配置”。
+5. 禁止在未声明来源的情况下臆造 BMAD 命令、角色定义与模板结构。

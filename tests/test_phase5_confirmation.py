@@ -228,7 +228,7 @@ def test_schema_validation():
         assert not result.is_valid, "Should reject additional fields for security"
         print("✓ Additional properties rejected (prevents parameter injection)")
 
-        # Test 5: Unknown intent allowed (fallback for non-schema-validated intents)
+        # Test 5: Unknown intent allowed (strict handling for non-schema-validated intents)
         result = validator.validate("unknown_read_intent", {})
 
         assert result.is_valid, "Should allow unknown intents (read operations)"

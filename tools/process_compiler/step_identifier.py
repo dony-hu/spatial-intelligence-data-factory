@@ -78,7 +78,7 @@ class StepIdentifier:
             'tool_name': 'db_persister',
             'tool_module': 'persisters.py',
             'parameters': {
-                'database': 'sqlite',
+                'database': 'postgresql',
                 'table_name': 'process_results',
                 'batch_size': 1000
             }

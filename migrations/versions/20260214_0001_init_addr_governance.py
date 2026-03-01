@@ -158,6 +158,81 @@ def upgrade() -> None:
         """
     )
 
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS addr_workpackage_publish (
+            publish_id VARCHAR(64) PRIMARY KEY,
+            workpackage_id VARCHAR(128) NOT NULL,
+            version VARCHAR(64) NOT NULL,
+            status VARCHAR(32) NOT NULL,
+            evidence_ref TEXT NOT NULL,
+            published_at TIMESTAMPTZ,
+            bundle_path TEXT,
+            published_by VARCHAR(128),
+            confirmation_user VARCHAR(128),
+            confirmation_decision VARCHAR(128),
+            confirmation_timestamp TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(workpackage_id, version)
+        );
+        """
+    )
+
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS addr_observation_event (
+            event_id VARCHAR(64) PRIMARY KEY,
+            trace_id VARCHAR(128) NOT NULL,
+            span_id VARCHAR(128),
+            source_service VARCHAR(64) NOT NULL,
+            event_type VARCHAR(64) NOT NULL,
+            status VARCHAR(32) NOT NULL,
+            severity VARCHAR(16) NOT NULL,
+            task_id VARCHAR(64),
+            workpackage_id VARCHAR(128),
+            ruleset_id VARCHAR(64),
+            payload_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """
+    )
+
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS addr_observation_metric (
+            metric_id VARCHAR(64) PRIMARY KEY,
+            metric_name VARCHAR(128) NOT NULL,
+            metric_value DOUBLE PRECISION NOT NULL,
+            labels_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+            window_start TIMESTAMPTZ,
+            window_end TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """
+    )
+
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS addr_alert_event (
+            alert_id VARCHAR(64) PRIMARY KEY,
+            alert_rule VARCHAR(128) NOT NULL,
+            severity VARCHAR(16) NOT NULL,
+            status VARCHAR(32) NOT NULL,
+            trigger_value DOUBLE PRECISION NOT NULL,
+            threshold_value DOUBLE PRECISION NOT NULL,
+            trace_id VARCHAR(128),
+            task_id VARCHAR(64),
+            workpackage_id VARCHAR(128),
+            owner VARCHAR(128),
+            ack_by VARCHAR(128),
+            ack_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """
+    )
+
     op.execute("CREATE INDEX IF NOT EXISTS idx_addr_raw_hash ON addr_raw(raw_hash);")
     op.execute("CREATE INDEX IF NOT EXISTS idx_addr_raw_text_trgm ON addr_raw USING gin(raw_text gin_trgm_ops);")
     op.execute("CREATE INDEX IF NOT EXISTS idx_addr_canonical_text_trgm ON addr_canonical USING gin(canon_text gin_trgm_ops);")
@@ -191,6 +266,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS addr_alert_event;")
+    op.execute("DROP TABLE IF EXISTS addr_observation_metric;")
+    op.execute("DROP TABLE IF EXISTS addr_observation_event;")
+    op.execute("DROP TABLE IF EXISTS addr_workpackage_publish;")
     op.execute("DROP TABLE IF EXISTS agent_execution_log;")
     op.execute("DROP TABLE IF EXISTS api_audit_log;")
     op.execute("DROP TABLE IF EXISTS addr_ruleset;")

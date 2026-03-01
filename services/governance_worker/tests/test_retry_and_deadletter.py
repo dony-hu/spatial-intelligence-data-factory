@@ -1,18 +1,25 @@
-from services.governance_worker.app.core.queue import IN_MEMORY_QUEUE, enqueue_task
+from services.governance_worker.app.core.queue import enqueue_task
 
 
-def test_enqueue_fallback_to_in_memory_when_enabled(monkeypatch) -> None:
-    monkeypatch.setenv("ALLOW_IN_MEMORY_QUEUE", "1")
-    before = len(IN_MEMORY_QUEUE.jobs)
-    result = enqueue_task({"task_id": "task_fallback"})
-    after = len(IN_MEMORY_QUEUE.jobs)
-    assert result.queued is True
-    assert after >= before
+def test_enqueue_without_queue_mode_fails_fast(monkeypatch) -> None:
+    monkeypatch.delenv("GOVERNANCE_QUEUE_MODE", raising=False)
+    result = enqueue_task({"task_id": "task_no_mode"})
+    assert result.queued is False
+    assert result.backend == "none"
+    assert result.message == "queue_mode_unset"
 
 
-def test_enqueue_strict_mode_blocks_fallback_by_default(monkeypatch) -> None:
-    monkeypatch.delenv("ALLOW_IN_MEMORY_QUEUE", raising=False)
-    result = enqueue_task({"task_id": "task_no_fallback"})
+def test_enqueue_unknown_mode_is_unsupported(monkeypatch) -> None:
+    monkeypatch.setenv("GOVERNANCE_QUEUE_MODE", "unsupported")
+    result = enqueue_task({"task_id": "task_mode_unsupported"})
+    assert result.queued is False
+    assert result.backend == "unsupported"
+    assert result.message == "queue_mode_unsupported"
+
+
+def test_enqueue_rq_mode_returns_error_when_rq_unavailable(monkeypatch) -> None:
+    monkeypatch.setenv("GOVERNANCE_QUEUE_MODE", "rq")
+    result = enqueue_task({"task_id": "task_rq_unavailable"})
     assert result.queued is False
     assert result.backend == "rq"
     assert result.message.startswith("enqueue_failed:")

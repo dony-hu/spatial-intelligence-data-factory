@@ -1,12 +1,11 @@
 import os
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
 
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 from services.governance_worker.app.jobs.governance_job import run
 
 
-class _DummyRuntimeResult:
+class _RuntimeResultStub:
     def model_dump(self) -> dict:
         return {
             "strategy": "auto_accept",
@@ -15,15 +14,15 @@ class _DummyRuntimeResult:
         }
 
 
-class _DummyRuntime:
+class _RuntimeStub:
     def run_task(self, task_context: dict, ruleset: dict):
-        return _DummyRuntimeResult()
+        return _RuntimeResultStub()
 
 
 def test_governance_job_run_updates_task_status(monkeypatch) -> None:
     monkeypatch.setattr(
         "services.governance_worker.app.jobs.governance_job.get_runtime",
-        lambda: _DummyRuntime(),
+        lambda: _RuntimeStub(),
     )
     task_id = "task_unit_flow"
     REPOSITORY.create_task(

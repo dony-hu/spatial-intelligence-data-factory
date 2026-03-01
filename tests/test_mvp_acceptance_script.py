@@ -25,8 +25,7 @@ def _pg_available() -> bool:
 
 
 def test_run_acceptance_script_as_subprocess(tmp_path) -> None:
-    if not _pg_available():
-        pytest.skip("requires reachable PostgreSQL for PG-only acceptance")
+    assert _pg_available(), "requires reachable PostgreSQL for PG-only acceptance"
     repo_root = Path(__file__).resolve().parents[1]
     output_dir = tmp_path / "output" / "acceptance"
     db_url = _postgres_db_url()
@@ -41,7 +40,6 @@ def test_run_acceptance_script_as_subprocess(tmp_path) -> None:
         str(tmp_path),
     ]
     env = os.environ.copy()
-    env["MVP_ACCEPTANCE_MOCK_LLM"] = "1"
     proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False, env=env)
     assert proc.returncode == 0, proc.stderr or proc.stdout
 
@@ -59,8 +57,7 @@ def test_run_acceptance_script_as_subprocess(tmp_path) -> None:
 
 
 def test_run_acceptance_script_real_llm_gate_blocked_without_config(tmp_path) -> None:
-    if not _pg_available():
-        pytest.skip("requires reachable PostgreSQL for PG-only acceptance")
+    assert _pg_available(), "requires reachable PostgreSQL for PG-only acceptance"
     repo_root = Path(__file__).resolve().parents[1]
     output_dir = tmp_path / "output" / "acceptance"
     db_url = _postgres_db_url()
@@ -77,7 +74,6 @@ def test_run_acceptance_script_real_llm_gate_blocked_without_config(tmp_path) ->
         "config/not_exists.json",
     ]
     env = os.environ.copy()
-    env.pop("MVP_ACCEPTANCE_MOCK_LLM", None)
     env.pop("LLM_MODEL", None)
     env.pop("LLM_API_KEY", None)
     env.pop("LLM_ENDPOINT", None)
@@ -109,7 +105,6 @@ def test_run_acceptance_script_rejects_non_pg_db_url(tmp_path) -> None:
         str(tmp_path),
     ]
     env = os.environ.copy()
-    env["MVP_ACCEPTANCE_MOCK_LLM"] = "1"
     proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False, env=env)
     assert proc.returncode == 2, proc.stderr or proc.stdout
     assert "postgresql://" in (proc.stderr + proc.stdout)
@@ -129,7 +124,6 @@ def test_run_acceptance_script_uses_env_database_url_when_db_url_not_provided(tm
         "unit",
     ]
     env = os.environ.copy()
-    env["MVP_ACCEPTANCE_MOCK_LLM"] = "1"
     env["DATABASE_URL"] = "mysql://env-user:env-pass@localhost/env_db"
     proc = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, check=False, env=env)
     assert proc.returncode == 2, proc.stderr or proc.stdout

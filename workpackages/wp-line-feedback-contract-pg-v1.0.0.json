@@ -9,7 +9,7 @@
     "released_by": "project-manager",
     "dispatch_time_local": "2026-02-16 11:22:20 CST",
     "rollback_target_version": "wp-address-topology-v1.0.2",
-    "runtime_record_ref": "pg://address_line.addr_audit_event"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-line-feedback-contract-pg-v1.0.0"
   },
   "line_spec": {
     "line_type": "line_execution_feedback_phase1",

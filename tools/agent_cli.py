@@ -15,7 +15,7 @@ DEFAULT_CONFIG_PATH = "config/llm_api.json"
 
 
 def load_config(config_path: str = DEFAULT_CONFIG_PATH) -> Dict[str, Any]:
-    """Load LLM config from file with env fallback.
+    """Load LLM config from file with env override.
 
     Required final fields:
     - provider

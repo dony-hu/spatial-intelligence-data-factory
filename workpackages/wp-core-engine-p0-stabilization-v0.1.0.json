@@ -8,7 +8,7 @@
     "released_at": "2026-02-15T19:00:00+08:00",
     "released_by": "orchestrator",
     "rollback_target_version": "wp-address-topology-v1.0.2",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-p0-stabilization-v0.1.0"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-core-engine-p0-stabilization-v0.1.0"
   },
   "line_spec": {
     "line_type": "core_engine_stabilization",
@@ -155,7 +155,6 @@
       "python_min": "3.11",
       "python_max": "3.12",
       "db": [
-        "sqlite",
         "postgres"
       ]
     }

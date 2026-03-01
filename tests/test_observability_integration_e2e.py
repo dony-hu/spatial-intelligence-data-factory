@@ -81,7 +81,7 @@ class TestMandatory1VersionAutoReference(unittest.TestCase):
     def test_resolve_observability_entrypoint_from_workpackage(self):
         """验证从 workpackage 解析 line_observe.py 路径"""
         ep_path = _resolve_observability_entrypoint(self.workpackage)
-        # Should either find entrypoint or fallback path
+        # Should either find entrypoint or strict path
         if ep_path:
             self.assertTrue(ep_path.exists(), f"Resolved entrypoint doesn't exist: {ep_path}")
             self.assertTrue(ep_path.suffix == ".py", "Entrypoint should be .py file")
@@ -109,8 +109,8 @@ class TestMandatory2RuntimeMetricsCollection(unittest.TestCase):
     def test_aggregate_runtime_metrics_exists_in_template(self):
         """验证 aggregate_runtime_metrics 函数在 line_observe 代码中"""
         ep_path = _resolve_observability_entrypoint(self.workpackage)
-        if not ep_path:
-            self.skipTest("No observability entrypoint resolved")
+        self.assertIsNotNone(ep_path, "No observability entrypoint resolved")
+        assert ep_path is not None
         observe_code = ep_path.read_text()
         self.assertIn("aggregate_runtime_metrics", observe_code,
                      "aggregate_runtime_metrics function not generated in line_observe.py")

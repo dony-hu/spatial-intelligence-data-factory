@@ -17,6 +17,9 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS trust_meta;")
+    op.execute("CREATE SCHEMA IF NOT EXISTS trust_db;")
+
     # 1. source_snapshot
     op.create_table(
         'source_snapshot',
@@ -32,6 +35,68 @@ def upgrade() -> None:
         sa.Column('meta_info', JSONB, server_default='{}', nullable=False),
         sa.PrimaryKeyConstraint('namespace_id', 'snapshot_id'),
         schema='trust_meta'
+    )
+
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS trust_db.admin_division (
+            namespace_id VARCHAR(64) NOT NULL,
+            source_id VARCHAR(64) NOT NULL,
+            division_id VARCHAR(64) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            level VARCHAR(32),
+            parent_id VARCHAR(64),
+            adcode VARCHAR(32),
+            snapshot_id VARCHAR(64),
+            PRIMARY KEY(namespace_id, source_id, division_id)
+        );
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS trust_db.place_name_index (
+            namespace_id VARCHAR(64) NOT NULL,
+            source_id VARCHAR(64) NOT NULL,
+            place_id VARCHAR(64) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            alias_names JSONB DEFAULT '[]'::jsonb,
+            category VARCHAR(64),
+            adcode VARCHAR(32),
+            confidence_hint DOUBLE PRECISION,
+            snapshot_id VARCHAR(64),
+            PRIMARY KEY(namespace_id, source_id, place_id)
+        );
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS trust_db.road_index (
+            namespace_id VARCHAR(64) NOT NULL,
+            source_id VARCHAR(64) NOT NULL,
+            road_id VARCHAR(64) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            alias_names JSONB DEFAULT '[]'::jsonb,
+            adcode VARCHAR(32),
+            snapshot_id VARCHAR(64),
+            PRIMARY KEY(namespace_id, source_id, road_id)
+        );
+        """
+    )
+    op.execute(
+        """
+        CREATE TABLE IF NOT EXISTS trust_db.poi_index (
+            namespace_id VARCHAR(64) NOT NULL,
+            source_id VARCHAR(64) NOT NULL,
+            poi_id VARCHAR(64) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            category VARCHAR(64),
+            adcode VARCHAR(32),
+            lon DOUBLE PRECISION,
+            lat DOUBLE PRECISION,
+            snapshot_id VARCHAR(64),
+            PRIMARY KEY(namespace_id, source_id, poi_id)
+        );
+        """
     )
 
     # 2. snapshot_quality_report
@@ -112,6 +177,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP TABLE IF EXISTS trust_db.poi_index;")
+    op.execute("DROP TABLE IF EXISTS trust_db.road_index;")
+    op.execute("DROP TABLE IF EXISTS trust_db.place_name_index;")
+    op.execute("DROP TABLE IF EXISTS trust_db.admin_division;")
     op.drop_table('validation_replay_run', schema='trust_meta')
     op.drop_table('snapshot_diff_report', schema='trust_meta')
     op.drop_table('active_release', schema='trust_meta')

@@ -51,9 +51,6 @@ def run(task_payload: dict) -> dict:
         ruleset_id=str(task_payload.get("ruleset_id") or ""),
         payload={"stage": "start"},
     )
-    original_strict = os.getenv("OPENHANDS_STRICT")
-    if original_strict is None:
-        os.environ["OPENHANDS_STRICT"] = "1"
     try:
         processed = ingest_run(task_payload)
         ruleset_context = _resolve_ruleset_context(str(processed.get("ruleset_id", "default")))
@@ -128,8 +125,3 @@ def run(task_payload: dict) -> dict:
             payload={"error": message[:400]},
         )
         return {"task_id": task_id, "status": "FAILED"}
-    finally:
-        if original_strict is None:
-            os.environ.pop("OPENHANDS_STRICT", None)
-        else:
-            os.environ["OPENHANDS_STRICT"] = original_strict

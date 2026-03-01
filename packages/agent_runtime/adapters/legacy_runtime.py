@@ -14,7 +14,7 @@ class LegacyRuntime:
                 "items": [
                     {
                         "runtime": "legacy",
-                        "message": "fallback runtime",
+                        "message": "legacy runtime",
                         "ruleset": ruleset.get("ruleset_id", "default"),
                     }
                 ]

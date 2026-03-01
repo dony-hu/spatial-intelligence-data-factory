@@ -1,0 +1,4 @@
+./scripts/check_repo_hygiene.sh
+[check] repo hygiene
+[ok] no tracked venv artifacts
+EXIT_CODE=0

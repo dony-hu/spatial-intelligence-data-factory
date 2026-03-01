@@ -449,7 +449,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="后台持续执行用例并驱动实时看板")
     parser.add_argument("--host", default="127.0.0.1", help="Dashboard host")
     parser.add_argument("--port", type=int, default=5000, help="Dashboard port")
-    parser.add_argument("--runtime-db", default="database/factory_demo_runtime.db", help="Runtime sqlite db")
+    parser.add_argument("--runtime-db", default="database/factory_demo_runtime.db", help="Runtime db path")
     parser.add_argument("--case-mode", choices=["scenario", "address"], default="scenario", help="Use case source")
     parser.add_argument("--cases-per-cycle", type=int, default=30, help="Number of cases in one cycle")
     parser.add_argument("--max-cycles", type=int, default=0, help="0 means infinite loop")

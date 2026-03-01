@@ -11,13 +11,33 @@ from packages.agent_runtime.models.runtime_result import RuntimeResult
 
 
 class OpenCodeRuntime:
-    """基于 OpenCode CLI 的适配器（严格模式，无 fallback）。"""
+    """基于 OpenCode CLI 的适配器（严格阻塞模式）。"""
 
     def __init__(self, config_path=None):
         self._config_path = config_path or os.getenv("OPENCODE_CONFIG_PATH", "config/llm_api.json")
         self._opencode_bin = os.getenv("OPENCODE_BIN", "opencode")
         self._timeout_sec = int(os.getenv("OPENCODE_TIMEOUT_SEC", "300"))
-        self._model = str(os.getenv("OPENCODE_MODEL", "opencode/gpt-5-nano"))
+        self._model = self._resolve_model()
+
+    def _resolve_model(self) -> str:
+        env_model = str(os.getenv("OPENCODE_MODEL", "")).strip()
+        if env_model:
+            return env_model
+
+        path = Path(self._config_path)
+        if path.exists():
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                payload = {}
+            if isinstance(payload, dict):
+                config_model = str(payload.get("opencode_model") or "").strip()
+                if config_model:
+                    return config_model
+                generic_model = str(payload.get("model") or "").strip()
+                if "/" in generic_model:
+                    return generic_model
+        return "opencode/gpt-5-nano"
 
     def _ensure_opencode_available(self):
         try:

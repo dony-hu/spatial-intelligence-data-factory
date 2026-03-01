@@ -35,14 +35,19 @@ tools/keys/
 
 # Local runtime artifacts
 output/line_runs/
+output/acceptance/
+output/logs/
 output/recovery_snapshot_*/
 output/factory_templates/
 output/factory_story5_panel.log
 output/factory_story5_panel.pid
 output/factory_process_dialog_room.log
 output/factory_process_dialog_room.pid
+output/workpackages/acceptance-demo-v*.publish.json
 database/tc06_line_execution.db
 .venv/
+.venv.broken.*/
+workpackages/bundles/acceptance-demo-v*/
 
 # Temporary scripts
 fix_paths.py

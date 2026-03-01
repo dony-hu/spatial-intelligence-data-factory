@@ -303,8 +303,6 @@ class TrustRepository:
         row_count = sum(len(payload.get(k, [])) for k in ("admin_division", "roads", "pois", "places"))
 
         status = "success"
-        if latest and latest.get("content_hash") == content_hash:
-            status = "skipped"
 
         snapshot = {
             "namespace": namespace,

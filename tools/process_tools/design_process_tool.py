@@ -278,7 +278,7 @@ class DesignProcessTool(BaseTool):
             except Exception:
                 pass
 
-        # Fallback default plan
+        # Default plan
         return {
             "auto_execute": False,
             "max_duration_sec": 300,

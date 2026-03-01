@@ -8,7 +8,7 @@
     "released_at": "2026-02-15T19:10:00+08:00",
     "released_by": "orchestrator",
     "rollback_target_version": "wp-address-topology-v1.0.2",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-core-engine-address-core-p0-v0.1.0"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-core-engine-address-core-p0-v0.1.0"
   },
   "line_spec": {
     "line_type": "address_core_algorithm_and_tests",

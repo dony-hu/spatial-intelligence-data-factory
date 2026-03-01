@@ -36,6 +36,35 @@
 | MVP-A5 | 可信数据 Hub 能力沉淀 | 积累外部 API 能力与可信互联网数据 | `packages/trust_hub/__init__.py`、`data/trust_hub.json` | 可注册/查询能力与样例数据；外部能力异常需阻塞确认 |
 | MVP-A6 | 数据库模型与持久化闭环补齐 | 消除主链路与发布链路持久化断层 | `services/governance_api/app/repositories/*`、`packages/governance_runtime/*`、`database/*` | 任务/发布/LLM状态/TrustHub 均可持久化查询，并记录阻塞审批链路 |
 
+## 3.2 PG-ONLY 专项 Backlog（SQLite 运行时清理）
+
+对应 Epic：`docs/epic-pg-only-sqlite-decommission-2026-02-27.md`
+
+| ID | Story | 目标 | 主要交付物 | 验收标准 |
+|---|---|---|---|---|
+| PGO-S1 | 治理仓储与服务入口 PG-only 硬切 | 关闭主链路 sqlite:// 入口 | `services/governance_api/app/repositories/*` | 非 PG 数据源 fail-fast，仓储不再接受 sqlite:// |
+| PGO-S2 | MVP 验收脚本 PG-only 改造 | 验收 profile 全切 PG | `scripts/run_address_governance_mvp_acceptance*.py` | 验收脚本不再初始化 SQLite，PG profile 全通过 |
+| PGO-S3 | 契约与工作包 SQLite 引用收敛 | 发布契约改为 PG-only | `contracts/workpackage.schema.json`、`workpackages/*` | 运行契约不再允许 sqlite:// |
+| PGO-S4 | 主线测试集 PG-only 重构 | 移除主线测试 SQLite 假设 | `tests/*`、`services/*/tests/*` | 主线测试按 PG-only 口径回归通过 |
+| PGO-S5 | CI 与仓库卫生 SQLite 回流硬门 | 防止 SQLite 回流 | `scripts/check_repo_hygiene.sh`、`.github/workflows/*` | 运行主链路出现 SQLite 引用即 NO_GO |
+| PGO-S6 | 全量移除代码中 SQLite 相关内容 | 清理代码与测试中的 SQLite 逻辑 | `services/*`、`packages/*`、`scripts/*`、`tests/*` | 代码目录不再保留 SQLite 运行路径与依赖入口 |
+
+## 3.3 架构收口专项 Backlog（目标架构落地）
+
+对应 Epic：`docs/epic-architecture-closure-2026-02-27.md`
+
+| ID | Story | 目标 | 主要交付物 | 验收标准 |
+|---|---|---|---|---|
+| ARC-S1 | 多 Schema 物理表落地（替代兼容视图） | 从兼容视图切换到可演进物理表 | `migrations/versions/*`、仓储读写映射 | 关键读写不再依赖 `public.addr_*` 兼容视图 |
+| ARC-S2 | Runtime 发布域实体化 | 落地 runtime 发布域核心实体并切换主写 | `migrations/*`、`services/governance_api/app/repositories/*`、`packages/factory_agent/*` | 发布/对比/回放 API 以 runtime 域实体为准 |
+| ARC-S3 | Alembic 唯一路径收口 | 移除运行时自动建表与生产 DDL 脚本入口 | `services/*`、`packages/*`、`scripts/init_*` | 运行时不再执行 DDL，缺表直接阻塞 |
+| ARC-S4 | 全量移除 SQLite 相关代码 | 清理代码中的 SQLite 逻辑与入口 | `services/*`、`packages/*`、`scripts/*`、`tests/*` | 代码目录不保留 SQLite 运行代码 |
+| ARC-S5 | No-Fallback 门禁统一化 | 清理可开关回退通道并统一阻塞语义 | `services/governance_worker/app/core/queue.py`、相关测试 | 关键依赖失败统一 fail-fast/blocked |
+| ARC-S6 | API-Service-Repository 分层落地 | 从 Router 直连仓储迁移到应用服务层 | `services/governance_api/app/services/*`、routers 重构 | Router 不再承载业务编排 |
+| ARC-S7 | Observability 真相源统一 | 将观测页面/API统一到 PG 审计与指标口径 | `services/governance_api/app/routers/lab.py`、`observability.py`、`web/dashboard/*` | 页面与 API 查询同源且可复核 |
+| ARC-S8 | Core 接入 Trust 查询抽象 | 落地 Trust 增强流进入治理主链路 | `packages/address_core/*`、`packages/trust_hub/*` | 治理输出 evidence 包含可信数据查询证据 |
+| ARC-S9 | trust_data 命名与路径统一 | 从 `trust_db` 收敛到 `trust_data` | migrations + repository 收敛 | 运行代码默认 `trust_data`，仅保留过渡兼容 |
+
 ## 4. Sprint-2 Backlog（P0/P1）
 
 | ID | Story | 目标 | 主要交付物 | 验收标准 |

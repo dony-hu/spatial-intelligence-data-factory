@@ -62,12 +62,12 @@ class ExternalAPIClient(ABC):
                 response = self._call_impl(request)
                 latency = int((time.time() - t0) * 1000)
             except (requests.Timeout if requests else TimeoutError) as e:
-                last_error = (False, {}, APIErrorType.TIMEOUT, 0)
+                last_error = (False, {}, APIErrorType.TIMEOUT)
                 if attempt < self.max_retries - 1:
                     time.sleep(2 ** attempt)  # exponential backoff
                 continue
             except (requests.ConnectionError if requests else Exception) as e:
-                last_error = (False, {}, APIErrorType.SERVICE_UNAVAILABLE, 0)
+                last_error = (False, {}, APIErrorType.SERVICE_UNAVAILABLE)
                 continue
             except Exception as e:
                 error_type = self._classify_error(e)

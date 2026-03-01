@@ -8,7 +8,7 @@
     "released_at": "2026-02-15T20:20:00+08:00",
     "released_by": "project-manager",
     "rollback_target_version": "dashboard-web-baseline",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-test-panel-sql-query-readonly-v0.1.0"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-test-panel-sql-query-readonly-v0.1.0"
   },
   "line_spec": {
     "line_type": "test_panel_sql_query",
@@ -148,7 +148,6 @@
     "tools": [
       "fastapi",
       "pytest",
-      "sqlite",
       "web/dashboard/app.js"
     ]
   },
@@ -160,7 +159,6 @@
       "python_min": "3.11",
       "python_max": "3.12",
       "db": [
-        "sqlite",
         "postgres"
       ]
     }
@@ -183,8 +181,8 @@
       "test_report_ref",
       "release_decision"
     ],
-    "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
-    "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs"
+    "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+    "replay_result_ref": "pg://address_line.replay_runs"
   },
   "rollback": {
     "from_version": "0.1.0",

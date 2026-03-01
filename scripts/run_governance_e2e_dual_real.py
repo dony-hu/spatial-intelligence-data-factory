@@ -261,19 +261,19 @@ def _persist_to_pg(task_id: str, batch_name: str, records: List[Dict[str, Any]],
     engine = create_engine(db_url)
     with engine.begin() as conn:
         task_rows = conn.execute(
-            text("SELECT status FROM addr_task_run WHERE task_id = :task_id"),
+            text("SELECT status FROM governance.task_run WHERE task_id = :task_id"),
             {"task_id": task_id},
         ).fetchall()
         raw_rows = conn.execute(
-            text("SELECT COUNT(1) FROM addr_raw WHERE batch_id = :batch_id"),
+            text("SELECT COUNT(1) FROM governance.raw_record WHERE batch_id = :batch_id"),
             {"batch_id": task_id},
         ).scalar()
         canon_rows = conn.execute(
             text(
                 """
                 SELECT COUNT(1)
-                FROM addr_canonical c
-                JOIN addr_raw r ON c.raw_id = r.raw_id
+                FROM governance.canonical_record c
+                JOIN governance.raw_record r ON c.raw_id = r.raw_id
                 WHERE r.batch_id = :batch_id
                 """
             ),

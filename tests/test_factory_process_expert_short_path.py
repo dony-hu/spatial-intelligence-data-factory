@@ -54,11 +54,10 @@ class _RealLLMService:
 
 
 class FactoryProcessExpertShortPathTests(unittest.TestCase):
-    @unittest.skipUnless(os.getenv("FACTORY_REAL_SHORT_PATH") == "1", "set FACTORY_REAL_SHORT_PATH=1 to enable real-mode test")
     def test_real_mode_llm_and_map_api(self):
+        self.assertEqual(os.getenv("FACTORY_REAL_SHORT_PATH"), "1", "FACTORY_REAL_SHORT_PATH=1 is required")
         map_api_url = str(os.getenv("MAP_TOOLPACK_API_URL") or "").strip()
-        if not map_api_url:
-            self.skipTest("MAP_TOOLPACK_API_URL is required in real mode")
+        self.assertTrue(map_api_url, "MAP_TOOLPACK_API_URL is required in real mode")
 
         llm_config_path = str(PROJECT_ROOT / "config" / "llm_api.json")
         llm_service = _RealLLMService(llm_config_path)

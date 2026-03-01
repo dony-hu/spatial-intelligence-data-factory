@@ -17,7 +17,7 @@ def _now_iso() -> str:
 
 
 class _CompatCursor:
-    """Small cursor adapter to keep sqlite-style '?' placeholders working on postgres."""
+    """Small cursor adapter to keep '?' placeholders working on postgres."""
 
     def __init__(self, raw_cursor: Any):
         self._raw = raw_cursor
@@ -443,7 +443,7 @@ class AgentRuntimeStore:
                     provider TEXT,
                     status TEXT NOT NULL,
                     config_json TEXT,
-                    fallback_to TEXT,
+                    backup_target TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )

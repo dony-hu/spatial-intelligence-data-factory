@@ -1,0 +1,34 @@
+{
+  "story_id": "OBS-RUNTIME-S2-14",
+  "story_name": "新增治理包链路观测与验收闭环",
+  "date": "2026-03-01",
+  "status": "passed",
+  "scope": [
+    "真实链路埋点接入（CLI/Agent/LLM/Runtime）",
+    "新增 API（workpackage-pipeline/workpackage-events/llm-interactions）",
+    "工作包明细字段补齐（checksum/skills_count/artifact_count/submit_status/runtime_receipt_id）",
+    "运行态页面链路板块与事件弹窗",
+    "WebUI E2E 链路回归"
+  ],
+  "test_runs": [
+    {
+      "command": "PYTHONPATH=. ./.venv/bin/pytest -q services/governance_api/tests/test_runtime_workpackage_pipeline_api_contract.py services/governance_api/tests/test_runtime_workpackage_events_api_contract.py services/governance_api/tests/test_runtime_llm_interactions_api_contract.py services/governance_api/tests/test_runtime_workpackage_observability_rbac.py services/governance_api/tests/test_runtime_workpackage_seed_demo.py services/governance_api/tests/test_runtime_workpackage_real_chain_from_factory_agent.py services/governance_api/tests/test_runtime_observability_view.py tests/test_factory_agent_observability_events.py tests/test_factory_cli_exit_code.py",
+      "result": "16 passed"
+    },
+    {
+      "command": "DATABASE_URL=postgresql://si_factory_user:SiFactory2026@127.0.0.1:5432/si_factory GOVERNANCE_ALLOW_MEMORY_FALLBACK=0 PYTHONPATH=. ./.venv/bin/pytest -q tests/web_e2e/test_runtime_observability_workpackage_pipeline_ui.py",
+      "result": "1 passed"
+    }
+  ],
+  "acceptance_checks": {
+    "api_contract": true,
+    "rbac_masking": true,
+    "real_chain_from_factory_agent": true,
+    "ui_pipeline_modal": true,
+    "no_fallback": true
+  },
+  "remaining_risks": [
+    "需要补充连续多批次长压场景的观测稳定性报告",
+    "需要在真实业务流量下验证链路事件覆盖率"
+  ]
+}

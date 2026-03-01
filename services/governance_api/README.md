@@ -1,7 +1,7 @@
 # governance_api Runtime Baseline
 
 - Python: `3.11+` (recommended `3.11.x`)
-- Queue mode for local/API tests: in-memory fallback is enabled by default.
+- Queue mode for local/API tests: use `sync` or `rq` only.
 
 ## Install
 

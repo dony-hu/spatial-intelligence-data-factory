@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
 
 from fastapi.testclient import TestClient
 

@@ -9,7 +9,7 @@
     "released_by": "project-manager",
     "dispatch_time_local": "2026-02-16 11:22:20 CST",
     "rollback_target_version": "wp-core-engine-governance-api-lab-p0-v0.1.0",
-    "runtime_record_ref": "pg://address_line.addr_audit_event"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-runtime-pg-repository-switch-v1.0.0"
   },
   "line_spec": {
     "line_type": "core_runtime_phase1",
@@ -79,7 +79,7 @@
           "services/governance_api/app/repositories/README_PHASE1_PG_SWITCH.md"
         ],
         "done_definition": [
-          "关键路径不再依赖SQLite"
+          "关键路径仅允许PostgreSQL"
         ]
       },
       {

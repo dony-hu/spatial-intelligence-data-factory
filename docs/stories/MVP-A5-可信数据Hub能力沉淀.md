@@ -21,3 +21,24 @@
 
 1. 注册高德/百度数据源后可查询到 provider 与 endpoint。
 2. 写入可信样例数据后可按 source 检索。
+
+## 对齐信息（PRD/架构）
+
+1. PRD 对齐：EPIC A（结果可信）+ EPIC B（可观测执行）+ EPIC D（能力沉淀）。
+2. 架构对齐：
+- `docs/architecture/system_overview.md` Trust 增强流。
+- `docs/architecture/dependency_map.md` trust_meta/trust_data 依赖关系。
+
+## 模块边界与 API 边界
+
+1. 所属模块：`trust_hub`、`trust_meta/trust_data repository`、`governance query adapter`。
+2. 上游入口：CLI/Agent 能力注册与数据沉淀请求。
+3. 下游依赖：外部工具/API 适配器、可信数据持久化层。
+4. API 边界：Trust Hub 对上暴露能力接口，不暴露底层外部 provider 差异细节。
+
+## 依赖与禁止耦合
+
+1. 允许依赖：`trust_hub -> provider adapter -> repository`。
+2. 禁止耦合：
+- `address_core` 与 `trust_hub` 双向直接调用形成循环依赖。
+- 以本地文件替代数据库为主真相源且无显式模式标识。

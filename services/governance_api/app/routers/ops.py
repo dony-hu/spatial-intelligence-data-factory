@@ -16,7 +16,7 @@ from services.governance_api.app.models.ops_models import (
     WorkpackagePublishRecordResponse,
     WorkpackagePublishVersionsResponse,
 )
-from services.governance_api.app.repositories.governance_repository import REPOSITORY
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
 router = APIRouter()
 
@@ -37,23 +37,22 @@ def _whitelist_tables() -> set[str]:
     if env_value:
         return {item.strip().lower() for item in env_value.split(",") if item.strip()}
     return {
-        "addr_batch",
-        "addr_task_run",
-        "addr_raw",
-        "addr_canonical",
-        "addr_review",
-        "addr_ruleset",
-        "addr_change_request",
-        "addr_audit_event",
+        "batch",
+        "task_run",
+        "raw_record",
+        "canonical_record",
+        "review",
+        "ruleset",
+        "change_request",
+        "event_log",
         "api_audit_log",
         "process_definition",
         "process_version",
-        "task_run",
         "task_step_run",
         "task_output_json",
         "operation_audit",
         "confirmation_record",
-        "addr_workpackage_publish",
+        "publish_record",
     }
 
 
@@ -113,7 +112,7 @@ def _execute_postgres_readonly(sql: str, timeout_ms: int) -> tuple[list[str], li
     try:
         with conn.cursor() as cur:
             cur.execute(f"SET statement_timeout = {int(timeout_ms)}")
-            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, trust_db, public")
+            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, public")
             cur.execute(sql)
             rows = cur.fetchall()
             columns = [str(getattr(col, "name", col[0])) for col in (cur.description or [])]
@@ -139,7 +138,7 @@ def get_ops_summary(
     t_high: Optional[float] = Query(default=None, ge=0, le=1),
 ) -> OpsSummaryResponse:
     return OpsSummaryResponse(
-        **REPOSITORY.get_ops_summary(
+        **GOVERNANCE_SERVICE.get_ops_summary(
             task_id=task_id,
             batch_name=batch_name,
             ruleset_id=ruleset_id,
@@ -159,7 +158,7 @@ def get_ops_scorecard(
     t_high: Optional[float] = Query(default=None, ge=0, le=1),
 ) -> ScorecardCompareResponse:
     return ScorecardCompareResponse(
-        **REPOSITORY.compute_scorecard(
+        **GOVERNANCE_SERVICE.compute_scorecard(
             baseline_task_id=baseline_task_id,
             candidate_task_id=candidate_task_id,
             t_low_override=t_low,
@@ -176,7 +175,7 @@ def run_readonly_sql_query(payload: ReadOnlySqlQueryRequest) -> ReadOnlySqlQuery
         columns, rows, elapsed_ms = _execute_postgres_readonly(limited_sql, payload.timeout_ms)
     except HTTPException as exc:
         detail = exc.detail if isinstance(exc.detail, dict) else {}
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "readonly_sql_query_blocked",
             payload.caller,
             {
@@ -190,7 +189,7 @@ def run_readonly_sql_query(payload: ReadOnlySqlQueryRequest) -> ReadOnlySqlQuery
         )
         raise
 
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "readonly_sql_query_executed",
         payload.caller,
         {
@@ -223,7 +222,7 @@ def list_workpackage_publish_versions(
     status: Optional[str] = Query(default=None),
     limit: int = Query(default=100, ge=1, le=1000),
 ) -> WorkpackagePublishVersionsResponse:
-    items = REPOSITORY.list_workpackage_publishes(workpackage_id=workpackage_id, status=status, limit=limit)
+    items = GOVERNANCE_SERVICE.list_workpackage_publishes(workpackage_id=workpackage_id, status=status, limit=limit)
     return WorkpackagePublishVersionsResponse(
         workpackage_id=workpackage_id,
         status_filter=str(status or ""),
@@ -241,7 +240,7 @@ def compare_workpackage_publish_versions(
     baseline_version: str = Query(..., min_length=1),
     candidate_version: str = Query(..., min_length=1),
 ) -> WorkpackagePublishCompareResponse:
-    compared = REPOSITORY.compare_workpackage_publish_versions(
+    compared = GOVERNANCE_SERVICE.compare_workpackage_publish_versions(
         workpackage_id=workpackage_id,
         baseline_version=baseline_version,
         candidate_version=candidate_version,
@@ -263,7 +262,7 @@ def compare_workpackage_publish_versions(
     response_model=WorkpackagePublishRecordResponse,
 )
 def get_workpackage_publish_record(workpackage_id: str, version: str) -> WorkpackagePublishRecordResponse:
-    item = REPOSITORY.get_workpackage_publish(workpackage_id, version)
+    item = GOVERNANCE_SERVICE.get_workpackage_publish(workpackage_id, version)
     if not item:
         raise HTTPException(status_code=404, detail="workpackage publish record not found")
     return WorkpackagePublishRecordResponse(**item)

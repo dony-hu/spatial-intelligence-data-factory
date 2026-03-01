@@ -11,14 +11,14 @@ from services.governance_api.app.models.ruleset_models import (
     RulesetPublishRequest,
     RulesetResponse,
 )
-from services.governance_api.app.repositories.governance_repository import GovernanceGateError, REPOSITORY
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE, GovernanceGateError
 
 router = APIRouter()
 
 
 @router.get("/rulesets/{ruleset_id}", response_model=RulesetResponse)
 def get_ruleset(ruleset_id: str) -> RulesetResponse:
-    ruleset = REPOSITORY.get_ruleset(ruleset_id)
+    ruleset = GOVERNANCE_SERVICE.get_ruleset(ruleset_id)
     if not ruleset:
         raise HTTPException(status_code=404, detail="ruleset not found")
     return RulesetResponse(**ruleset)
@@ -26,13 +26,13 @@ def get_ruleset(ruleset_id: str) -> RulesetResponse:
 
 @router.put("/rulesets/{ruleset_id}", response_model=RulesetResponse)
 def update_ruleset(ruleset_id: str, payload: RulesetPayload) -> RulesetResponse:
-    ruleset = REPOSITORY.upsert_ruleset(ruleset_id, payload.model_dump())
+    ruleset = GOVERNANCE_SERVICE.upsert_ruleset(ruleset_id, payload.model_dump())
     return RulesetResponse(**ruleset)
 
 
 @router.post("/rulesets/{ruleset_id}/publish", response_model=RulesetResponse)
 def publish_ruleset(ruleset_id: str, payload: RulesetPublishRequest) -> RulesetResponse:
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         event_type="ruleset_publish_blocked",
         caller=payload.operator,
         payload={
@@ -54,17 +54,17 @@ def publish_ruleset(ruleset_id: str, payload: RulesetPublishRequest) -> RulesetR
 
 @router.post("/change-requests", response_model=ChangeRequestResponse)
 def create_change_request(payload: ChangeRequestCreatePayload) -> ChangeRequestResponse:
-    if not REPOSITORY.get_ruleset(payload.from_ruleset_id):
+    if not GOVERNANCE_SERVICE.get_ruleset(payload.from_ruleset_id):
         raise HTTPException(status_code=404, detail="from_ruleset not found")
-    if not REPOSITORY.get_ruleset(payload.to_ruleset_id):
+    if not GOVERNANCE_SERVICE.get_ruleset(payload.to_ruleset_id):
         raise HTTPException(status_code=404, detail="to_ruleset not found")
-    item = REPOSITORY.create_change_request(payload.model_dump())
+    item = GOVERNANCE_SERVICE.create_change_request(payload.model_dump())
     return ChangeRequestResponse(**item)
 
 
 @router.get("/change-requests/{change_id}", response_model=ChangeRequestResponse)
 def get_change_request(change_id: str) -> ChangeRequestResponse:
-    item = REPOSITORY.get_change_request(change_id)
+    item = GOVERNANCE_SERVICE.get_change_request(change_id)
     if not item:
         raise HTTPException(status_code=404, detail="change request not found")
     return ChangeRequestResponse(**item)
@@ -72,7 +72,7 @@ def get_change_request(change_id: str) -> ChangeRequestResponse:
 
 @router.post("/change-requests/{change_id}/approve", response_model=ChangeRequestResponse)
 def approve_change_request(change_id: str, payload: ChangeRequestApprovalPayload) -> ChangeRequestResponse:
-    item = REPOSITORY.update_change_request_status(
+    item = GOVERNANCE_SERVICE.update_change_request_status(
         change_id,
         status="approved",
         actor=payload.approver,
@@ -85,7 +85,7 @@ def approve_change_request(change_id: str, payload: ChangeRequestApprovalPayload
 
 @router.post("/change-requests/{change_id}/reject", response_model=ChangeRequestResponse)
 def reject_change_request(change_id: str, payload: ChangeRequestRejectPayload) -> ChangeRequestResponse:
-    item = REPOSITORY.update_change_request_status(
+    item = GOVERNANCE_SERVICE.update_change_request_status(
         change_id,
         status="rejected",
         actor=payload.reviewer,
@@ -99,7 +99,7 @@ def reject_change_request(change_id: str, payload: ChangeRequestRejectPayload) -
 @router.post("/rulesets/{ruleset_id}/activate", response_model=RulesetActivateResponse)
 def activate_ruleset(ruleset_id: str, payload: RulesetActivateRequest) -> RulesetActivateResponse:
     try:
-        activated = REPOSITORY.activate_ruleset(
+        activated = GOVERNANCE_SERVICE.activate_ruleset(
             ruleset_id=ruleset_id,
             change_id=payload.change_id,
             caller=payload.caller,

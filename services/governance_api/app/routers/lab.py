@@ -37,7 +37,7 @@ from services.governance_api.app.models.lab_models import (
     LabSqlTemplatesResponse,
     LabSampleDelta,
 )
-from services.governance_api.app.repositories.governance_repository import REPOSITORY
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 from services.governance_worker.app.jobs.governance_job import run as run_governance_job
 
 router = APIRouter()
@@ -94,7 +94,7 @@ def _parse_iso_to_dt(value: str) -> datetime | None:
 
 
 def _recent_audit_events(limit: int = 12) -> list[dict]:
-    events = REPOSITORY.list_audit_events()
+    events = GOVERNANCE_SERVICE.list_audit_events()
     sorted_events = sorted(events, key=lambda item: str(item.get("created_at", "")), reverse=True)
     return sorted_events[: max(1, min(100, int(limit)))]
 
@@ -102,7 +102,7 @@ def _recent_audit_events(limit: int = 12) -> list[dict]:
 def _count_recent_workpackages(hours: int = 24 * 7) -> int:
     cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, int(hours)))
     count = 0
-    for event in REPOSITORY.list_audit_events():
+    for event in GOVERNANCE_SERVICE.list_audit_events():
         event_type = str(event.get("event_type") or "")
         if event_type not in {"change_request_created", "ruleset_activated"}:
             continue
@@ -113,14 +113,15 @@ def _count_recent_workpackages(hours: int = 24 * 7) -> int:
 
 
 def _address_line_metrics() -> dict:
-    ops = REPOSITORY.get_ops_summary()
+    ops = GOVERNANCE_SERVICE.get_ops_summary()
     status_counts = ops.get("status_counts", {}) if isinstance(ops.get("status_counts"), dict) else {}
     avg_confidence = float(ops.get("avg_confidence") or 0.0)
     quality_score = round(max(0.0, min(100.0, avg_confidence * 100.0)), 2)
 
     failure_refs: list[dict] = []
     # Task-level failure references.
-    for task_id, task in REPOSITORY._memory.tasks.items():  # type: ignore[attr-defined]
+    for task in GOVERNANCE_SERVICE.list_tasks(status="FAILED", limit=50):
+        task_id = str(task.get("task_id") or "")
         task_status = str((task or {}).get("status") or "")
         if task_status.upper() != "FAILED":
             continue
@@ -215,7 +216,7 @@ def _load_release_gate_status() -> dict:
 
 
 def _build_observability_snapshot(env: str = "all", include_events: bool = True) -> dict:
-    ops = REPOSITORY.get_ops_summary()
+    ops = GOVERNANCE_SERVICE.get_ops_summary()
     status_counts = ops.get("status_counts", {}) if isinstance(ops.get("status_counts"), dict) else {}
     quality_reasons = ops.get("quality_gate_reasons", []) if isinstance(ops.get("quality_gate_reasons"), list) else []
     coverage = _coverage_status_payload()
@@ -284,7 +285,7 @@ def _build_observability_snapshot(env: str = "all", include_events: bool = True)
         },
         "alerts": alerts,
         "address_line": _address_line_metrics(),
-        "observation_foundation": REPOSITORY.get_observability_snapshot(env=env),
+        "observation_foundation": GOVERNANCE_SERVICE.get_observability_snapshot(env=env),
         "metric_explanations": {
             "l1.success_rate": "(SUCCEEDED + REVIEWED) / total_tasks，反映任务闭环完成率。",
             "l2.avg_confidence": "运营摘要中的平均置信度，范围[0,1]。",
@@ -422,7 +423,7 @@ def _execute_lab_postgres_readonly(sql: str, timeout_sec: float) -> tuple[list[s
         timeout_ms = int(float(timeout_sec) * 1000)
         with conn.cursor() as cur:
             cur.execute(f"SET statement_timeout = {timeout_ms}")
-            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, trust_db, public")
+            cur.execute("SET search_path TO governance, runtime, trust_meta, trust_data, audit, control_plane, address_line, public")
             cur.execute(sql)
             fetched = cur.fetchall()
             columns = [str(getattr(col, "name", col[0])) for col in (cur.description or [])]
@@ -450,11 +451,40 @@ def _relative(path: Path) -> str:
         return str(path)
 
 
-def _read_dashboard_events(limit: int = 200) -> list[dict[str, Any]]:
-    if not _DASHBOARD_EVENTS_PATH.exists():
+def _to_public_output_path(path: Path | str) -> str:
+    raw = str(path or "").strip()
+    if not raw or raw == "-":
+        return ""
+    if raw.startswith(("http://", "https://", "/")):
+        return raw
+    candidate = Path(raw)
+    if candidate.is_absolute():
+        try:
+            relative = candidate.relative_to(_PROJECT_ROOT)
+            return "/" + str(relative).replace("\\", "/")
+        except ValueError:
+            return raw
+    return "/" + raw.replace("\\", "/").lstrip("/")
+
+
+def _dashboard_paths_for_env(env: str) -> tuple[Path, Path, Path, Path]:
+    env_key = str(env or "").strip().lower()
+    if env_key and env_key not in {"all", "default"}:
+        env_dir = _DASHBOARD_DIR / env_key
+        env_test = env_dir / "test_status_board.json"
+        env_workpackages = env_dir / "workpackages_live.json"
+        env_project = env_dir / "project_overview.json"
+        env_events = env_dir / "dashboard_events.jsonl"
+        if env_test.exists() and env_workpackages.exists() and env_project.exists():
+            return env_test, env_workpackages, env_project, env_events
+    return _DASHBOARD_TEST_STATUS_PATH, _DASHBOARD_WORKPACKAGES_PATH, _DASHBOARD_PROJECT_PATH, _DASHBOARD_EVENTS_PATH
+
+
+def _read_dashboard_events(path: Path, limit: int = 200) -> list[dict[str, Any]]:
+    if not path.exists():
         return []
     events: list[dict[str, Any]] = []
-    for raw in _DASHBOARD_EVENTS_PATH.read_text(encoding="utf-8").splitlines():
+    for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line:
             continue
@@ -468,7 +498,7 @@ def _read_dashboard_events(limit: int = 200) -> list[dict[str, Any]]:
     return events[: max(1, min(1000, int(limit)))]
 
 
-def _merge_timeline_events(workpackages_live: dict[str, Any], limit: int = 50) -> list[dict[str, Any]]:
+def _merge_timeline_events(workpackages_live: dict[str, Any], events_path: Path, limit: int = 50) -> list[dict[str, Any]]:
     merged: list[dict[str, Any]] = []
     recent_changes = workpackages_live.get("recent_changes", [])
     if isinstance(recent_changes, list):
@@ -485,7 +515,7 @@ def _merge_timeline_events(workpackages_live: dict[str, Any], limit: int = 50) -
                     "evidence_ref": str(item.get("evidence_ref") or ""),
                 }
             )
-    for item in _read_dashboard_events(limit=200):
+    for item in _read_dashboard_events(events_path, limit=200):
         merged.append(
             {
                 "time": str(item.get("time") or item.get("created_at") or ""),
@@ -508,118 +538,86 @@ def _merge_timeline_events(workpackages_live: dict[str, Any], limit: int = 50) -
     return deduped[: max(1, min(200, int(limit)))]
 
 
-def _build_management_observability_data(owner_line: str = "", workpackage_id: str = "") -> dict[str, Any]:
-    test_status_board = _read_dashboard_json(_DASHBOARD_TEST_STATUS_PATH)
-    workpackages_live = _read_dashboard_json(_DASHBOARD_WORKPACKAGES_PATH)
-    project_overview = _read_dashboard_json(_DASHBOARD_PROJECT_PATH)
+def _build_management_observability_data(env: str = "all", owner_line: str = "", workpackage_id: str = "") -> dict[str, Any]:
+    ops = GOVERNANCE_SERVICE.get_ops_summary()
+    status_counts = ops.get("status_counts", {}) if isinstance(ops.get("status_counts"), dict) else {}
+    total_tasks = int(ops.get("total_tasks") or 0)
+    total_results = int(ops.get("total_results") or 0)
+    succeeded_tasks = int(status_counts.get("SUCCEEDED") or 0)
+    reviewed_tasks = int(status_counts.get("REVIEWED") or 0)
+    failed_tasks = int(status_counts.get("FAILED") or 0)
+    blocked_tasks = int(status_counts.get("BLOCKED") or 0)
+    quality_gate_passed = bool(ops.get("quality_gate_passed"))
 
-    overall_progress = test_status_board.get("overall_progress", {}) if isinstance(test_status_board.get("overall_progress"), dict) else {}
-    suites = test_status_board.get("test_suites", []) if isinstance(test_status_board.get("test_suites"), list) else []
-    last_run_at = ""
-    for suite in suites:
-        if not isinstance(suite, dict):
-            continue
-        ts = str(suite.get("last_run_at") or "")
-        if ts > last_run_at:
-            last_run_at = ts
-    gate_overall = bool((test_status_board.get("quality_gates") or {}).get("overall", False)) if isinstance(test_status_board.get("quality_gates"), dict) else False
-    project_release = str(project_overview.get("release_decision") or "").upper()
-    current_gate = project_release if project_release in {"GO", "NO_GO"} else ("GO" if gate_overall else "NO_GO")
-
-    packages = workpackages_live.get("packages", []) if isinstance(workpackages_live.get("packages"), list) else []
-    filtered_packages: list[dict[str, Any]] = []
-    for row in packages:
-        if not isinstance(row, dict):
-            continue
-        if owner_line and str(row.get("owner_line") or "") != owner_line:
-            continue
-        if workpackage_id and str(row.get("workpackage_id") or "") != workpackage_id:
-            continue
-        filtered_packages.append(row)
-
+    publishes = GOVERNANCE_SERVICE.list_workpackage_publishes(workpackage_id=(workpackage_id or None), status=None, limit=500)
     execution_rows: list[dict[str, Any]] = []
-    for row in filtered_packages:
+    for item in publishes:
+        wp_id = str(item.get("workpackage_id") or "-")
+        if owner_line and owner_line != "-" and owner_line not in wp_id:
+            continue
+        status_value = str(item.get("status") or "-")
+        release_decision = "GO" if status_value.lower() == "published" else "HOLD"
         execution_rows.append(
             {
-                "task_batch_id": str(row.get("task_batch_id") or row.get("workpackage_id") or "-"),
-                "workpackage_id": str(row.get("workpackage_id") or "-"),
-                "status": str(row.get("status") or "-"),
-                "progress": int(row.get("progress") or 0),
-                "owner": str(row.get("owner") or "-"),
-                "owner_line": str(row.get("owner_line") or "-"),
-                "eta": str(row.get("eta") or ""),
-                "updated_at": str(row.get("updated_at") or "-"),
-                "evidence_ref": str(row.get("test_report_ref") or ""),
-                "release_decision": str(row.get("release_decision") or "-"),
-            }
-        )
-
-    workline_status: list[dict[str, Any]] = []
-    by_owner_line = workpackages_live.get("by_owner_line", []) if isinstance(workpackages_live.get("by_owner_line"), list) else []
-    for line_row in by_owner_line:
-        if not isinstance(line_row, dict):
-            continue
-        line_name = str(line_row.get("owner_line") or "")
-        if owner_line and line_name != owner_line:
-            continue
-        line_pkgs = [pkg for pkg in packages if isinstance(pkg, dict) and str(pkg.get("owner_line") or "") == line_name]
-        status = "GO"
-        if any(str(pkg.get("release_decision") or "").upper() == "NO_GO" for pkg in line_pkgs):
-            status = "NO_GO"
-        owner = str(line_pkgs[0].get("owner") or "-") if line_pkgs else "-"
-        eta = str(line_pkgs[0].get("eta") or "") if line_pkgs else ""
-        evidence_ref = str(line_pkgs[0].get("test_report_ref") or "") if line_pkgs else ""
-        workline_status.append(
-            {
-                "line_name": line_name,
-                "status": status,
-                "owner": owner,
-                "eta": eta,
-                "evidence_ref": evidence_ref,
+                "task_batch_id": str(item.get("publish_id") or wp_id),
+                "workpackage_id": wp_id,
+                "status": status_value,
+                "progress": 100 if status_value.lower() == "published" else 0,
+                "owner": str(item.get("published_by") or "-"),
+                "owner_line": "-",
+                "eta": "",
+                "updated_at": str(item.get("updated_at") or item.get("published_at") or ""),
+                "evidence_ref": _to_public_output_path(str(item.get("evidence_ref") or "")),
+                "release_decision": release_decision,
             }
         )
 
     wp_gate_rows: list[dict[str, Any]] = []
-    for row in filtered_packages:
+    for row in execution_rows:
         wp_gate_rows.append(
             {
                 "scope": "workpackage",
                 "id": str(row.get("workpackage_id") or "-"),
-                "gate_status": str(row.get("release_decision") or "-"),
+                "gate_status": str(row.get("release_decision") or "HOLD"),
                 "owner": str(row.get("owner") or "-"),
                 "eta": str(row.get("eta") or ""),
-                "evidence_ref": str(row.get("test_report_ref") or ""),
+                "evidence_ref": str(row.get("evidence_ref") or ""),
             }
         )
 
+    workline_status = [
+        {
+            "line_name": "governance",
+            "status": "NO_GO" if (failed_tasks + blocked_tasks) > 0 else ("GO" if quality_gate_passed else "HOLD"),
+            "owner": "governance-api",
+            "eta": "",
+            "evidence_ref": "/v1/governance/ops/summary",
+        }
+    ]
+
+    gate_status = "NO_GO" if (failed_tasks + blocked_tasks) > 0 else ("GO" if quality_gate_passed else "HOLD")
     project_gate_row = {
         "scope": "project",
-        "id": str(project_overview.get("project_id") or "spatial-intelligence-data-factory"),
-        "gate_status": current_gate,
-        "owner": str(project_overview.get("owner") or "可观测与运营指标线-Codex"),
-        "eta": str(project_overview.get("eta") or ""),
-        "evidence_ref": str(project_overview.get("evidence_ref") or _relative(_DASHBOARD_PROJECT_PATH) if _DASHBOARD_PROJECT_PATH.exists() else ""),
+        "id": "spatial-intelligence-data-factory",
+        "gate_status": gate_status,
+        "owner": "可观测与运营指标线-Codex",
+        "eta": "",
+        "evidence_ref": "/v1/governance/ops/summary",
     }
 
+    alerts = GOVERNANCE_SERVICE.list_observation_alerts(status="", limit=200)
     failure_classification: list[dict[str, Any]] = []
-    regressions = test_status_board.get("regressions", []) if isinstance(test_status_board.get("regressions"), list) else []
-    suite_ref_map: dict[str, str] = {}
-    for suite in suites:
-        if isinstance(suite, dict):
-            suite_ref_map[str(suite.get("suite_id") or "")] = str(suite.get("report_ref") or "")
-    for reg in regressions:
-        if not isinstance(reg, dict):
-            continue
-        sid = str(reg.get("suite_id") or "")
+    for alert in alerts:
+        severity = str(alert.get("severity") or "P2").upper()
         failure_classification.append(
             {
-                "failure_type": "regression_open",
-                "severity": "P1",
+                "failure_type": str(alert.get("metric_name") or "observation_alert"),
+                "severity": severity if severity in {"P0", "P1", "P2", "P3"} else "P2",
                 "retryable": True,
-                "gate_impact": True,
-                "owner": str(reg.get("owner") or "-"),
-                "eta": str(reg.get("eta") or ""),
-                "evidence_ref": suite_ref_map.get(sid, ""),
+                "gate_impact": severity in {"P0", "P1"},
+                "owner": str(alert.get("owner") or "governance"),
+                "eta": "",
+                "evidence_ref": _to_public_output_path(str(alert.get("evidence_ref") or "")),
             }
         )
     if not failure_classification:
@@ -631,15 +629,30 @@ def _build_management_observability_data(owner_line: str = "", workpackage_id: s
                 "gate_impact": False,
                 "owner": "可观测与运营指标线-Codex",
                 "eta": "",
-                "evidence_ref": str(_relative(_DASHBOARD_TEST_STATUS_PATH) if _DASHBOARD_TEST_STATUS_PATH.exists() else ""),
+                "evidence_ref": "/v1/governance/observability/alerts",
             }
         )
 
-    timeline = _merge_timeline_events(workpackages_live, limit=80)
-    if owner_line:
-        timeline = [item for item in timeline if owner_line in str(item.get("summary") or "") or owner_line == str(item.get("owner_line") or "")]
-    if workpackage_id:
-        timeline = [item for item in timeline if str(item.get("workpackage_id") or "") == workpackage_id]
+    timeline: list[dict[str, Any]] = []
+    for event in GOVERNANCE_SERVICE.list_audit_events():
+        payload = event.get("payload_json") if isinstance(event.get("payload_json"), dict) else {}
+        wp_id = str(payload.get("workpackage_id") or payload.get("id") or "")
+        if workpackage_id and wp_id != workpackage_id:
+            continue
+        summary = str(payload.get("summary") or payload.get("reason") or str(event.get("event_type") or ""))
+        if owner_line and owner_line not in summary and owner_line not in wp_id:
+            continue
+        timeline.append(
+            {
+                "time": str(event.get("created_at") or ""),
+                "event_type": str(event.get("event_type") or ""),
+                "workpackage_id": wp_id,
+                "summary": summary,
+                "operator": str(event.get("caller") or ""),
+                "evidence_ref": _to_public_output_path(str(payload.get("evidence_ref") or "")),
+            }
+        )
+    timeline.sort(key=lambda x: str(x.get("time") or ""), reverse=True)
     timeline = timeline[:50]
     while len(timeline) < 20:
         timeline.append(
@@ -653,27 +666,67 @@ def _build_management_observability_data(owner_line: str = "", workpackage_id: s
             }
         )
 
+    blocked_rows = [
+        row
+        for row in execution_rows
+        if str(row.get("release_decision") or "").upper() in {"NO_GO", "HOLD"}
+        or str(row.get("status") or "").lower() in {"blocked", "failed", "error"}
+    ]
+    blocker_top5 = blocked_rows[:5]
+
+    now_utc = datetime.now(timezone.utc)
+    event_last_24h = 0
+    no_go_last_24h = 0
+    for row in timeline:
+        dt = _parse_iso_to_dt(str(row.get("time") or ""))
+        if not dt or dt < now_utc - timedelta(hours=24):
+            continue
+        event_last_24h += 1
+        if "NO_GO" in str(row.get("summary") or "").upper() or "no_go" in str(row.get("event_type") or "").lower():
+            no_go_last_24h += 1
+
+    p1_failures = sum(1 for row in failure_classification if str(row.get("severity") or "").upper() == "P1")
+    pass_rate = float(succeeded_tasks + reviewed_tasks) / float(total_tasks) if total_tasks > 0 else 0.0
+    sql_available = str(os.getenv("DATABASE_URL") or os.getenv("READONLY_DATABASE_URL") or "").strip().startswith("postgresql")
+
     return {
+        "environment": str(env or "all"),
         "as_of": datetime.now(timezone.utc).isoformat(),
+        "decision_overview": {
+            "gate_status": gate_status,
+            "blocked_workpackage_count": len(blocked_rows),
+            "p1_failures": p1_failures,
+            "timeout_tasks": 0,
+            "owner": str(project_gate_row.get("owner") or "-"),
+            "eta": str(project_gate_row.get("eta") or ""),
+            "top_blockers": blocker_top5,
+        },
+        "trends": {
+            "window_hours": 24,
+            "event_count_24h": event_last_24h,
+            "no_go_event_count_24h": no_go_last_24h,
+        },
         "filters": {
             "owner_line": owner_line,
             "workpackage_id": workpackage_id,
-            "owner_line_options": sorted({str(row.get("owner_line") or "") for row in packages if isinstance(row, dict) and str(row.get("owner_line") or "")}),
-            "workpackage_options": sorted({str(row.get("workpackage_id") or "") for row in packages if isinstance(row, dict) and str(row.get("workpackage_id") or "")}),
+            "owner_line_options": [],
+            "workpackage_options": sorted(
+                {str(row.get("workpackage_id") or "") for row in execution_rows if str(row.get("workpackage_id") or "")}
+            ),
         },
         "test_overview": {
-            "total": int(overall_progress.get("total_cases") or 0),
-            "executed": int(overall_progress.get("executed_cases") or 0),
-            "passed": int(overall_progress.get("passed_cases") or 0),
-            "failed": int(overall_progress.get("failed_cases") or 0),
-            "skipped": int(overall_progress.get("skipped_cases") or 0),
-            "pass_rate": float(overall_progress.get("pass_rate") or 0.0),
-            "quality_score": round(float(overall_progress.get("pass_rate") or 0.0) * 100, 2),
-            "last_run_at": last_run_at or str(overall_progress.get("last_run_at") or ""),
-            "gate_decision": current_gate,
+            "total": total_tasks,
+            "executed": total_results,
+            "passed": succeeded_tasks + reviewed_tasks,
+            "failed": failed_tasks + blocked_tasks,
+            "skipped": max(total_tasks - total_results, 0),
+            "pass_rate": pass_rate,
+            "quality_score": round(pass_rate * 100, 2),
+            "last_run_at": str(ops.get("latest_task_at") or ""),
+            "gate_decision": gate_status,
             "owner": "可观测与运营指标线-Codex",
-            "eta": str(project_overview.get("eta") or ""),
-            "evidence_ref": str(_relative(_DASHBOARD_TEST_STATUS_PATH) if _DASHBOARD_TEST_STATUS_PATH.exists() else ""),
+            "eta": "",
+            "evidence_ref": "/v1/governance/ops/summary",
         },
         "gate_layers": {
             "workpackage": wp_gate_rows,
@@ -698,11 +751,13 @@ def _build_management_observability_data(owner_line: str = "", workpackage_id: s
             "whitelist_tables": sorted(_SQL_ALLOWED_TABLES),
             "max_rows": _SQL_MAX_ROWS,
             "timeout_sec": _SQL_TIMEOUT_SEC,
+            "available": sql_available,
+            "availability_message": "已连接 PostgreSQL，可执行只读查询"
+            if sql_available
+            else "未配置 DATABASE_URL(postgresql://...)，SQL 查询不可用",
             "audit_history_ref": "/v1/governance/lab/sql/history",
         },
     }
-
-
 def _is_valid_cn_coverage_report(path: Path) -> bool:
     payload = _load_json_file(path)
     rows_total = payload.get("rows_total", 0)
@@ -870,7 +925,7 @@ def get_fengtu_status() -> FengtuNetworkStatusResponse:
 def confirm_fengtu_network(payload: FengtuConfirmNetworkPayload) -> FengtuNetworkStatusResponse:
     client = FengtuTrustedClient()
     state = FengtuTrustedClient.confirm_network_resume(payload.operator)
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "approval_changed",
         payload.operator,
         {
@@ -1021,10 +1076,10 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>系统可观测性管理看板</title>
+        <title>可观测性总览</title>
         <style>
           :root {{
-            --bg: #edf3f7;
+            --bg: #eef3f8;
             --card: #fff;
             --line: #dbe6ef;
             --ink: #102a43;
@@ -1033,21 +1088,22 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
             --warn: #b88217;
             --danger: #b42318;
             --ok: #177245;
+            --hold: #975a16;
           }}
           * {{ box-sizing: border-box; }}
           body {{ margin: 0; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--ink); }}
-          .wrap {{ max-width: 1400px; margin: 0 auto; padding: 14px; }}
+          .wrap {{ max-width: 1380px; margin: 0 auto; padding: 14px; }}
           .hero {{ background: linear-gradient(120deg,#123f62,#145f7f); color: #fff; border-radius: 12px; padding: 14px; }}
           .row {{ display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 10px; }}
           .card {{ background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }}
-          .split {{ display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-top: 10px; }}
+          .split {{ display: grid; gap: 10px; grid-template-columns: 1.2fr 1fr; margin-top: 10px; }}
           .tabs {{ display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }}
           .tab-btn {{ border: 1px solid #b8cbdb; border-radius: 8px; background: #f4f9fd; color: #184968; padding: 8px; cursor: pointer; }}
           .tab-btn.active {{ background: #1d5f91; color: #fff; border-color: #1d5f91; }}
           .tab-view {{ display: none; margin-top: 10px; }}
           .tab-view.active {{ display: block; }}
           .k {{ font-size: 12px; color: var(--soft); }}
-          .v {{ font-size: 30px; font-weight: 700; }}
+          .v {{ font-size: 28px; font-weight: 700; }}
           .chain {{ display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }}
           .node {{ background: #eef6fc; border: 1px solid #cbdceb; border-radius: 999px; padding: 4px 10px; }}
           table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
@@ -1056,9 +1112,11 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
           .meta-dark {{ color: var(--soft); font-size: 12px; }}
           .warn-row {{ background: #fff8e7; }}
           .btn {{ border: 1px solid #b8cbdb; border-radius: 8px; background: #f4f9fd; color: #184968; padding: 6px 8px; cursor: pointer; }}
-          .field-warn {{ color: var(--warn); font-weight: 600; }}
           .tag-go {{ color: var(--ok); font-weight: 700; }}
           .tag-no {{ color: var(--danger); font-weight: 700; }}
+          .tag-hold {{ color: var(--hold); font-weight: 700; }}
+          .section-title {{ margin: 0 0 8px 0; }}
+          .pill {{ display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--soft); background:#f8fbfe; }}
           pre {{ background: #f8fbfe; border: 1px solid #dbe6ef; border-radius: 8px; padding: 8px; max-height: 260px; overflow: auto; }}
           @media (max-width: 1000px) {{ .row, .split {{ grid-template-columns: 1fr; }} }}
         </style>
@@ -1066,63 +1124,58 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
       <body>
         <main class="wrap">
           <section class="hero">
-            <h2 style="margin:0;">系统可观测性管理看板</h2>
-            <div class="meta">目标：看得见、点得进、查得到 · env=<code>{escape(env)}</code></div>
+            <h2 style="margin:0;">可观测性总览</h2>
+            <div class="meta">目标：快速判断是否可发布、明确阻塞项并可下钻诊断 · env=<code>{escape(env)}</code></div>
             <div class="meta">最后刷新：<span id="asOf">-</span></div>
           </section>
-          <section class="row">
-            <article class="card"><div class="k">总测试数</div><div class="v" id="kTotal">0</div></article>
-            <article class="card"><div class="k">执行数</div><div class="v" id="kExec">0</div></article>
-            <article class="card"><div class="k">通过率</div><div class="v" id="kPassRate">0%</div></article>
-            <article class="card"><div class="k">当前门槛结论</div><div class="v" id="kGate">-</div></article>
-          </section>
-          <section class="card" style="margin-top:10px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <h3 style="margin:0;">首页摘要（测试结果 + 执行过程）</h3>
-              <button class="btn" id="jumpSql">一键进入 SQL 交互查询</button>
-            </div>
-            <table style="margin-top:8px;">
-              <thead><tr><th>摘要项</th><th>Owner</th><th>ETA</th><th>证据链接</th><th>状态</th></tr></thead>
-              <tbody id="summaryRows"></tbody>
-            </table>
-          </section>
           <section class="tabs">
-            <button class="tab-btn active" data-tab="tab-test">测试结果视图</button>
-            <button class="tab-btn" data-tab="tab-process">执行过程视图</button>
-            <button class="tab-btn" data-tab="tab-sql">SQL交互查询</button>
+            <button class="tab-btn active" data-tab="tab-overview">决策总览</button>
+            <button class="tab-btn" data-tab="tab-domain">域视图</button>
+            <button class="tab-btn" data-tab="tab-diagnose">诊断工具</button>
           </section>
-          <section id="tab-test" class="tab-view active">
+          <section id="tab-overview" class="tab-view active">
+            <section class="row">
+              <article class="card"><div class="k">发布结论</div><div class="v" id="kGate">-</div></article>
+              <article class="card"><div class="k">阻塞工作包</div><div class="v" id="kBlocked">0</div></article>
+              <article class="card"><div class="k">P1失败</div><div class="v" id="kP1">0</div></article>
+              <article class="card"><div class="k">24h事件量</div><div class="v" id="kEvent24h">0</div></article>
+            </section>
             <div class="split">
               <article class="card">
-                <h3 style="margin:0 0 8px 0;">测试总览</h3>
-                <table>
-                  <tbody id="testOverviewRows"></tbody>
+                <h3 class="section-title">决策动作清单</h3>
+                <div class="meta-dark">按严重级排序：NO_GO > HOLD > GO</div>
+                <table style="margin-top:8px;">
+                  <thead><tr><th>工作包</th><th>状态</th><th>Owner</th><th>ETA</th><th>证据</th></tr></thead>
+                  <tbody id="blockerRows"></tbody>
                 </table>
               </article>
               <article class="card">
-                <h3 style="margin:0 0 8px 0;">失败分类</h3>
+                <h3 class="section-title">趋势摘要（24h）</h3>
                 <table>
-                  <thead><tr><th>failure_type</th><th>severity</th><th>retryable</th><th>gate_impact</th><th>证据</th></tr></thead>
-                  <tbody id="failureRows"></tbody>
+                  <tbody id="trendRows"></tbody>
                 </table>
               </article>
             </div>
+          </section>
+          <section id="tab-domain" class="tab-view">
+            <article class="card">
+              <h3 class="section-title">测试质量</h3>
+              <table><tbody id="testOverviewRows"></tbody></table>
+            </article>
             <article class="card" style="margin-top:10px;">
-              <h3 style="margin:0 0 8px 0;">分层门槛状态（工作包/工作线/项目）</h3>
+              <h3 class="section-title">失败分类</h3>
               <table>
-                <thead><tr><th>scope</th><th>id</th><th>gate_status</th><th>Owner</th><th>ETA</th><th>证据</th></tr></thead>
-                <tbody id="layerRows"></tbody>
+                <thead><tr><th>failure_type</th><th>severity</th><th>retryable</th><th>gate_impact</th><th>证据</th></tr></thead>
+                <tbody id="failureRows"></tbody>
               </table>
             </article>
-          </section>
-          <section id="tab-process" class="tab-view">
             <article class="card">
-              <h3 style="margin:0 0 8px 0;">流程链路</h3>
+              <h3 class="section-title">执行流程链路</h3>
               <div class="chain" id="chainNodes"></div>
             </article>
             <article class="card" style="margin-top:10px;">
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                <h3 style="margin:0;">执行过程字段</h3>
+                <h3 style="margin:0;">执行过程</h3>
                 <label class="meta-dark">工作线
                   <select id="filterOwnerLine"></select>
                 </label>
@@ -1137,17 +1190,25 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
               </table>
             </article>
             <article class="card" style="margin-top:10px;">
-              <h3 style="margin:0 0 8px 0;">最近事件时间线（倒序）</h3>
+              <h3 class="section-title">发布门槛（工作包/工作线/项目）</h3>
+              <table>
+                <thead><tr><th>scope</th><th>id</th><th>gate_status</th><th>Owner</th><th>ETA</th><th>证据</th></tr></thead>
+                <tbody id="layerRows"></tbody>
+              </table>
+            </article>
+          </section>
+          <section id="tab-diagnose" class="tab-view">
+            <article class="card">
+              <h3 class="section-title">最近事件时间线（倒序）</h3>
               <table>
                 <thead><tr><th>time</th><th>event_type</th><th>workpackage_id</th><th>summary</th><th>operator</th><th>证据</th></tr></thead>
                 <tbody id="timelineRows"></tbody>
               </table>
             </article>
-          </section>
-          <section id="tab-sql" class="tab-view">
             <article class="card">
-              <h3 style="margin:0 0 8px 0;">只读 SQL 查询区</h3>
-              <div class="meta-dark">只允许 SELECT/WITH；白名单表；LIMIT/超时/审计已启用。缺字段统一显示“-”。</div>
+              <h3 class="section-title">诊断工具 · 只读 SQL 查询区</h3>
+              <div class="meta-dark">只允许 SELECT/WITH；白名单表；LIMIT/超时/审计已启用。</div>
+              <div class="meta-dark" id="sqlAvail"></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
                 <div>
                   <label class="meta-dark">模板</label>
@@ -1169,8 +1230,30 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
           </section>
         </main>
         <script>
+          const ENV = {json.dumps(str(env or "all"), ensure_ascii=False)};
           const v = (x) => (x === null || x === undefined || x === '' ? '-' : x);
           const fill = (id, val) => document.getElementById(id).textContent = val;
+          const clearNode = (node) => {{ while (node.firstChild) node.removeChild(node.firstChild); }};
+          const appendTextCell = (tr, value) => {{
+            const td = document.createElement('td');
+            td.textContent = v(value);
+            tr.appendChild(td);
+          }};
+          const appendLinkCell = (tr, href) => {{
+            const td = document.createElement('td');
+            const link = String(href || '').trim();
+            if (link && link !== '-') {{
+              const a = document.createElement('a');
+              a.href = link;
+              a.target = '_blank';
+              a.rel = 'noopener noreferrer';
+              a.textContent = link;
+              td.appendChild(a);
+            }} else {{
+              td.textContent = '-';
+            }}
+            tr.appendChild(td);
+          }};
           const tabButtons = [...document.querySelectorAll('.tab-btn')];
           const tabViews = [...document.querySelectorAll('.tab-view')];
           tabButtons.forEach((btn) => btn.addEventListener('click', () => {{
@@ -1179,77 +1262,101 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
             btn.classList.add('active');
             document.getElementById(btn.dataset.tab).classList.add('active');
           }}));
-          document.getElementById('jumpSql').addEventListener('click', () => {{
-            document.querySelector('[data-tab="tab-sql"]').click();
-          }});
-
-          function warnClass(eta, evidence) {{
-            return (!eta || !evidence) ? 'warn-row' : '';
-          }}
 
           async function loadData() {{
             const ownerLine = encodeURIComponent(document.getElementById('filterOwnerLine').value || '');
             const wp = encodeURIComponent(document.getElementById('filterWorkpackage').value || '');
-            const resp = await fetch(`/v1/governance/lab/observability/management/data?owner_line=${{ownerLine}}&workpackage_id=${{wp}}`);
+            const resp = await fetch(`/v1/governance/lab/observability/management/data?env=${{encodeURIComponent(ENV)}}&owner_line=${{ownerLine}}&workpackage_id=${{wp}}`);
             const data = await resp.json();
             fill('asOf', v(data.as_of));
 
+            const d = data.decision_overview || {{}};
             const t = data.test_overview || {{}};
-            fill('kTotal', String(t.total || 0));
-            fill('kExec', String(t.executed || 0));
-            fill('kPassRate', `${{(Number(t.pass_rate || 0) * 100).toFixed(2)}}%`);
-            fill('kGate', v(t.gate_decision));
-            document.getElementById('kGate').className = String(t.gate_decision || '').toUpperCase() === 'GO' ? 'tag-go' : 'tag-no';
+            fill('kBlocked', String(d.blocked_workpackage_count || 0));
+            fill('kP1', String(d.p1_failures || 0));
+            fill('kEvent24h', String((data.trends || {{}}).event_count_24h || 0));
+            fill('kGate', v(d.gate_status || t.gate_decision));
+            const gateEl = document.getElementById('kGate');
+            const gate = String(d.gate_status || t.gate_decision || '').toUpperCase();
+            gateEl.className = gate === 'GO' ? 'tag-go' : (gate === 'HOLD' ? 'tag-hold' : 'tag-no');
 
-            const summaryRows = document.getElementById('summaryRows');
-            summaryRows.innerHTML = '';
-            const summaryItems = [
-              {{ item: '测试结果摘要', owner: v(t.owner), eta: v(t.eta), evidence_ref: v(t.evidence_ref), status: v(t.gate_decision) }},
-              {{ item: '执行过程摘要', owner: '可观测与运营指标线-Codex', eta: v((data.execution_process || {{}}).rows?.[0]?.eta), evidence_ref: v((data.execution_process || {{}}).rows?.[0]?.evidence_ref), status: '可追踪' }},
-              {{ item: 'SQL交互能力', owner: '测试平台与质量门槛线-Codex', eta: '-', evidence_ref: '/v1/governance/lab/sql/templates', status: '只读' }},
-            ];
-            summaryItems.forEach((row) => {{
+            const blockerRows = document.getElementById('blockerRows');
+            clearNode(blockerRows);
+            (d.top_blockers || []).forEach((row) => {{
               const tr = document.createElement('tr');
-              tr.className = warnClass(row.eta, row.evidence_ref);
-              tr.innerHTML = `<td>${{v(row.item)}}</td><td>${{v(row.owner)}}</td><td>${{v(row.eta)}}</td><td><a href="${{v(row.evidence_ref)}}" target="_blank">${{v(row.evidence_ref)}}</a></td><td>${{v(row.status)}}</td>`;
-              summaryRows.appendChild(tr);
+              appendTextCell(tr, row.workpackage_id);
+              appendTextCell(tr, row.release_decision || row.status);
+              appendTextCell(tr, row.owner);
+              appendTextCell(tr, row.eta);
+              appendLinkCell(tr, row.evidence_ref);
+              blockerRows.appendChild(tr);
+            }});
+            if (!blockerRows.firstChild) {{
+              const tr = document.createElement('tr');
+              const td = document.createElement('td');
+              td.colSpan = 5;
+              td.textContent = '当前无阻塞项';
+              tr.appendChild(td);
+              blockerRows.appendChild(tr);
+            }}
+
+            const trendRows = document.getElementById('trendRows');
+            clearNode(trendRows);
+            [
+              ['24h 事件总数', (data.trends || {{}}).event_count_24h],
+              ['24h NO_GO 事件数', (data.trends || {{}}).no_go_event_count_24h],
+              ['最近测试执行时间', t.last_run_at],
+              ['通过率', `${{(Number(t.pass_rate || 0) * 100).toFixed(2)}}%`],
+            ].forEach((pair) => {{
+              const tr = document.createElement('tr');
+              appendTextCell(tr, pair[0]);
+              appendTextCell(tr, pair[1]);
+              trendRows.appendChild(tr);
             }});
 
             const testOverviewRows = document.getElementById('testOverviewRows');
-            testOverviewRows.innerHTML = '';
+            clearNode(testOverviewRows);
             [
               ['total', t.total], ['executed', t.executed], ['passed', t.passed], ['failed', t.failed], ['skipped', t.skipped],
               ['pass_rate', `${{(Number(t.pass_rate || 0) * 100).toFixed(2)}}%`], ['quality_score', `${{Number(t.quality_score || 0).toFixed(2)}}`], ['last_run_at', t.last_run_at], ['gate_decision', t.gate_decision]
             ].forEach((pair) => {{
               const tr = document.createElement('tr');
-              tr.innerHTML = `<td>${{pair[0]}}</td><td>${{v(pair[1])}}</td>`;
+              appendTextCell(tr, pair[0]);
+              appendTextCell(tr, pair[1]);
               testOverviewRows.appendChild(tr);
             }});
 
             const layerRows = document.getElementById('layerRows');
-            layerRows.innerHTML = '';
+            clearNode(layerRows);
             const layers = [];
             (data.gate_layers?.workpackage || []).forEach((x) => layers.push(x));
             (data.gate_layers?.workline || []).forEach((x) => layers.push({{ scope: 'workline', id: x.line_name, gate_status: x.status, owner: x.owner, eta: x.eta, evidence_ref: x.evidence_ref }}));
             (data.gate_layers?.project || []).forEach((x) => layers.push(x));
             layers.forEach((row) => {{
               const tr = document.createElement('tr');
-              tr.className = warnClass(row.eta, row.evidence_ref);
-              tr.innerHTML = `<td>${{v(row.scope)}}</td><td>${{v(row.id)}}</td><td>${{v(row.gate_status)}}</td><td>${{v(row.owner)}}</td><td>${{v(row.eta)}}</td><td><a href="${{v(row.evidence_ref)}}" target="_blank">${{v(row.evidence_ref)}}</a></td>`;
+              appendTextCell(tr, row.scope);
+              appendTextCell(tr, row.id);
+              appendTextCell(tr, row.gate_status);
+              appendTextCell(tr, row.owner);
+              appendTextCell(tr, row.eta);
+              appendLinkCell(tr, row.evidence_ref);
               layerRows.appendChild(tr);
             }});
 
             const failureRows = document.getElementById('failureRows');
-            failureRows.innerHTML = '';
+            clearNode(failureRows);
             (data.failure_classification || []).forEach((row) => {{
               const tr = document.createElement('tr');
-              tr.className = warnClass(row.eta, row.evidence_ref);
-              tr.innerHTML = `<td>${{v(row.failure_type)}}</td><td>${{v(row.severity)}}</td><td>${{v(row.retryable)}}</td><td>${{v(row.gate_impact)}}</td><td><a href="${{v(row.evidence_ref)}}" target="_blank">${{v(row.evidence_ref)}}</a></td>`;
+              appendTextCell(tr, row.failure_type);
+              appendTextCell(tr, row.severity);
+              appendTextCell(tr, row.retryable);
+              appendTextCell(tr, row.gate_impact);
+              appendLinkCell(tr, row.evidence_ref);
               failureRows.appendChild(tr);
             }});
 
             const chainNodes = document.getElementById('chainNodes');
-            chainNodes.innerHTML = '';
+            clearNode(chainNodes);
             (data.execution_process?.chain || []).forEach((s) => {{
               const span = document.createElement('span');
               span.className = 'node';
@@ -1258,19 +1365,30 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
             }});
 
             const processRows = document.getElementById('processRows');
-            processRows.innerHTML = '';
+            clearNode(processRows);
             (data.execution_process?.rows || []).forEach((row) => {{
               const tr = document.createElement('tr');
-              tr.className = warnClass(row.eta, row.evidence_ref);
-              tr.innerHTML = `<td>${{v(row.task_batch_id)}}</td><td>${{v(row.workpackage_id)}}</td><td>${{v(row.status)}}</td><td>${{v(row.progress)}}</td><td>${{v(row.owner)}}</td><td>${{v(row.eta)}}</td><td>${{v(row.updated_at)}}</td><td><a href="${{v(row.evidence_ref)}}" target="_blank">${{v(row.evidence_ref)}}</a></td>`;
+              appendTextCell(tr, row.task_batch_id);
+              appendTextCell(tr, row.workpackage_id);
+              appendTextCell(tr, row.status);
+              appendTextCell(tr, row.progress);
+              appendTextCell(tr, row.owner);
+              appendTextCell(tr, row.eta);
+              appendTextCell(tr, row.updated_at);
+              appendLinkCell(tr, row.evidence_ref);
               processRows.appendChild(tr);
             }});
 
             const timelineRows = document.getElementById('timelineRows');
-            timelineRows.innerHTML = '';
+            clearNode(timelineRows);
             (data.execution_process?.timeline || []).slice(0, 50).forEach((row) => {{
               const tr = document.createElement('tr');
-              tr.innerHTML = `<td>${{v(row.time)}}</td><td>${{v(row.event_type)}}</td><td>${{v(row.workpackage_id)}}</td><td>${{v(row.summary)}}</td><td>${{v(row.operator)}}</td><td><a href="${{v(row.evidence_ref)}}" target="_blank">${{v(row.evidence_ref)}}</a></td>`;
+              appendTextCell(tr, row.time);
+              appendTextCell(tr, row.event_type);
+              appendTextCell(tr, row.workpackage_id);
+              appendTextCell(tr, row.summary);
+              appendTextCell(tr, row.operator);
+              appendLinkCell(tr, row.evidence_ref);
               timelineRows.appendChild(tr);
             }});
 
@@ -1302,6 +1420,11 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
               document.getElementById('sqlText').value = data.templates[0].sql || '';
             }}
             document.getElementById('sqlMeta').textContent = `whitelist=${{(data.whitelist_tables || []).join(',')}}; max_rows=${{data.max_rows}}; timeout=${{data.timeout_sec}}s`;
+            const mgmt = await fetch(`/v1/governance/lab/observability/management/data?env=${{encodeURIComponent(ENV)}}`);
+            const mgmtData = await mgmt.json();
+            const sqlCap = mgmtData.sql_capability || {{}};
+            document.getElementById('sqlAvail').textContent = sqlCap.availability_message || '';
+            document.getElementById('runSql').disabled = !sqlCap.available;
           }}
 
           async function runSql(pageDelta = 0) {{
@@ -1358,8 +1481,8 @@ def observability_live_view(env: str = "all") -> HTMLResponse:
 
 
 @router.get("/lab/observability/management/data")
-def observability_management_data(owner_line: str = "", workpackage_id: str = "") -> dict:
-    return _build_management_observability_data(owner_line=owner_line, workpackage_id=workpackage_id)
+def observability_management_data(env: str = "all", owner_line: str = "", workpackage_id: str = "") -> dict:
+    return _build_management_observability_data(env=env, owner_line=owner_line, workpackage_id=workpackage_id)
 
 
 @router.get("/lab/coverage/data")
@@ -1732,7 +1855,7 @@ def query_lab_sql(payload: LabSqlQueryRequest) -> LabSqlQueryResponse:
             "status": "success",
         }
         _append_sql_history(history_item)
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "tool_call",
             payload.operator,
             {
@@ -1767,7 +1890,7 @@ def query_lab_sql(payload: LabSqlQueryRequest) -> LabSqlQueryResponse:
             "message": str(detail.get("message") or ""),
         }
         _append_sql_history(history_item)
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "tool_call",
             payload.operator,
             {
@@ -1799,7 +1922,7 @@ def decide_fengtu_conflict(case_id: str, payload: FengtuConflictDecisionPayload)
     decisions["items"] = items
     _save_json_file(_CONFLICT_DECISIONS_PATH, decisions)
 
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "approval_changed",
         payload.operator,
         {
@@ -1821,7 +1944,7 @@ def decide_fengtu_conflict(case_id: str, payload: FengtuConflictDecisionPayload)
 
 def _run_task_sync(batch_id: str, ruleset_id: str, records: list[dict], queue_message: str) -> str:
     task_id = f"task_{uuid4().hex[:12]}"
-    REPOSITORY.create_task(
+    GOVERNANCE_SERVICE.create_task(
         task_id=task_id,
         batch_name=batch_id,
         ruleset_id=ruleset_id,
@@ -1830,29 +1953,20 @@ def _run_task_sync(batch_id: str, ruleset_id: str, records: list[dict], queue_me
         queue_message=queue_message,
     )
 
-    original_strict = os.getenv("OPENHANDS_STRICT")
-    if not original_strict:
-        os.environ["OPENHANDS_STRICT"] = "0"
-    try:
-        run_governance_job(
-            {
-                "task_id": task_id,
-                "batch_name": batch_id,
-                "ruleset_id": ruleset_id,
-                "records": records,
-            }
-        )
-    finally:
-        if original_strict is None:
-            os.environ.pop("OPENHANDS_STRICT", None)
-        else:
-            os.environ["OPENHANDS_STRICT"] = original_strict
+    run_governance_job(
+        {
+            "task_id": task_id,
+            "batch_name": batch_id,
+            "ruleset_id": ruleset_id,
+            "records": records,
+        }
+    )
     return task_id
 
 
 def _sample_deltas(baseline_run_id: str, candidate_run_id: str) -> tuple[list[LabSampleDelta], list[LabSampleDelta]]:
-    baseline_items = {str(item.get("raw_id")): item for item in REPOSITORY.get_results(baseline_run_id)}
-    candidate_items = {str(item.get("raw_id")): item for item in REPOSITORY.get_results(candidate_run_id)}
+    baseline_items = {str(item.get("raw_id")): item for item in GOVERNANCE_SERVICE.get_results(baseline_run_id)}
+    candidate_items = {str(item.get("raw_id")): item for item in GOVERNANCE_SERVICE.get_results(candidate_run_id)}
     shared_raw_ids = [raw_id for raw_id in baseline_items.keys() if raw_id in candidate_items]
 
     deltas: list[LabSampleDelta] = []
@@ -1947,12 +2061,12 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
     if not records:
         raise HTTPException(status_code=400, detail="records is required")
 
-    active_ruleset_id = REPOSITORY.get_ops_summary().get("active_ruleset_id", "default")
-    active_ruleset = REPOSITORY.get_ruleset(active_ruleset_id)
+    active_ruleset_id = GOVERNANCE_SERVICE.get_ops_summary().get("active_ruleset_id", "default")
+    active_ruleset = GOVERNANCE_SERVICE.get_ruleset(active_ruleset_id)
     if not active_ruleset:
         raise HTTPException(status_code=404, detail="active ruleset not found")
 
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "agent_run_start",
         payload.caller,
         {
@@ -1964,7 +2078,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
         },
     )
 
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "tool_call",
         payload.caller,
         {"tool_name": "RunGovernance", "phase": "baseline", "batch_id": batch_id},
@@ -1975,7 +2089,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
         records=records,
         queue_message="lab_baseline_sync",
     )
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "baseline_completed",
         payload.caller,
         {"batch_id": batch_id, "run_id": baseline_run_id, "ruleset_id": active_ruleset_id},
@@ -2003,7 +2117,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
             "t_high": round(candidate_t_high, 6),
             "t_low": round(candidate_t_low, 6),
         }
-        REPOSITORY.upsert_ruleset(
+        GOVERNANCE_SERVICE.upsert_ruleset(
             candidate_ruleset_id,
             {
                 "version": f"lab-{idx + 1}",
@@ -2013,7 +2127,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
         )
         candidate_rule_ids.append(candidate_ruleset_id)
 
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "tool_call",
             payload.caller,
             {
@@ -2022,7 +2136,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
                 "candidate_ruleset_id": candidate_ruleset_id,
             },
         )
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "tool_call",
             payload.caller,
             {"tool_name": "RunGovernance", "phase": "candidate", "candidate_index": idx + 1},
@@ -2034,7 +2148,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
             queue_message=f"lab_candidate_sync_{idx + 1}",
         )
         candidate_run_ids.append(run_id)
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "candidate_completed",
             payload.caller,
             {
@@ -2044,12 +2158,12 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
             },
         )
 
-        REPOSITORY.log_audit_event(
+        GOVERNANCE_SERVICE.log_audit_event(
             "tool_call",
             payload.caller,
             {"tool_name": "ComputeScorecard", "baseline_run_id": baseline_run_id, "candidate_run_id": run_id},
         )
-        scorecard = REPOSITORY.compute_scorecard(
+        scorecard = GOVERNANCE_SERVICE.compute_scorecard(
             baseline_task_id=baseline_run_id,
             candidate_task_id=run_id,
         )
@@ -2075,7 +2189,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
         f"delta.human_required_rate={best_scorecard.get('delta', {}).get('human_required_rate', 0.0)}",
     ]
 
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "scorecard_computed",
         payload.caller,
         {
@@ -2084,18 +2198,18 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
             "recommendation": best_scorecard.get("recommendation"),
         },
     )
-    REPOSITORY.log_audit_event(
+    GOVERNANCE_SERVICE.log_audit_event(
         "tool_call",
         payload.caller,
         {"tool_name": "CreateChangeRequest", "candidate_ruleset_id": best_candidate_ruleset_id},
     )
-    change = REPOSITORY.create_change_request(
+    change = GOVERNANCE_SERVICE.create_change_request(
         {
             "from_ruleset_id": active_ruleset_id,
             "to_ruleset_id": best_candidate_ruleset_id,
             "baseline_task_id": baseline_run_id,
             "candidate_task_id": best_candidate_run_id,
-            "diff": {"thresholds": REPOSITORY.get_ruleset(best_candidate_ruleset_id).get("config_json", {}).get("thresholds", {})},
+            "diff": {"thresholds": GOVERNANCE_SERVICE.get_ruleset(best_candidate_ruleset_id).get("config_json", {}).get("thresholds", {})},
             "scorecard": best_scorecard,
             "recommendation": best_scorecard.get("recommendation", "needs-human"),
             "evidence_bullets": evidence_bullets,
@@ -2113,7 +2227,7 @@ def optimize_batch(batch_id: str, payload: LabOptimizeRequest) -> LabOptimizeRes
 
 @router.get("/lab/change_requests/{change_id}", response_model=LabReplayResponse)
 def replay_change_request(change_id: str) -> LabReplayResponse:
-    change = REPOSITORY.get_change_request(change_id)
+    change = GOVERNANCE_SERVICE.get_change_request(change_id)
     if not change:
         raise HTTPException(status_code=404, detail="change request not found")
 
@@ -2122,7 +2236,7 @@ def replay_change_request(change_id: str) -> LabReplayResponse:
     improved_samples, worsened_samples = _sample_deltas(baseline_run_id, candidate_run_id)
     run_refs = {baseline_run_id, candidate_run_id}
     audit_events: list[dict] = []
-    for event in REPOSITORY.list_audit_events():
+    for event in GOVERNANCE_SERVICE.list_audit_events():
         payload = event.get("payload", {})
         if not isinstance(payload, dict):
             payload = {}

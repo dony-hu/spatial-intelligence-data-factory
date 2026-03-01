@@ -35,17 +35,8 @@ def bootstrap_pg_env() -> None:
             os.environ.setdefault(key, value)
 
     db_url = str(os.getenv("DATABASE_URL") or "").strip()
-    if not db_url:
-        fallback = (
-            str(os.getenv("TRUST_META_DATABASE_URL") or "").strip()
-            or str(os.getenv("TRUST_TRUSTDB_DSN") or "").strip()
-        )
-        if fallback:
-            os.environ["DATABASE_URL"] = fallback
-            db_url = fallback
 
     if db_url:
         os.environ.setdefault("TRUST_META_DATABASE_URL", db_url)
         os.environ.setdefault("TRUST_TRUSTDB_DSN", db_url)
         os.environ.setdefault("READONLY_DATABASE_URL", db_url)
-

@@ -1,0 +1,5 @@
+Initializing SQLite DB at output/runtime/governance.db...
+SQLite DB initialized successfully.
+Acceptance JSON: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/real-gate/address-governance-mvp-acceptance-20260227-081031.json
+Acceptance Markdown: /Users/01411043/code/spatial-intelligence-data-factory/output/acceptance/real-gate/address-governance-mvp-acceptance-20260227-081031.md
+EXIT_CODE=0

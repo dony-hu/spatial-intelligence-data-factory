@@ -224,7 +224,7 @@ def governance_api(base_url: str):
 
 @pytest.fixture(scope="session", autouse=True)
 def ensure_playwright_browser_ready() -> None:
-    sync_api = pytest.importorskip("playwright.sync_api")
+    from playwright import sync_api
     launch_attempts = [
         ("chromium", {}),
         ("chromium", {"channel": "chrome"}),
@@ -244,7 +244,7 @@ def ensure_playwright_browser_ready() -> None:
                     errors.append(f"{label} -> {exc}")
     except Exception as exc:  # pragma: no cover - depends on local browser install
         errors.append(str(exc))
-    pytest.skip(
+    raise RuntimeError(
         "Playwright browser is not installed or unavailable; "
         + " ; ".join(errors)
     )

@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from .errors import InvalidTransitionError, NotFoundError
+from .evidence_store import PGEvidenceStore
 from .policies import check_required_approvals
+from .state_store import PGStateStore
 
 
 @dataclass
@@ -33,9 +35,9 @@ class Orchestrator:
         "ROLLED_BACK": set(),
     }
 
-    def __init__(
-        self,
-    ):
+    def __init__(self, state_store=None, evidence_store=None):
+        self.state_store = state_store or PGStateStore()
+        self.evidence_store = evidence_store or PGEvidenceStore()
 
     def submit(self, task_id: str, context: Optional[Dict] = None, approvals_required: Optional[List[str]] = None) -> Dict:
         payload = TaskRuntimeState(

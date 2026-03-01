@@ -126,9 +126,16 @@ class TrustHub:
         if not replaced:
             self._capabilities.append(item)
         self._save()
+        if self._db_enabled():
+            self._upsert_capability_db(item)
+            db_items = self._query_capabilities_db(source_id=source_text, endpoint=endpoint_text, limit=1)
+            if db_items:
+                return db_items[0]
         return item
 
     def list_capabilities(self, source_id: str = "") -> List[Dict[str, str]]:
+        if self._db_enabled():
+            return self._query_capabilities_db(source_id=source_id, endpoint="", limit=1000)
         if source_id:
             return [item for item in self._capabilities if str(item.get("source_id") or "") == source_id]
         return list(self._capabilities)
@@ -157,9 +164,13 @@ class TrustHub:
         }
         self._samples.append(item)
         self._save()
+        if self._db_enabled():
+            self._insert_sample_db(item)
         return item
 
     def query_samples(self, source_id: str = "", limit: int = 20) -> List[Dict[str, object]]:
+        if self._db_enabled():
+            return self._query_samples_db(source_id=source_id, limit=limit)
         rows = list(self._samples)
         if source_id:
             rows = [item for item in rows if str(item.get("source_id") or "") == source_id]
@@ -167,11 +178,11 @@ class TrustHub:
         return rows[: max(1, int(limit))]
 
     def _db_enabled(self) -> bool:
-        return self._database_url.startswith("postgresql") or self._database_url.startswith("sqlite")
+        return self._database_url.startswith("postgresql")
 
     def _query_db(self, sql: str, params: Dict[str, object]) -> List[Dict[str, object]]:
         if not self._db_enabled():
-            raise ValueError("blocked: DATABASE_URL is required for trust_meta/trust_db query")
+            raise ValueError("blocked: DATABASE_URL is required for trust_meta/trust_data query")
         try:
             from sqlalchemy import create_engine, text
         except Exception as exc:  # pragma: no cover - 依赖异常
@@ -181,11 +192,114 @@ class TrustHub:
         try:
             with engine.begin() as conn:
                 if self._database_url.startswith("postgresql"):
-                    conn.execute(text("SET search_path TO trust_meta, trust_db, public"))
+                    conn.execute(text("SET search_path TO trust_meta, trust_data, public"))
                 rows = conn.execute(text(sql), params).mappings().all()
             return [dict(row) for row in rows]
         except Exception as exc:
             raise ValueError(f"blocked: trust query failed: {exc}") from exc
+
+    def _execute_db(self, sql: str, params: Dict[str, object]) -> None:
+        if not self._db_enabled():
+            return
+        try:
+            from sqlalchemy import create_engine, text
+        except Exception as exc:  # pragma: no cover
+            raise ValueError(f"blocked: sqlalchemy unavailable: {exc}") from exc
+
+        engine = create_engine(self._database_url)
+        try:
+            with engine.begin() as conn:
+                if self._database_url.startswith("postgresql"):
+                    conn.execute(text("SET search_path TO trust_meta, trust_data, public"))
+                conn.execute(text(sql), params)
+        except Exception as exc:
+            raise ValueError(f"blocked: trust write failed: {exc}") from exc
+
+    def _upsert_capability_db(self, item: Dict[str, str]) -> None:
+        self._execute_db(
+            """
+            INSERT INTO trust_meta.capability_registry (
+                capability_id, source_id, provider, endpoint, tool_type, status, updated_at
+            ) VALUES (
+                :capability_id, :source_id, :provider, :endpoint, :tool_type, :status, :updated_at
+            )
+            ON CONFLICT(source_id, endpoint)
+            DO UPDATE SET
+                provider = excluded.provider,
+                tool_type = excluded.tool_type,
+                status = excluded.status,
+                updated_at = excluded.updated_at;
+            """,
+            item,
+        )
+
+    def _query_capabilities_db(self, *, source_id: str, endpoint: str, limit: int) -> List[Dict[str, str]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        rows = self._query_db(
+            """
+            SELECT capability_id, source_id, provider, endpoint, tool_type, status, updated_at
+            FROM trust_meta.capability_registry
+            WHERE (:source_id = '' OR source_id = :source_id)
+              AND (:endpoint = '' OR endpoint = :endpoint)
+            ORDER BY updated_at DESC
+            LIMIT :limit
+            """,
+            {"source_id": str(source_id or ""), "endpoint": str(endpoint or ""), "limit": safe_limit},
+        )
+        return [{k: str(v) for k, v in row.items()} for row in rows]
+
+    def _insert_sample_db(self, item: Dict[str, object]) -> None:
+        params = {
+            "sample_id": str(item.get("sample_id") or ""),
+            "source_id": str(item.get("source_id") or ""),
+            "trust_score": float(item.get("trust_score") or 0.0),
+            "content_json": json.dumps(item.get("content") or {}, ensure_ascii=False),
+            "collected_at": str(item.get("collected_at") or datetime.now(timezone.utc).isoformat()),
+        }
+        self._execute_db(
+            """
+            INSERT INTO trust_data.sample_data (
+                sample_id, source_id, trust_score, content_json, collected_at
+            ) VALUES (
+                :sample_id, :source_id, :trust_score, CAST(:content_json AS JSONB), :collected_at
+            );
+            """,
+            params,
+        )
+
+    def _query_samples_db(self, *, source_id: str, limit: int) -> List[Dict[str, object]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        rows = self._query_db(
+            """
+            SELECT sample_id, source_id, trust_score, content_json, collected_at
+            FROM trust_data.sample_data
+            WHERE (:source_id = '' OR source_id = :source_id)
+            ORDER BY collected_at DESC
+            LIMIT :limit
+            """,
+            {"source_id": str(source_id or ""), "limit": safe_limit},
+        )
+        parsed: List[Dict[str, object]] = []
+        for row in rows:
+            content_raw = row.get("content_json")
+            content: Dict[str, object]
+            if isinstance(content_raw, dict):
+                content = content_raw
+            else:
+                try:
+                    content = json.loads(str(content_raw or "{}"))
+                except Exception:
+                    content = {}
+            parsed.append(
+                {
+                    "sample_id": str(row.get("sample_id") or ""),
+                    "source_id": str(row.get("source_id") or ""),
+                    "trust_score": float(row.get("trust_score") or 0.0),
+                    "content": content,
+                    "collected_at": str(row.get("collected_at") or ""),
+                }
+            )
+        return parsed
 
     def list_trust_meta_sources(self, namespace_id: str = "", limit: int = 20) -> List[Dict[str, object]]:
         safe_limit = max(1, min(int(limit), 1000))
@@ -199,9 +313,9 @@ class TrustHub:
         """
         return self._query_db(sql, {"namespace_id": str(namespace_id or ""), "limit": safe_limit})
 
-    def list_trust_db_admin_division(self, namespace_id: str = "", limit: int = 20) -> List[Dict[str, object]]:
+    def list_trust_data_admin_division(self, namespace_id: str = "", limit: int = 20) -> List[Dict[str, object]]:
         safe_limit = max(1, min(int(limit), 1000))
-        table = "trust_db.admin_division" if self._database_url.startswith("postgresql") else "trust_db_admin_division"
+        table = "trust_data.admin_division" if self._database_url.startswith("postgresql") else "trust_data_admin_division"
         sql = f"""
             SELECT namespace_id, source_id, division_id, name, level, parent_id, adcode, snapshot_id
             FROM {table}

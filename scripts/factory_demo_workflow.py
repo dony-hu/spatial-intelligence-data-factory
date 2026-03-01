@@ -125,7 +125,7 @@ def demo_workflow(scenario_name: str = 'address_cleaning', auto_execute: bool = 
         graph_completed = executions.get('graph_completed', 0)
         total_executed = executions.get('count', cleaning_completed + graph_completed)
         quality_passed = executions.get('quality_passed', 'N/A')
-        # Fallback to live metrics when workflow stage does not return token summary
+        # Use live metrics when workflow stage does not return token summary
         total_tokens = executions.get('total_tokens')
         if total_tokens is None:
             summary = workflow.get_workflow_summary()
@@ -200,7 +200,7 @@ def demo_workflow(scenario_name: str = 'address_cleaning', auto_execute: bool = 
     print("  - database/factory.db (Factory state and operations)")
     print("\nNext Steps:")
     print("  1. View factory dashboard: python3 tools/factory_dashboard.py")
-    print("  2. Query database: sqlite3 database/factory.db")
+    print("  2. Query database: psql \"$DATABASE_URL\" -c \"SELECT now();\"")
     print("  3. Export state: python3 -c \"from tools.factory_workflow import FactoryWorkflow; wf = FactoryWorkflow(); print(wf.export_state_to_json())\"")
 
     return workflow

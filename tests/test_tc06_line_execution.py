@@ -81,8 +81,8 @@ class Tc06LineExecutionTests(unittest.TestCase):
                 "replay_result_ref",
                 "release_decision",
             ],
-            "failure_queue_snapshot_ref": "sqlite://database/tc06_line_execution.db#failure_queue",
-            "replay_result_ref": "sqlite://database/tc06_line_execution.db#replay_runs",
+            "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
+            "replay_result_ref": "pg://address_line.replay_runs",
         }
         payload = build_line_feedback_payload(
             contract=contract,
@@ -94,31 +94,6 @@ class Tc06LineExecutionTests(unittest.TestCase):
         self.assertEqual(payload["replay_result_ref"], contract["replay_result_ref"])
         self.assertEqual(payload["status"], "done")
         self.assertEqual(payload["release_decision"], "GO")
-
-    def test_build_line_feedback_payload_accepts_pg_contract_refs(self):
-        contract = {
-            "required_fields": [
-                "status",
-                "done",
-                "next",
-                "blocker",
-                "eta",
-                "test_report_ref",
-                "failure_queue_snapshot_ref",
-                "replay_result_ref",
-                "release_decision",
-            ],
-            "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
-            "replay_result_ref": "pg://address_line.replay_runs",
-        }
-        payload = build_line_feedback_payload(
-            contract=contract,
-            replay_report_ref="output/line_runs/tc06_failure_replay_2026-02-15_210327_583381.json",
-            status="done",
-        )
-        self.assertEqual(payload["failure_queue_snapshot_ref"], contract["failure_queue_snapshot_ref"])
-        self.assertEqual(payload["replay_result_ref"], contract["replay_result_ref"])
-
 
 if __name__ == "__main__":
     unittest.main()

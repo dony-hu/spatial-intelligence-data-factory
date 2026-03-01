@@ -21,3 +21,24 @@
 
 1. 合法工作包发布成功，Runtime 可读取元数据。
 2. 缺失 `workpackage.json` 时发布失败并返回错误码。
+
+## 对齐信息（PRD/架构）
+
+1. PRD 对齐：EPIC B（发布与运行编排）+ EPIC C（证据与门禁）。
+2. 架构对齐：
+- `docs/architecture/system_overview.md` 发布执行流。
+- `docs/architecture/dependency_map.md` 中 Agent/Runtime/Repository 依赖图。
+
+## 模块边界与 API 边界
+
+1. 所属模块：`publish_workflow`、`runtime`、`repository`、`audit`。
+2. 上游入口：CLI/API publish 指令。
+3. 下游依赖：Runtime 发布接口、版本持久化、执行触发、证据归档。
+4. API 边界：发布 API 仅接受工作包契约输入，不暴露内部存储细节。
+
+## 依赖与禁止耦合
+
+1. 允许依赖：`agent publish workflow -> runtime adapter -> repository`。
+2. 禁止耦合：
+- 直接在 CLI 中拼装 SQL 写入发布记录。
+- 绕过版本契约直接触发运行时执行。

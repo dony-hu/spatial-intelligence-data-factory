@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("GOVERNANCE_ALLOW_MEMORY_FALLBACK", "1")
+os.environ.setdefault("OBSERVABILITY_ONCALL_TOKEN", "oncall-token-local")
 
 from fastapi.testclient import TestClient
 
@@ -78,7 +78,11 @@ def test_observability_snapshot_timeseries_and_alert_ack_contract() -> None:
     list_payload = list_alerts.json()
     assert list_payload["total"] >= 1
 
-    ack_resp = client.post(f"/v1/governance/observability/alerts/{created['alert_id']}/ack", json={"actor": "owner_a"})
+    ack_resp = client.post(
+        f"/v1/governance/observability/alerts/{created['alert_id']}/ack?role=oncall&actor=owner_a",
+        headers={"x-observability-token": "oncall-token-local"},
+        json={"actor": "owner_a"},
+    )
     assert ack_resp.status_code == 200
     ack_payload = ack_resp.json()
     assert ack_payload["status"] == "acked"

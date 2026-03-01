@@ -4,7 +4,6 @@ Implements address standardization, entity mapping, and data fusion
 """
 
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import re
@@ -13,6 +12,7 @@ from enum import Enum
 
 class AddressLevel(Enum):
     """Address hierarchy levels"""
+
     PROVINCE = 1
     CITY = 2
     DISTRICT = 3
@@ -24,44 +24,78 @@ class AddressLevel(Enum):
     ROOM = 9
 
 
-@dataclass
 class AddressComponent:
     """Represents a single address component"""
-    component_type: str
-    value: str
-    level: int
-    standardized_value: Optional[str] = None
-    confidence: float = 0.0
+
+    def __init__(
+        self,
+        component_type="",
+        value="",
+        level=0,
+        standardized_value=None,
+        confidence=0.0,
+    ):
+        self.component_type = component_type
+        self.value = value
+        self.level = level
+        self.standardized_value = standardized_value
+        self.confidence = confidence
 
 
-@dataclass
 class ParsedAddress:
     """Result of address parsing"""
-    raw_address: str
-    components: Dict[str, str]
-    parsing_method: str
-    confidence_score: float
-    component_confidences: Dict[str, float] = field(default_factory=dict)
-    parsing_errors: List[str] = field(default_factory=list)
+
+    def __init__(
+        self,
+        raw_address="",
+        components=None,
+        parsing_method="",
+        confidence_score=0.0,
+        component_confidences=None,
+        parsing_errors=None,
+    ):
+        self.raw_address = raw_address
+        self.components = components or {}
+        self.parsing_method = parsing_method
+        self.confidence_score = confidence_score
+        self.component_confidences = component_confidences or {}
+        self.parsing_errors = parsing_errors or []
 
 
-@dataclass
 class StandardizedAddress:
     """Standardized address representation"""
-    standard_full_address: str
-    province: str
-    city: str
-    district: str
-    street: Optional[str] = None
-    lane: Optional[str] = None
-    building: Optional[str] = None
-    unit: Optional[str] = None
-    floor: Optional[str] = None
-    room: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    confidence_score: float = 0.0
-    rules_applied: List[str] = field(default_factory=list)
+
+    def __init__(
+        self,
+        standard_full_address="",
+        province="",
+        city="",
+        district="",
+        street=None,
+        lane=None,
+        building=None,
+        unit=None,
+        floor=None,
+        room=None,
+        latitude=None,
+        longitude=None,
+        confidence_score=0.0,
+        rules_applied=None,
+    ):
+        self.standard_full_address = standard_full_address
+        self.province = province
+        self.city = city
+        self.district = district
+        self.street = street
+        self.lane = lane
+        self.building = building
+        self.unit = unit
+        self.floor = floor
+        self.room = room
+        self.latitude = latitude
+        self.longitude = longitude
+        self.confidence_score = confidence_score
+        self.rules_applied = rules_applied or []
 
 
 class AddressStandardizer:
@@ -86,7 +120,7 @@ class AddressStandardizer:
         "黄浦": "黄浦区",
         "浦东": "浦东新区",
         "奉贤": "奉贤区",
-        "金山": "金山区"
+        "金山": "金山区",
     }
 
     # Province to city mapping for Shanghai
@@ -104,10 +138,10 @@ class AddressStandardizer:
         "金山区": "310116",
         "松江区": "310117",
         "青浦区": "310118",
-        "崇明区": "310151"
+        "崇明区": "310151",
     }
 
-    def standardize(self, parsed_address: ParsedAddress) -> StandardizedAddress:
+    def standardize(self, parsed_address):
         """
         Standardize a parsed address
 
@@ -121,13 +155,17 @@ class AddressStandardizer:
         rules_applied = []
 
         # Standardize province
-        province = self._standardize_province(components.get("province", ""), rules_applied)
+        province = self._standardize_province(
+            components.get("province", ""), rules_applied
+        )
 
         # Standardize city
         city = self._standardize_city(components.get("city", ""), rules_applied)
 
         # Standardize district
-        district = self._standardize_district(components.get("district", ""), rules_applied)
+        district = self._standardize_district(
+            components.get("district", ""), rules_applied
+        )
 
         # Standardize street name
         street = components.get("street", "").strip()
@@ -135,11 +173,14 @@ class AddressStandardizer:
 
         # Build full standard address
         full_address = self._build_full_address(
-            province, city, district, street,
+            province,
+            city,
+            district,
+            street,
             components.get("building", ""),
             components.get("unit", ""),
             components.get("floor", ""),
-            components.get("room", "")
+            components.get("room", ""),
         )
 
         return StandardizedAddress(
@@ -153,11 +194,12 @@ class AddressStandardizer:
             unit=components.get("unit", "").strip() or None,
             floor=components.get("floor", "").strip() or None,
             room=components.get("room", "").strip() or None,
-            confidence_score=parsed_address.confidence_score * 0.95,  # Reduce confidence slightly
-            rules_applied=rules_applied
+            confidence_score=parsed_address.confidence_score
+            * 0.95,  # Reduce confidence slightly
+            rules_applied=rules_applied,
         )
 
-    def _standardize_province(self, province: str, rules_applied: List[str]) -> str:
+    def _standardize_province(self, province, rules_applied):
         """Standardize province name"""
         province = province.strip()
 
@@ -173,7 +215,7 @@ class AddressStandardizer:
 
         return province
 
-    def _standardize_city(self, city: str, rules_applied: List[str]) -> str:
+    def _standardize_city(self, city, rules_applied):
         """Standardize city name"""
         city = city.strip()
 
@@ -187,7 +229,7 @@ class AddressStandardizer:
 
         return city
 
-    def _standardize_district(self, district: str, rules_applied: List[str]) -> str:
+    def _standardize_district(self, district, rules_applied):
         """Standardize district name"""
         district = district.strip()
 
@@ -200,7 +242,7 @@ class AddressStandardizer:
 
         return district
 
-    def _standardize_street(self, street: str, rules_applied: List[str]) -> str:
+    def _standardize_street(self, street, rules_applied):
         """Standardize street name"""
         street = street.strip()
 
@@ -213,9 +255,9 @@ class AddressStandardizer:
 
         return street
 
-    def _build_full_address(self, province: str, city: str, district: str,
-                           street: str, building: str, unit: str,
-                           floor: str, room: str) -> str:
+    def _build_full_address(
+        self, province, city, district, street, building, unit, floor, room
+    ):
         """Build full standardized address string"""
         parts = [province, city, district]
 
@@ -245,10 +287,10 @@ class AddressParser:
         "building": r"(\d+号(?:[甲乙丙丁])?)",
         "unit": r"(\d+单元)",
         "floor": r"([0-9顶十百千]+(?:楼|层))",
-        "room": r"(\d{3,4}室?)"
+        "room": r"(\d{3,4}室?)",
     }
 
-    def parse(self, raw_address: str, parsing_method: str = "regex") -> ParsedAddress:
+    def parse(self, raw_address, parsing_method="regex"):
         """
         Parse raw address into components
 
@@ -266,7 +308,7 @@ class AddressParser:
         else:
             return self._parse_regex(raw_address)
 
-    def _parse_regex(self, raw_address: str) -> ParsedAddress:
+    def _parse_regex(self, raw_address):
         """Parse using regex patterns"""
         components = {}
         component_confidences = {}
@@ -279,7 +321,9 @@ class AddressParser:
             match = re.search(pattern, clean_address)
             if match:
                 components[component_type] = match.group(0)
-                component_confidences[component_type] = 0.85 + (len(match.group(0)) / 10) * 0.1
+                component_confidences[component_type] = (
+                    0.85 + (len(match.group(0)) / 10) * 0.1
+                )
             else:
                 components[component_type] = ""
                 component_confidences[component_type] = 0.0
@@ -293,10 +337,10 @@ class AddressParser:
             components=components,
             parsing_method="regex",
             confidence_score=overall_confidence,
-            component_confidences=component_confidences
+            component_confidences=component_confidences,
         )
 
-    def _parse_ml_model(self, raw_address: str) -> ParsedAddress:
+    def _parse_ml_model(self, raw_address):
         """Parse using ML model (stub for future implementation)"""
         # This would integrate with an actual ML model
         return self._parse_regex(raw_address)
@@ -308,15 +352,11 @@ class EntityMapper:
     def __init__(self):
         self.entity_database = self._load_entity_database()
 
-    def _load_entity_database(self) -> Dict[str, List[Dict]]:
+    def _load_entity_database(self):
         """Load entity reference database (stub)"""
-        return {
-            "poi": [],
-            "building": [],
-            "landmark": []
-        }
+        return {"poi": [], "building": [], "landmark": []}
 
-    def map_to_entity(self, standardized_address: StandardizedAddress) -> Optional[Dict]:
+    def map_to_entity(self, standardized_address):
         """
         Map standardized address to entity
 
@@ -335,16 +375,18 @@ class EntityMapper:
             "entity_name": best_match.get("name") if best_match else None,
             "similarity_score": best_match.get("similarity") if best_match else 0.0,
             "mapping_method": "fuzzy_match",
-            "match_confidence": best_match.get("confidence", 0.0) if best_match else 0.0
+            "match_confidence": best_match.get("confidence", 0.0)
+            if best_match
+            else 0.0,
         }
 
-    def _fuzzy_match(self, standardized_address: StandardizedAddress) -> Optional[Dict]:
+    def _fuzzy_match(self, standardized_address):
         """Perform fuzzy matching against entity database"""
         # Implementation would use fuzzy string matching algorithms
         # For now, return None as stub
         return None
 
-    def merge_multi_source(self, entities: List[Dict]) -> Dict:
+    def merge_multi_source(self, entities):
         """
         Merge multiple source entities into canonical form
 
@@ -373,22 +415,22 @@ class EntityMapper:
 class AddressGovernanceSystem:
     """Main system orchestrating address governance"""
 
-    def __init__(self, region: str = "Shanghai"):
+    def __init__(self, region="Shanghai"):
         self.region = region
         self.parser = AddressParser()
         self.standardizer = AddressStandardizer()
         self.mapper = EntityMapper()
         self.quality_rules = self._load_quality_rules()
 
-    def _load_quality_rules(self) -> Dict:
+    def _load_quality_rules(self):
         """Load quality assurance rules"""
         return {
             "completeness_threshold": 0.8,
             "accuracy_threshold": 0.85,
-            "consistency_threshold": 0.9
+            "consistency_threshold": 0.9,
         }
 
-    def process_address(self, raw_address: str) -> Dict:
+    def process_address(self, raw_address):
         """
         Complete address processing pipeline
 
@@ -417,17 +459,17 @@ class AddressGovernanceSystem:
             "entity_mapping": entity_mapping,
             "quality_score": quality_score,
             "processing_region": self.region,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    def _assess_quality(self, parsed: ParsedAddress,
-                       standardized: StandardizedAddress,
-                       mapping: Dict) -> float:
+    def _assess_quality(self, parsed, standardized, mapping):
         """Assess quality of address processing"""
+        if mapping is None:
+            mapping = {}
         factors = [
             parsed.confidence_score,
             standardized.confidence_score,
-            mapping.get("match_confidence", 0.0) if mapping.get("entity_id") else 0.7
+            mapping.get("match_confidence", 0.0) if mapping.get("entity_id") else 0.7,
         ]
 
         return sum(factors) / len(factors)

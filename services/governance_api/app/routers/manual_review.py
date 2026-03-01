@@ -11,7 +11,7 @@ from services.governance_api.app.models.manual_review_models import (
     ManualReviewDecisionResponse,
     ManualReviewQueueResponse,
 )
-from services.governance_api.app.repositories.governance_repository import REPOSITORY
+from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ def _now_iso() -> str:
 def manual_review_queue(pending_only: bool = True, limit: int = 200) -> ManualReviewQueueResponse:
     if limit < 1 or limit > 1000:
         raise HTTPException(status_code=400, detail="limit must be in [1, 1000]")
-    items = REPOSITORY.list_manual_review_items(pending_only=pending_only, limit=limit)
+    items = GOVERNANCE_SERVICE.list_manual_review_items(pending_only=pending_only, limit=limit)
     pending = sum(1 for item in items if not str(item.get("review_status") or ""))
     return ManualReviewQueueResponse(
         as_of=_now_iso(),
@@ -37,7 +37,7 @@ def manual_review_queue(pending_only: bool = True, limit: int = 200) -> ManualRe
 @router.post("/manual-review/decision", response_model=ManualReviewDecisionResponse)
 def submit_manual_review_decision(payload: ManualReviewDecisionRequest) -> ManualReviewDecisionResponse:
     try:
-        outcome = REPOSITORY.submit_manual_review_decision(
+        outcome = GOVERNANCE_SERVICE.submit_manual_review_decision(
             task_id=payload.task_id,
             raw_id=payload.raw_id,
             review_status=payload.review_status,

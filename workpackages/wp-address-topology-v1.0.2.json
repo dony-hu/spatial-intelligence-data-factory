@@ -8,7 +8,7 @@
     "released_at": "2026-02-14T14:50:00",
     "released_by": "factory-workpackage-line",
     "rollback_target_version": "1.0.1",
-    "runtime_record_ref": "sqlite://database/agent_runtime.db#wp-address-topology-v1.0.2"
+    "runtime_record_ref": "pg://runtime.publish_record#wp-address-topology-v1.0.2"
   },
   "line_spec": {
     "line_type": "address_to_topology",
@@ -24,31 +24,69 @@
   },
   "input_contract": {
     "type": "object",
-    "required": ["raw_address"],
+    "required": [
+      "raw_address"
+    ],
     "properties": {
-      "raw_address": {"type": "string", "minLength": 3},
-      "task_id": {"type": "string"}
+      "raw_address": {
+        "type": "string",
+        "minLength": 3
+      },
+      "task_id": {
+        "type": "string"
+      }
     }
   },
   "output_contract": {
     "type": "object",
-    "required": ["standard_address", "topology_nodes", "topology_edges", "quality_score"],
+    "required": [
+      "standard_address",
+      "topology_nodes",
+      "topology_edges",
+      "quality_score"
+    ],
     "properties": {
-      "standard_address": {"type": "string"},
-      "topology_nodes": {"type": "array"},
-      "topology_edges": {"type": "array"},
-      "quality_score": {"type": "number"},
-      "execution_trace_id": {"type": "string"},
-      "failure_queue_snapshot_ref": {"type": "string"},
-      "replay_result_ref": {"type": "string"}
+      "standard_address": {
+        "type": "string"
+      },
+      "topology_nodes": {
+        "type": "array"
+      },
+      "topology_edges": {
+        "type": "array"
+      },
+      "quality_score": {
+        "type": "number"
+      },
+      "execution_trace_id": {
+        "type": "string"
+      },
+      "failure_queue_snapshot_ref": {
+        "type": "string"
+      },
+      "replay_result_ref": {
+        "type": "string"
+      }
     }
   },
   "process_spec": {
     "steps": [
-      {"code": "parse", "name": "地址解析"},
-      {"code": "normalize", "name": "地址标准化"},
-      {"code": "validate", "name": "质量校验"},
-      {"code": "topology_build", "name": "拓扑构建"}
+      {
+        "code": "parse",
+        "name": "地址解析"
+      },
+      {
+        "code": "normalize",
+        "name": "地址标准化"
+      },
+      {
+        "code": "validate",
+        "name": "质量校验"
+      },
+      {
+        "code": "topology_build",
+        "name": "拓扑构建"
+      }
     ]
   },
   "tool_bundle": {
@@ -75,7 +113,11 @@
     ]
   },
   "line_feedback_contract": {
-    "required_fields": ["status", "failure_queue_snapshot_ref", "replay_result_ref"],
+    "required_fields": [
+      "status",
+      "failure_queue_snapshot_ref",
+      "replay_result_ref"
+    ],
     "failure_queue_snapshot_ref": "pg://address_line.failure_queue",
     "replay_result_ref": "pg://address_line.replay_runs"
   },

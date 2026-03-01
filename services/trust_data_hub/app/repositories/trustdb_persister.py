@@ -4,6 +4,8 @@ import json
 import os
 from typing import Any, Optional
 
+from services.trust_data_hub.app.repositories.schema_bootstrap import ensure_trust_pg_schema
+
 
 class TrustDbPersister:
     def __init__(self) -> None:
@@ -12,6 +14,7 @@ class TrustDbPersister:
             or os.getenv("TRUST_TRUSTDB_DSN")
             or os.getenv("TRUST_META_DATABASE_URL")
         )
+        ensure_trust_pg_schema(self._dsn)
 
     def enabled(self) -> bool:
         return bool(self._dsn and str(self._dsn).startswith("postgresql"))
@@ -58,9 +61,11 @@ class TrustDbPersister:
                     text(
                         """
                         INSERT INTO trust_db.admin_division
-                        (namespace_id, adcode, name, level, parent_adcode, name_aliases, valid_from, valid_to, source_id, snapshot_id)
+                        (namespace_id, adcode, name, level, parent_adcode, name_aliases, valid_from, valid_to, source_id, snapshot_id,
+                         division_id, parent_id)
                         VALUES
-                        (:ns, :adcode, :name, :level, :parent_adcode, CAST(:name_aliases AS jsonb), :valid_from, :valid_to, :source_id, :snapshot_id)
+                        (:ns, :adcode, :name, :level, :parent_adcode, CAST(:name_aliases AS jsonb), :valid_from, :valid_to, :source_id, :snapshot_id,
+                         :division_id, :parent_id)
                         """
                     ),
                     {
@@ -74,6 +79,8 @@ class TrustDbPersister:
                         "valid_to": None,
                         "source_id": source_id,
                         "snapshot_id": snapshot_id,
+                        "division_id": row.get("adcode"),
+                        "parent_id": row.get("parent_adcode"),
                     },
                 )
 
@@ -82,9 +89,9 @@ class TrustDbPersister:
                     text(
                         """
                         INSERT INTO trust_db.road_index
-                        (namespace_id, road_id, name, normalized_name, admin_adcode, geometry_ref, source_id, snapshot_id)
+                        (namespace_id, road_id, name, normalized_name, admin_adcode, geometry_ref, source_id, snapshot_id, alias_names, adcode)
                         VALUES
-                        (:ns, :road_id, :name, :normalized_name, :admin_adcode, :geometry_ref, :source_id, :snapshot_id)
+                        (:ns, :road_id, :name, :normalized_name, :admin_adcode, :geometry_ref, :source_id, :snapshot_id, CAST(:alias_names AS jsonb), :adcode)
                         """
                     ),
                     {
@@ -96,17 +103,30 @@ class TrustDbPersister:
                         "geometry_ref": row.get("geometry_ref"),
                         "source_id": source_id,
                         "snapshot_id": snapshot_id,
+                        "alias_names": json.dumps(row.get("alias_names") or [], ensure_ascii=False),
+                        "adcode": row.get("admin_adcode"),
                     },
                 )
 
             for row in poi_rows:
+                centroid = str(row.get("centroid") or "")
+                lon = None
+                lat = None
+                if "," in centroid:
+                    parts = centroid.split(",", 1)
+                    try:
+                        lon = float(parts[0].strip())
+                        lat = float(parts[1].strip())
+                    except Exception:
+                        lon = None
+                        lat = None
                 conn.execute(
                     text(
                         """
                         INSERT INTO trust_db.poi_index
-                        (namespace_id, poi_id, name, normalized_name, category, admin_adcode, centroid, source_id, snapshot_id)
+                        (namespace_id, poi_id, name, normalized_name, category, admin_adcode, centroid, source_id, snapshot_id, adcode, lon, lat)
                         VALUES
-                        (:ns, :poi_id, :name, :normalized_name, :category, :admin_adcode, :centroid, :source_id, :snapshot_id)
+                        (:ns, :poi_id, :name, :normalized_name, :category, :admin_adcode, :centroid, :source_id, :snapshot_id, :adcode, :lon, :lat)
                         """
                     ),
                     {
@@ -119,6 +139,9 @@ class TrustDbPersister:
                         "centroid": row.get("centroid"),
                         "source_id": source_id,
                         "snapshot_id": snapshot_id,
+                        "adcode": row.get("admin_adcode"),
+                        "lon": lon,
+                        "lat": lat,
                     },
                 )
 
@@ -127,9 +150,9 @@ class TrustDbPersister:
                     text(
                         """
                         INSERT INTO trust_db.place_name_index
-                        (namespace_id, place_id, name, normalized_name, type, admin_adcode, centroid, confidence_hint, source_id, snapshot_id)
+                        (namespace_id, place_id, name, normalized_name, type, admin_adcode, centroid, confidence_hint, source_id, snapshot_id, alias_names, category, adcode)
                         VALUES
-                        (:ns, :place_id, :name, :normalized_name, :type, :admin_adcode, :centroid, :confidence_hint, :source_id, :snapshot_id)
+                        (:ns, :place_id, :name, :normalized_name, :type, :admin_adcode, :centroid, :confidence_hint, :source_id, :snapshot_id, CAST(:alias_names AS jsonb), :category, :adcode)
                         """
                     ),
                     {
@@ -143,6 +166,9 @@ class TrustDbPersister:
                         "confidence_hint": row.get("confidence_hint"),
                         "source_id": source_id,
                         "snapshot_id": snapshot_id,
+                        "alias_names": json.dumps(row.get("alias_names") or [], ensure_ascii=False),
+                        "category": row.get("type"),
+                        "adcode": row.get("admin_adcode"),
                     },
                 )
 

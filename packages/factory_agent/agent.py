@@ -4,9 +4,17 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
+from uuid import uuid4
+import hashlib
+import os
 
 from packages.trust_hub import TrustHub
+from packages.factory_agent.dryrun_workflow import WorkpackageDryrunWorkflow
+from packages.factory_agent.llm_gateway import RequirementLLMGateway
+from packages.factory_agent.publish_workflow import WorkpackagePublishWorkflow
+from packages.factory_agent.routing import detect_agent_intent
 
 
 class FactoryAgent:
@@ -15,6 +23,20 @@ class FactoryAgent:
     def __init__(self):
         self._opencode_available = self._check_opencode()
         self._trust_hub = TrustHub()
+        self._llm_gateway = RequirementLLMGateway()
+        self._dryrun_workflow = WorkpackageDryrunWorkflow(
+            bundle_root=Path("workpackages/bundles"),
+            extract_bundle_name=self._extract_bundle_name,
+            execute_entrypoint=self._execute_workpackage_entrypoint,
+        )
+        self._publish_workflow = WorkpackagePublishWorkflow(
+            bundle_root=Path("workpackages/bundles"),
+            output_root=Path("output/workpackages"),
+            extract_bundle_name=self._extract_bundle_name,
+            execute_entrypoint=self._execute_workpackage_entrypoint,
+            persist_publish=self._persist_workpackage_publish_record,
+            log_blocked=self._log_publish_blocked_event,
+        )
         self._state: Dict[str, Any] = {}
 
     def _check_opencode(self):
@@ -28,36 +50,83 @@ class FactoryAgent:
 
     def converse(self, prompt):
         """对话接口 - 支持确定数据源、存储 API Key、生成工作包、workpackage 生命周期管理"""
-        prompt_lower = prompt.lower()
-        
-        if ("存储" in prompt and ("密钥" in prompt or "API" in prompt)) or ("api" in prompt_lower and "key" in prompt_lower):
+        intent = detect_agent_intent(prompt)
+        if intent == "store_api_key":
             return self._handle_store_api_key(prompt)
-        
-        if ("列出" in prompt and "工作包" in prompt) or ("list" in prompt_lower and ("workpackage" in prompt_lower)):
+        if intent == "list_workpackages":
             return self._handle_list_workpackages()
-        
-        if "查询" in prompt or ("query" in prompt_lower and ("workpackage" in prompt_lower)):
+        if intent == "query_workpackage":
             return self._handle_query_workpackage(prompt)
-        
-        if "试运行" in prompt or ("dryrun" in prompt_lower and ("workpackage" in prompt_lower)):
+        if intent == "dryrun_workpackage":
             return self._handle_dryrun_workpackage(prompt)
-
-        if "发布" in prompt or ("publish" in prompt_lower and ("workpackage" in prompt_lower or "runtime" in prompt_lower)):
+        if intent == "publish_workpackage":
             return self._handle_publish_workpackage(prompt)
-        
-        if ("列出" in prompt and "数据源" in prompt) or "list" in prompt_lower:
+        if intent == "list_sources":
             return self._handle_list_sources()
-        
-        if ("生成" in prompt and "工作包" in prompt) or ("generate" in prompt_lower and ("workpackage" in prompt_lower or "work package" in prompt_lower)):
+        if intent == "generate_workpackage":
             return self._handle_generate_workpackage(prompt)
-
         return self._handle_requirement_confirmation(prompt)
 
     def _handle_requirement_confirmation(self, prompt: str) -> Dict[str, Any]:
         """调用 LLM 确认治理需求；失败时阻塞并等待人工确认。"""
+        workpackage_id = str(self._extract_bundle_name(prompt) or f"wp_req_{uuid4().hex[:8]}")
+        trace_id = f"trace_req_{uuid4().hex[:12]}"
+        llm_meta = self._resolve_llm_meta()
+        self._record_observation_event(
+            source_service="llm",
+            event_type="llm_request",
+            status="success",
+            trace_id=trace_id,
+            workpackage_id=workpackage_id,
+            payload={
+                "pipeline_stage": "llm_confirmed",
+                "client_type": "user",
+                "version": "",
+                "model": llm_meta["model"],
+                "base_url": llm_meta["base_url"],
+                "prompt": str(prompt or ""),
+            },
+        )
         try:
             result = self._run_requirement_query(prompt)
             summary = self._extract_requirement_summary(str(result.get("answer") or ""))
+            answer = str(result.get("answer") or "")
+            usage = result.get("token_usage") if isinstance(result.get("token_usage"), dict) else {}
+            self._record_observation_event(
+                source_service="llm",
+                event_type="llm_response",
+                status="success",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "llm_confirmed",
+                    "client_type": "user",
+                    "version": "",
+                    "model": llm_meta["model"],
+                    "base_url": llm_meta["base_url"],
+                    "latency_ms": float(result.get("latency_ms") or 0.0),
+                    "token_usage": {
+                        "prompt": int(usage.get("prompt") or 0),
+                        "completion": int(usage.get("completion") or 0),
+                        "total": int(usage.get("total") or 0),
+                    },
+                    "prompt": str(prompt or ""),
+                    "response": answer,
+                },
+            )
+            self._record_observation_event(
+                source_service="factory_agent",
+                event_type="requirements_confirmed",
+                status="success",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "llm_confirmed",
+                    "client_type": "user",
+                    "version": "",
+                    "summary": summary,
+                },
+            )
             return {
                 "status": "ok",
                 "action": "confirm_requirement",
@@ -66,6 +135,23 @@ class FactoryAgent:
                 "message": "已完成治理需求确认，可进入 dry run 与工作包发布阶段",
             }
         except Exception as exc:
+            self._record_observation_event(
+                source_service="llm",
+                event_type="llm_response",
+                status="error",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "llm_confirmed",
+                    "client_type": "user",
+                    "version": "",
+                    "model": llm_meta["model"],
+                    "base_url": llm_meta["base_url"],
+                    "failure_reason": str(exc),
+                    "prompt": str(prompt or ""),
+                    "response": "",
+                },
+            )
             return {
                 "status": "blocked",
                 "action": "confirm_requirement",
@@ -77,15 +163,7 @@ class FactoryAgent:
             }
 
     def _run_requirement_query(self, prompt: str) -> Dict[str, Any]:
-        from tools.agent_cli import load_config, run_requirement_query
-
-        config = load_config()
-        system_prompt = (
-            "你是地址治理工厂Agent。"
-            "请仅输出JSON对象，字段必须包含："
-            "target(string), data_sources(array), rule_points(array), outputs(array)。"
-        )
-        return run_requirement_query(prompt, config, system_prompt_override=system_prompt)
+        return self._llm_gateway.query(prompt)
 
     def _extract_requirement_summary(self, answer: str) -> Dict[str, Any]:
         obj = self._extract_json_object(answer)
@@ -218,89 +296,56 @@ class FactoryAgent:
 
     def _handle_dryrun_workpackage(self, prompt):
         """处理 dryrun 工作包的对话"""
-        bundles_dir = Path("workpackages/bundles")
-        bundle_name = self._extract_bundle_name(prompt)
-        
-        if not bundle_name:
-            return {
-                "status": "error",
-                "message": "请提供工作包名称，例如：'试运行 poi-trust-verification-v1.0.0'"
-            }
-        
-        bundle_dir = bundles_dir / bundle_name
-        if not bundle_dir.exists():
-            return {
-                "status": "blocked",
-                "action": "dryrun_workpackage",
-                "reason": "workpackage_not_found",
-                "requires_user_confirmation": True,
-                "message": f"工作包 {bundle_name} 不存在，dry run 已阻塞，请人工确认方案",
-            }
+        return self._dryrun_workflow.run(prompt)
 
-        config_path = bundle_dir / "workpackage.json"
-        if not config_path.exists():
-            return {
-                "status": "blocked",
-                "action": "dryrun_workpackage",
-                "reason": "workpackage_config_missing",
-                "requires_user_confirmation": True,
-                "bundle_name": bundle_name,
-                "bundle_path": str(bundle_dir),
-                "message": f"工作包 {bundle_name} 缺少 workpackage.json，dry run 已阻塞，请人工确认方案",
-            }
+    def _execute_workpackage_entrypoint(self, *, bundle_dir: Path, bundle_name: str, report_name: str) -> Dict[str, Any]:
+        observability_dir = bundle_dir / "observability"
+        observability_dir.mkdir(parents=True, exist_ok=True)
+        report_path = observability_dir / report_name
+        metrics_path = observability_dir / "line_metrics.json"
+        if not metrics_path.exists():
+            metrics_path.write_text(
+                json.dumps(
+                    {
+                        "bundle_name": bundle_name,
+                        "status": "initialized",
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
 
-        try:
-            wp_config = json.loads(config_path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            return {
-                "status": "blocked",
-                "action": "dryrun_workpackage",
-                "reason": "workpackage_config_invalid",
-                "requires_user_confirmation": True,
-                "bundle_name": bundle_name,
-                "bundle_path": str(bundle_dir),
-                "error": str(exc),
-                "message": f"工作包 {bundle_name} 配置解析失败，dry run 已阻塞，请人工确认方案",
-            }
+        cmd: list[str]
+        if (bundle_dir / "entrypoint.sh").exists():
+            cmd = ["bash", "entrypoint.sh"]
+        else:
+            cmd = ["python3", "entrypoint.py"]
 
-        if not (bundle_dir / "entrypoint.sh").exists() and not (bundle_dir / "entrypoint.py").exists():
-            return {
-                "status": "blocked",
-                "action": "dryrun_workpackage",
-                "reason": "entrypoint_missing",
-                "requires_user_confirmation": True,
-                "bundle_name": bundle_name,
-                "bundle_path": str(bundle_dir),
-                "message": f"工作包 {bundle_name} 缺少执行入口，dry run 已阻塞，请人工确认方案",
-            }
-
-        sources = wp_config.get("sources", []) if isinstance(wp_config, dict) else []
-        output_items = []
-        if isinstance(sources, list):
-            output_items.extend([str(item) for item in sources])
-
-        return {
-            "status": "ok",
-            "action": "dryrun_workpackage",
+        proc = subprocess.run(
+            cmd,
+            cwd=str(bundle_dir),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        report_payload = {
             "bundle_name": bundle_name,
-            "bundle_path": str(bundle_dir),
-            "dryrun": {
-                "status": "success",
-                "input_summary": {
-                    "bundle_name": bundle_name,
-                    "records_count": 0,
-                },
-                "output_summary": {
-                    "sources_checked": output_items,
-                    "result_count": len(output_items),
-                },
-                "failure_reason": "",
-                "artifacts": {
-                    "observability": str(bundle_dir / "observability" / "line_metrics.json"),
-                    "report": str(bundle_dir / "observability" / "dryrun_report.json"),
-                },
-            },
-            "message": f"工作包 {bundle_name} dry run 成功，可进入发布阶段",
+            "command": cmd,
+            "return_code": int(proc.returncode),
+            "stdout": str(proc.stdout or ""),
+            "stderr": str(proc.stderr or ""),
+            "executed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        report_path.write_text(json.dumps(report_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return {
+            "success": int(proc.returncode) == 0,
+            "return_code": int(proc.returncode),
+            "report_path": str(report_path),
+            "metrics_path": str(metrics_path),
+            "stdout": str(proc.stdout or ""),
+            "stderr": str(proc.stderr or ""),
         }
 
     def _extract_bundle_name(self, prompt: str) -> Optional[str]:
@@ -315,92 +360,180 @@ class FactoryAgent:
         return None
 
     def _handle_publish_workpackage(self, prompt: str) -> Dict[str, Any]:
-        bundles_dir = Path("workpackages/bundles")
-        bundle_name = self._extract_bundle_name(prompt)
-        if not bundle_name:
-            return self._build_publish_blocked(
-                bundle_name="",
-                reason="bundle_name_missing",
-                message="未识别到工作包名称，发布已阻塞，请人工确认方案",
-            )
-
-        bundle_dir = bundles_dir / bundle_name
-        if not bundle_dir.exists():
-            return self._build_publish_blocked(
-                bundle_name=bundle_name,
-                reason="workpackage_not_found",
-                message=f"工作包 {bundle_name} 不存在，发布已阻塞，请人工确认方案",
-            )
-
-        config_path = bundle_dir / "workpackage.json"
-        if not config_path.exists():
-            return self._build_publish_blocked(
-                bundle_name=bundle_name,
-                reason="workpackage_config_missing",
-                message=f"工作包 {bundle_name} 缺少 workpackage.json，发布已阻塞，请人工确认方案",
-            )
-        try:
-            config = json.loads(config_path.read_text(encoding="utf-8"))
-        except Exception as exc:
-            return self._build_publish_blocked(
-                bundle_name=bundle_name,
-                reason="workpackage_config_invalid",
-                message=f"工作包 {bundle_name} 配置不可解析，发布已阻塞，请人工确认方案",
-                error=str(exc),
-            )
-
-        required_dirs = ["skills", "observability"]
-        for name in required_dirs:
-            if not (bundle_dir / name).exists():
-                return self._build_publish_blocked(
-                    bundle_name=bundle_name,
-                    reason=f"{name}_missing",
-                    message=f"工作包 {bundle_name} 缺少 {name} 目录，发布已阻塞，请人工确认方案",
-                )
-        if not (bundle_dir / "entrypoint.sh").exists() and not (bundle_dir / "entrypoint.py").exists():
-            return self._build_publish_blocked(
-                bundle_name=bundle_name,
-                reason="entrypoint_missing",
-                message=f"工作包 {bundle_name} 缺少入口脚本，发布已阻塞，请人工确认方案",
-            )
-
-        out_dir = Path("output/workpackages")
-        out_dir.mkdir(parents=True, exist_ok=True)
-        version = str(config.get("version") or "")
-        evidence_path = out_dir / f"{bundle_name}.publish.json"
-        evidence = {
-            "workpackage_id": bundle_name,
-            "version": version,
-            "published_at": datetime.utcnow().isoformat() + "Z",
-            "status": "published",
-            "bundle_path": str(bundle_dir),
-        }
-        evidence_path.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
-        try:
-            self._persist_workpackage_publish_record(
-                workpackage_id=bundle_name,
-                version=version,
-                status="published",
-                evidence_ref=str(evidence_path),
-                bundle_path=str(bundle_dir),
-            )
-        except Exception as exc:
-            return self._build_publish_blocked(
-                bundle_name=bundle_name,
-                reason="publish_record_persist_failed",
-                message=f"工作包 {bundle_name} 发布记录持久化失败，发布已阻塞，请人工确认方案",
-                error=str(exc),
-            )
-        return {
-            "status": "ok",
-            "action": "publish_workpackage",
-            "bundle_name": bundle_name,
-            "runtime": {
-                "status": "published",
+        bundle_name = str(self._extract_bundle_name(prompt) or "")
+        workpackage_id = bundle_name or f"wp_publish_{uuid4().hex[:8]}"
+        trace_id = f"trace_publish_{uuid4().hex[:12]}"
+        metadata = self._collect_workpackage_metadata(bundle_name)
+        version = str(metadata.get("version") or "")
+        self._record_observation_event(
+            source_service="factory_agent",
+            event_type="workpackage_packaged",
+            status="success",
+            trace_id=trace_id,
+            workpackage_id=workpackage_id,
+            payload={
+                "pipeline_stage": "packaged",
+                "client_type": "user",
                 "version": version,
-                "evidence_ref": str(evidence_path),
+                "checksum": metadata.get("checksum", ""),
+                "skills_count": int(metadata.get("skills_count", 0)),
+                "artifact_count": int(metadata.get("artifact_count", 0)),
+                "submit_status": "prepared",
             },
-            "message": f"工作包 {bundle_name} 已发布到 Runtime",
+        )
+        self._record_observation_event(
+            source_service="governance_runtime",
+            event_type="runtime_submit_requested",
+            status="success",
+            trace_id=trace_id,
+            workpackage_id=workpackage_id,
+            payload={
+                "pipeline_stage": "submitted",
+                "client_type": "user",
+                "version": version,
+                "checksum": metadata.get("checksum", ""),
+                "skills_count": int(metadata.get("skills_count", 0)),
+                "artifact_count": int(metadata.get("artifact_count", 0)),
+                "submit_status": "submitted",
+            },
+        )
+
+        result = self._publish_workflow.run(prompt)
+        runtime = result.get("runtime") if isinstance(result.get("runtime"), dict) else {}
+        runtime_receipt_id = str(runtime.get("receipt_id") or f"receipt_{uuid4().hex[:10]}")
+        if str(result.get("status") or "").lower() == "ok":
+            self._record_observation_event(
+                source_service="governance_runtime",
+                event_type="runtime_submit_accepted",
+                status="success",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "accepted",
+                    "client_type": "user",
+                    "version": version,
+                    "runtime_receipt_id": runtime_receipt_id,
+                    "checksum": metadata.get("checksum", ""),
+                    "skills_count": int(metadata.get("skills_count", 0)),
+                    "artifact_count": int(metadata.get("artifact_count", 0)),
+                    "submit_status": "accepted",
+                },
+            )
+            self._record_observation_event(
+                source_service="governance_runtime",
+                event_type="runtime_task_running",
+                status="success",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "running",
+                    "client_type": "user",
+                    "version": version,
+                    "runtime_receipt_id": runtime_receipt_id,
+                    "submit_status": "running",
+                },
+            )
+            self._record_observation_event(
+                source_service="governance_runtime",
+                event_type="runtime_task_finished",
+                status="success",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "finished",
+                    "client_type": "user",
+                    "version": version,
+                    "runtime_receipt_id": runtime_receipt_id,
+                    "submit_status": "published",
+                },
+            )
+        else:
+            self._record_observation_event(
+                source_service="governance_runtime",
+                event_type="runtime_submit_failed",
+                status="error",
+                trace_id=trace_id,
+                workpackage_id=workpackage_id,
+                payload={
+                    "pipeline_stage": "submitted",
+                    "client_type": "user",
+                    "version": version,
+                    "runtime_receipt_id": runtime_receipt_id,
+                    "submit_status": "blocked",
+                    "failure_reason": str(result.get("reason") or result.get("message") or "publish_blocked"),
+                },
+            )
+        return result
+
+    def _resolve_llm_meta(self) -> Dict[str, str]:
+        config_path = Path("config/llm_api.json")
+        model = str(os.getenv("LLM_MODEL") or "")
+        base_url = str(os.getenv("LLM_BASE_URL") or "")
+        if config_path.exists():
+            try:
+                config = json.loads(config_path.read_text(encoding="utf-8"))
+                if isinstance(config, dict):
+                    model = str(config.get("model") or model)
+                    base_url = str(config.get("base_url") or base_url)
+            except Exception:
+                pass
+        return {"model": model, "base_url": base_url}
+
+    def _record_observation_event(
+        self,
+        *,
+        source_service: str,
+        event_type: str,
+        status: str,
+        trace_id: str,
+        workpackage_id: str = "",
+        payload: Dict[str, Any] | None = None,
+    ) -> None:
+        try:
+            from services.governance_api.app.repositories.governance_repository import REPOSITORY
+
+            REPOSITORY.record_observation_event(
+                source_service=source_service,
+                event_type=event_type,
+                status=status,
+                trace_id=trace_id,
+                workpackage_id=str(workpackage_id or ""),
+                payload=payload or {},
+            )
+        except Exception:
+            return
+
+    def _collect_workpackage_metadata(self, bundle_name: str) -> Dict[str, Any]:
+        if not bundle_name:
+            return {"version": "", "checksum": "", "skills_count": 0, "artifact_count": 0}
+        bundle_dir = Path("workpackages/bundles") / bundle_name
+        config_path = bundle_dir / "workpackage.json"
+        version = ""
+        if config_path.exists():
+            try:
+                config = json.loads(config_path.read_text(encoding="utf-8"))
+                if isinstance(config, dict):
+                    version = str(config.get("version") or "")
+            except Exception:
+                version = ""
+        digest = hashlib.sha256()
+        artifact_count = 0
+        if bundle_dir.exists():
+            files = sorted(path for path in bundle_dir.rglob("*") if path.is_file())
+            artifact_count = len(files)
+            for item in files:
+                try:
+                    digest.update(str(item.relative_to(bundle_dir)).encode("utf-8"))
+                    digest.update(item.read_bytes())
+                except Exception:
+                    continue
+        checksum = digest.hexdigest() if artifact_count else ""
+        skills_count = len(list((bundle_dir / "skills").glob("*.md"))) if (bundle_dir / "skills").exists() else 0
+        return {
+            "version": version,
+            "checksum": checksum,
+            "skills_count": skills_count,
+            "artifact_count": artifact_count,
         }
 
     def _persist_workpackage_publish_record(
@@ -423,6 +556,15 @@ class FactoryAgent:
             published_by="factory_agent",
         )
 
+    def _log_publish_blocked_event(self, payload: Dict[str, Any]) -> None:
+        from services.governance_api.app.repositories.governance_repository import REPOSITORY
+
+        REPOSITORY.log_blocked_confirmation(
+            event_type="workpackage_publish_blocked",
+            caller="factory_agent",
+            payload=payload,
+        )
+
     def _build_publish_blocked(
         self,
         *,
@@ -439,13 +581,7 @@ class FactoryAgent:
             "confirmation_timestamp": datetime.now(timezone.utc).isoformat(),
         }
         try:
-            from services.governance_api.app.repositories.governance_repository import REPOSITORY
-
-            REPOSITORY.log_blocked_confirmation(
-                event_type="workpackage_publish_blocked",
-                caller="factory_agent",
-                payload=payload,
-            )
+            self._log_publish_blocked_event(payload)
         except Exception:
             pass
         result = {

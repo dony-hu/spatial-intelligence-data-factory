@@ -21,3 +21,24 @@
 
 1. 正常地址输入输出结构化治理结果。
 2. 空地址输入返回失败并记录原因。
+
+## 对齐信息（PRD/架构）
+
+1. PRD 对齐：EPIC A（治理主链路）+ EPIC C（可观测交付）。
+2. 架构对齐：
+- `docs/architecture/system_overview.md` 治理试运行流/发布执行流。
+- `docs/architecture/module_boundaries.md` Core 与 Trust 查询边界。
+
+## 模块边界与 API 边界
+
+1. 所属模块：`address_core`、`runtime worker`、`governance repository`、`observability`。
+2. 上游入口：Runtime 任务执行触发。
+3. 下游依赖：治理核心流程、结果持久化、审计/观测输出。
+4. API 边界：对外仅暴露结果契约，不透出内部流水线步骤实现细节。
+
+## 依赖与禁止耦合
+
+1. 允许依赖：`runtime worker -> address_core -> repository/trust query interface`。
+2. 禁止耦合：
+- `address_core` 直接依赖 FastAPI request/response。
+- 失败链路使用默认结果对象伪装成功。

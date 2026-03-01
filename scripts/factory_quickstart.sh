@@ -4,7 +4,7 @@
 # Automated setup and execution of the factory demonstration system
 
 if [ "${ALLOW_DEMO_SCRIPTS:-0}" != "1" ]; then
-    echo "[blocked] scripts/factory_quickstart.sh 已默认禁用（mock/demo流程）"
+    echo "[blocked] scripts/factory_quickstart.sh 已默认禁用（演示流程）"
     echo "如需强制运行请设置: ALLOW_DEMO_SCRIPTS=1"
     echo "建议使用最小真实链路: PYTHONPATH=\"\$PWD\" /Users/huda/Code/.venv/bin/python scripts/run_governance_e2e_minimal.py"
     exit 2
@@ -49,13 +49,7 @@ fi
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 print_step "Python 版本: $PYTHON_VERSION"
 
-# Check SQLite
-if ! command -v sqlite3 &> /dev/null; then
-    print_error "SQLite 未找到"
-    exit 1
-fi
-
-print_step "SQLite 已安装"
+print_step "数据库客户端检查已跳过（PG-only 模式）"
 
 # Create output directory
 print_step "创建输出目录"
@@ -103,8 +97,8 @@ print_step "下一步:"
 print_info "  1. 打开看板在浏览器中查看:"
 print_info "     open output/factory_dashboard.html"
 print_info ""
-print_info "  2. 查询数据库统计信息:"
-print_info "     sqlite3 database/factory.db \"SELECT * FROM factory_metrics ORDER BY timestamp DESC LIMIT 1;\""
+print_info "  2. 查询数据库统计信息（PG 示例）:"
+print_info "     psql \"\$DATABASE_URL\" -c \"SELECT now();\""
 print_info ""
 print_info "  3. 导出工厂状态为JSON:"
 print_info "     python3 -c \"from tools.factory_workflow import FactoryWorkflow; wf = FactoryWorkflow(); print(wf.export_state_to_json())\" > output/factory_state.json"

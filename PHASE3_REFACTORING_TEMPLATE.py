@@ -330,7 +330,7 @@ SAFETY CHECKS:
   ☐ Performance is not degraded
 
 ROLLBACK PLAN:
-  ☐ Keep old _execute_process_expert_intent_OLD as fallback
+  ☐ Keep old _execute_process_expert_intent_OLD as backup path
   ☐ Have git branch ready to revert if needed
   ☐ Monitor logs for new errors during rollout
   ☐ Have database snapshots before migration
