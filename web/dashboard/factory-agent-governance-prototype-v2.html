@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Factory Agent 协同治理控制台（交互过程版）</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      :root {
+        --brand: #0f766e;
+        --brand-deep: #115e59;
+        --surface: #f4f8f7;
+      }
+      body {
+        background:
+          radial-gradient(1000px 520px at 100% -15%, rgba(15, 118, 110, 0.18), transparent 60%),
+          radial-gradient(760px 360px at -10% -10%, rgba(217, 119, 6, 0.14), transparent 58%),
+          var(--surface);
+      }
+      .app-navbar { background: linear-gradient(120deg, var(--brand-deep), var(--brand)); }
+      .kpi-card, .panel-card { border: 0; border-radius: 1rem; box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08); }
+      .kpi-value { font-size: 1.8rem; font-weight: 700; }
+      .chat-shell {
+        border: 1px solid #d9e4e1;
+        border-radius: 0.9rem;
+        background: #fbfdfd;
+        min-height: 280px;
+        max-height: 420px;
+        overflow: auto;
+        padding: 12px;
+      }
+      .chat-row { display: flex; margin-bottom: 10px; }
+      .chat-row.user { justify-content: flex-end; }
+      .chat-bubble {
+        max-width: 86%;
+        border-radius: 14px;
+        padding: 10px 12px;
+        border: 1px solid #d6e5df;
+      }
+      .chat-row.user .chat-bubble { background: #eaf4ff; border-color: #ccdef5; }
+      .chat-row.agent .chat-bubble { background: #eaf8f2; border-color: #c7e7da; }
+      .chat-meta { font-size: 12px; color: #5e6c67; margin-bottom: 4px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .table-fit td, .table-fit th { white-space: nowrap; }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      @media (max-width: 992px) { .summary-grid { grid-template-columns: 1fr; } }
+      .summary-card {
+        border: 1px solid #d9e4e0;
+        border-radius: .75rem;
+        background: #fcfefd;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg app-navbar navbar-dark sticky-top">
+      <div class="container-fluid px-3">
+        <a class="navbar-brand fw-semibold" href="#">Factory Agent 协同治理控制台</a>
+        <span class="badge text-bg-light">OBS-RUNTIME-S2-15</span>
+        <div class="ms-auto d-flex gap-2 align-items-center">
+          <select id="windowFilter" class="form-select form-select-sm" style="width: 100px">
+            <option value="1h">1h</option>
+            <option value="24h" selected>24h</option>
+            <option value="7d">7d</option>
+            <option value="30d">30d</option>
+          </select>
+          <button class="btn btn-light btn-sm" id="refreshAll" type="button">刷新</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container-fluid py-3 px-3">
+      <section class="row g-3 mb-3">
+        <div class="col-6 col-lg-3"><div class="card kpi-card"><div class="card-body"><div class="text-secondary small">Agent 对话轮次</div><div id="kpiTurns" class="kpi-value">0</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="card kpi-card"><div class="card-body"><div class="text-secondary small">LLM 往返成功率</div><div id="kpiLlm" class="kpi-value">0%</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="card kpi-card"><div class="card-body"><div class="text-secondary small">工作包当前状态</div><div id="kpiWp" class="kpi-value">created</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="card kpi-card"><div class="card-body"><div class="text-secondary small">治理输出成功率</div><div id="kpiSuccess" class="kpi-value">0%</div></div></div></div>
+      </section>
+
+      <section class="row g-3">
+        <div class="col-xl-7">
+          <div class="card panel-card mb-3" data-testid="agent-chat-panel">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">1) 我与工厂 Agent 交互</h5>
+              <p class="text-secondary small mb-0">人工替代测试程序，与工厂 Agent 对话触发工作包生成与更新。</p>
+            </div>
+            <div class="card-body">
+              <div id="chatLog" class="chat-shell mb-3" data-testid="agent-chat-log"></div>
+              <div class="input-group">
+                <input id="chatInput" data-testid="agent-chat-input" class="form-control" placeholder="例如：列出工作包" />
+                <button id="chatSend" data-testid="agent-chat-send" class="btn btn-success" type="button">发送</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel-card mb-3">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">2) Agent 与 LLM 交互轨迹（自动记录）</h5>
+            </div>
+            <div class="card-body">
+              <div class="accordion" id="llmAccordion"></div>
+            </div>
+          </div>
+
+          <div class="card panel-card">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">4) 数据治理输入到输出</h5>
+              <p class="text-secondary small mb-0">按工作包执行上传批次，查看试运行报告与图谱结果。</p>
+            </div>
+            <div class="card-body">
+              <div class="row g-2 align-items-end mb-2">
+                <div class="col-md-4">
+                  <label for="wpSelector" class="form-label small text-secondary mb-1">工作包</label>
+                  <input id="wpSelector" data-testid="wp-selector" list="wpOptions" class="form-control form-control-sm" placeholder="workpackage_id@version" />
+                  <datalist id="wpOptions"></datalist>
+                </div>
+                <div class="col-md-4">
+                  <label for="sourceFile" class="form-label small text-secondary mb-1">源文件</label>
+                  <input id="sourceFile" type="file" class="form-control form-control-sm" accept=".csv,.txt,.json,.jsonl" />
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small text-secondary mb-1">Runtime 回执</label>
+                  <div class="badge text-bg-light border mono d-block text-start" data-testid="runtime-receipt-id" id="runtimeReceipt">-</div>
+                </div>
+                <div class="col-md-2 text-md-end">
+                  <button id="runPipeline" data-testid="upload-exec-button" class="btn btn-success btn-sm w-100" type="button">执行治理</button>
+                </div>
+              </div>
+
+              <label class="form-label small text-secondary">输入地址（可手填或由源文件加载）</label>
+              <textarea id="csvInput" data-testid="csv-upload-input" class="form-control mb-2" rows="4" placeholder="每行一条地址"></textarea>
+              <p id="uploadStatus" class="small text-secondary mb-2">等待执行</p>
+
+              <div class="d-flex gap-2 mb-2">
+                <button id="dryrunReportOpen" data-testid="dryrun-report-open" class="btn btn-outline-secondary btn-sm" type="button" disabled>查看试运行报告</button>
+                <button id="eventViewModeToggle" data-testid="event-view-mode-toggle" class="btn btn-outline-secondary btn-sm" type="button">切换事件视图（中文/JSON）</button>
+                <a id="outputDownloadLink" data-testid="runtime-output-download-link" class="btn btn-outline-success btn-sm d-none" href="#" target="_blank" rel="noopener">下载预处理结果CSV</a>
+              </div>
+
+              <div class="table-responsive mb-2">
+                <table class="table table-sm table-hover table-fit" data-testid="dryrun-records-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>raw_id</th>
+                      <th>normalization</th>
+                      <th>entity_parsing</th>
+                      <th>address_validation</th>
+                      <th>record_decision</th>
+                    </tr>
+                  </thead>
+                  <tbody id="resultBody"><tr><td colspan="5" class="text-secondary">暂无试运行报告</td></tr></tbody>
+                </table>
+              </div>
+
+              <div class="p-3 rounded border bg-light" data-testid="dryrun-graph-card" id="graphSummary">暂无图谱</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-5">
+          <div class="card panel-card mb-3">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">3) 工作包制定过程与结果</h5>
+              <p class="text-secondary small mb-0">人工门禁动作 + 阶段状态 + 自动维护日志。</p>
+            </div>
+            <div class="card-body">
+              <pre id="wpTimeline" class="mb-3" data-testid="confirm-timeline-panel">等待执行，暂无确认动作</pre>
+
+              <div class="small text-secondary mb-2">工作包维护记录（Factory Agent 通过 LLM 自动维护）</div>
+              <div id="wpMaintLogs" class="list-group list-group-flush mb-3"></div>
+
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button id="actGenerate" class="btn btn-outline-success btn-sm" type="button">confirm_generate</button>
+                <button id="actDryrun" class="btn btn-outline-warning btn-sm" type="button">confirm_dryrun_result</button>
+                <button id="actPublish" class="btn btn-outline-primary btn-sm" type="button">confirm_publish</button>
+              </div>
+              <div id="wpAlert"></div>
+              <hr>
+              <pre class="mono small" id="artifactDetail">-</pre>
+            </div>
+          </div>
+
+          <div class="card panel-card mb-3" data-testid="workpackage-blueprint-panel">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">工作包结构与内容可视化</h5>
+              <p class="text-secondary small mb-0">展示工作包配置、已注册 API 清单与可执行结构。</p>
+            </div>
+            <div class="card-body">
+              <div class="small mb-2" id="wpBlueprintMeta" data-testid="workpackage-blueprint-meta">请选择工作包</div>
+              <div class="small mb-2" id="wpBlueprintSources" data-testid="workpackage-blueprint-sources">数据源：-</div>
+              <div class="table-responsive mb-2">
+                <table class="table table-sm table-fit" data-testid="workpackage-blueprint-apis">
+                  <thead class="table-light">
+                    <tr>
+                      <th>API</th>
+                      <th>Method</th>
+                      <th>Provider</th>
+                      <th>Group</th>
+                    </tr>
+                  </thead>
+                  <tbody id="wpBlueprintApis"><tr><td colspan="4" class="text-secondary">暂无 API 清单</td></tr></tbody>
+                </table>
+              </div>
+              <pre class="mono small mb-0" id="wpBlueprintConfig" data-testid="workpackage-blueprint-config">{}</pre>
+            </div>
+          </div>
+
+          <div class="card panel-card mb-3">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">工作包链路观测</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <button id="seedWpBtn" class="btn btn-outline-dark btn-sm" type="button">灌入链路样例</button>
+                <span id="wpSeedStatus" class="small text-secondary">可点击灌入链路样例</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm" data-testid="events-table">
+                  <thead>
+                    <tr>
+                      <th>Workpackage</th>
+                      <th>Stage</th>
+                      <th>Submit</th>
+                      <th>Receipt</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody id="workpackageRows"><tr><td colspan="5" class="text-secondary">暂无链路数据</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const state = {
+        sessionId: "runtime_agent_ui_" + Math.random().toString(16).slice(2, 10),
+        rounds: [],
+        maintLogs: [],
+        eventViewMode: "zh",
+        confirmations: new Set(),
+        lastDryrunReport: null,
+        chatSending: false,
+        lastChatSubmit: { text: "", at: 0 },
+      };
+
+      const el = {
+        windowFilter: document.getElementById("windowFilter"),
+        refreshAll: document.getElementById("refreshAll"),
+        kpiTurns: document.getElementById("kpiTurns"),
+        kpiLlm: document.getElementById("kpiLlm"),
+        kpiWp: document.getElementById("kpiWp"),
+        kpiSuccess: document.getElementById("kpiSuccess"),
+        chatLog: document.getElementById("chatLog"),
+        chatInput: document.getElementById("chatInput"),
+        chatSend: document.getElementById("chatSend"),
+        llmAccordion: document.getElementById("llmAccordion"),
+        wpTimeline: document.getElementById("wpTimeline"),
+        wpAlert: document.getElementById("wpAlert"),
+        actGenerate: document.getElementById("actGenerate"),
+        actDryrun: document.getElementById("actDryrun"),
+        actPublish: document.getElementById("actPublish"),
+        sourceFile: document.getElementById("sourceFile"),
+        wpSelector: document.getElementById("wpSelector"),
+        wpOptions: document.getElementById("wpOptions"),
+        csvInput: document.getElementById("csvInput"),
+        runPipeline: document.getElementById("runPipeline"),
+        uploadStatus: document.getElementById("uploadStatus"),
+        runtimeReceipt: document.getElementById("runtimeReceipt"),
+        dryrunReportOpen: document.getElementById("dryrunReportOpen"),
+        outputDownloadLink: document.getElementById("outputDownloadLink"),
+        eventViewModeToggle: document.getElementById("eventViewModeToggle"),
+        resultBody: document.getElementById("resultBody"),
+        graphSummary: document.getElementById("graphSummary"),
+        wpMaintLogs: document.getElementById("wpMaintLogs"),
+        artifactDetail: document.getElementById("artifactDetail"),
+        wpBlueprintMeta: document.getElementById("wpBlueprintMeta"),
+        wpBlueprintSources: document.getElementById("wpBlueprintSources"),
+        wpBlueprintApis: document.getElementById("wpBlueprintApis"),
+        wpBlueprintConfig: document.getElementById("wpBlueprintConfig"),
+        seedWpBtn: document.getElementById("seedWpBtn"),
+        wpSeedStatus: document.getElementById("wpSeedStatus"),
+        workpackageRows: document.getElementById("workpackageRows"),
+      };
+
+      el.windowFilter.value = "__DEFAULT_WINDOW__";
+
+      function qs(params) {
+        const sp = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== "" && v !== null && v !== undefined) sp.set(k, String(v));
+        });
+        return sp.toString();
+      }
+
+      function safeJson(v) {
+        try {
+          return JSON.stringify(v, null, 2);
+        } catch (_err) {
+          return String(v || "");
+        }
+      }
+
+      function esc(v) {
+        return String(v || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll("\"", "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function parseCsvRow(line) {
+        const out = [];
+        let current = "";
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              current += '"';
+              i += 1;
+            } else {
+              inQuotes = !inQuotes;
+            }
+            continue;
+          }
+          if (ch === "," && !inQuotes) {
+            out.push(current);
+            current = "";
+            continue;
+          }
+          current += ch;
+        }
+        out.push(current);
+        return out.map((x) => x.trim());
+      }
+
+      function parseAddressInput(text) {
+        const raw = String(text || "").trim();
+        if (!raw) return [];
+        const first = raw.slice(0, 1);
+        if (first === "[" || first === "{") {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              return parsed.map((x) => (typeof x === "string" ? x.trim() : String(x?.raw_text || x?.address || "").trim())).filter(Boolean);
+            }
+            if (parsed && Array.isArray(parsed.addresses)) {
+              return parsed.addresses.map((x) => (typeof x === "string" ? x.trim() : String(x?.raw_text || x?.address || "").trim())).filter(Boolean);
+            }
+          } catch (_err) {}
+        }
+        const lines = raw.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        if (!lines.length) return [];
+        if (lines[0].includes(",")) {
+          const headers = parseCsvRow(lines[0]).map((h) => h.toLowerCase());
+          const idx = headers.findIndex((h) => ["raw_text", "address", "addr", "text"].includes(h));
+          if (idx >= 0) {
+            return lines.slice(1).map((line) => String(parseCsvRow(line)[idx] || "").trim()).filter(Boolean);
+          }
+        }
+        return lines;
+      }
+
+      function addChat(role, text) {
+        const row = document.createElement("div");
+        row.className = "chat-row " + role;
+        const rawText = String(text || "");
+        const contentHtml = role === "agent" ? formatAssistantText(rawText) : esc(rawText).replaceAll("\n", "<br>");
+        row.innerHTML = `<div class="chat-bubble"><div class="chat-meta">${role === "user" ? "你" : "Factory Agent"} · ${new Date().toLocaleTimeString()}</div>${contentHtml}</div>`;
+        el.chatLog.appendChild(row);
+        el.chatLog.scrollTop = el.chatLog.scrollHeight;
+      }
+
+      function _formatInlineMarkdown(escapedText) {
+        return String(escapedText || "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      }
+
+      function formatAssistantText(text) {
+        let normalized = String(text || "").replace(/\r\n/g, "\n");
+        normalized = normalized.replace(/\\n/g, "\n");
+        normalized = normalized.replace(/\s+---\s+/g, "\n---\n");
+        normalized = normalized.replace(/\s+###\s+/g, "\n### ");
+        const lines = normalized.split("\n");
+        const out = [];
+        let inOl = false;
+        let inUl = false;
+        const closeLists = () => {
+          if (inOl) {
+            out.push("</ol>");
+            inOl = false;
+          }
+          if (inUl) {
+            out.push("</ul>");
+            inUl = false;
+          }
+        };
+
+        for (const rawLine of lines) {
+          const escapedLine = esc(rawLine);
+          const line = String(escapedLine || "");
+          const trimmed = line.trim();
+          if (!trimmed) {
+            closeLists();
+            continue;
+          }
+          if (/^-{3,}$/.test(trimmed)) {
+            closeLists();
+            out.push("<hr>");
+            continue;
+          }
+          const h3 = trimmed.match(/^###\s+(.+)$/);
+          if (h3) {
+            closeLists();
+            out.push(`<h3 style="margin:8px 0 6px;font-size:20px;">${_formatInlineMarkdown(h3[1])}</h3>`);
+            continue;
+          }
+          const ol = trimmed.match(/^\d+\.\s+(.+)$/);
+          if (ol) {
+            if (inUl) {
+              out.push("</ul>");
+              inUl = false;
+            }
+            if (!inOl) {
+              out.push('<ol style="margin:6px 0 6px 20px;">');
+              inOl = true;
+            }
+            out.push(`<li>${_formatInlineMarkdown(ol[1])}</li>`);
+            continue;
+          }
+          const ul = trimmed.match(/^[-*]\s+(.+)$/);
+          if (ul) {
+            if (inOl) {
+              out.push("</ol>");
+              inOl = false;
+            }
+            if (!inUl) {
+              out.push('<ul style="margin:6px 0 6px 20px;">');
+              inUl = true;
+            }
+            out.push(`<li>${_formatInlineMarkdown(ul[1])}</li>`);
+            continue;
+          }
+          closeLists();
+          out.push(`<p style="margin:0 0 6px;">${_formatInlineMarkdown(trimmed)}</p>`);
+        }
+        closeLists();
+        return out.length ? out.join("") : `<p style="margin:0;">${esc(String(text || ""))}</p>`;
+      }
+
+      window.__formatAssistantText = formatAssistantText;
+
+      function toNaturalChatReply(result, fallbackText) {
+        const parseMaybeJsonObject = (value) => {
+          const text = String(value || "").trim();
+          if (!text || text[0] !== "{") return null;
+          try {
+            const parsed = JSON.parse(text);
+            return parsed && typeof parsed === "object" ? parsed : null;
+          } catch (_err) {
+            return null;
+          }
+        };
+        const obj = result && typeof result === "object" ? result : {};
+        const reply = String(obj.reply || "").trim();
+        if (reply) return reply;
+        const message = String(obj.message || "").trim();
+        const messageObj = parseMaybeJsonObject(message);
+        if (messageObj) {
+          const m = String(messageObj.message || messageObj.reply || "").trim();
+          const s = String(messageObj.suggestion || "").trim();
+          if (m && s && s !== m) return `${m}\n${s}`;
+          if (m) return m;
+        }
+        if (message) return message;
+
+        const action = String(obj.action || "").trim();
+        if (action === "confirm_requirement" && obj.summary && typeof obj.summary === "object") {
+          const summary = obj.summary || {};
+          const target = String(summary.target || "").trim();
+          const outputs = Array.isArray(summary.outputs) ? summary.outputs.filter(Boolean) : [];
+          if (target) {
+            return `我已完成需求确认。治理目标：${target}${outputs.length ? `；预期输出共 ${outputs.length} 项。` : "。"}`;
+          }
+          return "我已完成需求确认，可以继续 dry run 或发布工作包。";
+        }
+
+        const fallback = String(fallbackText || "").trim();
+        const fallbackObj = parseMaybeJsonObject(fallback);
+        if (fallbackObj) {
+          const m = String(fallbackObj.message || fallbackObj.reply || "").trim();
+          const s = String(fallbackObj.suggestion || "").trim();
+          if (m && s && s !== m) return `${m}\n${s}`;
+          if (m) return m;
+        }
+        if (fallback) return fallback;
+        return "已收到，我会继续协助你完成数据治理任务。";
+      }
+      window.toNaturalChatReply = toNaturalChatReply;
+
+      function gateAlert(type, msg) {
+        el.wpAlert.innerHTML = `<div class="alert alert-${type} py-2 my-2">${msg}</div>`;
+      }
+
+      function renderTimeline() {
+        const steps = ["confirm_generate", "confirm_dryrun_result", "confirm_publish"];
+        const current = steps.filter((s) => state.confirmations.has(s));
+        el.wpTimeline.textContent = current.length ? current.join(" -> ") : "等待执行，暂无确认动作";
+        if (state.confirmations.has("confirm_publish")) {
+          el.kpiWp.textContent = "publish_confirmed";
+        } else if (state.confirmations.has("confirm_dryrun_result")) {
+          el.kpiWp.textContent = "dryrun_finished";
+        } else if (state.confirmations.has("confirm_generate")) {
+          el.kpiWp.textContent = "packaged";
+        } else {
+          el.kpiWp.textContent = "created";
+        }
+      }
+
+      function renderLlmRounds() {
+        if (!state.rounds.length) {
+          el.llmAccordion.innerHTML = `<div class="text-secondary small">暂无轮次</div>`;
+          el.kpiLlm.textContent = "0%";
+          return;
+        }
+        el.llmAccordion.innerHTML = state.rounds
+          .map((r, i) => {
+            const id = `round${i + 1}`;
+            return `<div class="accordion-item">
+              <h2 class="accordion-header" id="h-${id}">
+                <button class="accordion-button ${i === state.rounds.length - 1 ? "" : "collapsed"}" type="button" data-bs-toggle="collapse" data-bs-target="#c-${id}">
+                  第 ${i + 1} 轮 · ${esc(r.model || "gpt-4.1")} · ${esc(r.at || "-")}
+                </button>
+              </h2>
+              <div id="c-${id}" class="accordion-collapse collapse ${i === state.rounds.length - 1 ? "show" : ""}" data-bs-parent="#llmAccordion">
+                <div class="accordion-body">
+                  <div class="mb-2"><span class="badge text-bg-secondary">用户输入</span> ${esc(r.userInput || "-")}</div>
+                  <div class="mb-2"><span class="badge text-bg-success">Agent -> LLM（完整请求）</span></div>
+                  <pre class="mb-2 mono">${esc(r.llmRequest || "{}")}</pre>
+                  <div class="mb-2"><span class="badge text-bg-warning">LLM -> Agent（原始文本）</span></div>
+                  <pre class="mb-2 mono">${esc(r.llmRawText || "-")}</pre>
+                  <div class="mb-2"><span class="badge text-bg-light text-dark border">workpackage_ref</span> <span class="mono">${esc(r.workpackageRef || "-")}</span></div>
+                  <div class="small text-secondary mb-1">原始 LLM 响应对象</div>
+                  <pre class="mb-2 mono">${esc(r.llmRawResponse || "{}")}</pre>
+                  <div class="small text-secondary mb-1">Agent 结构化结果（仅作对照）</div>
+                  <pre class="mb-0 mono">${esc(r.resultJson || "{}")}</pre>
+                </div>
+              </div>
+            </div>`;
+          })
+          .join("");
+        el.kpiLlm.textContent = "100%";
+        el.kpiTurns.textContent = String(state.rounds.length);
+      }
+
+      function renderMaintLogs() {
+        if (!state.maintLogs.length) {
+          el.wpMaintLogs.innerHTML = `<div class="list-group-item text-secondary">暂无维护记录</div>`;
+          return;
+        }
+        el.wpMaintLogs.innerHTML = state.maintLogs
+          .map((x) => `<div class="list-group-item"><div class="d-flex justify-content-between"><span class="mono">${x.key}</span><span class="badge text-bg-light">${x.action}</span></div><div class="small text-secondary">${x.detail}</div><div class="small text-secondary">${x.at}</div></div>`)
+          .join("");
+      }
+
+      function setWorkpackageOptions(items) {
+        el.wpOptions.innerHTML = (items || []).map((row) => {
+          const key = `${row.workpackage_id || ""}@${row.version || ""}`;
+          return `<option value="${key}"></option>`;
+        }).join("");
+      }
+
+      async function loadPipeline() {
+        const resp = await fetch(`/v1/governance/observability/runtime/workpackage-pipeline?${qs({ window: el.windowFilter.value || "24h", client_type: "" })}`);
+        if (!resp.ok) {
+          el.workpackageRows.innerHTML = '<tr><td colspan="5" class="text-secondary">加载失败</td></tr>';
+          return [];
+        }
+        const payload = await resp.json();
+        const items = payload.items || [];
+        setWorkpackageOptions(items);
+        if (!el.wpSelector.value && items.length) {
+          const firstId = String(items[0].workpackage_id || "");
+          const firstVer = String(items[0].version || (firstId.includes("@") ? firstId.split("@").pop() : "") || "v1.0.0");
+          const firstKey = firstId.includes("@") ? firstId : `${firstId}@${firstVer}`;
+          el.wpSelector.value = firstKey;
+        }
+        el.workpackageRows.innerHTML = items.length
+          ? items
+              .map((row) => {
+                const rawId = String(row.workpackage_id || "");
+                const id = rawId.includes("@") ? rawId.split("@")[0] : rawId;
+                const version = String(row.version || (rawId.includes("@") ? rawId.split("@").pop() : "") || "v1.0.0");
+                const display = `${id}@${version}`;
+                return `<tr>
+                <td><span class="mono task-link" data-workpackage-id="${id}" data-version="${version}">${display}</span></td>
+                <td>${row.current_stage || "-"}</td>
+                <td>${row.submit_status || "-"}</td>
+                <td>${row.runtime_receipt_id || "-"}</td>
+                <td>${row.updated_at || "-"}</td>
+              </tr>`;
+              })
+              .join("")
+          : '<tr><td colspan="5" class="text-secondary">暂无链路数据</td></tr>';
+        return items;
+      }
+
+      async function loadSummary() {
+        const resp = await fetch(`/v1/governance/observability/runtime/summary?${qs({ window: el.windowFilter.value || "24h", ruleset_id: "" })}`);
+        if (!resp.ok) return;
+        const summary = await resp.json();
+        const total = Number(summary.total_tasks || 0);
+        const counts = summary.status_counts || {};
+        const done = Number(counts.SUCCEEDED || 0) + Number(counts.REVIEWED || 0);
+        el.kpiSuccess.textContent = total ? `${Math.round((done * 100) / total)}%` : "0%";
+      }
+
+      async function loadWorkpackageEvents(ref) {
+        const [workpackage_id, version] = String(ref || "").split("@");
+        if (!workpackage_id || !version) return;
+        const resp = await fetch(`/v1/governance/observability/runtime/workpackage-events?${qs({ workpackage_id, version, window: el.windowFilter.value || "24h", client_type: "", limit: 20 })}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const items = data.items || [];
+        if (!items.length) return;
+        const first = items[0];
+        if (state.eventViewMode === "json") {
+          el.artifactDetail.textContent = safeJson(items.slice(0, 5));
+        } else {
+          el.artifactDetail.textContent = items
+            .slice(0, 5)
+            .map((x, i) => `${i + 1}. ${x.source_zh || x.source || "-"} ${x.event_type_zh || x.event_type || "-"} 状态=${x.status_zh || x.status || "-"}`)
+            .join("\n");
+        }
+        if (first.pipeline_stage) {
+          el.kpiWp.textContent = String(first.pipeline_stage);
+        }
+      }
+
+      async function loadWorkpackageBlueprint(ref) {
+        const [workpackage_id, version] = String(ref || "").split("@");
+        if (!workpackage_id) {
+          el.wpBlueprintMeta.textContent = "请选择工作包";
+          el.wpBlueprintSources.textContent = "数据源：-";
+          el.wpBlueprintApis.innerHTML = '<tr><td colspan="4" class="text-secondary">暂无 API 清单</td></tr>';
+          el.wpBlueprintConfig.textContent = "{}";
+          return;
+        }
+        const resp = await fetch(`/v1/governance/observability/runtime/workpackage-blueprint?${qs({ workpackage_id, version })}`);
+        if (!resp.ok) {
+          el.wpBlueprintMeta.textContent = "工作包蓝图加载失败";
+          return;
+        }
+        const payload = await resp.json().catch(() => ({}));
+        const publish = payload.publish_record || {};
+        const status = String(publish.status || "created");
+        const resolvedVersion = String(payload.version || version || "-");
+        el.wpBlueprintMeta.textContent = `工作包：${workpackage_id}@${resolvedVersion} 状态：${status}`;
+        const sources = Array.isArray(payload.selected_sources) ? payload.selected_sources : [];
+        el.wpBlueprintSources.textContent = `数据源：${sources.length ? sources.join(", ") : "-"}`;
+        const apis = Array.isArray(payload.registered_apis) ? payload.registered_apis : [];
+        el.wpBlueprintApis.innerHTML = apis.length
+          ? apis
+              .map((x) => `<tr>
+                <td><div class="fw-semibold">${esc(x.name || x.interface_id || "-")}</div><div class="small text-secondary mono">${esc(x.base_url || "-")}</div></td>
+                <td>${esc(x.method || "-")}</td>
+                <td>${esc(x.provider || "-")}</td>
+                <td>${esc(x.provider_group || "-")}</td>
+              </tr>`)
+              .join("")
+          : '<tr><td colspan="4" class="text-secondary">暂无 API 清单</td></tr>';
+        el.wpBlueprintConfig.textContent = safeJson(payload.workpackage_config || {});
+      }
+
+      function renderDryrunReport(report) {
+        const records = Array.isArray(report?.records) ? report.records : [];
+        if (!records.length) {
+          el.resultBody.innerHTML = '<tr><td colspan="5" class="text-secondary">暂无试运行报告</td></tr>';
+        } else {
+          el.resultBody.innerHTML = records
+            .map((row) => {
+              const input = row.input || {};
+              const norm = row.normalization || {};
+              const entity = row.entity_parsing || {};
+              const valid = row.address_validation || {};
+              return `<tr>
+                <td>${input.raw_id || "-"}</td>
+                <td>${norm.status || "-"}</td>
+                <td>${entity.status || "-"}</td>
+                <td>${valid.status || "-"}</td>
+                <td>${row.record_decision || "-"}</td>
+              </tr>`;
+            })
+            .join("");
+        }
+        const graph = report?.spatial_graph || {};
+        const metrics = graph.metrics || {};
+        el.graphSummary.innerHTML = `<div class="summary-grid">
+          <div class="summary-card"><div class="fw-semibold">图谱状态</div><div class="small text-secondary">build_status=${graph.build_status || "-"}</div></div>
+          <div class="summary-card"><div class="fw-semibold">节点/边</div><div class="small text-secondary">nodes=${metrics.node_count || 0}, edges=${metrics.edge_count || 0}</div></div>
+          <div class="summary-card"><div class="fw-semibold">失败行</div><div class="small text-secondary">${Array.isArray(graph.failed_row_refs) ? graph.failed_row_refs.join(",") : "-"}</div></div>
+          <div class="summary-card"><div class="fw-semibold">图谱摘要</div><div class="small text-secondary">${safeJson((graph.nodes || []).slice(0, 2))}</div></div>
+        </div>`;
+      }
+
+      async function sendAgentMessage() {
+        const text = String(el.chatInput.value || "").trim();
+        if (!text) return;
+        const now = Date.now();
+        if (state.chatSending) return;
+        if (state.lastChatSubmit.text === text && now - Number(state.lastChatSubmit.at || 0) < 1200) {
+          return;
+        }
+        state.chatSending = true;
+        state.lastChatSubmit = { text, at: now };
+        el.chatSend.disabled = true;
+        const originalBtnText = el.chatSend.textContent;
+        el.chatSend.textContent = "发送中...";
+        addChat("user", text);
+        el.chatInput.value = "";
+        try {
+          const resp = await fetch("/v1/governance/observability/runtime/agent-chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: state.sessionId, message: text }),
+          });
+          const payload = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            gateAlert("danger", "对话失败: " + (payload?.detail?.message || payload?.detail || resp.statusText || "unknown"));
+            return;
+          }
+          state.sessionId = String(payload.session_id || state.sessionId);
+          const history = Array.isArray(payload.history) ? payload.history : [];
+          const lastAssistant = [...history].reverse().find((x) => x && x.role === "assistant");
+          const lastContent = lastAssistant?.content;
+          const fallbackAssistantText = typeof lastContent === "string" ? lastContent : "";
+          const assistantText = toNaturalChatReply(payload.result || lastContent || {}, fallbackAssistantText);
+          addChat("agent", assistantText);
+
+          const result = payload.result || {};
+          const workpackageRef = String(payload.workpackage_ref || "");
+          const agentPrompt = String(text || "");
+          const llmRawText = String(result.llm_raw_text || "");
+          const llmRawResponse = safeJson(result.llm_raw_response || {});
+          const llmRequest = safeJson(result.llm_request || { user_prompt: agentPrompt });
+          state.rounds.push({
+            userInput: text,
+            agentPrompt,
+            llmRequest,
+            llmRawText: llmRawText || assistantText || "-",
+            llmRawResponse,
+            resultJson: safeJson(result),
+            workpackageRef,
+            at: new Date().toLocaleString(),
+            model: "gpt-4.1",
+          });
+          renderLlmRounds();
+
+          if (workpackageRef) {
+            el.wpSelector.value = workpackageRef;
+            state.maintLogs.unshift({
+              action: "upsert",
+              key: workpackageRef,
+              detail: "Agent 对话后自动维护工作包候选",
+              at: new Date().toLocaleString(),
+            });
+            renderMaintLogs();
+            await loadWorkpackageEvents(workpackageRef);
+            await loadWorkpackageBlueprint(workpackageRef);
+          }
+        } finally {
+          state.chatSending = false;
+          el.chatSend.disabled = false;
+          el.chatSend.textContent = originalBtnText || "发送";
+        }
+      }
+
+      async function runPipeline() {
+        const addresses = parseAddressInput(el.csvInput.value || "");
+        if (!addresses.length) {
+          el.uploadStatus.textContent = "请先输入地址";
+          return;
+        }
+        const raw = String(el.wpSelector.value || "").trim();
+        const atIdx = raw.lastIndexOf("@");
+        if (atIdx <= 0 || atIdx >= raw.length - 1) {
+          el.uploadStatus.textContent = "工作包格式错误，应为 workpackage_id@version";
+          return;
+        }
+        const workpackage_id = raw.slice(0, atIdx).trim();
+        const version = raw.slice(atIdx + 1).trim();
+        const confirmations = Array.from(state.confirmations);
+
+        el.uploadStatus.textContent = "执行中...";
+        const requestBody = {
+          batch_name: "runtime-upload-" + Date.now(),
+          addresses,
+          actor: "runtime_view_upload",
+          workpackage_id,
+          version,
+          confirmations,
+        };
+        // workpackage 路径下由后端基于发布记录反查 ruleset，避免与显式 ruleset_id 冲突。
+        if (!workpackage_id || !version) {
+          requestBody.ruleset_id = "default";
+        }
+
+        const resp = await fetch("/v1/governance/observability/runtime/upload-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        const payload = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          el.uploadStatus.textContent = "执行失败: " + (payload?.detail?.message || payload?.detail || resp.statusText || "unknown");
+          gateAlert("danger", el.uploadStatus.textContent);
+          return;
+        }
+
+        const timeline = Array.isArray(payload.confirm_timeline) ? payload.confirm_timeline : [];
+        state.confirmations = new Set(timeline);
+        renderTimeline();
+        state.lastDryrunReport = payload.dryrun_report || null;
+        el.dryrunReportOpen.disabled = !state.lastDryrunReport;
+        const csvUrl = String((payload.output_artifacts || {}).csv_url || "").trim();
+        if (csvUrl) {
+          el.outputDownloadLink.href = csvUrl;
+          el.outputDownloadLink.classList.remove("d-none");
+        } else {
+          el.outputDownloadLink.href = "#";
+          el.outputDownloadLink.classList.add("d-none");
+        }
+        el.runtimeReceipt.textContent = payload.runtime_receipt_id || "-";
+        el.uploadStatus.textContent = `已执行 task=${payload.task_id || "-"} 状态=${payload.status || "-"}`;
+
+        if (state.lastDryrunReport) {
+          renderDryrunReport(state.lastDryrunReport);
+        }
+        await loadPipeline();
+        await loadWorkpackageEvents(raw);
+        await loadWorkpackageBlueprint(raw);
+      }
+
+      el.chatSend.addEventListener("click", () => { sendAgentMessage(); });
+      el.chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendAgentMessage();
+        }
+      });
+
+      el.sourceFile.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        const lines = parseAddressInput(text);
+        el.csvInput.value = lines.join("\n");
+      });
+
+      el.actGenerate.addEventListener("click", () => {
+        state.confirmations.add("confirm_generate");
+        renderTimeline();
+        gateAlert("success", "confirm_generate 已完成");
+      });
+      el.actDryrun.addEventListener("click", () => {
+        if (!state.confirmations.has("confirm_generate")) {
+          gateAlert("warning", "阻断：请先执行 confirm_generate");
+          return;
+        }
+        state.confirmations.add("confirm_dryrun_result");
+        renderTimeline();
+        gateAlert("success", "confirm_dryrun_result 已完成");
+      });
+      el.actPublish.addEventListener("click", () => {
+        if (!state.confirmations.has("confirm_dryrun_result")) {
+          gateAlert("warning", "阻断：请先执行 confirm_dryrun_result");
+          return;
+        }
+        state.confirmations.add("confirm_publish");
+        renderTimeline();
+        gateAlert("primary", "confirm_publish 已完成");
+      });
+
+      el.runPipeline.addEventListener("click", () => { runPipeline(); });
+
+      el.dryrunReportOpen.addEventListener("click", () => {
+        renderDryrunReport(state.lastDryrunReport || {});
+      });
+
+      el.eventViewModeToggle.addEventListener("click", async () => {
+        state.eventViewMode = state.eventViewMode === "zh" ? "json" : "zh";
+        el.eventViewModeToggle.textContent = state.eventViewMode === "zh" ? "切换事件视图（中文/JSON）" : "切换事件视图（JSON/中文）";
+        await loadWorkpackageEvents(el.wpSelector.value || "");
+      });
+
+      el.seedWpBtn.addEventListener("click", async () => {
+        el.wpSeedStatus.textContent = "灌入中...";
+        const resp = await fetch("/v1/governance/observability/runtime/seed-workpackage-demo?total=12", { method: "POST" });
+        const payload = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          el.wpSeedStatus.textContent = "灌入失败: " + (payload?.detail?.message || payload?.detail || resp.statusText || "unknown");
+          return;
+        }
+        el.wpSeedStatus.textContent = "已灌入链路样例: " + (payload.total_seeded || 0) + " 个工作包";
+        await loadPipeline();
+      });
+
+      el.workpackageRows.addEventListener("click", async (ev) => {
+        const target = ev.target;
+        if (!target || !target.dataset || !target.dataset.workpackageId) return;
+        const ref = `${target.dataset.workpackageId}@${target.dataset.version || ""}`;
+        el.wpSelector.value = ref;
+        await loadWorkpackageEvents(ref);
+        await loadWorkpackageBlueprint(ref);
+      });
+
+      el.wpSelector.addEventListener("change", async () => {
+        const ref = String(el.wpSelector.value || "");
+        await loadWorkpackageEvents(ref);
+        await loadWorkpackageBlueprint(ref);
+      });
+
+      el.refreshAll.addEventListener("click", async () => {
+        await Promise.all([loadSummary(), loadPipeline()]);
+        await loadWorkpackageEvents(el.wpSelector.value || "");
+        await loadWorkpackageBlueprint(el.wpSelector.value || "");
+      });
+
+      async function init() {
+        addChat("agent", "欢迎使用协同治理控制台，请输入治理目标。");
+        renderTimeline();
+        renderLlmRounds();
+        renderMaintLogs();
+        await Promise.all([loadSummary(), loadPipeline()]);
+        await loadWorkpackageBlueprint(el.wpSelector.value || "");
+      }
+      init().catch(() => {
+        el.uploadStatus.textContent = "初始化失败，请检查服务状态";
+      });
+    </script>
+  </body>
+</html>

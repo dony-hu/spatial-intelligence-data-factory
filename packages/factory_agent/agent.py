@@ -50,22 +50,48 @@ class FactoryAgent:
 
     def converse(self, prompt):
         """对话接口 - 支持确定数据源、存储 API Key、生成工作包、workpackage 生命周期管理"""
+        user_prompt = str(prompt or "").strip()
+        self._append_chat_history("user", user_prompt)
         intent = detect_agent_intent(prompt)
         if intent == "store_api_key":
-            return self._handle_store_api_key(prompt)
+            result = self._handle_store_api_key(prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "list_workpackages":
-            return self._handle_list_workpackages()
+            result = self._handle_list_workpackages()
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "query_workpackage":
-            return self._handle_query_workpackage(prompt)
+            result = self._handle_query_workpackage(prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "dryrun_workpackage":
-            return self._handle_dryrun_workpackage(prompt)
+            result = self._handle_dryrun_workpackage(prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "publish_workpackage":
-            return self._handle_publish_workpackage(prompt)
+            result = self._handle_publish_workpackage(prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "list_sources":
-            return self._handle_list_sources()
+            result = self._handle_list_sources()
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
         if intent == "generate_workpackage":
-            return self._handle_generate_workpackage(prompt)
-        return self._handle_requirement_confirmation(prompt)
+            result = self._handle_generate_workpackage(prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+            return result
+        if not self._is_data_governance_topic(user_prompt) and self._is_explicitly_non_governance_topic(user_prompt):
+            result = self._handle_out_of_scope_chat(user_prompt)
+            self._append_chat_history("assistant", str(result.get("message") or ""))
+            return result
+        if not self._requires_structured_requirement(user_prompt):
+            result = self._handle_general_governance_chat(user_prompt)
+            self._append_chat_history("assistant", str(result.get("message") or result.get("reply") or ""))
+            return result
+        result = self._handle_requirement_confirmation(prompt)
+        self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
+        return result
 
     def _handle_requirement_confirmation(self, prompt: str) -> Dict[str, Any]:
         """调用 LLM 确认治理需求；失败时阻塞并等待人工确认。"""
@@ -131,6 +157,9 @@ class FactoryAgent:
                 "status": "ok",
                 "action": "confirm_requirement",
                 "llm_status": "success",
+                "llm_raw_text": answer,
+                "llm_raw_response": result.get("raw") if isinstance(result.get("raw"), dict) else {},
+                "llm_request": result.get("request") if isinstance(result.get("request"), dict) else {},
                 "summary": summary,
                 "message": "已完成治理需求确认，可进入 dry run 与工作包发布阶段",
             }
@@ -156,6 +185,9 @@ class FactoryAgent:
                 "status": "blocked",
                 "action": "confirm_requirement",
                 "llm_status": "blocked",
+                "llm_raw_text": "",
+                "llm_raw_response": {},
+                "llm_request": {},
                 "reason": "llm_blocked",
                 "requires_user_confirmation": True,
                 "error": str(exc),
@@ -164,6 +196,167 @@ class FactoryAgent:
 
     def _run_requirement_query(self, prompt: str) -> Dict[str, Any]:
         return self._llm_gateway.query(prompt)
+
+    def _run_general_chat_query(self, prompt: str) -> Dict[str, Any]:
+        return self._llm_gateway.query_dialogue(prompt, history=self._get_chat_history())
+
+    def _run_workpackage_blueprint_query(
+        self,
+        prompt: str,
+        context: Dict[str, Any],
+        feedback: List[str] | None = None,
+    ) -> Dict[str, Any]:
+        return self._llm_gateway.query_workpackage_blueprint(
+            user_prompt=prompt,
+            context=context,
+            feedback=feedback,
+            history=self._get_chat_history(),
+        )
+
+    def _get_chat_history(self) -> List[Dict[str, str]]:
+        history = self._state.get("chat_history")
+        if isinstance(history, list):
+            return [item for item in history if isinstance(item, dict)]
+        return []
+
+    def _append_chat_history(self, role: str, content: str) -> None:
+        role_text = str(role or "").strip()
+        content_text = str(content or "").strip()
+        if not role_text or not content_text:
+            return
+        history = self._get_chat_history()
+        history.append({"role": role_text, "content": content_text})
+        self._state["chat_history"] = history[-20:]
+
+    def _is_data_governance_topic(self, prompt: str) -> bool:
+        text = str(prompt or "").lower()
+        keywords = [
+            "数据治理",
+            "治理",
+            "质量",
+            "数据量",
+            "样本量",
+            "条数",
+            "约束",
+            "建议",
+            "阈值",
+            "准确率",
+            "召回率",
+            "时效",
+            "sla",
+            "成本",
+            "规则",
+            "血缘",
+            "标准化",
+            "清洗",
+            "稽核",
+            "schema",
+            "etl",
+            "pipeline",
+            "lineage",
+            "data quality",
+            "data governance",
+            "workpackage",
+            "工作包",
+            "地址",
+            "元数据",
+            "主数据",
+        ]
+        return any(key in text for key in keywords)
+
+    def _is_explicitly_non_governance_topic(self, prompt: str) -> bool:
+        text = str(prompt or "").lower()
+        keywords = [
+            "天气",
+            "电影",
+            "音乐",
+            "体育",
+            "八卦",
+            "笑话",
+            "星座",
+            "彩票开奖",
+            "weather",
+            "movie",
+            "music",
+            "football",
+            "nba",
+        ]
+        return any(key in text for key in keywords)
+
+    def _requires_structured_requirement(self, prompt: str) -> bool:
+        text = str(prompt or "").lower()
+        required = [
+            "工作包",
+            "workpackage",
+            "confirm_requirement",
+            "需求确认",
+            "生成方案",
+            "输出json",
+            "target/data_sources/rule_points/outputs",
+        ]
+        if any(key in text for key in required):
+            return True
+        return ("生成" in text and ("方案" in text or "需求" in text)) or ("generate" in text and "plan" in text)
+
+    def _handle_out_of_scope_chat(self, prompt: str) -> Dict[str, Any]:
+        return {
+            "status": "ok",
+            "action": "out_of_scope_chat",
+            "llm_status": "skipped",
+            "message": "这个话题我不太擅长。我主要支持通用数据治理相关能力，比如数据质量规则、标准化、血缘、主数据与工作包执行闭环。",
+            "suggestion": "你可以告诉我数据治理目标、数据源和约束，我会继续协助。",
+            "user_prompt": str(prompt or ""),
+        }
+
+    def _handle_general_governance_chat(self, prompt: str) -> Dict[str, Any]:
+        try:
+            result = self._run_general_chat_query(prompt)
+            answer = str(result.get("answer") or "").strip()
+            natural_reply = self._extract_natural_dialogue_reply(answer)
+            return {
+                "status": "ok",
+                "action": "general_governance_chat",
+                "llm_status": "success",
+                "reply": natural_reply,
+                "llm_raw_text": answer,
+                "llm_raw_response": result.get("raw") if isinstance(result.get("raw"), dict) else {},
+                "llm_request": result.get("request") if isinstance(result.get("request"), dict) else {},
+                "message": natural_reply or "已完成回复",
+            }
+        except Exception as exc:
+            return {
+                "status": "blocked",
+                "action": "general_governance_chat",
+                "llm_status": "blocked",
+                "llm_raw_text": "",
+                "llm_raw_response": {},
+                "llm_request": {},
+                "reason": "llm_blocked",
+                "requires_user_confirmation": True,
+                "error": str(exc),
+                "message": "LLM 对话阻塞，请稍后重试或改为明确的数据治理问题。",
+            }
+
+    def _extract_natural_dialogue_reply(self, answer: str) -> str:
+        raw = str(answer or "").strip()
+        if not raw:
+            return ""
+        obj = self._extract_json_object(raw)
+        if not obj:
+            return raw
+        for key in ("reply", "message", "content"):
+            value = str(obj.get(key) or "").strip()
+            if value:
+                suggestion = str(obj.get("suggestion") or "").strip()
+                if suggestion and suggestion not in value:
+                    return f"{value}\n{suggestion}"
+                return value
+        summary = obj.get("summary")
+        if isinstance(summary, dict):
+            target = str(summary.get("target") or "").strip()
+            if target:
+                return f"治理目标已确认：{target}"
+        return raw
 
     def _extract_requirement_summary(self, answer: str) -> Dict[str, Any]:
         obj = self._extract_json_object(answer)
@@ -597,67 +790,112 @@ class FactoryAgent:
         return result
 
     def _handle_generate_workpackage(self, prompt):
-        """处理生成工作包的对话"""
-        name = self._extract_name(prompt) or "poi-trust-verification"
-        version = "v1.0.0"
+        """处理生成工作包的对话：基于上下文 + LLM 蓝图迭代收敛。"""
+        context = self._build_workpackage_context(prompt)
+        max_rounds = max(1, min(int(os.getenv("WORKPACKAGE_BLUEPRINT_MAX_ROUNDS", "2")), 8))
+        feedback: List[str] = []
+        schema_errors: List[str] = []
+        blueprint: Dict[str, Any] = {}
+        llm_raw_text = ""
+        llm_request: Dict[str, Any] = {}
+        llm_raw_response: Dict[str, Any] = {}
+        retry_count = 0
+
+        for idx in range(max_rounds):
+            try:
+                result = self._run_workpackage_blueprint_query(prompt, context, feedback if feedback else None)
+                llm_raw_text = str(result.get("answer") or "")
+                llm_request = result.get("request") if isinstance(result.get("request"), dict) else llm_request
+                llm_raw_response = result.get("raw") if isinstance(result.get("raw"), dict) else llm_raw_response
+                candidate = self._extract_json_object(llm_raw_text)
+                blueprint = self._normalize_workpackage_blueprint(candidate, prompt=prompt)
+                schema_errors = self._validate_workpackage_blueprint(blueprint)
+            except Exception as exc:
+                schema_errors = [f"llm_call_failed: {exc}"]
+            if not schema_errors:
+                break
+            retry_count += 1
+            feedback = [f"schema_error: {item}" for item in schema_errors]
+            if idx == max_rounds - 1:
+                blueprint = self._autofill_blueprint_from_context(blueprint, context, prompt=prompt)
+                schema_errors = self._validate_workpackage_blueprint(blueprint)
+                break
+
+        self._enrich_blueprint_with_api_gap_plan(blueprint, context, prompt=prompt)
+        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
+        name = str(workpackage.get("name") or self._extract_name(prompt) or f"wp-{uuid4().hex[:8]}")
+        version = str(workpackage.get("version") or "v1.0.0")
         bundle_name = f"{name}-{version}"
-        
-        sources = self._trust_hub.list_sources()
-        if len(sources) < 2:
-            return {
-                "status": "error",
-                "message": f"需要至少 2 个数据源，当前只有 {len(sources)} 个，请先存储 API Key"
-            }
-        
+
+        sources = self._resolve_blueprint_sources(blueprint, context)
+        self._apply_missing_api_plan(blueprint)
         bundle_dir = Path(f"workpackages/bundles/{bundle_name}")
-        self._create_workpackage_bundle(bundle_dir, name, version, sources[:3])
-        
+        self._create_workpackage_bundle(bundle_dir, blueprint=blueprint, sources=sources)
+
         return {
             "status": "ok",
             "action": "generate_workpackage",
             "bundle_name": bundle_name,
             "bundle_path": str(bundle_dir),
-            "sources_used": sources[:3],
-            "message": f"工作包 {bundle_name} 已生成"
+            "sources_used": sources,
+            "llm_retry_count": retry_count,
+            "schema_errors": schema_errors,
+            "llm_raw_text": llm_raw_text,
+            "llm_raw_response": llm_raw_response,
+            "llm_request": llm_request,
+            "workpackage_blueprint": blueprint,
+            "message": f"工作包 {bundle_name} 已生成，包含架构上下文、I/O定义、API计划与可执行脚本。",
         }
 
-    def _create_workpackage_bundle(self, bundle_dir: Path, name: str, version: str, sources: List[str]):
-        """创建工作包 bundle"""
+    def _create_workpackage_bundle(self, bundle_dir: Path, *, blueprint: Dict[str, Any], sources: List[str]):
+        """创建工作包 bundle。"""
         bundle_dir.mkdir(parents=True, exist_ok=True)
-        
-        (bundle_dir / "README.md").write_text(
-            self._generate_readme(name, version, sources),
-            encoding="utf-8"
-        )
-        
-        wp_config = {
-            "name": name,
-            "version": version,
-            "sources": sources
-        }
+
+        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
+        name = str(workpackage.get("name") or "workpackage")
+        version = str(workpackage.get("version") or "v1.0.0")
+        objective = str(workpackage.get("objective") or "数据治理执行")
+
+        (bundle_dir / "README.md").write_text(self._generate_readme(name, version, sources, objective), encoding="utf-8")
+
+        wp_config = dict(blueprint)
+        wp_config["name"] = name
+        wp_config["version"] = version
+        wp_config["objective"] = objective
+        wp_config["sources"] = sources
         (bundle_dir / "workpackage.json").write_text(
             json.dumps(wp_config, ensure_ascii=False, indent=2),
             encoding="utf-8"
         )
-        
+
         skills_dir = bundle_dir / "skills"
         skills_dir.mkdir(exist_ok=True)
-        
         for source in sources:
             skill_path = skills_dir / f"{source}_verification.md"
             skill_path.write_text(
                 self._generate_skill_markdown(source),
                 encoding="utf-8"
             )
-        
+
         scripts_dir = bundle_dir / "scripts"
         scripts_dir.mkdir(exist_ok=True)
-        
-        (scripts_dir / "verify_poi.py").write_text(
-            self._generate_verify_script(sources),
-            encoding="utf-8"
-        )
-        
+
+        script_specs = blueprint.get("scripts") if isinstance(blueprint.get("scripts"), list) else []
+        generated_count = 0
+        for spec in script_specs:
+            if not isinstance(spec, dict):
+                continue
+            filename = re.sub(r"[^a-zA-Z0-9._-]", "_", str(spec.get("name") or "").strip()) or ""
+            if not filename.endswith(".py"):
+                continue
+            content = str(spec.get("content") or "").strip()
+            if not content:
+                content = self._generate_script_template(spec)
+            (scripts_dir / filename).write_text(content, encoding="utf-8")
+            generated_count += 1
+        if generated_count == 0:
+            (scripts_dir / "run_pipeline.py").write_text(self._generate_verify_script(sources), encoding="utf-8")
+
         (bundle_dir / "entrypoint.sh").write_text(
             self._generate_entrypoint_sh(),
             encoding="utf-8"
@@ -670,13 +908,417 @@ class FactoryAgent:
         observability_dir = bundle_dir / "observability"
         observability_dir.mkdir(exist_ok=True)
         (observability_dir / "line_metrics.json").write_text(
-            json.dumps({"sources": sources, "version": version}, ensure_ascii=False, indent=2),
+            json.dumps({"sources": sources, "version": version, "objective": objective}, ensure_ascii=False, indent=2),
             encoding="utf-8"
         )
         (observability_dir / "line_observe.py").write_text(
             self._generate_observe_script(),
             encoding="utf-8"
         )
+
+        missing_apis = ((blueprint.get("api_plan") or {}).get("missing_apis") if isinstance(blueprint.get("api_plan"), dict) else []) or []
+        env_lines = ["# 需要用户补充的外部API Key", ""]
+        for item in missing_apis:
+            if not isinstance(item, dict):
+                continue
+            if not bool(item.get("requires_key")):
+                continue
+            env_name = str(item.get("api_key_env") or f"{str(item.get('name') or 'EXT_API').upper()}_API_KEY")
+            env_name = re.sub(r"[^A-Z0-9_]", "_", env_name.upper())
+            env_lines.append(f"{env_name}=")
+        if len(env_lines) > 2:
+            (bundle_dir / "config").mkdir(exist_ok=True)
+            (bundle_dir / "config" / "provider_keys.env.example").write_text("\n".join(env_lines) + "\n", encoding="utf-8")
+
+    def _build_workpackage_context(self, prompt: str) -> Dict[str, Any]:
+        catalog = self._load_registered_api_catalog()
+        trusted_sources = self._trust_hub.list_sources()
+        architecture = {
+            "layers": [
+                "Agent会话编排层",
+                "可信数据Hub层",
+                "工作包执行层",
+                "运行态可观测层",
+            ],
+            "workpackage_lifecycle": ["requirements_confirm", "generate", "dryrun", "publish", "runtime_upload"],
+        }
+        alignment_checklist = [
+            "1) 解释数据治理工厂架构上下文与工作包生命周期",
+            "2) 对齐输入输出结构并给出精准 schema 定义",
+            "3) 使用可信数据Hub已注册 API，并列出可调用接口",
+            "4) 若 API 不足，建议外部 API/数据源，生成脚本并说明 key 获取与注册步骤",
+            "5) 在依赖明确后输出可执行工具脚本与执行计划",
+        ]
+        return {
+            "architecture_context": architecture,
+            "registered_api_catalog": catalog,
+            "trusted_hub_sources": trusted_sources,
+            "alignment_checklist": alignment_checklist,
+            "user_prompt": str(prompt or ""),
+        }
+
+    def _load_registered_api_catalog(self) -> List[Dict[str, Any]]:
+        config_path = Path("config/trusted_data_sources.json")
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        trusted_sources = payload.get("trusted_sources") if isinstance(payload, dict) else []
+        if not isinstance(trusted_sources, list):
+            return []
+        rows: List[Dict[str, Any]] = []
+        for source in trusted_sources:
+            if not isinstance(source, dict):
+                continue
+            source_id = str(source.get("source_id") or "")
+            provider = str(source.get("provider") or "")
+            interfaces = source.get("trusted_interfaces") if isinstance(source.get("trusted_interfaces"), list) else []
+            for item in interfaces:
+                if not isinstance(item, dict):
+                    continue
+                rows.append(
+                    {
+                        "source_id": source_id,
+                        "provider": provider,
+                        "interface_id": str(item.get("interface_id") or ""),
+                        "name": str(item.get("name") or ""),
+                        "base_url": str(item.get("base_url") or ""),
+                        "method": str(item.get("method") or ""),
+                        "provider_group": str(item.get("provider_group") or ""),
+                    }
+                )
+        return rows
+
+    def _normalize_workpackage_blueprint(self, obj: Dict[str, Any], *, prompt: str) -> Dict[str, Any]:
+        workpackage = obj.get("workpackage") if isinstance(obj.get("workpackage"), dict) else {}
+        name = str(workpackage.get("name") or self._slugify_name(self._extract_name(prompt) or "governance-workpackage"))
+        version = str(workpackage.get("version") or "v1.0.0")
+        if version and not version.startswith("v"):
+            version = f"v{version}"
+        merged = re.match(r"^(.+)-v(\d+\.\d+\.\d+)$", name)
+        if merged:
+            extracted_name = str(merged.group(1) or "").strip()
+            extracted_version = f"v{str(merged.group(2) or '').strip()}"
+            if extracted_name:
+                name = extracted_name
+            if not str(version or "").strip() or str(version or "").strip() == "v1.0.0":
+                version = extracted_version
+        objective = str(workpackage.get("objective") or "数据治理任务执行")
+        architecture_context = obj.get("architecture_context") if isinstance(obj.get("architecture_context"), dict) else {}
+        io_contract = obj.get("io_contract") if isinstance(obj.get("io_contract"), dict) else {}
+        api_plan = obj.get("api_plan") if isinstance(obj.get("api_plan"), dict) else {}
+        execution_plan = obj.get("execution_plan") if isinstance(obj.get("execution_plan"), dict) else {}
+        scripts = obj.get("scripts") if isinstance(obj.get("scripts"), list) else []
+        return {
+            "workpackage": {"name": name, "version": version, "objective": objective},
+            "architecture_context": architecture_context,
+            "io_contract": io_contract,
+            "api_plan": {
+                "registered_apis_used": api_plan.get("registered_apis_used") if isinstance(api_plan.get("registered_apis_used"), list) else [],
+                "missing_apis": api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else [],
+            },
+            "execution_plan": {"steps": execution_plan.get("steps") if isinstance(execution_plan.get("steps"), list) else []},
+            "scripts": scripts,
+        }
+
+    def _validate_workpackage_blueprint(self, blueprint: Dict[str, Any]) -> List[str]:
+        errors: List[str] = []
+        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
+        if not str(workpackage.get("name") or "").strip():
+            errors.append("workpackage.name is required")
+        if not str(workpackage.get("version") or "").strip():
+            errors.append("workpackage.version is required")
+        if not str(workpackage.get("objective") or "").strip():
+            errors.append("workpackage.objective is required")
+
+        architecture_context = blueprint.get("architecture_context") if isinstance(blueprint.get("architecture_context"), dict) else {}
+        if not architecture_context:
+            errors.append("architecture_context is required")
+        if not isinstance(architecture_context.get("runtime_env"), dict):
+            errors.append("architecture_context.runtime_env must be object")
+
+        io_contract = blueprint.get("io_contract") if isinstance(blueprint.get("io_contract"), dict) else {}
+        if not isinstance(io_contract.get("input_schema"), dict):
+            errors.append("io_contract.input_schema must be object")
+        if not isinstance(io_contract.get("output_schema"), dict):
+            errors.append("io_contract.output_schema must be object")
+
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        if not isinstance(api_plan.get("registered_apis_used"), list):
+            errors.append("api_plan.registered_apis_used must be array")
+        if not isinstance(api_plan.get("missing_apis"), list):
+            errors.append("api_plan.missing_apis must be array")
+        for idx, item in enumerate(api_plan.get("missing_apis") or []):
+            if not isinstance(item, dict):
+                errors.append(f"api_plan.missing_apis[{idx}] must be object")
+                continue
+            if not str(item.get("name") or "").strip():
+                errors.append(f"api_plan.missing_apis[{idx}].name is required")
+            if not str(item.get("endpoint") or "").strip():
+                errors.append(f"api_plan.missing_apis[{idx}].endpoint is required")
+            if "requires_key" not in item:
+                errors.append(f"api_plan.missing_apis[{idx}].requires_key is required")
+
+        execution_plan = blueprint.get("execution_plan") if isinstance(blueprint.get("execution_plan"), dict) else {}
+        if not isinstance(execution_plan.get("steps"), list) or not execution_plan.get("steps"):
+            errors.append("execution_plan.steps must be non-empty array")
+
+        scripts = blueprint.get("scripts")
+        if not isinstance(scripts, list) or not scripts:
+            errors.append("scripts must be non-empty array")
+        else:
+            for idx, item in enumerate(scripts):
+                if not isinstance(item, dict):
+                    errors.append(f"scripts[{idx}] must be object")
+                    continue
+                if not str(item.get("name") or "").strip():
+                    errors.append(f"scripts[{idx}].name is required")
+                if not str(item.get("entry") or "").strip():
+                    errors.append(f"scripts[{idx}].entry is required")
+        return errors
+
+    def _resolve_blueprint_sources(self, blueprint: Dict[str, Any], context: Dict[str, Any]) -> List[str]:
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        registered = api_plan.get("registered_apis_used") if isinstance(api_plan.get("registered_apis_used"), list) else []
+        source_ids: List[str] = []
+        for item in registered:
+            if not isinstance(item, dict):
+                continue
+            source_id = str(item.get("source_id") or "").strip()
+            if source_id and source_id not in source_ids:
+                source_ids.append(source_id)
+        if source_ids:
+            return source_ids
+        trusted_sources = context.get("trusted_hub_sources") if isinstance(context.get("trusted_hub_sources"), list) else []
+        fallback = [str(item).strip() for item in trusted_sources if str(item).strip()]
+        if fallback:
+            return fallback[:3]
+        return ["fengtu", "opencagedata", "nominatim_openstreetmap"]
+
+    def _apply_missing_api_plan(self, blueprint: Dict[str, Any]) -> None:
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        missing = api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else []
+        registered_rows: List[Dict[str, Any]] = []
+        for item in missing:
+            if not isinstance(item, dict):
+                continue
+            endpoint = str(item.get("endpoint") or "").strip()
+            if not endpoint.startswith("http"):
+                continue
+            source_id = self._slugify_name(str(item.get("name") or "ext_api"))
+            provider = str(item.get("provider") or source_id)
+            try:
+                capability = self._trust_hub.upsert_capability(
+                    source_id=source_id,
+                    provider=provider,
+                    endpoint=endpoint,
+                    tool_type="api",
+                    status="pending_key" if bool(item.get("requires_key")) else "active",
+                )
+                registered_rows.append(capability)
+            except Exception as exc:
+                registered_rows.append({"source_id": source_id, "endpoint": endpoint, "error": str(exc)})
+        api_plan["missing_apis_registered"] = registered_rows
+        blueprint["api_plan"] = api_plan
+
+    def _slugify_name(self, value: str) -> str:
+        raw = str(value or "").strip().lower()
+        if not raw:
+            return f"wp_{uuid4().hex[:8]}"
+        text = re.sub(r"[^a-z0-9_-]+", "-", raw).strip("-")
+        return text or f"wp_{uuid4().hex[:8]}"
+
+    def _autofill_blueprint_from_context(self, blueprint: Dict[str, Any], context: Dict[str, Any], *, prompt: str) -> Dict[str, Any]:
+        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
+        if not str(workpackage.get("name") or "").strip():
+            workpackage["name"] = self._slugify_name(self._extract_name(prompt) or "governance-workpackage")
+        if not str(workpackage.get("version") or "").strip():
+            workpackage["version"] = "v1.0.0"
+        if not str(workpackage.get("objective") or "").strip():
+            workpackage["objective"] = "地址治理工作包（标准化/验真/空间图谱）"
+        blueprint["workpackage"] = workpackage
+
+        architecture_context = blueprint.get("architecture_context") if isinstance(blueprint.get("architecture_context"), dict) else {}
+        if not architecture_context:
+            architecture_context = dict(context.get("architecture_context") or {})
+        if not isinstance(architecture_context.get("runtime_env"), dict):
+            architecture_context["runtime_env"] = {"python": "3.11", "queue": "sync"}
+        blueprint["architecture_context"] = architecture_context
+
+        io_contract = blueprint.get("io_contract") if isinstance(blueprint.get("io_contract"), dict) else {}
+        if not isinstance(io_contract.get("input_schema"), dict):
+            io_contract["input_schema"] = {
+                "type": "object",
+                "properties": {"raw_text": {"type": "string"}},
+                "required": ["raw_text"],
+            }
+        if not isinstance(io_contract.get("output_schema"), dict):
+            io_contract["output_schema"] = {
+                "type": "object",
+                "properties": {
+                    "normalization": {"type": "object"},
+                    "entity_parsing": {"type": "object"},
+                    "address_validation": {"type": "object"},
+                    "spatial_graph": {"type": "object"},
+                },
+                "required": ["normalization", "entity_parsing", "address_validation", "spatial_graph"],
+            }
+        blueprint["io_contract"] = io_contract
+
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        if not isinstance(api_plan.get("registered_apis_used"), list) or not api_plan.get("registered_apis_used"):
+            api_plan["registered_apis_used"] = [
+                {"source_id": "fengtu", "interface_id": "address_standardize"},
+                {"source_id": "fengtu", "interface_id": "address_real_check"},
+            ]
+        if not isinstance(api_plan.get("missing_apis"), list):
+            api_plan["missing_apis"] = []
+        blueprint["api_plan"] = api_plan
+
+        execution_plan = blueprint.get("execution_plan") if isinstance(blueprint.get("execution_plan"), dict) else {}
+        if not isinstance(execution_plan.get("steps"), list) or not execution_plan.get("steps"):
+            execution_plan["steps"] = ["解析输入", "地址标准化", "地址验真", "空间图谱构建"]
+        blueprint["execution_plan"] = execution_plan
+
+        scripts = blueprint.get("scripts")
+        if not isinstance(scripts, list) or not scripts:
+            scripts = [
+                {"name": "run_pipeline.py", "purpose": "执行治理流程", "runtime": "python", "entry": "python scripts/run_pipeline.py"},
+            ]
+        blueprint["scripts"] = scripts
+        return blueprint
+
+    def _enrich_blueprint_with_api_gap_plan(self, blueprint: Dict[str, Any], context: Dict[str, Any], *, prompt: str) -> None:
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        registered_used = api_plan.get("registered_apis_used") if isinstance(api_plan.get("registered_apis_used"), list) else []
+        missing = api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else []
+
+        registered_ids = self._collect_registered_interface_ids(registered_used, context)
+        required = self._derive_required_capabilities(prompt=prompt, io_contract=blueprint.get("io_contract"))
+        missing_by_capability = {str(item.get("capability_id") or ""): item for item in missing if isinstance(item, dict)}
+        for capability in required:
+            cap_id = str(capability.get("capability_id") or "").strip()
+            if not cap_id or cap_id in registered_ids or cap_id in missing_by_capability:
+                continue
+            missing.append(
+                {
+                    "capability_id": cap_id,
+                    "name": str(capability.get("name") or cap_id),
+                    "endpoint": str(capability.get("endpoint") or ""),
+                    "reason": str(capability.get("reason") or "补足治理能力"),
+                    "requires_key": True,
+                    "api_key_env": str(capability.get("api_key_env") or f"{cap_id.upper()}_API_KEY"),
+                    "provider": str(capability.get("provider") or "external"),
+                }
+            )
+        api_plan["missing_apis"] = missing
+        blueprint["api_plan"] = api_plan
+        self._ensure_blueprint_scripts_for_missing_apis(blueprint)
+
+    def _collect_registered_interface_ids(self, registered_used: List[Dict[str, Any]], context: Dict[str, Any]) -> set[str]:
+        ids: set[str] = set()
+        for item in registered_used:
+            if not isinstance(item, dict):
+                continue
+            interface_id = str(item.get("interface_id") or "").strip().lower()
+            name = str(item.get("name") or "").strip().lower()
+            if interface_id:
+                ids.add(interface_id)
+            if name:
+                if "标准化" in name:
+                    ids.add("address_standardize")
+                if "验真" in name or "真实性" in name:
+                    ids.add("address_real_check")
+                if "实体" in name or "拆分" in name:
+                    ids.add("entity_parsing")
+                if "图谱" in name:
+                    ids.add("spatial_graph_build")
+        catalog = context.get("registered_api_catalog") if isinstance(context.get("registered_api_catalog"), list) else []
+        for row in catalog:
+            if not isinstance(row, dict):
+                continue
+            interface_id = str(row.get("interface_id") or "").strip().lower()
+            if interface_id:
+                ids.add(interface_id)
+        return ids
+
+    def _derive_required_capabilities(self, *, prompt: str, io_contract: Any) -> List[Dict[str, str]]:
+        text = str(prompt or "")
+        output_schema = {}
+        if isinstance(io_contract, dict) and isinstance(io_contract.get("output_schema"), dict):
+            output_schema = io_contract.get("output_schema") or {}
+        props = output_schema.get("properties") if isinstance(output_schema, dict) else {}
+        required: List[Dict[str, str]] = []
+        required.append(
+            {
+                "capability_id": "address_standardize",
+                "name": "地址标准化API",
+                "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+                "reason": "执行地址标准化",
+                "api_key_env": "FENGTU_AK_STANDARDIZE",
+                "provider": "sfmap",
+            }
+        )
+        if "验真" in text or "真实性" in text or "address_validation" in str(props):
+            required.append(
+                {
+                    "capability_id": "address_real_check",
+                    "name": "地址真实性校验API",
+                    "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/realcheck",
+                    "reason": "执行地址验真",
+                    "api_key_env": "FENGTU_AK_REALCHECK",
+                    "provider": "sfmap",
+                }
+            )
+        if "实体拆分" in text or "entity_parsing" in str(props):
+            required.append(
+                {
+                    "capability_id": "entity_parsing",
+                    "name": "空间实体拆分API",
+                    "endpoint": "https://api.external.example.com/entity/parsing",
+                    "reason": "补齐空间实体拆分能力",
+                    "api_key_env": "ENTITY_PARSING_API_KEY",
+                    "provider": "external",
+                }
+            )
+        if "空间图谱" in text or "spatial_graph" in str(props):
+            required.append(
+                {
+                    "capability_id": "spatial_graph_build",
+                    "name": "空间图谱构建API",
+                    "endpoint": "https://api.external.example.com/spatial/graph/build",
+                    "reason": "补齐空间图谱输出能力",
+                    "api_key_env": "SPATIAL_GRAPH_API_KEY",
+                    "provider": "external",
+                }
+            )
+        return required
+
+    def _ensure_blueprint_scripts_for_missing_apis(self, blueprint: Dict[str, Any]) -> None:
+        scripts = blueprint.get("scripts") if isinstance(blueprint.get("scripts"), list) else []
+        existing_names = {str(item.get("name") or "").strip() for item in scripts if isinstance(item, dict)}
+        missing = ((blueprint.get("api_plan") or {}).get("missing_apis") if isinstance(blueprint.get("api_plan"), dict) else []) or []
+        for item in missing:
+            if not isinstance(item, dict):
+                continue
+            cap_id = self._slugify_name(str(item.get("capability_id") or item.get("name") or "external_api"))
+            script_name = f"fetch_{cap_id}.py"
+            if script_name in existing_names:
+                continue
+            scripts.append(
+                {
+                    "name": script_name,
+                    "purpose": f"调用外部API补齐能力：{str(item.get('name') or cap_id)}",
+                    "runtime": "python",
+                    "entry": f"python scripts/{script_name}",
+                    "endpoint": str(item.get("endpoint") or ""),
+                    "api_key_env": str(item.get("api_key_env") or ""),
+                }
+            )
+            existing_names.add(script_name)
+        blueprint["scripts"] = scripts
 
     def _extract_name(self, prompt: str) -> Optional[str]:
         if "高德" in prompt:
@@ -703,10 +1345,10 @@ class FactoryAgent:
             return "tianditu"
         return "unknown"
 
-    def _generate_readme(self, name: str, version: str, sources: List[str]) -> str:
+    def _generate_readme(self, name: str, version: str, sources: List[str], objective: str) -> str:
         return f"""# {name} {version}
 
-沿街商铺 POI 可信度验证工作包。
+{objective}
 
 ## 数据源
 {chr(10).join(f'- {s}' for s in sources)}
@@ -720,6 +1362,36 @@ bash entrypoint.sh
 ```bash
 python entrypoint.py
 ```
+""".strip()
+
+    def _generate_script_template(self, spec: Dict[str, Any]) -> str:
+        purpose = str(spec.get("purpose") or "执行数据治理步骤")
+        name = str(spec.get("name") or "script.py")
+        endpoint = str(spec.get("endpoint") or "")
+        key_env = str(spec.get("api_key_env") or "EXTERNAL_API_KEY")
+        return f"""#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+def main() -> None:
+    api_key = os.getenv("{key_env}", "")
+    payload = {{
+        "script": "{name}",
+        "purpose": "{purpose}",
+        "endpoint": "{endpoint}",
+        "api_key_provided": bool(api_key),
+        "status": "ready" if api_key else "waiting_for_api_key",
+    }}
+    out = Path("output")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "{name}.result.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(payload, ensure_ascii=False))
+
+if __name__ == "__main__":
+    main()
 """.strip()
 
     def _generate_skill_markdown(self, source: str) -> str:
@@ -889,36 +1561,42 @@ if __name__ == "__main__":
                 "message": "未提供数据源标识，Trust Hub 补充已阻塞，请人工确认方案",
             }
 
-        mapping = self._resolve_source_profile(source_text)
         try:
-            self._trust_hub.store_api_key(
-                name=mapping["source_id"],
-                api_key="MASKED",
-                provider=mapping["provider"],
-                api_endpoint=mapping["endpoint"],
-            )
-            capability = self._trust_hub.upsert_capability(
-                source_id=mapping["source_id"],
-                provider=mapping["provider"],
-                endpoint=mapping["endpoint"],
-                tool_type="api",
-            )
-            sample = self._trust_hub.add_sample_data(
-                source_id=mapping["source_id"],
-                content={
-                    "query": "杭州市西湖区文三路90号",
-                    "result": "地址结构化结果",
-                    "provider": mapping["provider"],
-                },
-                trust_score=0.9,
-            )
+            profiles = self._resolve_fengtu_group_profiles() if ("丰图" in source_text or "sfmap" in source_text.lower() or "fengtu" in source_text.lower()) else [self._resolve_source_profile(source_text)]
+            persisted_caps = []
+            persisted_samples = []
+            for mapping in profiles:
+                self._trust_hub.store_api_key(
+                    name=mapping["source_id"],
+                    api_key="MASKED",
+                    provider=mapping["provider"],
+                    api_endpoint=mapping["endpoint"],
+                )
+                capability = self._trust_hub.upsert_capability(
+                    source_id=mapping["source_id"],
+                    provider=mapping["provider"],
+                    endpoint=mapping["endpoint"],
+                    tool_type="api",
+                )
+                sample = self._trust_hub.add_sample_data(
+                    source_id=mapping["source_id"],
+                    content={
+                        "query": "杭州市西湖区文三路90号",
+                        "result": "地址结构化结果",
+                        "provider": mapping["provider"],
+                        "provider_group": mapping.get("provider_group", ""),
+                    },
+                    trust_score=0.9,
+                )
+                persisted_caps.append(capability)
+                persisted_samples.append(sample)
             return {
                 "status": "ok",
                 "action": "supplement_trust_hub",
                 "source": source_text,
-                "capability": capability,
-                "sample": sample,
-                "message": f"已沉淀 {mapping['source_id']} 的能力与可信样例数据",
+                "capabilities": persisted_caps,
+                "samples": persisted_samples,
+                "message": f"已沉淀 {len(persisted_caps)} 组 provider 能力与可信样例数据",
             }
         except Exception as exc:
             return {
@@ -930,6 +1608,22 @@ if __name__ == "__main__":
                 "error": str(exc),
                 "message": "Trust Hub 沉淀失败，流程已阻塞，请人工确认方案",
             }
+
+    def _resolve_fengtu_group_profiles(self) -> List[Dict[str, str]]:
+        return [
+            {
+                "source_id": "fengtu_group_a",
+                "provider": "fengtu_group_a",
+                "provider_group": "group_a",
+                "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+            },
+            {
+                "source_id": "fengtu_group_b",
+                "provider": "fengtu_group_b",
+                "provider_group": "group_b",
+                "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+            },
+        ]
 
     def _resolve_source_profile(self, source_text: str) -> Dict[str, str]:
         lower = source_text.lower()
