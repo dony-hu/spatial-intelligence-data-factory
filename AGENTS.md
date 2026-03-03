@@ -20,6 +20,15 @@
 3. 仅在用户明确说明“跳过用例/紧急修复”时可例外；例外需在回复中注明原因与风险。
 4. 若需求无法直接编写自动化用例，需先提供最小可复现脚本或验收检查清单，再开始开发。
 
+## Ring 0 规则（强制）
+
+1. 涉及 LLM 能力验证时，默认必须使用真实外部 LLM 网络调用。
+2. 非用户显式指定，不允许使用 mock/stub/fake gateway/本地伪响应替代真实 LLM。
+3. 非用户显式指定，不允许使用 workaround（含“workground”）绕过真实链路与验收门禁。
+4. 如因外部依赖不可用导致阻塞，必须明确报错与阻塞点，不得伪造成功结果。
+5. nanobot 行为收敛必须基于预设配置与 skills 实现；非用户显式批准，不允许修改 nanobot 代码逻辑。
+6. opencode 行为收敛必须基于预设配置与 skills/tools 实现；非用户显式批准，不允许修改 opencode 代码逻辑。
+
 
 ## Active Technologies
 - Markdown 规范文档 + Shell 自动化脚本（仓库现状） + GitHub 仓库协作、Spec Kit 工作流、BMAD 方法文档资产 (001-system-design-spec)

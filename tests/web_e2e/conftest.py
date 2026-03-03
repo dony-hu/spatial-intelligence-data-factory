@@ -17,10 +17,28 @@ DEFAULT_SERVER_WAIT_SEC = float(os.getenv("WEB_E2E_SERVER_WAIT_SEC", "45"))
 DEFAULT_OPTIMIZE_TIMEOUT_SEC = float(os.getenv("WEB_E2E_OPTIMIZE_TIMEOUT_SEC", "90"))
 DEFAULT_OPTIMIZE_RETRIES = int(os.getenv("WEB_E2E_OPTIMIZE_RETRIES", "3"))
 DEFAULT_OPTIMIZE_RETRY_DELAY_SEC = float(os.getenv("WEB_E2E_OPTIMIZE_RETRY_DELAY_SEC", "1.5"))
+DEFAULT_PREFLIGHT_TIMEOUT_SEC = float(os.getenv("WEB_E2E_PREFLIGHT_TIMEOUT_SEC", "40"))
+DEFAULT_SKILLPACK_SETUP = str(os.getenv("WEB_E2E_SETUP_SKILLPACKS", "1")).strip() == "1"
 
 
 def _e2e_log(message: str) -> None:
     print(f"[web_e2e] {message}", flush=True)
+
+
+def _load_env_file(path: Path) -> Dict[str, str]:
+    if not path.exists():
+        return {}
+    values: Dict[str, str] = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = str(raw or "").strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key:
+            values[key] = value
+    return values
 
 
 def _find_free_port(host: str = DEFAULT_HOST) -> int:
@@ -51,12 +69,23 @@ def _http_post(url: str, payload: Dict[str, Any], timeout_sec: float = 10.0) -> 
         return json.loads(resp.read().decode("utf-8"))
 
 
+def _runtime_preflight(base_url: str, timeout_sec: float = DEFAULT_PREFLIGHT_TIMEOUT_SEC) -> Dict[str, Any]:
+    url = (
+        f"{base_url}/v1/governance/observability/runtime/preflight"
+        "?verify_llm=true&fail_fast=false"
+    )
+    req = urllib.request.Request(url=url, method="GET")
+    with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 def _wait_server(base_url: str, timeout_sec: float = 35.0) -> None:
     deadline = time.time() + timeout_sec
-    health_urls = [
-        f"{base_url}/v1/governance/ops/summary",
-        f"{base_url}/v1/governance/lab/observability/snapshot?env=dev",
-    ]
+    custom_paths = str(os.getenv("WEB_E2E_HEALTH_PATHS", "") or "").strip()
+    if custom_paths:
+        health_urls = [f"{base_url}{path.strip()}" for path in custom_paths.split(",") if path.strip()]
+    else:
+        health_urls = [f"{base_url}/v1/governance/ops/summary"]
     last_error = "unknown"
     while time.time() < deadline:
         ready = True
@@ -140,6 +169,14 @@ def local_governance_server(base_url: str):
     port = base_url.rsplit(":", 1)[-1]
     env = os.environ.copy()
     env["PYTHONPATH"] = f"{ROOT}:{env.get('PYTHONPATH', '')}".rstrip(":")
+    # E2E 强制加载 docker pg 配置并锁定 no-fallback。
+    db_env_path = ROOT / "config" / "database.postgres.env"
+    for k, v in _load_env_file(db_env_path).items():
+        env.setdefault(k, v)
+    env["TRUST_ALLOW_MEMORY_FALLBACK"] = "0"
+    env["GOVERNANCE_ALLOW_MEMORY_FALLBACK"] = "0"
+    if not str(env.get("DATABASE_URL") or "").strip().startswith("postgresql://"):
+        raise RuntimeError("WEB E2E requires DATABASE_URL=postgresql://... (docker pg)")
 
     process = subprocess.Popen(
         [
@@ -169,6 +206,37 @@ def local_governance_server(base_url: str):
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
             process.kill()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_nanobot_opencode_skillpacks_ready() -> None:
+    if not DEFAULT_SKILLPACK_SETUP:
+        _e2e_log("skip skillpack setup: WEB_E2E_SETUP_SKILLPACKS!=1")
+        return
+    script_path = ROOT / "scripts" / "install_nanobot_opencode_skillpacks.sh"
+    if not script_path.exists():
+        raise RuntimeError(f"skillpack installer missing: {script_path}")
+    proc = subprocess.run(
+        ["bash", str(script_path)],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            "skillpack setup failed: "
+            + (proc.stderr or proc.stdout or f"rc={proc.returncode}")
+        )
+    required_files = [
+        ROOT / "workpackages" / "skills" / "nanobot_workpackage_schema_orchestrator.md",
+        ROOT / "workpackages" / "skills" / "opencode_workpackage_builder_guardrails.md",
+        ROOT / "workpackages" / "skills" / "trusted_map_api_catalog_sf_v1.md",
+        ROOT / ".opencode" / "agents" / "factory-workpackage-schema.md",
+    ]
+    missing = [str(p) for p in required_files if not p.exists()]
+    if missing:
+        raise RuntimeError("skillpack files missing: " + ", ".join(missing))
 
 
 @pytest.fixture(scope="session")
@@ -248,3 +316,12 @@ def ensure_playwright_browser_ready() -> None:
         "Playwright browser is not installed or unavailable; "
         + " ; ".join(errors)
     )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_runtime_preflight_ok(base_url: str, local_governance_server) -> None:
+    if str(os.getenv("WEB_E2E_RUNTIME_PREFLIGHT", "1")).strip() != "1":
+        return
+    payload = _runtime_preflight(base_url, timeout_sec=DEFAULT_PREFLIGHT_TIMEOUT_SEC)
+    if str(payload.get("status") or "") != "ok":
+        raise RuntimeError(f"runtime preflight blocked: {json.dumps(payload, ensure_ascii=False)}")

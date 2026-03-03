@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import hmac
+import json
 import os
+import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse
@@ -19,6 +25,26 @@ from services.governance_api.app.models.observability_models import (
 from services.governance_api.app.services.governance_service import GOVERNANCE_SERVICE, GovernanceGateError
 
 router = APIRouter()
+_AGENT_CHAT_SESSIONS: dict[str, list[dict[str, Any]]] = {}
+_AGENT_TRACE_SESSIONS: dict[str, dict[str, list[dict[str, Any]]]] = {}
+_FACTORY_AGENT: Any = None
+
+
+def _get_factory_agent() -> Any:
+    global _FACTORY_AGENT
+    if _FACTORY_AGENT is None:
+        from packages.factory_agent.agent import FactoryAgent
+
+        _FACTORY_AGENT = FactoryAgent()
+    return _FACTORY_AGENT
+
+
+def _split_bundle_name(bundle_name: str) -> tuple[str, str]:
+    name = str(bundle_name or "").strip()
+    match = re.match(r"^(.+)-v(\d+\.\d+\.\d+)$", name)
+    if not match:
+        return "", ""
+    return str(match.group(1) or ""), f"v{match.group(2)}"
 
 
 def _resolve_role(role: str, x_role: Optional[str]) -> str:
@@ -83,6 +109,70 @@ def _mask_object(value: Any) -> Any:
     if isinstance(value, str) and len(value) >= 6:
         return _mask_text(value)
     return value
+
+
+def _ok_response(data: Any, message: str = "ok") -> dict[str, Any]:
+    return {
+        "code": "OK",
+        "message": message,
+        "data": data,
+        "request_id": f"req_{uuid4().hex[:12]}",
+    }
+
+
+def _append_runtime_api_trace(
+    *,
+    event_type: str,
+    endpoint: str,
+    status: str,
+    session_id: str = "",
+    payload: Optional[dict[str, Any]] = None,
+) -> None:
+    log_path = Path(str(os.getenv("RUNTIME_API_TRACE_LOG") or "output/runtime_traces/runtime_api_trace.jsonl"))
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "event_type": str(event_type or ""),
+            "endpoint": str(endpoint or ""),
+            "status": str(status or "ok"),
+            "session_id": str(session_id or ""),
+            "payload": payload if isinstance(payload, dict) else {},
+        }
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    except Exception:
+        # trace logging must not break primary API path
+        return
+
+
+def _trace_item(
+    *,
+    session_id: str,
+    trace_id: str,
+    channel: str,
+    direction: str,
+    stage: str,
+    event_type: str,
+    content_text: str,
+    content_json: Any = None,
+    artifacts: list[str] | None = None,
+    status: str = "success",
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "session_id": str(session_id or ""),
+        "trace_id": str(trace_id or ""),
+        "channel": str(channel or ""),
+        "direction": str(direction or ""),
+        "stage": str(stage or ""),
+        "event_type": str(event_type or ""),
+        "content_text": str(content_text or ""),
+        "content_json": content_json if isinstance(content_json, (dict, list)) else {},
+        "artifacts": [str(x) for x in (artifacts or []) if str(x).strip()],
+        "status": str(status or "success"),
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
+    return payload
 
 
 @router.get("/observability/snapshot", response_model=ObservationSnapshotResponse)
@@ -288,7 +378,10 @@ def get_runtime_workpackage_pipeline(
     window: str = Query(default="24h"),
     client_type: str = Query(default=""),
 ) -> dict:
-    return GOVERNANCE_SERVICE.runtime_workpackage_pipeline(window=window, client_type=client_type)
+    try:
+        return GOVERNANCE_SERVICE.runtime_workpackage_pipeline(window=window, client_type=client_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_ARGUMENT", "message": str(exc)}) from exc
 
 
 @router.get("/observability/runtime/workpackage-events")
@@ -306,6 +399,20 @@ def get_runtime_workpackage_events(
             window=window,
             client_type=client_type,
             limit=limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_ARGUMENT", "message": str(exc)}) from exc
+
+
+@router.get("/observability/runtime/workpackage-blueprint")
+def get_runtime_workpackage_blueprint(
+    workpackage_id: str = Query(..., min_length=1),
+    version: str = Query(default=""),
+) -> dict:
+    try:
+        return GOVERNANCE_SERVICE.runtime_workpackage_blueprint(
+            workpackage_id=workpackage_id,
+            version=version,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail={"code": "INVALID_ARGUMENT", "message": str(exc)}) from exc
@@ -442,10 +549,134 @@ def seed_runtime_workpackage_demo(total: int = Query(default=12, ge=3, le=200)) 
     return GOVERNANCE_SERVICE.runtime_seed_workpackage_demo_cases(total=total)
 
 
+@router.post("/observability/runtime/workpackages")
+def create_runtime_workpackage(payload: dict[str, Any]) -> dict[str, Any]:
+    try:
+        item = GOVERNANCE_SERVICE.runtime_workpackage_create(
+            workpackage_id=str(payload.get("workpackage_id") or ""),
+            version=str(payload.get("version") or ""),
+            name=str(payload.get("name") or ""),
+            objective=str(payload.get("objective") or ""),
+            status=str(payload.get("status") or "created"),
+            actor=str(payload.get("actor") or ""),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_PAYLOAD", "message": str(exc)}) from exc
+    _append_runtime_api_trace(
+        event_type="runtime_workpackage_crud_create",
+        endpoint="/v1/governance/observability/runtime/workpackages",
+        status="ok",
+        payload={"workpackage_id": str(item.get("workpackage_id") or ""), "version": str(item.get("version") or "")},
+    )
+    return _ok_response(item, message="created")
+
+
+@router.get("/observability/runtime/workpackages")
+def list_runtime_workpackages(
+    q: str = Query(default=""),
+    status: str = Query(default=""),
+    version: str = Query(default=""),
+    limit: int = Query(default=20, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    sort_by: str = Query(default="updated_at"),
+    sort_order: str = Query(default="desc"),
+) -> dict[str, Any]:
+    payload = GOVERNANCE_SERVICE.runtime_workpackage_list(
+        q=q,
+        status=status,
+        version=version,
+        limit=limit,
+        offset=offset,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    _append_runtime_api_trace(
+        event_type="runtime_workpackage_crud_list",
+        endpoint="/v1/governance/observability/runtime/workpackages",
+        status="ok",
+        payload={
+            "q": q,
+            "status": status,
+            "version": version,
+            "limit": limit,
+            "offset": offset,
+            "total": int(payload.get("total") or 0) if isinstance(payload, dict) else 0,
+        },
+    )
+    return _ok_response(payload)
+
+
+@router.get("/observability/runtime/workpackages/{workpackage_id}/versions/{version}")
+def get_runtime_workpackage(workpackage_id: str, version: str) -> dict[str, Any]:
+    item = GOVERNANCE_SERVICE.runtime_workpackage_detail(workpackage_id=workpackage_id, version=version)
+    if not item:
+        raise HTTPException(status_code=404, detail="workpackage not found")
+    _append_runtime_api_trace(
+        event_type="runtime_workpackage_crud_get",
+        endpoint="/v1/governance/observability/runtime/workpackages/{workpackage_id}/versions/{version}",
+        status="ok",
+        payload={"workpackage_id": workpackage_id, "version": version},
+    )
+    return _ok_response(item)
+
+
+@router.put("/observability/runtime/workpackages/{workpackage_id}/versions/{version}")
+def update_runtime_workpackage(workpackage_id: str, version: str, payload: dict[str, Any]) -> dict[str, Any]:
+    try:
+        item = GOVERNANCE_SERVICE.runtime_workpackage_update(
+            workpackage_id=workpackage_id,
+            version=version,
+            name=payload.get("name"),
+            objective=payload.get("objective"),
+            status=payload.get("status"),
+            actor=str(payload.get("actor") or ""),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_PAYLOAD", "message": str(exc)}) from exc
+    if not item:
+        raise HTTPException(status_code=404, detail="workpackage not found")
+    _append_runtime_api_trace(
+        event_type="runtime_workpackage_crud_update",
+        endpoint="/v1/governance/observability/runtime/workpackages/{workpackage_id}/versions/{version}",
+        status="ok",
+        payload={"workpackage_id": workpackage_id, "version": version, "status": str(item.get("status") or "")},
+    )
+    return _ok_response(item, message="updated")
+
+
+@router.delete("/observability/runtime/workpackages/{workpackage_id}/versions/{version}")
+def delete_runtime_workpackage(workpackage_id: str, version: str, actor: str = Query(default="")) -> dict[str, Any]:
+    item = GOVERNANCE_SERVICE.runtime_workpackage_delete(workpackage_id=workpackage_id, version=version, actor=actor)
+    if not item:
+        raise HTTPException(status_code=404, detail="workpackage not found")
+    _append_runtime_api_trace(
+        event_type="runtime_workpackage_crud_delete",
+        endpoint="/v1/governance/observability/runtime/workpackages/{workpackage_id}/versions/{version}",
+        status="ok",
+        payload={"workpackage_id": workpackage_id, "version": version, "actor": actor},
+    )
+    return _ok_response({"workpackage_id": workpackage_id, "version": version}, message="deleted")
+
+
+@router.post("/observability/runtime/workpackages/seed-crud-demo")
+def seed_runtime_workpackage_crud_demo(
+    total: int = Query(default=12, ge=12, le=200),
+    prefix: str = Query(default="wp_seed_crud"),
+) -> dict[str, Any]:
+    payload = GOVERNANCE_SERVICE.runtime_seed_workpackage_crud_demo(total=total, prefix=prefix)
+    return _ok_response(payload)
+
+
 @router.post("/observability/runtime/upload-batch")
 def upload_runtime_batch(payload: dict[str, Any]) -> dict:
     batch_name = str(payload.get("batch_name") or "runtime-upload-batch")
     ruleset_id = str(payload.get("ruleset_id") or "default")
+    workpackage_id = str(payload.get("workpackage_id") or "")
+    version = str(payload.get("version") or "")
+    confirmations_raw = payload.get("confirmations")
+    confirmations = []
+    if isinstance(confirmations_raw, list):
+        confirmations = [str(item or "").strip() for item in confirmations_raw if str(item or "").strip()]
     actor = str(payload.get("actor") or "runtime_upload")
     addresses_raw = payload.get("addresses")
     if not isinstance(addresses_raw, list):
@@ -454,780 +685,208 @@ def upload_runtime_batch(payload: dict[str, Any]) -> dict:
     if not addresses:
         raise HTTPException(status_code=400, detail={"code": "INVALID_ADDRESSES", "message": "addresses is empty"})
     try:
-        return GOVERNANCE_SERVICE.submit_runtime_uploaded_batch(
+        result = GOVERNANCE_SERVICE.submit_runtime_uploaded_batch(
             batch_name=batch_name,
             ruleset_id=ruleset_id,
             addresses=addresses,
             actor=actor,
+            workpackage_id=workpackage_id,
+            version=version,
+            confirmations=confirmations,
         )
+        _append_runtime_api_trace(
+            event_type="runtime_upload_batch",
+            endpoint="/v1/governance/observability/runtime/upload-batch",
+            status="ok",
+            payload={
+                "workpackage_id": workpackage_id,
+                "version": version,
+                "record_count": int(result.get("record_count") or 0) if isinstance(result, dict) else 0,
+                "runtime_receipt_id": str(result.get("runtime_receipt_id") or "") if isinstance(result, dict) else "",
+            },
+        )
+        return result
     except ValueError as exc:
+        _append_runtime_api_trace(
+            event_type="runtime_upload_batch",
+            endpoint="/v1/governance/observability/runtime/upload-batch",
+            status="error",
+            payload={"workpackage_id": workpackage_id, "version": version, "error": str(exc)},
+        )
         raise HTTPException(status_code=400, detail={"code": "INVALID_PAYLOAD", "message": str(exc)}) from exc
     except GovernanceGateError as exc:
+        _append_runtime_api_trace(
+            event_type="runtime_upload_batch",
+            endpoint="/v1/governance/observability/runtime/upload-batch",
+            status="blocked",
+            payload={"workpackage_id": workpackage_id, "version": version, "code": exc.code, "message": exc.message},
+        )
         raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "message": exc.message}) from exc
+
+
+@router.post("/observability/runtime/agent-chat")
+def runtime_agent_chat(payload: dict[str, Any]) -> dict:
+    session_id = str(payload.get("session_id") or "").strip() or f"runtime_agent_{os.urandom(4).hex()}"
+    message = str(payload.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail={"code": "INVALID_PAYLOAD", "message": "message is required"})
+    try:
+        agent = _get_factory_agent()
+        try:
+            result = agent.converse(message, session_id=session_id)
+        except TypeError:
+            result = agent.converse(message)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail={"code": "AGENT_CHAT_FAILED", "message": str(exc)}) from exc
+
+    history = _AGENT_CHAT_SESSIONS.setdefault(session_id, [])
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": result})
+    trace_payload = (result or {}).get("nanobot_traces") if isinstance(result, dict) else {}
+    if not isinstance(trace_payload, dict):
+        trace_payload = {"client_nanobot": [], "nanobot_opencode": []}
+    _AGENT_TRACE_SESSIONS[session_id] = {
+        "client_nanobot": list(trace_payload.get("client_nanobot") or []),
+        "nanobot_opencode": list(trace_payload.get("nanobot_opencode") or []),
+    }
+
+    bundle_name = str((result or {}).get("bundle_name") or "")
+    bundle_id, version = _split_bundle_name(bundle_name)
+    workpackage_ref = ""
+    if bundle_id and version:
+        workpackage_ref = f"{bundle_id}@{version}"
+
+    try:
+        GOVERNANCE_SERVICE.log_audit_event(
+            event_type="runtime_agent_chat",
+            caller="runtime_view_user",
+            payload={"session_id": session_id, "message": message, "result_action": str((result or {}).get("action") or "")},
+        )
+    except Exception:
+        pass
+    _append_runtime_api_trace(
+        event_type="runtime_agent_chat",
+        endpoint="/v1/governance/observability/runtime/agent-chat",
+        status=str((result or {}).get("status") or "ok"),
+        session_id=session_id,
+        payload={
+            "message": message,
+            "action": str((result or {}).get("action") or ""),
+            "workpackage_ref": workpackage_ref,
+            "client_trace_count": len(_AGENT_TRACE_SESSIONS.get(session_id, {}).get("client_nanobot") or []),
+            "opencode_trace_count": len(_AGENT_TRACE_SESSIONS.get(session_id, {}).get("nanobot_opencode") or []),
+        },
+    )
+    return {
+        "session_id": session_id,
+        "result": result,
+        "workpackage_ref": workpackage_ref,
+        "nanobot_traces": trace_payload,
+        "trace_log_path": str((result or {}).get("trace_log_path") or ""),
+        "schema_fix_rounds": (result or {}).get("schema_fix_rounds") if isinstance(result, dict) else [],
+        "workpackage_blueprint_summary": (result or {}).get("workpackage_blueprint_summary") if isinstance(result, dict) else {},
+        "history": history[-20:],
+    }
 
 
 @router.get("/observability/runtime/view", response_class=HTMLResponse)
 def runtime_observability_view(window: str = Query(default="24h")) -> HTMLResponse:
-    safe_window = str(window or "24h")
-    html = f"""
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>系统运行态可观测总览</title>
-    <style>
-      :root {{
-        --bg: #f4f7f9;
-        --panel: #ffffff;
-        --line: #d7e0e8;
-        --ink: #0f2742;
-        --muted: #526377;
-        --blue: #0d6aa8;
-        --green: #0e805a;
-        --orange: #b06a12;
-        --red: #b3261e;
-      }}
-      * {{ box-sizing: border-box; }}
-      body {{ margin: 0; background: var(--bg); color: var(--ink); font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }}
-      .wrap {{ max-width: 1400px; margin: 0 auto; padding: 14px; }}
-      .hero {{
-        background: linear-gradient(120deg, #11476e, #0d6aa8 60%, #1e8bb7);
-        color: #fff;
-        border-radius: 14px;
-        padding: 18px;
-      }}
-      .hero p {{ margin: 8px 0 0; color: rgba(255, 255, 255, 0.88); }}
-      .toolbar {{
-        margin-top: 12px;
-        display: grid;
-        grid-template-columns: 140px 160px 160px 160px 1fr 1fr;
-        gap: 10px;
-      }}
-      select, button {{
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 14px;
-        background: #fff;
-      }}
-      button {{
-        background: var(--ink);
-        color: #fff;
-        border-color: var(--ink);
-        cursor: pointer;
-      }}
-      .kpi {{
-        margin-top: 12px;
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 10px;
-      }}
-      .card {{
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 12px;
-      }}
-      .k {{ font-size: 12px; color: var(--muted); }}
-      .v {{ margin-top: 6px; font-weight: 700; font-size: 22px; }}
-      .split {{
-        margin-top: 12px;
-        display: grid;
-        grid-template-columns: 1.1fr 1fr 1fr;
-        gap: 10px;
-      }}
-      .reliability {{
-        margin-top: 12px;
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 10px;
-      }}
-      .panel-title {{ margin: 0 0 8px; font-size: 15px; }}
-      ul {{
-        margin: 0;
-        padding: 0 0 0 18px;
-      }}
-      li {{ margin: 5px 0; color: var(--muted); }}
-      table {{
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }}
-      th, td {{
-        border-bottom: 1px solid var(--line);
-        padding: 8px 6px;
-        text-align: left;
-      }}
-      th {{ color: var(--muted); font-weight: 600; }}
-      .status {{
-        display: inline-block;
-        min-width: 72px;
-        text-align: center;
-        padding: 3px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-      }}
-      .SUCCEEDED {{ background: rgba(14,128,90,.12); color: var(--green); }}
-      .BLOCKED {{ background: rgba(179,38,30,.12); color: var(--red); }}
-      .REVIEWED {{ background: rgba(13,106,168,.12); color: var(--blue); }}
-      .RUNNING {{ background: rgba(176,106,18,.12); color: var(--orange); }}
-      .PENDING {{ background: rgba(82,99,119,.12); color: var(--muted); }}
-      .muted {{ color: var(--muted); }}
-      .task-link {{
-        color: var(--blue);
-        text-decoration: underline;
-        cursor: pointer;
-      }}
-      .modal-mask {{
-        position: fixed;
-        inset: 0;
-        background: rgba(9, 22, 38, 0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }}
-      .modal-mask.show {{
-        display: flex;
-      }}
-      .modal {{
-        width: min(1320px, calc(100vw - 32px));
-        max-height: calc(100vh - 32px);
-        overflow: auto;
-        background: #fff;
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        padding: 12px;
-      }}
-      .modal-head {{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-      }}
-      .modal-grid {{
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-      }}
-      .modal-close {{
-        background: #fff;
-        color: var(--ink);
-        border: 1px solid var(--line);
-      }}
-      pre {{
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: #f6f9fc;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 8px;
-        color: #22354b;
-        max-height: 340px;
-        overflow: auto;
-      }}
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <section class="hero">
-        <h1 style="margin:0;">系统运行态可观测总览</h1>
-        <p>只展示治理运行成果与质量，不展示研发过程指标。默认时间窗：<span id="windowLabel">{safe_window}</span></p>
-      </section>
+    template_path = Path(__file__).resolve().parents[4] / "web" / "dashboard" / "factory-agent-governance-prototype-v2.html"
+    if not template_path.exists():
+        raise HTTPException(status_code=500, detail={"code": "RUNTIME_VIEW_TEMPLATE_MISSING", "message": str(template_path)})
+    raw_html = template_path.read_text(encoding="utf-8")
+    rendered_html = raw_html.replace("__DEFAULT_WINDOW__", str(window or "24h"))
+    return HTMLResponse(content=rendered_html)
 
-      <section class="toolbar">
-        <select id="window">
-          <option value="1h">近1小时</option>
-          <option value="24h" selected>近24小时</option>
-          <option value="7d">近7天</option>
-          <option value="30d">近30天</option>
-        </select>
-        <select id="status">
-          <option value="">全部状态</option>
-          <option value="PENDING">PENDING</option>
-          <option value="RUNNING">RUNNING</option>
-          <option value="SUCCEEDED">SUCCEEDED</option>
-          <option value="REVIEWED">REVIEWED</option>
-          <option value="BLOCKED">BLOCKED</option>
-          <option value="FAILED">FAILED</option>
-        </select>
-        <select id="ruleset">
-          <option value="">全部规则集</option>
-          <option value="default">default</option>
-        </select>
-        <select id="role">
-          <option value="viewer">viewer(只读脱敏)</option>
-          <option value="oncall">oncall(可ACK)</option>
-          <option value="admin">admin(全量)</option>
-        </select>
-        <input id="roleToken" type="password" placeholder="输入 oncall/admin token（viewer 可留空）" />
-        <button id="refreshBtn" type="button">刷新观测数据</button>
-      </section>
-      <section class="card" style="margin-top:12px;">
-        <h2 class="panel-title">上传地址批次并执行任务</h2>
-        <p class="muted" style="margin:0 0 8px;">支持 txt/csv/json 文本上传。每行一条地址，提交后自动创建并执行 task。</p>
-        <div style="display:grid;grid-template-columns:220px 1fr 170px;gap:10px;">
-          <input id="uploadFile" type="file" accept=".txt,.csv,.json,.jsonl,.ndjson,.log,.md" />
-          <textarea id="uploadText" placeholder="粘贴地址（每行一条）" style="min-height:96px;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;"></textarea>
-          <button id="uploadBtn" type="button">上传并执行</button>
-        </div>
-        <p id="uploadStatus" class="muted" style="margin:8px 0 0;">等待上传</p>
-      </section>
 
-      <section class="kpi">
-        <article class="card"><div class="k">任务总数</div><div id="kTotal" class="v">-</div></article>
-        <article class="card"><div class="k">完成率</div><div id="kSuccessRate" class="v">-</div></article>
-        <article class="card"><div class="k">阻塞率</div><div id="kBlockedRate" class="v">-</div></article>
-        <article class="card"><div class="k">平均置信度</div><div id="kConfidence" class="v">-</div></article>
-        <article class="card"><div class="k">待审核积压</div><div id="kPendingReview" class="v">-</div></article>
-        <article class="card"><div class="k">最近处理时间</div><div id="kLatest" class="v" style="font-size:14px;">-</div></article>
-      </section>
+@router.get("/observability/runtime/preflight")
+def runtime_preflight(
+    verify_llm: bool = Query(default=True),
+    fail_fast: bool = Query(default=True),
+    llm_retries: int = Query(default=3, ge=1, le=5),
+    llm_timeout_sec: int = Query(default=45, ge=10, le=120),
+) -> dict:
+    checks: dict[str, dict[str, Any]] = {}
+    errors: list[str] = []
 
-      <section class="split">
-        <article class="card">
-          <h2 class="panel-title">置信度分层</h2>
-          <ul id="confidenceBuckets"></ul>
-        </article>
-        <article class="card">
-          <h2 class="panel-title">阻塞原因 Top5</h2>
-          <ul id="blockedTop"></ul>
-        </article>
-        <article class="card">
-          <h2 class="panel-title">低置信模式 Top5</h2>
-          <ul id="lowPatternTop"></ul>
-        </article>
-      </section>
+    # 1) PostgreSQL / governance repository readiness
+    try:
+        summary = GOVERNANCE_SERVICE.runtime_summary(window="24h", ruleset_id="")
+        checks["postgres"] = {
+            "ok": True,
+            "detail": "governance repository reachable",
+            "sample_total_tasks": int(summary.get("total_tasks") or 0) if isinstance(summary, dict) else 0,
+        }
+    except Exception as exc:
+        checks["postgres"] = {"ok": False, "detail": str(exc)}
+        errors.append(f"postgres: {exc}")
 
-      <section class="reliability">
-        <article class="card"><div class="k">可靠性-可用性</div><div id="rAvailability" class="v">-</div></article>
-        <article class="card"><div class="k">可靠性-P95延迟</div><div id="rLatencyP95" class="v">-</div></article>
-        <article class="card"><div class="k">可靠性-新鲜度(分钟)</div><div id="rFreshness" class="v">-</div></article>
-        <article class="card"><div class="k">可靠性-正确性</div><div id="rCorrectness" class="v">-</div></article>
-        <article class="card"><div class="k">SLO违约项</div><div id="rViolations" class="v">-</div></article>
-        <article class="card"><div class="k">未ACK告警</div><div id="rOpenAlerts" class="v">-</div></article>
-      </section>
-      <section class="reliability">
-        <article class="card"><div class="k">质量漂移异常数</div><div id="qAnomalies" class="v">-</div></article>
-        <article class="card"><div class="k">覆盖率漂移</div><div id="qCoverageDelta" class="v">-</div></article>
-        <article class="card"><div class="k">区划一致率漂移</div><div id="qDistrictDelta" class="v">-</div></article>
-        <article class="card"><div class="k">低置信占比漂移</div><div id="qLowConfDelta" class="v">-</div></article>
-        <article class="card"><div class="k">阻塞稳定性漂移</div><div id="qBlockedDelta" class="v">-</div></article>
-        <article class="card"><div class="k">异常样本任务</div><div id="qSampleTask" class="v" style="font-size:14px;">-</div></article>
-      </section>
-      <section class="reliability">
-        <article class="card"><div class="k">聚合查询耗时</div><div id="pAggregateMs" class="v">-</div></article>
-        <article class="card"><div class="k">下钻查询耗时</div><div id="pDetailMs" class="v">-</div></article>
-        <article class="card"><div class="k">性能违约数</div><div id="pViolations" class="v">-</div></article>
-      </section>
+    # 2) nanobot runtime (FactoryAgent) readiness
+    try:
+        agent = _get_factory_agent()
+        checks["nanobot"] = {
+            "ok": callable(getattr(agent, "converse", None)),
+            "detail": "FactoryAgent loaded",
+        }
+        if not checks["nanobot"]["ok"]:
+            errors.append("nanobot: converse method missing")
+    except Exception as exc:
+        checks["nanobot"] = {"ok": False, "detail": str(exc)}
+        errors.append(f"nanobot: {exc}")
 
-      <section class="card" style="margin-top:12px;">
-        <h2 class="panel-title">新增治理包链路观测</h2>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-          <button id="seedWpBtn" type="button">灌入链路样例</button>
-        </div>
-        <div class="reliability" style="margin-top:0;">
-          <article class="card"><div class="k">工作包总数</div><div id="wpTotal" class="v">-</div></article>
-          <article class="card"><div class="k">端到端闭环率</div><div id="wpE2E" class="v">-</div></article>
-          <article class="card"><div class="k">Runtime提交成功率</div><div id="wpSubmitRate" class="v">-</div></article>
-        </div>
-        <p id="wpSeedStatus" class="muted" style="margin:8px 0 0;">可点击“灌入链路样例”生成可观测数据</p>
-        <table style="margin-top:8px;">
-          <thead>
-            <tr>
-              <th>Workpackage ID</th>
-              <th>Version</th>
-              <th>Client</th>
-              <th>当前阶段</th>
-              <th>提交状态</th>
-              <th>阶段数</th>
-              <th>Skills</th>
-              <th>Artifacts</th>
-              <th>Checksum</th>
-              <th>Runtime Receipt</th>
-              <th>更新时间</th>
-            </tr>
-          </thead>
-          <tbody id="workpackageRows">
-            <tr><td colspan="11" class="muted">加载中...</td></tr>
-          </tbody>
-        </table>
-      </section>
+    # 3) opencode availability
+    try:
+        proc = subprocess.run(["opencode", "--version"], capture_output=True, text=True, check=False, timeout=10)
+        ok = int(proc.returncode) == 0
+        checks["opencode"] = {
+            "ok": ok,
+            "detail": (proc.stdout or proc.stderr or "").strip(),
+        }
+        if not ok:
+            errors.append(f"opencode: {checks['opencode']['detail'] or 'not available'}")
+    except Exception as exc:
+        checks["opencode"] = {"ok": False, "detail": str(exc)}
+        errors.append(f"opencode: {exc}")
 
-      <section class="card" style="margin-top:12px;">
-        <h2 class="panel-title">任务明细</h2>
-        <p class="muted" style="margin:0 0 8px;">点击 Task ID 可查看“源数据 / 治理成果 / 过程日志”。</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Task ID</th>
-              <th>状态</th>
-              <th>规则集</th>
-              <th>地址条数</th>
-              <th>置信度</th>
-              <th>策略</th>
-              <th>审核状态</th>
-              <th>更新时间</th>
-            </tr>
-          </thead>
-          <tbody id="taskRows">
-            <tr><td colspan="8" class="muted">加载中...</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </div>
-    <div id="wpModalMask" class="modal-mask">
-      <section class="modal">
-        <div class="modal-head">
-          <h2 id="wpDetailTitle" class="panel-title" style="margin:0;">工作包链路事件</h2>
-          <button id="closeWpModalBtn" class="modal-close" type="button">关闭</button>
-        </div>
-        <article class="card">
-          <h2 class="panel-title">事件时间线（CLI / Agent / LLM / Runtime）</h2>
-          <pre id="wpProcessLogs">请选择工作包</pre>
-        </article>
-      </section>
-    </div>
-    <div id="modalMask" class="modal-mask">
-      <section class="modal">
-        <div class="modal-head">
-          <h2 id="detailTitle" class="panel-title" style="margin:0;">任务详情（批次）</h2>
-          <button id="closeModalBtn" class="modal-close" type="button">关闭</button>
-        </div>
-        <div class="modal-grid">
-          <article class="card">
-            <h2 class="panel-title">源数据（输入）</h2>
-            <pre id="sourceData">请选择任务</pre>
-          </article>
-          <article class="card">
-            <h2 class="panel-title">治理成果（输出）</h2>
-            <pre id="governanceData">请选择任务</pre>
-          </article>
-          <article class="card">
-            <h2 class="panel-title">治理过程日志</h2>
-            <pre id="processLogs">请选择任务</pre>
-          </article>
-        </div>
-      </section>
-    </div>
-    <script>
-      const els = {{
-        window: document.getElementById("window"),
-        status: document.getElementById("status"),
-        ruleset: document.getElementById("ruleset"),
-        role: document.getElementById("role"),
-        roleToken: document.getElementById("roleToken"),
-        refreshBtn: document.getElementById("refreshBtn"),
-        uploadFile: document.getElementById("uploadFile"),
-        uploadText: document.getElementById("uploadText"),
-        uploadBtn: document.getElementById("uploadBtn"),
-        uploadStatus: document.getElementById("uploadStatus"),
-        windowLabel: document.getElementById("windowLabel"),
-        kTotal: document.getElementById("kTotal"),
-        kSuccessRate: document.getElementById("kSuccessRate"),
-        kBlockedRate: document.getElementById("kBlockedRate"),
-        kConfidence: document.getElementById("kConfidence"),
-        kPendingReview: document.getElementById("kPendingReview"),
-        kLatest: document.getElementById("kLatest"),
-        confidenceBuckets: document.getElementById("confidenceBuckets"),
-        blockedTop: document.getElementById("blockedTop"),
-        lowPatternTop: document.getElementById("lowPatternTop"),
-        taskRows: document.getElementById("taskRows"),
-        rAvailability: document.getElementById("rAvailability"),
-        rLatencyP95: document.getElementById("rLatencyP95"),
-        rFreshness: document.getElementById("rFreshness"),
-        rCorrectness: document.getElementById("rCorrectness"),
-        rViolations: document.getElementById("rViolations"),
-        rOpenAlerts: document.getElementById("rOpenAlerts"),
-        qAnomalies: document.getElementById("qAnomalies"),
-        qCoverageDelta: document.getElementById("qCoverageDelta"),
-        qDistrictDelta: document.getElementById("qDistrictDelta"),
-        qLowConfDelta: document.getElementById("qLowConfDelta"),
-        qBlockedDelta: document.getElementById("qBlockedDelta"),
-        qSampleTask: document.getElementById("qSampleTask"),
-        pAggregateMs: document.getElementById("pAggregateMs"),
-        pDetailMs: document.getElementById("pDetailMs"),
-        pViolations: document.getElementById("pViolations"),
-        wpTotal: document.getElementById("wpTotal"),
-        wpE2E: document.getElementById("wpE2E"),
-        wpSubmitRate: document.getElementById("wpSubmitRate"),
-        workpackageRows: document.getElementById("workpackageRows"),
-        seedWpBtn: document.getElementById("seedWpBtn"),
-        wpSeedStatus: document.getElementById("wpSeedStatus"),
-        wpModalMask: document.getElementById("wpModalMask"),
-        wpDetailTitle: document.getElementById("wpDetailTitle"),
-        wpProcessLogs: document.getElementById("wpProcessLogs"),
-        closeWpModalBtn: document.getElementById("closeWpModalBtn"),
-        modalMask: document.getElementById("modalMask"),
-        closeModalBtn: document.getElementById("closeModalBtn"),
-        detailTitle: document.getElementById("detailTitle"),
-        sourceData: document.getElementById("sourceData"),
-        governanceData: document.getElementById("governanceData"),
-        processLogs: document.getElementById("processLogs"),
-      }};
+    # 4) real external LLM connectivity
+    if verify_llm:
+        try:
+            from tools.agent_cli import load_config, run_requirement_query
 
-      els.window.value = "{safe_window}";
+            config_path = Path(__file__).resolve().parents[4] / "config" / "llm_api.json"
+            config = load_config(str(config_path))
+            config["timeout_sec"] = int(llm_timeout_sec)
+            config["max_tokens"] = min(int(config.get("max_tokens") or 1200), 32)
+            llm_error = ""
+            answer = ""
+            for _ in range(max(1, int(llm_retries))):
+                try:
+                    ping = run_requirement_query(
+                        "请仅回复: OK",
+                        config,
+                        system_prompt_override="你是连通性探针，请只输出OK",
+                    )
+                    answer = str(ping.get("answer") or "").strip()
+                    if answer:
+                        break
+                except Exception as exc:
+                    llm_error = str(exc)
+            checks["llm"] = {"ok": bool(answer), "detail": (answer or llm_error)[:200]}
+            if not answer:
+                errors.append(f"llm: {llm_error or 'empty response'}")
+        except Exception as exc:
+            checks["llm"] = {"ok": False, "detail": str(exc)}
+            errors.append(f"llm: {exc}")
+    else:
+        checks["llm"] = {"ok": True, "detail": "skipped by verify_llm=false"}
 
-      function fmtPct(v) {{
-        return (Number(v || 0) * 100).toFixed(1) + "%";
-      }}
-
-      function qs(params) {{
-        const sp = new URLSearchParams();
-        Object.entries(params).forEach(([k, v]) => {{
-          if (v !== "" && v !== null && v !== undefined) sp.set(k, String(v));
-        }});
-        return sp.toString();
-      }}
-
-      function safeJson(value) {{
-        try {{
-          return JSON.stringify(value, null, 2);
-        }} catch (_err) {{
-          return String(value || "");
-        }}
-      }}
-
-      function parseCsvRow(line) {{
-        const out = [];
-        let current = "";
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {{
-          const ch = line[i];
-          if (ch === '"') {{
-            if (inQuotes && line[i + 1] === '"') {{
-              current += '"';
-              i += 1;
-            }} else {{
-              inQuotes = !inQuotes;
-            }}
-            continue;
-          }}
-          if (ch === "," && !inQuotes) {{
-            out.push(current);
-            current = "";
-            continue;
-          }}
-          current += ch;
-        }}
-        out.push(current);
-        return out.map((x) => x.trim());
-      }}
-
-      function parseAddressInput(text) {{
-        const raw = String(text || "").trim();
-        if (!raw) return [];
-
-        const firstChar = raw.slice(0, 1);
-        if (firstChar === "[" || firstChar === "{{") {{
-          try {{
-            const parsed = JSON.parse(raw);
-            const fromObject = (obj) => {{
-              if (!obj || typeof obj !== "object") return "";
-              return String(obj.raw_text || obj.address || obj.addr || obj.text || "").trim();
-            }};
-            if (Array.isArray(parsed)) {{
-              return parsed
-                .map((item) => (typeof item === "string" ? String(item).trim() : fromObject(item)))
-                .filter(Boolean);
-            }}
-            if (parsed && typeof parsed === "object" && Array.isArray(parsed.addresses)) {{
-              return parsed.addresses
-                .map((item) => (typeof item === "string" ? String(item).trim() : fromObject(item)))
-                .filter(Boolean);
-            }}
-          }} catch (_err) {{
-          }}
-        }}
-
-        const lines = raw
-          .split(/\\r?\\n/)
-          .map((x) => x.trim())
-          .filter(Boolean);
-        if (!lines.length) return [];
-
-        if (lines[0].includes(",")) {{
-          const headers = parseCsvRow(lines[0]).map((h) => h.toLowerCase());
-          const textIdx = headers.findIndex((h) => ["raw_text", "address", "addr", "text"].includes(h));
-          if (textIdx >= 0) {{
-            return lines
-              .slice(1)
-              .map((line) => {{
-                const cols = parseCsvRow(line);
-                return String(cols[textIdx] || "").trim();
-              }})
-              .filter(Boolean);
-          }}
-        }}
-        return lines;
-      }}
-
-      function authHeaders() {{
-        const token = (els.roleToken.value || "").trim();
-        if (!token) return {{}};
-        return {{ "x-observability-token": token }};
-      }}
-
-      async function loadTaskDetail(taskId) {{
-        const base = "/v1/governance/observability/runtime";
-        const role = els.role.value || "viewer";
-        els.detailTitle.textContent = "任务详情（批次） - " + taskId;
-        els.sourceData.textContent = "加载中...";
-        els.governanceData.textContent = "加载中...";
-        els.processLogs.textContent = "加载中...";
-        els.modalMask.classList.add("show");
-        const resp = await fetch(
-          base + "/tasks/" + encodeURIComponent(taskId) + "/detail?" + qs({{ role, actor: "runtime_view" }}),
-          {{ headers: authHeaders() }}
-        );
-        if (!resp.ok) {{
-          els.sourceData.textContent = "加载失败";
-          els.governanceData.textContent = "加载失败";
-          els.processLogs.textContent = "加载失败";
-          return;
-        }}
-        const detail = await resp.json();
-        els.sourceData.textContent = safeJson(detail.source_data || []);
-        els.governanceData.textContent = safeJson(detail.governance_results || []);
-        els.processLogs.textContent = safeJson(detail.process_logs || {{}});
-      }}
-
-      async function loadWorkpackageEvents(workpackageId, version) {{
-        const role = els.role.value || "viewer";
-        els.wpDetailTitle.textContent = "工作包链路事件 - " + workpackageId + (version ? ("@" + version) : "");
-        els.wpProcessLogs.textContent = "加载中...";
-        els.wpModalMask.classList.add("show");
-        const resp = await fetch(
-          "/v1/governance/observability/runtime/workpackage-events?" + qs({{
-            workpackage_id: workpackageId,
-            version: version || "",
-            window: els.window.value || "24h",
-            client_type: "",
-            limit: 500,
-          }}),
-          {{ headers: authHeaders() }}
-        );
-        if (!resp.ok) {{
-          els.wpProcessLogs.textContent = "加载失败";
-          return;
-        }}
-        const payload = await resp.json();
-        els.wpProcessLogs.textContent = safeJson(payload.items || []);
-      }}
-
-      async function loadData() {{
-        const window = els.window.value || "24h";
-        const status = els.status.value || "";
-        const ruleset = els.ruleset.value || "";
-        els.windowLabel.textContent = window;
-        const base = "/v1/governance/observability/runtime";
-
-        const [summaryResp, riskResp, tasksResp] = await Promise.all([
-          fetch(base + "/summary?" + qs({{ window, ruleset_id: ruleset }})),
-          fetch(base + "/risk-distribution?" + qs({{ window }})),
-          fetch(base + "/tasks?" + qs({{ window, status, ruleset_id: ruleset, limit: 50, page: 1 }})),
-        ]);
-        const pipelineResp = await fetch(base + "/workpackage-pipeline?" + qs({{ window, client_type: "" }}));
-        const reliabilityResp = await fetch(base + "/reliability/summary?" + qs({{ window }}));
-        const qualityDriftResp = await fetch(base + "/quality-drift/summary?" + qs({{ window, status, ruleset_id: ruleset }}));
-        const performanceResp = await fetch(base + "/performance/summary?" + qs({{ window }}));
-
-        if (!summaryResp.ok || !riskResp.ok || !tasksResp.ok) {{
-          els.taskRows.innerHTML = '<tr><td colspan="8" class="muted">加载失败：请检查 API 状态</td></tr>';
-          return;
-        }}
-
-        const summary = await summaryResp.json();
-        const risk = await riskResp.json();
-        const tasks = await tasksResp.json();
-        const pipeline = pipelineResp.ok ? await pipelineResp.json() : {{}};
-        const reliability = reliabilityResp.ok ? await reliabilityResp.json() : {{}};
-        const qualityDrift = qualityDriftResp.ok ? await qualityDriftResp.json() : {{}};
-        const performance = performanceResp.ok ? await performanceResp.json() : {{}};
-
-        const total = Number(summary.total_tasks || 0);
-        const statusCounts = summary.status_counts || {{}};
-        const done = Number(statusCounts.SUCCEEDED || 0) + Number(statusCounts.REVIEWED || 0);
-        const blocked = Number(statusCounts.BLOCKED || 0);
-
-        els.kTotal.textContent = String(total);
-        els.kSuccessRate.textContent = total > 0 ? fmtPct(done / total) : "0.0%";
-        els.kBlockedRate.textContent = total > 0 ? fmtPct(blocked / total) : "0.0%";
-        els.kConfidence.textContent = Number(summary.avg_confidence || 0).toFixed(3);
-        els.kPendingReview.textContent = String(summary.pending_review_tasks || 0);
-        els.kLatest.textContent = summary.latest_task_at || "-";
-        const sli = reliability.sli || {{}};
-        els.rAvailability.textContent = fmtPct(sli.availability || 0);
-        els.rLatencyP95.textContent = Number(sli.latency_p95_ms || 0).toFixed(0) + "ms";
-        els.rFreshness.textContent = Number(sli.freshness_minutes || 0).toFixed(1);
-        els.rCorrectness.textContent = Number(sli.correctness || 0).toFixed(3);
-        els.rViolations.textContent = String((reliability.violations || []).length);
-        els.rOpenAlerts.textContent = String((reliability.open_alerts || []).length);
-        const drift = qualityDrift.drift || {{}};
-        els.qAnomalies.textContent = String((qualityDrift.anomalies || []).length);
-        els.qCoverageDelta.textContent = Number(drift.normalization_coverage || 0).toFixed(3);
-        els.qDistrictDelta.textContent = Number(drift.district_match_rate || 0).toFixed(3);
-        els.qLowConfDelta.textContent = Number(drift.low_confidence_ratio || 0).toFixed(3);
-        els.qBlockedDelta.textContent = Number(drift.blocked_reason_stability || 0).toFixed(3);
-        els.qSampleTask.textContent = ((qualityDrift.sample_task_ids || []).slice(0, 2)).join(", ") || "-";
-        const perfMetrics = performance.metrics || {{}};
-        els.pAggregateMs.textContent = Number(perfMetrics.aggregate_api_ms || 0).toFixed(1) + "ms";
-        els.pDetailMs.textContent = Number(perfMetrics.task_detail_api_ms || 0).toFixed(1) + "ms";
-        els.pViolations.textContent = String((performance.violations || []).length);
-        els.wpTotal.textContent = String(Number(pipeline.total_workpackages || 0));
-        els.wpE2E.textContent = fmtPct(Number(pipeline.end_to_end_success_rate || 0));
-        els.wpSubmitRate.textContent = fmtPct(Number(pipeline.runtime_submit_success_rate || 0));
-        const wpRows = pipeline.items || [];
-        if (!wpRows.length) {{
-          els.workpackageRows.innerHTML = '<tr><td colspan="11" class="muted">暂无工作包链路数据</td></tr>';
-        }} else {{
-          els.workpackageRows.innerHTML = wpRows.map((row) => `
-            <tr>
-              <td><span class="task-link" data-workpackage-id="${{row.workpackage_id || ""}}" data-version="${{row.version || ""}}">${{row.workpackage_id || ""}}</span></td>
-              <td>${{row.version || ""}}</td>
-              <td>${{row.client_type || ""}}</td>
-              <td>${{row.current_stage || "-"}}</td>
-              <td>${{row.submit_status || "-"}}</td>
-              <td>${{Number(row.stage_count || 0)}}</td>
-              <td>${{Number(row.skills_count || 0)}}</td>
-              <td>${{Number(row.artifact_count || 0)}}</td>
-              <td>${{(row.checksum || "-").toString().slice(0, 10)}}</td>
-              <td>${{row.runtime_receipt_id || "-"}}</td>
-              <td>${{row.updated_at || "-"}}</td>
-            </tr>
-          `).join("");
-        }}
-
-        const buckets = risk.confidence_buckets || {{}};
-        els.confidenceBuckets.innerHTML = [
-          ["≥ 0.85", buckets.ge_085 || 0],
-          ["0.60 ~ 0.85", buckets.between_060_085 || 0],
-          ["< 0.60", buckets.lt_060 || 0],
-        ].map(([label, count]) => `<li>${{label}}: <b>${{count}}</b></li>`).join("");
-
-        const blockedTop = risk.blocked_reason_top || [];
-        els.blockedTop.innerHTML = blockedTop.length
-          ? blockedTop.map(i => `<li>${{i.reason}}: <b>${{i.count}}</b></li>`).join("")
-          : '<li class="muted">暂无阻塞</li>';
-
-        const patternTop = risk.low_confidence_pattern_top || [];
-        els.lowPatternTop.innerHTML = patternTop.length
-          ? patternTop.map(i => `<li>${{i.pattern}}: <b>${{i.count}}</b></li>`).join("")
-          : '<li class="muted">暂无低置信模式</li>';
-
-        const rows = tasks.items || [];
-        if (!rows.length) {{
-          els.taskRows.innerHTML = '<tr><td colspan="8" class="muted">暂无任务数据，可先灌入样例包</td></tr>';
-        }} else {{
-          els.taskRows.innerHTML = rows.map(row => `
-            <tr>
-              <td><span class="task-link" data-task-id="${{row.task_id || ""}}">${{row.task_id || ""}}</span></td>
-              <td><span class="status ${{row.status || ""}}">${{row.status || ""}}</span></td>
-              <td>${{row.ruleset_id || ""}}</td>
-              <td>${{Number(row.batch_size || 0)}}</td>
-              <td>${{Number(row.confidence || 0).toFixed(3)}}</td>
-              <td>${{row.strategy || ""}}</td>
-              <td>${{row.review_status || "-"}}</td>
-              <td>${{row.updated_at || "-"}}</td>
-            </tr>
-          `).join("");
-        }}
-      }}
-
-      els.refreshBtn.addEventListener("click", loadData);
-      els.window.addEventListener("change", loadData);
-      els.status.addEventListener("change", loadData);
-      els.ruleset.addEventListener("change", loadData);
-      els.taskRows.addEventListener("click", (ev) => {{
-        const target = ev.target;
-        if (!target || !target.dataset || !target.dataset.taskId) return;
-        loadTaskDetail(target.dataset.taskId).catch(() => {{
-          els.processLogs.textContent = "任务详情加载失败";
-        }});
-      }});
-      els.workpackageRows.addEventListener("click", (ev) => {{
-        const target = ev.target;
-        if (!target || !target.dataset || !target.dataset.workpackageId) return;
-        loadWorkpackageEvents(target.dataset.workpackageId, target.dataset.version || "").catch(() => {{
-          els.wpProcessLogs.textContent = "工作包链路加载失败";
-        }});
-      }});
-      els.closeModalBtn.addEventListener("click", () => {{
-        els.modalMask.classList.remove("show");
-      }});
-      els.modalMask.addEventListener("click", (ev) => {{
-        if (ev.target === els.modalMask) {{
-          els.modalMask.classList.remove("show");
-        }}
-      }});
-      els.closeWpModalBtn.addEventListener("click", () => {{
-        els.wpModalMask.classList.remove("show");
-      }});
-      els.wpModalMask.addEventListener("click", (ev) => {{
-        if (ev.target === els.wpModalMask) {{
-          els.wpModalMask.classList.remove("show");
-        }}
-      }});
-      els.uploadFile.addEventListener("change", async () => {{
-        const file = (els.uploadFile.files || [])[0];
-        if (!file) return;
-        const text = await file.text();
-        const addresses = parseAddressInput(text);
-        if (!addresses.length) {{
-          els.uploadStatus.textContent = "文件已选择，但未解析出地址，请检查内容格式";
-          els.uploadFile.value = "";
-          return;
-        }}
-        els.uploadText.value = addresses.join("\\n");
-        els.uploadStatus.textContent = "已加载文件: " + (file.name || "-") + "，共 " + addresses.length + " 条地址";
-        els.uploadFile.value = "";
-      }});
-      els.uploadBtn.addEventListener("click", async () => {{
-        const lines = parseAddressInput(els.uploadText.value || "");
-        if (!lines.length) {{
-          els.uploadStatus.textContent = "请先输入或上传地址数据";
-          return;
-        }}
-        const payload = {{
-          batch_name: "runtime-upload-" + Date.now(),
-          ruleset_id: els.ruleset.value || "default",
-          addresses: lines,
-          actor: "runtime_view_upload",
-        }};
-        els.uploadStatus.textContent = "执行中...";
-        const resp = await fetch("/v1/governance/observability/runtime/upload-batch", {{
-          method: "POST",
-          headers: {{
-            "Content-Type": "application/json",
-          }},
-          body: JSON.stringify(payload),
-        }});
-        const data = await resp.json().catch(() => ({{}}));
-        if (!resp.ok) {{
-          els.uploadStatus.textContent = "执行失败: " + (data?.detail?.message || data?.detail || resp.statusText || "unknown");
-          return;
-        }}
-        els.uploadStatus.textContent = "已创建并执行 task: " + (data.task_id || "-") + "，状态: " + (data.status || "-");
-        await loadData();
-      }});
-      els.seedWpBtn.addEventListener("click", async () => {{
-        els.wpSeedStatus.textContent = "灌入中...";
-        const resp = await fetch("/v1/governance/observability/runtime/seed-workpackage-demo?total=12", {{
-          method: "POST",
-        }});
-        const payload = await resp.json().catch(() => ({{}}));
-        if (!resp.ok) {{
-          els.wpSeedStatus.textContent = "灌入失败: " + (payload?.detail?.message || payload?.detail || resp.statusText || "unknown");
-          return;
-        }}
-        els.wpSeedStatus.textContent = "已灌入链路样例: " + (payload.total_seeded || 0) + " 个工作包";
-        await loadData();
-      }});
-      loadData().catch(() => {{
-        els.taskRows.innerHTML = '<tr><td colspan="8" class="muted">加载失败：请检查服务日志</td></tr>';
-      }});
-    </script>
-  </body>
-</html>
-"""
-    return HTMLResponse(content=html)
+    ok = len(errors) == 0
+    payload = {
+        "status": "ok" if ok else "blocked",
+        "checks": checks,
+        "errors": errors,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    if not ok and fail_fast:
+        raise HTTPException(status_code=503, detail=payload)
+    return payload

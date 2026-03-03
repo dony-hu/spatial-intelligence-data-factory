@@ -1,0 +1,18 @@
+{
+  "scenario_id": "address-governance-user-only-dialogue-v1",
+  "description": "用户仅表达治理目标与确认决策，不直接输入schema字段；由nanobot按skills主动收敛。",
+  "prompts": [
+    "系统可信数据Hub已注册顺丰地图接口：address_standardize、address_real_check、address_resolve_l5、address_type_identify、geocode、reverse_geocode、address_level_judge、address_search_service、address_aoi_keyword。请优先基于这些已注册接口设计方案。",
+    "我要做一个地址治理任务，目标是地址标准化、地址验真、实体拆分和空间图谱输出。",
+    "首批规模不超过100条，优先低成本，并且要可审计可下载。",
+    "请你按内部工作包协议主动问我需要补充的内容，我只做业务确认。",
+    "可以，按你给的方案执行。",
+    "请优先使用系统已注册可信接口完成方案；若确实缺能力，请给最小可走通建议方案。",
+    "如果还缺外部依赖，请把阻塞点和最小替代执行路径说清楚。",
+    "请现在新建并生成可执行工作包（调用opencode构建脚本），返回新的 workpackage_id@version。"
+  ],
+  "recovery_prompts": [
+    "请继续按你的schema收敛并生成工作包，返回新的 workpackage_id@version（不是当前默认项）。",
+    "请调用opencode继续推进到可执行状态，并保持自然语言回复。"
+  ]
+}
