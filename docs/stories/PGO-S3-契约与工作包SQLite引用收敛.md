@@ -6,7 +6,7 @@
 
 ## 验收标准
 
-1. `contracts/workpackage.schema.json` 不再把 `sqlite://` 作为运行时合法引用。
+1. `workpackage_schema/registry.json` 指向的当前 schema 不再把 `sqlite://` 作为运行时合法引用。
 2. 主线 workpackage 模板与活跃工作包移除 sqlite 运行引用。
 3. 相关校验脚本在遇到 sqlite 运行引用时返回 NO_GO。
 

@@ -1,0 +1,191 @@
+# 运行态可观测 E2E 验收用例设计（CLI -> Agent+LLM -> Runtime）
+
+更新时间：2026-03-02 13:55:00 +0800
+
+## 1. 目标
+围绕以下主流程设计一组可执行、可审计、可复现的可观测验收用例：
+
+`CLI 创建 -> Agent+LLM 确认需求 -> Agent 打包 -> Runtime 提交/受理 -> Runtime 运行 -> Runtime 完成`
+
+验收重点不是“功能是否可跑”，而是“链路是否可观测、可解释、可追溯、可告警”。
+
+## 2. 设计依据（PRD/架构）
+
+1. PRD：`docs/prd-runtime-observability-dashboard-2026-02-28.md`
+2. 架构：`docs/architecture/architecture-runtime-observability-v2-2026-02-28.md`
+
+本用例严格对齐以下约束：
+- No-Fallback：关键数据源异常时显式错误，不伪造成功。
+- PG-only：观测与运行数据以 PG 为唯一真相源。
+- 运行态口径统一：KPI 由后端聚合输出，前端不二次计算核心指标。
+
+## 3. 验收范围
+
+### 3.1 In Scope
+1. 工作包链路阶段观测：`created/llm_confirmed/packaged/submitted/accepted/running/finished`
+2. 运行态观测 API：`workpackage-pipeline/workpackage-events/llm-interactions`
+3. 页面链路面板与事件弹窗
+4. 脱敏与最小 RBAC
+5. 基础告警闭环（触发/ACK/审计）
+
+### 3.2 Out of Scope
+1. 多租户 RBAC
+2. 生产级高并发压测
+3. 业务规则正确性本体（本设计聚焦可观测）
+
+## 4. 验收数据设计
+
+## 4.1 样本分组
+1. `G1-成功链路`：标准输入，预期全阶段 success。
+2. `G2-LLM异常链路`：模拟 LLM 失败，预期在 `llm_confirmed` 前后出现 error/blocked。
+3. `G3-Runtime提交异常链路`：模拟提交失败，预期 `submitted` 后出现 error/blocked。
+4. `G4-长延迟链路`：人为注入慢响应，验证时延分位与告警触发。
+5. `G5-权限链路`：viewer/oncall/admin 访问同一工作包，验证脱敏与授权边界。
+
+### 4.2 最小观测字段（每个阶段必须具备）
+1. `trace_id`
+2. `span_id`
+3. `source`
+4. `event_type`
+5. `occurred_at`
+6. `status`
+7. `payload.pipeline_stage`
+8. `payload.client_type`
+9. `payload.version`
+10. `payload.runtime_receipt_id`（至少在 accepted 及之后必有）
+
+## 5. 阶段级可观测断言（核心）
+
+| 阶段 | 预期事件 | 必看字段 | 观测断言 | 失败语义 |
+|---|---|---|---|---|
+| CLI 创建 | `workpackage_created` | `trace_id/workpackage_id/version` | `pipeline_stage=created` 且 `status=success` | 无事件即失败 |
+| Agent+LLM 确认 | `requirements_confirmed` | `model/base_url/token_usage/prompt/response` | 有 LLM 交互摘要；脱敏口径符合角色 | LLM 不可用返回显式 error/blocked |
+| Agent 打包 | `workpackage_packaged` | `pipeline_stage=packaged` | 打包事件时间晚于确认事件 | 缺失 packaged 视为链路中断 |
+| Runtime 提交 | `runtime_submit_requested` | `pipeline_stage=submitted` | 提交请求与工作包版本一致 | 请求成功但无后续 accepted 需告警 |
+| Runtime 受理 | `runtime_submit_accepted` | `runtime_receipt_id` | receipt 非空并可回查 | 无 receipt 禁止判定闭环 |
+| Runtime 运行 | `runtime_task_running` | `task_id/trace_id` | running 事件可追溯到同 trace | 状态跳变异常需标记 |
+| Runtime 完成 | `runtime_task_finished` | `status` | finished 出现且链路闭环率计入统计 | 缺 finished 则端到端不成功 |
+
+## 6. 验收用例矩阵（建议）
+
+### 6.1 正向主用例
+
+#### `OBS-E2E-001` 全链路成功 + 可观测闭环
+- 目标：验证 7 阶段完整可见、顺序正确、字段完整。
+- 前置：服务可用，`DATABASE_URL` 指向 PG。
+- 步骤：
+  1. 发起工作包新增流程（CLI 或 seed-workpackage-demo）。
+  2. 调 `workpackage-pipeline` 查阶段统计。
+  3. 调 `workpackage-events` 查单链路时间线。
+  4. 调 `llm-interactions` 查模型、token、延迟。
+  5. 页面打开链路弹窗核对。
+- 验收：
+  1. 阶段顺序完整，`created -> ... -> finished`。
+  2. `runtime_receipt_id` 存在且一致。
+  3. `trace_id` 全阶段一致，`status` 全 success。
+
+#### `OBS-E2E-002` 指标口径一致性
+- 目标：验证 API 与 UI 的链路统计一致。
+- 步骤：
+  1. 获取 `workpackage-pipeline` 返回 `stage_counts`、`end_to_end_success_rate`。
+  2. 对照页面面板数值。
+- 验收：数值一致（允许仅格式化差异）。
+
+### 6.2 异常与告警用例
+
+#### `OBS-E2E-003` LLM 失败显式可见（No-Fallback）
+- 目标：LLM 异常不可静默成功。
+- 注入：错误模型配置或网关失败。
+- 验收：
+  1. 事件链出现 error/blocked。
+  2. 告警可触发并在告警列表可查。
+  3. 不得出现 finished 且 success 的伪闭环。
+
+#### `OBS-E2E-004` Runtime 提交失败显式可见
+- 注入：Runtime 提交接口不可达或返回失败。
+- 验收：
+  1. `submitted` 后出现失败事件。
+  2. `runtime_submit_success_rate` 下降。
+  3. 页面链路面板显示失败节点。
+
+#### `OBS-E2E-005` 慢链路触发时延告警
+- 注入：人为增加 LLM/Runtime 延迟。
+- 验收：
+  1. `latency_breakdown` p90 显著上升。
+  2. freshness/performance 评估出现 violation。
+  3. 告警触发并可 ACK，审计事件可回查。
+
+### 6.3 安全与合规用例
+
+#### `OBS-E2E-006` RBAC + 脱敏一致性
+- 目标：viewer/oncall/admin 的可见内容符合权限矩阵。
+- 步骤：同一工作包分别以三类角色访问 `workpackage-events`、`llm-interactions`。
+- 验收：
+  1. viewer 看脱敏摘要。
+  2. oncall 可执行 ACK。
+  3. admin 可查看更完整字段（若开放）且有审计日志。
+
+#### `OBS-E2E-007` 审计闭环
+- 目标：关键操作有审计留痕。
+- 验收：至少包含 `alert_triggered/alert_acked/runtime_llm_interactions_access` 三类事件。
+
+## 7. 执行步骤（建议脚本化）
+
+1. 清理环境数据（仅清数据，不删 schema）。
+2. 灌入成功链路样例（至少 12 条工作包）。
+3. 执行异常注入用例（LLM 失败、提交失败、慢链路）。
+4. 执行 API 契约校验。
+5. 执行 Web E2E 交互校验。
+6. 导出验收证据（JSON + Markdown）。
+
+## 8. 推荐执行命令（参考）
+
+```bash
+# 后端回归矩阵（观测主链路）
+PYTHONPATH=. .venv/bin/pytest -q \
+  services/governance_api/tests/test_runtime_workpackage_pipeline_api_contract.py \
+  services/governance_api/tests/test_runtime_workpackage_events_api_contract.py \
+  services/governance_api/tests/test_runtime_llm_interactions_api_contract.py \
+  services/governance_api/tests/test_runtime_workpackage_observability_rbac.py \
+  services/governance_api/tests/test_runtime_reliability_sli_slo.py \
+  services/governance_api/tests/test_runtime_freshness_latency.py \
+  services/governance_api/tests/test_runtime_performance_governance.py
+
+# Web E2E（页面体验）
+PYTHONPATH=. DATABASE_URL='postgresql://si_factory_user:SiFactory2026@127.0.0.1:5432/si_factory' \
+  .venv/bin/pytest -q \
+  tests/web_e2e/test_runtime_observability_workpackage_pipeline_ui.py \
+  tests/web_e2e/test_runtime_observability_upload_ui.py \
+  tests/web_e2e/test_observability_live_ui.py
+```
+
+## 9. 证据归档清单
+
+1. API 响应快照：`workpackage-pipeline/workpackage-events/llm-interactions`
+2. 页面截图：链路面板、事件弹窗、告警区
+3. 测试报告：pytest 输出摘要
+4. 审计证据：告警触发/ACK/访问日志
+5. 结论报告：PASS/NO-GO + 残余风险 + 责任人
+
+## 10. 通过门槛（Go/No-Go）
+
+### 10.1 Go（全部满足）
+1. 主流程 7 阶段可见且顺序正确。
+2. No-Fallback 场景下失败语义显式。
+3. UI 与 API 关键指标口径一致。
+4. RBAC/脱敏/审计通过。
+5. 验收证据完整可复核。
+
+### 10.2 No-Go（任一命中）
+1. 无 `runtime_receipt_id` 仍被判定成功闭环。
+2. 关键阶段缺失或顺序错乱。
+3. 异常链路被静默吞掉。
+4. viewer 可见未脱敏敏感内容。
+5. 告警不可 ACK 或无审计留痕。
+
+## 11. 本轮建议新增覆盖（对当前资产的补强）
+
+1. 增加“多轮 LLM 会话”样例链路（当前多为单轮确认）。
+2. 增加“阶段乱序”容错与告警测试。
+3. 增加“receipt 重复/缺失”一致性守卫测试。
+4. 增加“链路字段完整率阈值”自动门禁测试。

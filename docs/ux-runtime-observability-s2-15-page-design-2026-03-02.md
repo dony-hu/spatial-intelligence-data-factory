@@ -1,0 +1,109 @@
+# UX 设计稿：S2-15 运行态可观测页面（2026-03-02）
+
+## 1. 目标
+
+为 `OBS-RUNTIME-S2-15` 提供可实现、可测试的页面设计输入，支撑以下链路：
+
+1. 选择 `workpackage_id@version` 执行上传批次。
+2. 查看多轮确认摘要与人工确认节点。
+3. 查看试运行报告（逐地址结果 + 批次图谱）。
+4. 下钻事件时间线（中文可读）并关联 Runtime 回执。
+
+## 2. 页面信息架构
+
+1. 顶部筛选区
+- 时间窗：`1h/24h/7d/30d`
+- 工作包：`workpackage_id@version`
+- 客户端类型：`user/test_client`
+
+2. 上传执行区（新增 S2-15 重点）
+- CSV 上传控件
+- 工作包选择器（必选）
+- 执行按钮
+- 执行结果提示（成功/阻断）
+
+3. 人机确认摘要区（新增 S2-15 重点）
+- 对话轮次统计
+- 每轮摘要（`goal/constraint/decision`）
+- 确认动作时间线：`confirm_generate -> confirm_dryrun_result -> confirm_publish`
+
+4. 试运行报告区（新增 S2-15 重点）
+- 输入数据摘要（总条数、来源）
+- `records[]` 结果表（标准化/拆解/验证）
+- 批次级 `spatial_graph` 卡片（唯一图谱）
+
+5. 事件下钻区
+- `workpackage-events` 列表
+- 中文字段展示：`source_zh/event_type_zh/status_zh/description_zh/pipeline_stage_zh`
+- JSON 模式切换
+
+## 3. 关键交互定义
+
+1. 上传执行
+- 用户上传 CSV 后，若未选择 `workpackage_id@version`，执行按钮禁用并提示。
+- 点击执行后展示任务创建状态与 `runtime_receipt_id`。
+
+2. 试运行查看
+- 点击“查看试运行报告”弹窗，先展示输入摘要，再展示 `records[]` 表，再展示批次图谱。
+- 当图谱状态为 `PARTIAL` 时，必须显示 `failed_row_refs`。
+
+3. 时间线下钻
+- 点击某事件行展开 `payload_summary`。
+- 提供“中文叙述/JSON 原文”切换，默认中文叙述。
+
+## 4. 状态与错误设计
+
+1. 空态
+- 无工作包时：提示先创建工作包。
+- 无数据时：提示先上传 CSV 或执行种子灌入。
+
+2. 错误态
+- `400 INVALID_PAYLOAD`：参数冲突或缺失（如仅传 `workpackage_id`）。
+- 门禁阻断：明确显示“未确认动作，禁止进入下一阶段”。
+- 运行异常：显示 `blocked/error`，禁止展示伪成功。
+
+3. 成功态
+- 上传成功显示 `task_id`、`workpackage_id@version`、`runtime_receipt_id`。
+
+## 5. E2E 可测性约束（必须）
+
+以下元素必须提供稳定 `data-testid`：
+
+1. `wp-selector`
+2. `csv-upload-input`
+3. `upload-exec-button`
+4. `confirm-timeline-panel`
+5. `dryrun-report-open`
+6. `dryrun-records-table`
+7. `dryrun-graph-card`
+8. `events-table`
+9. `event-view-mode-toggle`
+10. `runtime-receipt-id`
+
+## 6. 与后端字段映射
+
+1. 上传执行区
+- `workpackage_id`
+- `version`
+- `runtime_receipt_id`
+
+2. 试运行报告区
+- `records[].normalization`
+- `records[].entity_parsing`
+- `records[].address_validation`
+- `spatial_graph.build_status`
+- `spatial_graph.nodes/edges/metrics/failed_row_refs`
+
+3. 事件下钻区
+- `source_zh`
+- `event_type_zh`
+- `status_zh`
+- `description_zh`
+- `payload_summary.pipeline_stage_zh`
+
+## 7. 验收口径（UI 视角）
+
+1. 可执行：上传 CSV + 选择工作包可触发执行。
+2. 可解释：对话摘要、确认节点、中文事件描述可直接阅读。
+3. 可追溯：试运行报告与 Runtime 回执可关联同一 `workpackage_id@version`。
+4. 可测试：核心元素具备稳定 `data-testid`，支持 Web E2E 自动化。

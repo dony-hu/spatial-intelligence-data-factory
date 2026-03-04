@@ -1,4 +1,4 @@
-.PHONY: up down test-integration report install-opencode factory-cli test-e2e check-repo-hygiene
+.PHONY: up down test-integration report install-opencode factory-cli test-e2e check-repo-hygiene check-workpackage-cleanup
 
 up:
 	docker compose up -d
@@ -26,3 +26,6 @@ test-e2e:
 
 check-repo-hygiene:
 	./scripts/check_repo_hygiene.sh
+
+check-workpackage-cleanup:
+	./scripts/check_workpackage_cleanup.sh

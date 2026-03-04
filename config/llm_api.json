@@ -1,8 +1,8 @@
 {
   "provider": "openai_compatible",
-  "endpoint": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-  "model": "doubao-seed-2-0-pro-260215",
-  "api_key": "ce4dad5a-be7f-4870-9fb4-4b5b73000a37",
+  "endpoint": "https://611996.xyz/v1/chat/completions",
+  "model": "gpt-5.3-codex",
+  "api_key": "${LLM_API_KEY}",
   "timeout_sec": 60,
   "temperature": 0.2,
   "max_tokens": 1200

@@ -7,6 +7,7 @@ os.environ["DATABASE_URL"] = os.getenv("DATABASE_URL", "postgresql://si_factory_
 from fastapi.testclient import TestClient
 
 from services.governance_api.app.main import app
+from services.governance_api.app.runtime_stage_dictionary import RUNTIME_PIPELINE_STAGE_ORDER
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 
 
@@ -55,6 +56,7 @@ def test_runtime_workpackage_pipeline_api_contract() -> None:
     assert "end_to_end_success_rate" in payload
     assert "latency_breakdown_ms_p50_p90" in payload
     assert "runtime_submit_success_rate" in payload
+    assert list((payload.get("stage_counts") or {}).keys()) == list(RUNTIME_PIPELINE_STAGE_ORDER)
     assert int(payload.get("total_workpackages") or 0) >= 1
     items = payload.get("items") or []
     assert items

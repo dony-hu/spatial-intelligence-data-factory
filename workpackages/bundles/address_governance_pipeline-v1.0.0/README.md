@@ -1,0 +1,16 @@
+# address_governance_pipeline v1.0.0
+
+构建可执行的地址治理工作包：完成地址清洗、标准化、真实性校验、五级解析、地理编码与质量评分，并产出可发布到运行态的治理结果与审计日志。
+
+## 数据源
+- fengtu
+
+## 执行方式
+```bash
+bash entrypoint.sh
+```
+
+或
+```bash
+python entrypoint.py
+```

@@ -113,6 +113,12 @@ def run_requirement_query(
         "status": "ok",
         "answer": answer,
         "raw": parsed,
+        "request": {
+            "model": payload.get("model"),
+            "messages": payload.get("messages"),
+            "temperature": payload.get("temperature"),
+            "max_tokens": payload.get("max_tokens"),
+        },
     }
 
 

@@ -1,6 +1,99 @@
 from packages.factory_agent.agent import FactoryAgent
 
 
+def test_factory_agent_has_no_llm_gateway_member(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    assert not hasattr(agent, "_llm_gateway")
+
+
+def test_run_requirement_query_calls_nanobot_adapter(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    captured = {}
+
+    def _fake_query_structured(requirement, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+        captured["requirement"] = requirement
+        captured["system_prompt"] = system_prompt
+        captured["session_key"] = session_key
+        captured["max_tokens"] = max_tokens
+        captured["temperature"] = temperature
+        return {"status": "ok", "answer": "{}"}
+
+    monkeypatch.setattr(agent._nanobot, "query_structured", _fake_query_structured)
+
+    result = agent._run_requirement_query("请生成地址治理 MVP 方案")
+    assert result["status"] == "ok"
+    assert captured.get("requirement") == "请生成地址治理 MVP 方案"
+    assert "target(string)" in str(captured.get("system_prompt") or "")
+    assert str(captured.get("session_key") or "").startswith("factory_agent:requirement:")
+
+
+def test_run_general_chat_query_includes_recent_history(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    agent._append_chat_history("user", "第一轮")
+    agent._append_chat_history("assistant", "收到")
+    captured = {}
+
+    def _fake_chat(prompt, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+        captured["prompt"] = prompt
+        captured["system_prompt"] = system_prompt
+        captured["session_key"] = session_key
+        captured["max_tokens"] = max_tokens
+        captured["temperature"] = temperature
+        return {"status": "ok", "answer": "好的"}
+
+    monkeypatch.setattr(agent._nanobot, "chat", _fake_chat)
+
+    result = agent._run_general_chat_query("当前问题")
+    assert result["status"] == "ok"
+    assert "历史对话：" in str(captured.get("prompt") or "")
+    assert "当前用户输入：" in str(captured.get("prompt") or "")
+    assert "自然沟通" in str(captured.get("system_prompt") or "")
+    assert str(captured.get("session_key") or "").startswith("factory_agent:chat:")
+
+
+def test_run_workpackage_blueprint_query_calls_nanobot_adapter_with_feedback(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    captured = {}
+
+    def _fake_query_structured(requirement, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+        captured["requirement"] = requirement
+        captured["system_prompt"] = system_prompt
+        captured["session_key"] = session_key
+        return {"status": "ok", "answer": "{}"}
+
+    monkeypatch.setattr(agent._nanobot, "query_structured", _fake_query_structured)
+    result = agent._run_workpackage_blueprint_query(
+        "创建工作包",
+        context={"architecture_context": {"layers": ["x"]}},
+        feedback=["schema_error: scripts[0].entry is required"],
+    )
+
+    assert result["status"] == "ok"
+    assert "历史对话" not in str(captured.get("requirement") or "")
+    assert "架构与API上下文" in str(captured.get("requirement") or "")
+    assert "schema_error" in str(captured.get("requirement") or "")
+    assert "最终必须输出一个JSON对象" in str(captured.get("system_prompt") or "")
+    assert str(captured.get("session_key") or "").startswith("factory_agent:blueprint:")
+
+
+def test_build_workpackage_context_contains_protocol_alignment_fields(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    context = agent._build_workpackage_context("创建地址治理工作包")
+    assert isinstance(context.get("schema_reference"), dict)
+    assert str((context.get("schema_reference") or {}).get("schema_version") or "") == "workpackage_schema.v1"
+    assert isinstance(context.get("runtime_constraints"), dict)
+    runtime_constraints = context.get("runtime_constraints") or {}
+    assert runtime_constraints.get("no_fallback") is True
+    assert runtime_constraints.get("no_mock") is True
+    assert isinstance(context.get("conversation_facts"), list)
+    assert isinstance(context.get("registered_api_catalog_digest"), str)
+
+
 def test_converse_returns_blocked_when_llm_fails(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
     agent = FactoryAgent()
@@ -249,3 +342,136 @@ def test_generate_workpackage_autofill_missing_api_and_scripts_when_capability_m
     from pathlib import Path
     env_example = Path(bundle_path) / "config" / "provider_keys.env.example"
     assert env_example.exists()
+
+
+def test_generate_workpackage_returns_schema_fix_rounds_and_generation_trace(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("WORKPACKAGE_BLUEPRINT_MAX_ROUNDS", "2")
+    agent = FactoryAgent()
+    calls = {"n": 0}
+    invalid = '{"workpackage":{"name":"ctx-e2e"}}'
+    valid = """
+{
+  "workpackage": {"name": "ctx-e2e", "version": "v1.0.0", "objective": "地址治理"},
+  "architecture_context": {"factory_architecture": {"layers": ["a"]}, "runtime_env": {"python": "3.11"}},
+  "io_contract": {"input_schema": {"type": "object"}, "output_schema": {"type": "object"}},
+  "api_plan": {"registered_apis_used": [{"source_id": "fengtu", "interface_id": "geocode"}], "missing_apis": []},
+  "execution_plan": {"steps": ["s1"]},
+  "scripts": [{"name": "run_pipeline.py", "entry": "python scripts/run_pipeline.py"}]
+}
+""".strip()
+
+    def _fake_query(_prompt: str, _context: dict, _feedback=None):
+        calls["n"] += 1
+        answer = invalid if calls["n"] == 1 else valid
+        return {"status": "ok", "answer": answer}
+
+    monkeypatch.setattr(agent, "_run_workpackage_blueprint_query", _fake_query)
+    result = agent.converse("请生成地址治理工作包")
+    assert result["status"] == "ok"
+    fix_rounds = result.get("schema_fix_rounds")
+    assert isinstance(fix_rounds, list)
+    assert len(fix_rounds) >= 1
+    assert isinstance((result.get("workpackage_blueprint") or {}).get("generation_trace"), dict)
+    from pathlib import Path
+    import json
+
+    bundle_path = Path(str(result.get("bundle_path") or ""))
+    payload = json.loads((bundle_path / "workpackage.json").read_text(encoding="utf-8"))
+    assert isinstance(payload.get("generation_trace"), dict)
+
+
+def test_generate_workpackage_ignores_llm_script_content_and_uses_opencode_builder(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    answer = """
+{
+  "workpackage": {"name": "builder-pack", "version": "v1.0.0", "objective": "builder test"},
+  "architecture_context": {"factory_architecture": {"layers": ["a"]}, "runtime_env": {"python": "3.11"}},
+  "io_contract": {"input_schema": {"type": "object"}, "output_schema": {"type": "object"}},
+  "api_plan": {"registered_apis_used": [{"source_id": "fengtu", "interface_id": "geocode"}], "missing_apis": []},
+  "execution_plan": {"steps": ["s1"]},
+  "scripts": [{
+    "name": "run_pipeline.py",
+    "purpose": "run",
+    "runtime": "python",
+    "entry": "python scripts/run_pipeline.py",
+    "content": "print('llm_script_content_should_not_be_used')"
+  }]
+}
+""".strip()
+    monkeypatch.setattr(agent, "_run_workpackage_blueprint_query", lambda *_a, **_k: {"status": "ok", "answer": answer})
+    result = agent.converse("创建工作包并生成脚本")
+    assert result["status"] == "ok"
+    from pathlib import Path
+    bundle_path = Path(str(result.get("bundle_path") or ""))
+    script_text = (bundle_path / "scripts" / "run_pipeline.py").read_text(encoding="utf-8")
+    assert "llm_script_content_should_not_be_used" not in script_text
+    assert "generated_by = \"opencode_agent\"" in script_text
+
+
+def test_generate_workpackage_missing_api_is_proposal_only_without_hub_upsert(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    answer = """
+{
+  "workpackage": {"name": "proposal-pack", "version": "v1.0.0", "objective": "proposal"},
+  "architecture_context": {"factory_architecture": {"layers": ["a"]}, "runtime_env": {"python": "3.11"}},
+  "io_contract": {"input_schema": {"type": "object"}, "output_schema": {"type": "object"}},
+  "api_plan": {
+    "registered_apis_used": [],
+    "missing_apis": [{"name":"ext-a","endpoint":"https://ext-a.example.com","reason":"need","requires_key":true}]
+  },
+  "execution_plan": {"steps": ["s1"]},
+  "scripts": [{"name":"run_pipeline.py","entry":"python scripts/run_pipeline.py"}]
+}
+""".strip()
+    monkeypatch.setattr(agent, "_run_workpackage_blueprint_query", lambda *_a, **_k: {"status": "ok", "answer": answer})
+    calls = {"n": 0}
+
+    def _forbidden_upsert(*_args, **_kwargs):
+        calls["n"] += 1
+        raise AssertionError("generate phase should not upsert trust hub capability")
+
+    monkeypatch.setattr(agent._trust_hub, "upsert_capability", _forbidden_upsert)
+    result = agent.converse("创建工作包，需要补齐缺失API")
+    assert result["status"] == "ok"
+    assert calls["n"] == 0
+    blueprint = result.get("workpackage_blueprint") or {}
+    assert isinstance(((blueprint.get("api_plan") or {}).get("missing_apis")), list)
+
+
+def test_generate_entrypoint_py_uses_subprocess_instead_of_exec(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    script = agent._generate_entrypoint_py()
+    assert "exec(" not in script
+    assert "subprocess.run" in script
+
+
+def test_generate_workpackage_delegates_bundle_build_to_opencode_builder(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    called = {"n": 0, "bundle_dir": ""}
+
+    class _FakeBuilder:
+        def build_bundle(self, *, bundle_dir, blueprint, sources):
+            called["n"] += 1
+            called["bundle_dir"] = str(bundle_dir)
+
+    monkeypatch.setattr(agent, "_workpackage_builder", _FakeBuilder())
+    answer = """
+{
+  "workpackage": {"name": "delegate-pack", "version": "v1.0.0", "objective": "delegate"},
+  "architecture_context": {"factory_architecture": {"layers": ["a"]}, "runtime_env": {"python": "3.11"}},
+  "io_contract": {"input_schema": {"type": "object"}, "output_schema": {"type": "object"}},
+  "api_plan": {"registered_apis_used": [{"source_id": "fengtu", "interface_id": "geocode"}], "missing_apis": []},
+  "execution_plan": {"steps": ["s1"]},
+  "scripts": [{"name": "run_pipeline.py", "entry": "python scripts/run_pipeline.py"}]
+}
+""".strip()
+    monkeypatch.setattr(agent, "_run_workpackage_blueprint_query", lambda *_a, **_k: {"status": "ok", "answer": answer})
+    result = agent.converse("创建工作包")
+    assert result["status"] == "ok"
+    assert called["n"] == 1
+    assert "delegate-pack-v1.0.0" in called["bundle_dir"]

@@ -4,9 +4,20 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Any
 from uuid import uuid4
+from pathlib import Path
+from urllib.parse import quote_plus
+import csv
+import json
 import os
+import urllib.error
+import urllib.request
 
 from services.governance_api.app.repositories.governance_repository import GovernanceGateError, REPOSITORY
+from services.governance_api.app.runtime_stage_dictionary import (
+    RUNTIME_PIPELINE_STAGE_ORDER,
+    RUNTIME_PIPELINE_STAGE_ZH,
+    ensure_known_pipeline_stage,
+)
 from services.governance_worker.app.core.queue import enqueue_task
 from services.governance_worker.app.jobs.review_reconcile_job import run as run_review_reconcile
 
@@ -88,6 +99,9 @@ class GovernanceService:
         ruleset_id: str,
         addresses: list[str],
         actor: str = "",
+        workpackage_id: str = "",
+        version: str = "",
+        confirmations: list[str] | None = None,
     ) -> dict[str, Any]:
         normalized: list[str] = []
         for item in addresses:
@@ -106,6 +120,152 @@ class GovernanceService:
             }
             for idx, text in enumerate(normalized)
         ]
+        target_workpackage_id = str(workpackage_id or "").strip()
+        target_version = str(version or "").strip()
+        has_workpackage = bool(target_workpackage_id or target_version)
+
+        if has_workpackage and (not target_workpackage_id or not target_version):
+            raise ValueError("workpackage_id and version must be provided together")
+        if has_workpackage and str(ruleset_id or "").strip() and str(ruleset_id or "default").strip() != "default":
+            raise ValueError("ruleset_id conflicts with workpackage_id/version mapping")
+
+        if has_workpackage:
+            trace_id = f"trace_wp_upload_{uuid4().hex[:12]}"
+            actor_name = str(actor or "runtime_upload")
+            confirm_set = {str(item or "").strip() for item in (confirmations or []) if str(item or "").strip()}
+
+            def _emit(event_type: str, stage: str, source: str = "factory_agent", status: str = "success", payload: dict[str, Any] | None = None) -> None:
+                base_payload = {
+                    "pipeline_stage": stage,
+                    "version": target_version,
+                    "client_type": "user",
+                    "runtime_receipt_id": "",
+                }
+                if payload:
+                    base_payload.update(payload)
+                self._repo.record_observation_event(
+                    source_service=source,
+                    event_type=event_type,
+                    status=status,
+                    trace_id=trace_id,
+                    span_id=f"span_{uuid4().hex[:10]}",
+                    workpackage_id=target_workpackage_id,
+                    payload=base_payload,
+                )
+
+            _emit("workpackage_created", "created", source="factory_cli")
+            _emit(
+                "llm_request",
+                "llm_confirmed",
+                source="llm",
+                payload={
+                    "goal": "地址标准化、实体拆解、地址验证、空间图谱",
+                    "constraint": "No-Fallback, PG-only",
+                    "decision": "请求方案收敛",
+                    "model": "doubao-seed-2-0-pro-260215",
+                    "prompt": f"请确认工作包 {target_workpackage_id}@{target_version} 的治理约束",
+                    "response": "",
+                },
+            )
+            _emit(
+                "llm_response",
+                "llm_confirmed",
+                source="llm",
+                payload={
+                    "goal": "地址治理执行链路",
+                    "constraint": "人工确认后执行",
+                    "decision": "生成工作包并先试运行",
+                    "model": "doubao-seed-2-0-pro-260215",
+                    "prompt": f"请输出 {target_workpackage_id}@{target_version} 最小执行流程",
+                    "response": "建议先 confirm_generate，再 dryrun，最后 confirm_publish",
+                },
+            )
+
+            if "confirm_generate" not in confirm_set:
+                self._repo.log_audit_event(
+                    event_type="runtime_upload_gate_blocked",
+                    caller=actor_name,
+                    payload={
+                        "workpackage_id": target_workpackage_id,
+                        "version": target_version,
+                        "missing_action": "confirm_generate",
+                        "trace_id": trace_id,
+                    },
+                )
+                raise GovernanceGateError(
+                    code="WORKPACKAGE_GATE_BLOCKED",
+                    message="missing confirm_generate; packaged is forbidden",
+                    status_code=409,
+                )
+
+            _emit(
+                "human_confirm_generate",
+                "packaged",
+                source="factory_cli",
+                payload={"actor": actor_name, "action": "confirm_generate", "decision": "approved"},
+            )
+            _emit("workpackage_packaged", "packaged", source="factory_agent")
+
+            dryrun_report = self._build_dryrun_report(
+                batch_name=str(batch_name or "runtime-upload-batch"),
+                workpackage_id=target_workpackage_id,
+                version=target_version,
+                records=records,
+                trace_id=trace_id,
+            )
+            output_artifacts = self._write_runtime_output_artifacts(
+                dryrun_report=dryrun_report,
+                workpackage_id=target_workpackage_id,
+                version=target_version,
+                trace_id=trace_id,
+            )
+            _emit(
+                "dryrun_finished",
+                "dryrun_finished",
+                source="governance_runtime",
+                payload={
+                    "report_build_status": str((dryrun_report.get("spatial_graph") or {}).get("build_status") or ""),
+                    "record_count": len(records),
+                },
+            )
+            _emit(
+                "human_confirm_dryrun_result",
+                "dryrun_finished",
+                source="factory_cli",
+                payload={"actor": actor_name, "action": "confirm_dryrun_result", "decision": "approved"},
+            )
+
+            if "confirm_publish" not in confirm_set:
+                self._repo.log_audit_event(
+                    event_type="runtime_upload_gate_blocked",
+                    caller=actor_name,
+                    payload={
+                        "workpackage_id": target_workpackage_id,
+                        "version": target_version,
+                        "missing_action": "confirm_publish",
+                        "trace_id": trace_id,
+                    },
+                )
+                return {
+                    "task_id": "",
+                    "trace_id": trace_id,
+                    "status": "BLOCKED",
+                    "record_count": len(records),
+                    "workpackage_id": target_workpackage_id,
+                    "version": target_version,
+                    "runtime_receipt_id": "",
+                    "dryrun_report": dryrun_report,
+                    "output_artifacts": output_artifacts,
+                    "confirm_timeline": ["confirm_generate", "confirm_dryrun_result"],
+                }
+
+            _emit(
+                "human_confirm_publish",
+                "publish_confirmed",
+                source="factory_cli",
+                payload={"actor": actor_name, "action": "confirm_publish", "decision": "approved"},
+            )
+            _emit("publish_confirmed", "publish_confirmed", source="factory_agent")
 
         original_mode = os.getenv("GOVERNANCE_QUEUE_MODE")
         os.environ["GOVERNANCE_QUEUE_MODE"] = "sync"
@@ -130,14 +290,327 @@ class GovernanceService:
                 "batch_name": str(batch_name or "runtime-upload-batch"),
                 "ruleset_id": str(ruleset_id or "default"),
                 "record_count": len(records),
+                "workpackage_id": target_workpackage_id,
+                "version": target_version,
             },
         )
         latest_task = self._repo.get_task(task_id) if task_id else None
+        runtime_receipt_id = f"receipt_{uuid4().hex[:16]}" if has_workpackage else ""
+        if has_workpackage:
+            submit_status = "success" if str((latest_task or {}).get("status") or submitted.get("status") or "").upper() != "BLOCKED" else "error"
+            self._repo.record_observation_event(
+                source_service="governance_runtime",
+                event_type="runtime_submit_requested",
+                status=submit_status,
+                trace_id=str(submitted.get("trace_id") or ""),
+                span_id=f"span_{uuid4().hex[:10]}",
+                workpackage_id=target_workpackage_id,
+                payload={
+                    "pipeline_stage": "submitted",
+                    "version": target_version,
+                    "client_type": "user",
+                    "runtime_receipt_id": runtime_receipt_id,
+                },
+            )
+            if submit_status == "success":
+                for event_type, stage in (
+                    ("runtime_submit_accepted", "accepted"),
+                    ("runtime_task_running", "running"),
+                    ("runtime_task_finished", "finished"),
+                ):
+                    self._repo.record_observation_event(
+                        source_service="governance_runtime",
+                        event_type=event_type,
+                        status="success",
+                        trace_id=str(submitted.get("trace_id") or ""),
+                        span_id=f"span_{uuid4().hex[:10]}",
+                        workpackage_id=target_workpackage_id,
+                        payload={
+                            "pipeline_stage": stage,
+                            "version": target_version,
+                            "client_type": "user",
+                            "runtime_receipt_id": runtime_receipt_id,
+                        },
+                    )
+        final_dryrun_report = (
+            self._build_dryrun_report(
+                batch_name=str(batch_name or "runtime-upload-batch"),
+                workpackage_id=target_workpackage_id,
+                version=target_version,
+                records=records,
+                trace_id=str(submitted.get("trace_id") or ""),
+            )
+            if has_workpackage
+            else {}
+        )
+        final_output_artifacts = (
+            self._write_runtime_output_artifacts(
+                dryrun_report=final_dryrun_report,
+                workpackage_id=target_workpackage_id,
+                version=target_version,
+                trace_id=str(submitted.get("trace_id") or ""),
+            )
+            if has_workpackage
+            else {}
+        )
         return {
             "task_id": task_id,
             "trace_id": str(submitted.get("trace_id") or ""),
             "status": str((latest_task or {}).get("status") or submitted.get("status") or ""),
             "record_count": len(records),
+            "workpackage_id": target_workpackage_id,
+            "version": target_version,
+            "runtime_receipt_id": runtime_receipt_id,
+            "dryrun_report": final_dryrun_report,
+            "output_artifacts": final_output_artifacts,
+            "confirm_timeline": ["confirm_generate", "confirm_dryrun_result", "confirm_publish"] if has_workpackage else [],
+        }
+
+    def _build_dryrun_report(
+        self,
+        *,
+        batch_name: str,
+        workpackage_id: str,
+        version: str,
+        records: list[dict[str, Any]],
+        trace_id: str,
+    ) -> dict[str, Any]:
+        row_results: list[dict[str, Any]] = []
+        nodes: list[dict[str, Any]] = []
+        edges: list[dict[str, Any]] = []
+        failed_row_refs: list[str] = []
+        contributed_ids: list[str] = []
+
+        for idx, record in enumerate(records):
+            raw_id = str(record.get("raw_id") or f"raw_{idx:04d}")
+            raw_text = str(record.get("raw_text") or "").strip()
+            online = self._resolve_address_via_internet(raw_text)
+            normalized_text = str(online.get("normalized_address") or raw_text.replace(" ", ""))
+            validation_status = str(online.get("validation_status") or "BLOCKED")
+            blocked = validation_status != "SUCCEEDED"
+            if blocked:
+                failed_row_refs.append(raw_id)
+            else:
+                node_id = f"node_{idx:04d}"
+                nodes.append({"node_id": node_id, "label": normalized_text, "node_type": "address"})
+                contributed_ids.append(node_id)
+            entities = online.get("entities") if isinstance(online.get("entities"), dict) else {}
+            provider = str(online.get("provider") or "")
+            reason = str(online.get("reason") or "")
+            row_results.append(
+                {
+                    "input": {"raw_id": raw_id, "raw_text": raw_text, "source": "upload_batch"},
+                    "normalization": {
+                        "status": "SUCCEEDED" if normalized_text else "BLOCKED",
+                        "normalized_address": normalized_text,
+                        "provider": provider,
+                    },
+                    "entity_parsing": {
+                        "status": "SUCCEEDED" if entities else "BLOCKED",
+                        "provider": provider,
+                        "entities": entities,
+                    },
+                    "address_validation": {
+                        "status": validation_status,
+                        "provider": provider,
+                        "reason": reason,
+                    },
+                    "record_decision": "BLOCKED" if blocked else "ACCEPTED",
+                    "audit_refs": {"trace_id": trace_id, "workpackage_id": workpackage_id, "version": version},
+                }
+            )
+
+        for idx in range(max(0, len(contributed_ids) - 1)):
+            edges.append(
+                {
+                    "edge_id": f"edge_{idx:04d}",
+                    "source": contributed_ids[idx],
+                    "target": contributed_ids[idx + 1],
+                    "relation": "adjacent",
+                }
+            )
+
+        if not row_results:
+            build_status = "FAILED"
+        elif failed_row_refs and nodes:
+            build_status = "PARTIAL"
+        elif failed_row_refs and not nodes:
+            build_status = "FAILED"
+        else:
+            build_status = "SUCCEEDED"
+
+        spatial_graph = {
+            "graph_id": f"graph_{workpackage_id}_{version}".strip("_"),
+            "graph_version": version,
+            "build_status": build_status,
+            "input_rows_total": len(row_results),
+            "rows_contributed": len(nodes),
+            "rows_skipped": len(failed_row_refs),
+            "nodes": nodes,
+            "edges": edges,
+            "failed_row_refs": failed_row_refs,
+            "metrics": {
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+                "connected_components": 0 if not nodes else 1,
+            },
+        }
+        return {
+            "batch_meta": {
+                "batch_name": batch_name,
+                "workpackage_id": workpackage_id,
+                "version": version,
+                "trace_id": trace_id,
+                "record_count": len(row_results),
+            },
+            "records": row_results,
+            "spatial_graph": spatial_graph,
+        }
+
+    def _http_get_json(self, url: str, timeout_sec: float = 12.0) -> Any:
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "spatial-intelligence-data-factory/1.0",
+            },
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+    def _resolve_address_via_internet(self, raw_text: str) -> dict[str, Any]:
+        text = str(raw_text or "").strip()
+        if not text:
+            return {
+                "provider": "internet_geocode",
+                "normalized_address": "",
+                "entities": {},
+                "validation_status": "BLOCKED",
+                "reason": "empty_address",
+            }
+
+        provider = "nominatim+mapsco"
+        nominatim_url = (
+            "https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=1&q="
+            + quote_plus(text)
+        )
+        mapsco_url = "https://geocode.maps.co/search?q=" + quote_plus(text)
+
+        errors: list[str] = []
+        normalized_address = ""
+        entities: dict[str, Any] = {}
+        validation_status = "BLOCKED"
+        reason = ""
+
+        try:
+            nominatim_data = self._http_get_json(nominatim_url)
+            top = nominatim_data[0] if isinstance(nominatim_data, list) and nominatim_data else {}
+            if isinstance(top, dict):
+                normalized_address = str(top.get("display_name") or "").strip()
+                addr = top.get("address") if isinstance(top.get("address"), dict) else {}
+                entities = {
+                    "country": str(addr.get("country") or ""),
+                    "province": str(addr.get("state") or addr.get("province") or ""),
+                    "city": str(addr.get("city") or addr.get("town") or addr.get("county") or ""),
+                    "district": str(addr.get("suburb") or addr.get("city_district") or ""),
+                    "road": str(addr.get("road") or ""),
+                    "house_number": str(addr.get("house_number") or ""),
+                }
+        except urllib.error.HTTPError as exc:
+            errors.append(f"nominatim_http_{exc.code}")
+        except Exception as exc:
+            errors.append(f"nominatim_{exc.__class__.__name__}")
+
+        try:
+            mapsco_data = self._http_get_json(mapsco_url)
+            top = mapsco_data[0] if isinstance(mapsco_data, list) and mapsco_data else {}
+            if isinstance(top, dict) and str(top.get("lat") or "").strip() and str(top.get("lon") or "").strip():
+                validation_status = "SUCCEEDED"
+            else:
+                reason = "mapsco_no_hit"
+        except urllib.error.HTTPError as exc:
+            errors.append(f"mapsco_http_{exc.code}")
+            reason = f"mapsco_http_{exc.code}"
+        except Exception as exc:
+            errors.append(f"mapsco_{exc.__class__.__name__}")
+            reason = f"mapsco_{exc.__class__.__name__}"
+
+        if validation_status != "SUCCEEDED" and not reason:
+            reason = "|".join(errors) if errors else "validation_no_hit"
+        if not normalized_address:
+            normalized_address = text.replace(" ", "")
+        return {
+            "provider": provider,
+            "normalized_address": normalized_address,
+            "entities": entities,
+            "validation_status": validation_status,
+            "reason": reason,
+        }
+
+    def _write_runtime_output_artifacts(
+        self,
+        *,
+        dryrun_report: dict[str, Any],
+        workpackage_id: str,
+        version: str,
+        trace_id: str,
+    ) -> dict[str, Any]:
+        wp = str(workpackage_id or "wp_runtime").replace("/", "_")
+        ver = str(version or "v0").replace("/", "_")
+        trace = str(trace_id or uuid4().hex[:8]).replace("/", "_")
+        out_dir = Path("output/runtime-artifacts") / f"{wp}_{ver}_{trace}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        json_path = out_dir / "dryrun_report.json"
+        csv_path = out_dir / "preprocessed_records.csv"
+        json_path.write_text(json.dumps(dryrun_report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        records = dryrun_report.get("records") if isinstance(dryrun_report.get("records"), list) else []
+        with csv_path.open("w", newline="", encoding="utf-8") as fp:
+            writer = csv.DictWriter(
+                fp,
+                fieldnames=[
+                    "raw_id",
+                    "raw_text",
+                    "normalized_address",
+                    "province",
+                    "city",
+                    "district",
+                    "validation_status",
+                    "record_decision",
+                ],
+            )
+            writer.writeheader()
+            for row in records:
+                inp = row.get("input") if isinstance(row.get("input"), dict) else {}
+                norm = row.get("normalization") if isinstance(row.get("normalization"), dict) else {}
+                entity = row.get("entity_parsing") if isinstance(row.get("entity_parsing"), dict) else {}
+                entities = entity.get("entities") if isinstance(entity.get("entities"), dict) else {}
+                valid = row.get("address_validation") if isinstance(row.get("address_validation"), dict) else {}
+                writer.writerow(
+                    {
+                        "raw_id": str(inp.get("raw_id") or ""),
+                        "raw_text": str(inp.get("raw_text") or ""),
+                        "normalized_address": str(norm.get("normalized_address") or ""),
+                        "province": str(entities.get("province") or ""),
+                        "city": str(entities.get("city") or ""),
+                        "district": str(entities.get("district") or ""),
+                        "validation_status": str(valid.get("status") or ""),
+                        "record_decision": str(row.get("record_decision") or ""),
+                    }
+                )
+
+        base = str(out_dir).replace("\\", "/")
+        if base.startswith("output/"):
+            base = "/" + base
+        else:
+            base = "/output/runtime-artifacts"
+        return {
+            "json_path": str(json_path),
+            "csv_path": str(csv_path),
+            "json_url": f"{base}/dryrun_report.json",
+            "csv_url": f"{base}/preprocessed_records.csv",
         }
 
     def ack_observation_alert(self, *, alert_id: str, actor: str) -> dict[str, Any] | None:
@@ -206,6 +679,48 @@ class GovernanceService:
         idx = int(round((len(sorted_values) - 1) * float(p)))
         idx = max(0, min(idx, len(sorted_values) - 1))
         return float(sorted_values[idx])
+
+    def _pipeline_stage_zh(self, stage: str) -> str:
+        name = ensure_known_pipeline_stage(stage)
+        if not name:
+            return ""
+        return str(RUNTIME_PIPELINE_STAGE_ZH.get(name) or "")
+
+    def _source_zh(self, source: str) -> str:
+        mapping = {
+            "factory_cli": "工厂CLI",
+            "factory_agent": "工厂Agent",
+            "llm": "大模型",
+            "governance_runtime": "治理Runtime",
+        }
+        return mapping.get(str(source or "").strip(), "未知来源")
+
+    def _status_zh(self, status: str) -> str:
+        raw = str(status or "").strip().lower()
+        mapping = {
+            "success": "成功",
+            "error": "错误",
+            "blocked": "阻塞",
+            "failed": "失败",
+        }
+        return mapping.get(raw, "未知状态")
+
+    def _event_type_zh(self, event_type: str) -> str:
+        mapping = {
+            "workpackage_created": "创建工作包",
+            "requirements_confirmed": "需求确认",
+            "workpackage_packaged": "工作包打包",
+            "runtime_submit_requested": "提交运行请求",
+            "runtime_submit_accepted": "运行请求已受理",
+            "runtime_task_running": "任务开始运行",
+            "runtime_task_finished": "任务运行完成",
+            "llm_request": "LLM请求",
+            "llm_response": "LLM响应",
+        }
+        return mapping.get(str(event_type or "").strip(), "链路事件")
+
+    def _event_description_zh(self, *, source: str, event_type: str, stage: str, status: str) -> str:
+        return f"{self._source_zh(source)}在「{self._pipeline_stage_zh(stage)}」阶段执行「{self._event_type_zh(event_type)}」，结果：{self._status_zh(status)}。"
 
     def runtime_summary(self, *, window: str = "24h", ruleset_id: str = "") -> dict[str, Any]:
         recent_hours = self._parse_window_hours(window)
@@ -415,8 +930,9 @@ class GovernanceService:
     def runtime_workpackage_pipeline(self, *, window: str = "24h", client_type: str = "") -> dict[str, Any]:
         recent_hours = self._parse_window_hours(window)
         client_filter = str(client_type or "").strip()
-        stage_order = ["created", "llm_confirmed", "packaged", "submitted", "accepted", "running", "finished"]
+        stage_order = list(RUNTIME_PIPELINE_STAGE_ORDER)
         stage_rank = {stage: idx for idx, stage in enumerate(stage_order)}
+        unknown_stages: set[str] = set()
 
         all_events = self._repo.list_observation_events(limit=10000)
         groups: dict[str, dict[str, Any]] = {}
@@ -433,7 +949,12 @@ class GovernanceService:
             if client_filter and event_client_type != client_filter:
                 continue
             pipeline_stage = str(payload.get("pipeline_stage") or "").strip()
-            if pipeline_stage not in stage_order:
+            if not pipeline_stage:
+                continue
+            try:
+                ensure_known_pipeline_stage(pipeline_stage)
+            except ValueError:
+                unknown_stages.add(pipeline_stage)
                 continue
             key = f"{workpackage_id}::{version}"
             item = groups.setdefault(
@@ -565,11 +1086,13 @@ class GovernanceService:
             )
         items.sort(key=lambda row: str(row.get("updated_at") or ""), reverse=True)
         return {
+            "status": "error" if unknown_stages else "ok",
             "total_workpackages": total_workpackages,
             "stage_counts": stage_counts,
             "end_to_end_success_rate": round(end_to_end_success_rate, 6),
             "latency_breakdown_ms_p50_p90": latency_breakdown,
             "runtime_submit_success_rate": round(runtime_submit_success_rate, 6),
+            "unknown_stage_errors": sorted(unknown_stages),
             "items": items[:50],
         }
 
@@ -606,27 +1129,161 @@ class GovernanceService:
                 continue
             payload_summary = {
                 "pipeline_stage": str(payload.get("pipeline_stage") or ""),
+                "pipeline_stage_zh": self._pipeline_stage_zh(str(payload.get("pipeline_stage") or "")),
                 "client_type": event_client,
                 "version": event_version,
                 "runtime_receipt_id": str(payload.get("runtime_receipt_id") or ""),
                 "model": str(payload.get("model") or ""),
                 "message": str(payload.get("message") or ""),
             }
+            source = str(evt.get("source_service") or "")
+            event_type = str(evt.get("event_type") or "")
+            status = str(evt.get("status") or "")
             items.append(
                 {
                     "trace_id": str(evt.get("trace_id") or ""),
                     "span_id": str(evt.get("span_id") or ""),
                     "parent_span_id": str(payload.get("parent_span_id") or ""),
-                    "source": str(evt.get("source_service") or ""),
-                    "event_type": str(evt.get("event_type") or ""),
+                    "source": source,
+                    "source_zh": self._source_zh(source),
+                    "event_type": event_type,
+                    "event_type_zh": self._event_type_zh(event_type),
                     "occurred_at": str(evt.get("created_at") or ""),
-                    "status": str(evt.get("status") or ""),
+                    "status": status,
+                    "status_zh": self._status_zh(status),
+                    "description_zh": self._event_description_zh(
+                        source=source,
+                        event_type=event_type,
+                        stage=str(payload.get("pipeline_stage") or ""),
+                        status=status,
+                    ),
                     "payload_summary": payload_summary,
                 }
             )
         items.sort(key=lambda item: str(item.get("occurred_at") or ""))
         sliced = items[:safe_limit]
         return {"total": len(sliced), "items": sliced}
+
+    def runtime_workpackage_blueprint(
+        self,
+        *,
+        workpackage_id: str,
+        version: str = "",
+    ) -> dict[str, Any]:
+        target_workpackage = str(workpackage_id or "").strip()
+        if not target_workpackage:
+            raise ValueError("workpackage_id is required")
+        target_version = str(version or "").strip()
+        publish_record: dict[str, Any] = {}
+        if target_version:
+            try:
+                publish_record = self._repo.get_workpackage_publish(target_workpackage, target_version) or {}
+            except Exception:
+                publish_record = {}
+        else:
+            try:
+                history = self._repo.list_workpackage_publishes(workpackage_id=target_workpackage, status=None, limit=1)
+            except Exception:
+                history = []
+            if history:
+                publish_record = history[0]
+                target_version = str(publish_record.get("version") or "")
+
+        bundle_dir = self._resolve_workpackage_bundle_dir(
+            workpackage_id=target_workpackage,
+            version=target_version,
+            publish_record=publish_record,
+        )
+        config_path = bundle_dir / "workpackage.json"
+        workpackage_config: dict[str, Any] = {}
+        if config_path.exists():
+            try:
+                loaded = json.loads(config_path.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    workpackage_config = loaded
+            except Exception:
+                workpackage_config = {}
+
+        selected_sources = [
+            str(item).strip()
+            for item in (workpackage_config.get("sources") if isinstance(workpackage_config.get("sources"), list) else [])
+            if str(item).strip()
+        ]
+        registered_apis = self._resolve_registered_apis(selected_sources)
+        return {
+            "workpackage_id": target_workpackage,
+            "version": target_version,
+            "bundle_path": str(bundle_dir),
+            "workpackage_config": workpackage_config,
+            "publish_record": publish_record,
+            "selected_sources": selected_sources,
+            "registered_apis": registered_apis,
+        }
+
+    def _resolve_workpackage_bundle_dir(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        publish_record: dict[str, Any],
+    ) -> Path:
+        candidates: list[Path] = []
+        bundle_path = str((publish_record or {}).get("bundle_path") or "").strip()
+        if bundle_path:
+            candidates.append(Path(bundle_path))
+        if workpackage_id and version:
+            candidates.append(Path("workpackages/bundles") / f"{workpackage_id}-{version}")
+        if workpackage_id:
+            candidates.append(Path("workpackages/bundles") / workpackage_id)
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        if workpackage_id and version:
+            return Path("workpackages/bundles") / f"{workpackage_id}-{version}"
+        return Path("workpackages/bundles") / workpackage_id
+
+    def _resolve_registered_apis(self, selected_sources: list[str]) -> list[dict[str, Any]]:
+        config_path = Path("config/trusted_data_sources.json")
+        if not config_path.exists():
+            return []
+        try:
+            payload = json.loads(config_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        trusted_sources = payload.get("trusted_sources") if isinstance(payload, dict) else []
+        if not isinstance(trusted_sources, list):
+            return []
+        selected = {str(item or "").strip().lower() for item in selected_sources if str(item or "").strip()}
+        rows: list[dict[str, Any]] = []
+        for source in trusted_sources:
+            if not isinstance(source, dict):
+                continue
+            source_id = str(source.get("source_id") or "").strip()
+            source_provider = str(source.get("provider") or "").strip()
+            aliases = source.get("aliases") if isinstance(source.get("aliases"), list) else []
+            source_tokens = {source_id.lower(), source_provider.lower(), *(str(x).strip().lower() for x in aliases if str(x).strip())}
+            source_hit = not selected or bool(selected & source_tokens)
+            interfaces = source.get("trusted_interfaces") if isinstance(source.get("trusted_interfaces"), list) else []
+            if interfaces:
+                if not source_hit and source_id.lower() != "fengtu":
+                    continue
+                for item in interfaces:
+                    if not isinstance(item, dict):
+                        continue
+                    rows.append(
+                        {
+                            "source_id": source_id,
+                            "provider": source_provider,
+                            "interface_id": str(item.get("interface_id") or ""),
+                            "name": str(item.get("name") or ""),
+                            "provider_group": str(item.get("provider_group") or ""),
+                            "method": str(item.get("method") or ""),
+                            "base_url": str(item.get("base_url") or ""),
+                            "doc_url": str(item.get("doc_url") or ""),
+                        }
+                    )
+        rows.sort(key=lambda item: (item.get("source_id") or "", item.get("name") or "", item.get("interface_id") or ""))
+        return rows
 
     def runtime_llm_interactions(
         self,
@@ -859,6 +1516,8 @@ class GovernanceService:
             ("created", "factory_cli", "workpackage_created"),
             ("llm_confirmed", "factory_agent", "requirements_confirmed"),
             ("packaged", "factory_agent", "workpackage_packaged"),
+            ("dryrun_finished", "governance_runtime", "dryrun_finished"),
+            ("publish_confirmed", "factory_agent", "publish_confirmed"),
             ("submitted", "governance_runtime", "runtime_submit_requested"),
             ("accepted", "governance_runtime", "runtime_submit_accepted"),
             ("running", "governance_runtime", "runtime_task_running"),
@@ -915,6 +1574,117 @@ class GovernanceService:
             "stage_counts": stage_counts,
             "window": "24h",
         }
+
+    def runtime_workpackage_create(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        name: str,
+        objective: str,
+        status: str,
+        actor: str = "",
+    ) -> dict[str, Any]:
+        return self._repo.create_runtime_workpackage_record(
+            workpackage_id=workpackage_id,
+            version=version,
+            name=name,
+            objective=objective,
+            status=status,
+            actor=actor,
+            upsert=False,
+        )
+
+    def runtime_workpackage_list(
+        self,
+        *,
+        q: str = "",
+        status: str = "",
+        version: str = "",
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "updated_at",
+        sort_order: str = "desc",
+    ) -> dict[str, Any]:
+        return self._repo.list_runtime_workpackage_records(
+            q=q,
+            status=status,
+            version=version,
+            limit=limit,
+            offset=offset,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            include_deleted=False,
+        )
+
+    def runtime_workpackage_detail(self, *, workpackage_id: str, version: str) -> dict[str, Any] | None:
+        return self._repo.get_runtime_workpackage_record(
+            workpackage_id=workpackage_id,
+            version=version,
+            include_deleted=False,
+        )
+
+    def runtime_workpackage_update(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        name: str | None = None,
+        objective: str | None = None,
+        status: str | None = None,
+        actor: str = "",
+    ) -> dict[str, Any] | None:
+        return self._repo.update_runtime_workpackage_record(
+            workpackage_id=workpackage_id,
+            version=version,
+            name=name,
+            objective=objective,
+            status=status,
+            actor=actor,
+        )
+
+    def runtime_workpackage_delete(self, *, workpackage_id: str, version: str, actor: str = "") -> dict[str, Any] | None:
+        return self._repo.soft_delete_runtime_workpackage_record(
+            workpackage_id=workpackage_id,
+            version=version,
+            actor=actor,
+        )
+
+    def runtime_seed_workpackage_crud_demo(
+        self,
+        *,
+        total: int = 12,
+        prefix: str = "wp_seed_crud",
+    ) -> dict[str, Any]:
+        safe_total = max(12, min(int(total), 200))
+        prefix_text = str(prefix or "wp_seed_crud").strip() or "wp_seed_crud"
+        status_cycle = ["created", "submitted", "packaged", "published", "blocked", "deleted"]
+        rows: list[dict[str, Any]] = []
+        for idx in range(safe_total):
+            group = (idx // 3) + 1
+            workpackage_id = f"{prefix_text}_{group:03d}"
+            version = f"v1.0.{(idx % 3) + 1}"
+            status = status_cycle[idx % len(status_cycle)]
+            is_zh = idx % 2 == 0
+            name = f"地址治理工作包{group:03d}" if is_zh else f"Address Governance Pack {group:03d}"
+            objective = (
+                f"地址标准化+验真+图谱（{group:03d}）"
+                if is_zh
+                else f"Address normalization + verification + graph ({group:03d})"
+            )
+            deleted_at = self._repo._now_iso() if status == "deleted" else ""
+            row = self._repo.create_runtime_workpackage_record(
+                workpackage_id=workpackage_id,
+                version=version,
+                name=name,
+                objective=objective,
+                status=status,
+                actor="runtime_seed",
+                upsert=True,
+                deleted_at=deleted_at,
+            )
+            rows.append(row)
+        return {"total_seeded": len(rows), "items": rows}
 
     def runtime_reliability_summary(self, *, window: str = "24h") -> dict[str, Any]:
         recent_hours = self._parse_window_hours(window)

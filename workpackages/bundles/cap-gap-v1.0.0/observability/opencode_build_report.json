@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "cap-gap-v1.0.0",
+  "name": "cap-gap",
+  "version": "v1.0.0",
+  "objective": "数据治理任务执行",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 3,
+  "line_metrics_path": "workpackages/bundles/cap-gap-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}

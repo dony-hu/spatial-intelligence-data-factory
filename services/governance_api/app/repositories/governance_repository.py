@@ -19,6 +19,7 @@ class _MemoryStore:
     rulesets: dict[str, dict[str, Any]] = field(default_factory=dict)
     change_requests: dict[str, dict[str, Any]] = field(default_factory=dict)
     workpackage_publishes: dict[str, dict[str, Any]] = field(default_factory=dict)
+    workpackage_records: dict[str, dict[str, Any]] = field(default_factory=dict)
     audit_events: list[dict[str, Any]] = field(default_factory=list)
     observation_events: list[dict[str, Any]] = field(default_factory=list)
     observation_metrics: list[dict[str, Any]] = field(default_factory=list)
@@ -41,6 +42,7 @@ class GovernanceRepository:
             raise RuntimeError(
                 "DATABASE_URL must be postgresql:// in persistent runtime mode."
             )
+        self._enforce_db_switch_guard(db_url)
         self._memory = _MemoryStore(
             rulesets={
                 "default": {
@@ -53,6 +55,20 @@ class GovernanceRepository:
         )
         self._engine = None
         self._engine = self._build_engine()
+
+    def _enforce_db_switch_guard(self, db_url: str) -> None:
+        locked = str(os.getenv("GOVERNANCE_DB_LOCKED_URL") or "").strip()
+        if not locked:
+            return
+        if db_url == locked:
+            return
+        confirm = str(os.getenv("GOVERNANCE_DB_SWITCH_CONFIRM") or "0").strip().lower()
+        if confirm in {"1", "true", "yes"}:
+            return
+        raise RuntimeError(
+            "DATABASE_URL differs from GOVERNANCE_DB_LOCKED_URL. "
+            "Manual confirmation required: set GOVERNANCE_DB_SWITCH_CONFIRM=1."
+        )
 
     def _database_url(self) -> str | None:
         return os.getenv("DATABASE_URL")
@@ -314,6 +330,229 @@ class GovernanceRepository:
             "candidate": candidate_item,
             "changed_fields": changed_fields,
         }
+
+    def _runtime_workpackage_key(self, workpackage_id: str, version: str) -> str:
+        return f"{str(workpackage_id or '').strip()}::{str(version or '').strip()}"
+
+    def _load_runtime_workpackage_records_from_events(self) -> dict[str, dict[str, Any]]:
+        rows = self._query(
+            """
+            SELECT workpackage_id, version, status, evidence_ref, published_by, created_at, updated_at
+            FROM runtime.publish_record
+            ORDER BY updated_at DESC
+            LIMIT 50000
+            """,
+            {},
+        )
+        store: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            raw = self._serialize_record(row)
+            meta = self._normalize_json_value(raw.get("evidence_ref") or {})
+            meta_obj = meta if isinstance(meta, dict) else {}
+            wid = str(raw.get("workpackage_id") or "")
+            ver = str(raw.get("version") or "")
+            key = self._runtime_workpackage_key(wid, ver)
+            if not key.strip(":"):
+                continue
+            normalized = {
+                "workpackage_id": wid,
+                "version": ver,
+                "name": str(meta_obj.get("name") or wid),
+                "objective": str(meta_obj.get("objective") or ""),
+                "status": str(raw.get("status") or "created"),
+                "deleted_at": str(meta_obj.get("deleted_at") or ""),
+                "created_at": str(raw.get("created_at") or ""),
+                "updated_at": str(raw.get("updated_at") or ""),
+                "updated_by": str(raw.get("published_by") or ""),
+            }
+            store[key] = normalized
+        self._memory.workpackage_records = dict(store)
+        return store
+
+    def create_runtime_workpackage_record(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        name: str,
+        objective: str,
+        status: str,
+        actor: str = "",
+        upsert: bool = False,
+        deleted_at: str = "",
+    ) -> dict[str, Any]:
+        workpackage_id = str(workpackage_id or "").strip()
+        version = str(version or "").strip()
+        objective = str(objective or "").strip()
+        if not workpackage_id:
+            raise ValueError("workpackage_id is required")
+        if not version:
+            raise ValueError("version is required")
+        if not objective:
+            raise ValueError("objective is required")
+        now_iso = self._now_iso()
+        key = self._runtime_workpackage_key(workpackage_id, version)
+        existing = self.get_runtime_workpackage_record(workpackage_id=workpackage_id, version=version, include_deleted=True)
+        if existing and not upsert:
+            raise ValueError("workpackage already exists")
+        item = {
+            "workpackage_id": workpackage_id,
+            "version": version,
+            "name": str(name or workpackage_id).strip() or workpackage_id,
+            "objective": objective,
+            "status": str(status or "created").strip() or "created",
+            "deleted_at": str(deleted_at or ""),
+            "created_at": str((existing or {}).get("created_at") or now_iso),
+            "updated_at": now_iso,
+            "updated_by": str(actor or ""),
+        }
+        self._memory.workpackage_records[key] = dict(item)
+        self.upsert_workpackage_publish(
+            workpackage_id=workpackage_id,
+            version=version,
+            status=str(item.get("status") or "created"),
+            evidence_ref=json.dumps(
+                {
+                    "name": str(item.get("name") or ""),
+                    "objective": str(item.get("objective") or ""),
+                    "deleted_at": str(item.get("deleted_at") or ""),
+                },
+                ensure_ascii=False,
+            ),
+            published_by=str(actor or ""),
+        )
+        return dict(item)
+
+    def get_runtime_workpackage_record(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        include_deleted: bool = False,
+    ) -> dict[str, Any] | None:
+        store = self._load_runtime_workpackage_records_from_events()
+        key = self._runtime_workpackage_key(workpackage_id, version)
+        item = store.get(key)
+        if not item:
+            return None
+        if not include_deleted and str(item.get("deleted_at") or "").strip():
+            return None
+        return dict(item)
+
+    def list_runtime_workpackage_records(
+        self,
+        *,
+        q: str = "",
+        status: str = "",
+        version: str = "",
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "updated_at",
+        sort_order: str = "desc",
+        include_deleted: bool = False,
+    ) -> dict[str, Any]:
+        store = self._load_runtime_workpackage_records_from_events()
+        rows = [dict(v) for v in store.values()]
+        qv = str(q or "").strip().lower()
+        sv = str(status or "").strip().lower()
+        vv = str(version or "").strip()
+        if not include_deleted:
+            rows = [x for x in rows if not str(x.get("deleted_at") or "").strip()]
+        if qv:
+            rows = [
+                x
+                for x in rows
+                if qv in str(x.get("workpackage_id") or "").lower()
+                or qv in str(x.get("name") or "").lower()
+                or qv in str(x.get("objective") or "").lower()
+            ]
+        if sv:
+            rows = [x for x in rows if str(x.get("status") or "").lower() == sv]
+        if vv:
+            rows = [x for x in rows if str(x.get("version") or "") == vv]
+        sort_key = str(sort_by or "updated_at")
+        reverse = str(sort_order or "desc").lower() != "asc"
+        allowed = {"updated_at", "created_at", "status", "workpackage_id", "version"}
+        if sort_key not in allowed:
+            sort_key = "updated_at"
+        rows.sort(key=lambda x: str(x.get(sort_key) or ""), reverse=reverse)
+        safe_limit = max(1, min(int(limit), 200))
+        safe_offset = max(0, int(offset))
+        sliced = rows[safe_offset : safe_offset + safe_limit]
+        return {"total": len(rows), "items": sliced}
+
+    def update_runtime_workpackage_record(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        name: str | None = None,
+        objective: str | None = None,
+        status: str | None = None,
+        actor: str = "",
+    ) -> dict[str, Any] | None:
+        existing = self.get_runtime_workpackage_record(workpackage_id=workpackage_id, version=version, include_deleted=False)
+        if not existing:
+            return None
+        merged = dict(existing)
+        if name is not None:
+            merged["name"] = str(name or "").strip() or merged.get("name") or workpackage_id
+        if objective is not None:
+            text = str(objective or "").strip()
+            if not text:
+                raise ValueError("objective is required")
+            merged["objective"] = text
+        if status is not None:
+            merged["status"] = str(status or "").strip() or merged.get("status") or "created"
+        merged["updated_at"] = self._now_iso()
+        merged["updated_by"] = str(actor or "")
+        self._memory.workpackage_records[self._runtime_workpackage_key(workpackage_id, version)] = dict(merged)
+        self.upsert_workpackage_publish(
+            workpackage_id=str(workpackage_id or ""),
+            version=str(version or ""),
+            status=str(merged.get("status") or "created"),
+            evidence_ref=json.dumps(
+                {
+                    "name": str(merged.get("name") or ""),
+                    "objective": str(merged.get("objective") or ""),
+                    "deleted_at": str(merged.get("deleted_at") or ""),
+                },
+                ensure_ascii=False,
+            ),
+            published_by=str(actor or ""),
+        )
+        return dict(merged)
+
+    def soft_delete_runtime_workpackage_record(
+        self,
+        *,
+        workpackage_id: str,
+        version: str,
+        actor: str = "",
+    ) -> dict[str, Any] | None:
+        existing = self.get_runtime_workpackage_record(workpackage_id=workpackage_id, version=version, include_deleted=True)
+        if not existing:
+            return None
+        existing["status"] = "deleted"
+        existing["deleted_at"] = self._now_iso()
+        existing["updated_at"] = self._now_iso()
+        existing["updated_by"] = str(actor or "")
+        self._memory.workpackage_records[self._runtime_workpackage_key(workpackage_id, version)] = dict(existing)
+        self.upsert_workpackage_publish(
+            workpackage_id=str(workpackage_id or ""),
+            version=str(version or ""),
+            status="deleted",
+            evidence_ref=json.dumps(
+                {
+                    "name": str(existing.get("name") or ""),
+                    "objective": str(existing.get("objective") or ""),
+                    "deleted_at": str(existing.get("deleted_at") or ""),
+                },
+                ensure_ascii=False,
+            ),
+            published_by=str(actor or ""),
+        )
+        return dict(existing)
 
     def create_task(
         self,

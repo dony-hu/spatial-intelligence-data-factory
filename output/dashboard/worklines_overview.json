@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "as_of": "2026-03-04T05:29:11.938152+00:00",
   "lines": [
     {
       "line_id": "line_project_orchestrator",
@@ -11,7 +11,7 @@
       "next": "以“夜间门槛优先”口径收敛：修复 `suite_web_e2e_catalog` 失败并恢复统一 `GO`；跟进 Iteration-005 管理看板合并任务包落地并完成验收勾选；推进工程监理线提交首份《项目级监理审计报告》并纳入总控决策",
       "blocker": "无（夜间质量门槛已转为GO；工程边界COMPLIANT；技术风险可控）",
       "eta": "✅ 2026-02-16 09:15（本地时间）ALL TASKS COMPLETE",
-      "last_update": "2026-02-16T01:18:05.036599+00:00"
+      "last_update": "2026-02-16T04:03:14.553432+00:00"
     },
     {
       "line_id": "line_engineering_supervisor",
@@ -35,7 +35,7 @@
       "next": "持续观察 nightly 门槛判定一致性（重点关注 `sql_security.return_code` 与报告展示字段一致性）",
       "blocker": "",
       "eta": "2026-02-16 10:30（本地时间）完成夜间稳定性复核（非阻断）",
-      "last_update": "2026-02-15T15:23:22.784499+00:00"
+      "last_update": "2026-02-16T04:03:04.361504+00:00"
     },
     {
       "line_id": "line_execution_feedback",
@@ -59,7 +59,7 @@
       "next": "在真实 Postgres 容器环境执行一次端到端联调并采集 SQL 侧截图/查询证据；对接地址治理 validate stage 的调用链，补充跨服务回放压测样本",
       "blocker": "",
       "eta": "2026-02-17 18:00（本地时间）完成持久化闭环联调",
-      "last_update": "2026-02-15T14:45:58.604862+00:00"
+      "last_update": "2026-02-16T04:03:01.083900+00:00"
     },
     {
       "line_id": "line_address_algo",
@@ -71,7 +71,7 @@
       "next": "增加 `workpackage` schema 校验脚本与 CI 校验；在产线执行脚本中消费 `line_feedback_contract` 约束",
       "blocker": "",
       "eta": "2026-02-15 13:00（本地时间）完成 schema 自动校验接入",
-      "last_update": "2026-02-14T06:38:27.619146+00:00"
+      "last_update": "2026-03-03T03:28:52.764544+00:00"
     },
     {
       "line_id": "line_test_quality",
@@ -98,19 +98,6 @@
       "last_update": "2026-02-14T06:43:39.338056+00:00"
     }
   ],
-  "cross_line_dependencies": [
-    {
-      "from_line": "工厂-工具/执行引擎",
-      "to_line": "工厂-工作包",
-      "topic": "3. 发布门禁中出现 SQLite 权威依赖即 `NO_GO`。",
-      "status": "open"
-    },
-    {
-      "from_line": "工厂-工具/执行引擎",
-      "to_line": "工厂-工作包",
-      "topic": "下发提示词：你负责Phase1合规审计。必须完成：1) 检查是否存在SQLite权威依赖；2) 检查是否出现越界改动；3) 输出P0/P1问题清单与Hold建议。回传格式：Compliance Check Matrix / Violations / Risk Level / Rectification Actions / Hold-or-Release Recommendation。",
-      "status": "open"
-    }
-  ],
+  "cross_line_dependencies": [],
   "blocked_count": 1
 }

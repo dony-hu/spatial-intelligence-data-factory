@@ -1,0 +1,186 @@
+{
+  "workpackage": {
+    "name": "cap-gap",
+    "version": "v1.0.0",
+    "objective": "数据治理任务执行"
+  },
+  "architecture_context": {
+    "layers": [
+      "Agent会话编排层",
+      "可信数据Hub层",
+      "工作包执行层",
+      "运行态可观测层"
+    ],
+    "workpackage_lifecycle": [
+      "requirements_confirm",
+      "generate",
+      "dryrun",
+      "publish",
+      "runtime_upload"
+    ],
+    "runtime_env": {
+      "python": "3.11",
+      "queue": "sync"
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "raw_text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "raw_text"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "normalization": {
+          "type": "object"
+        },
+        "entity_parsing": {
+          "type": "object"
+        },
+        "address_validation": {
+          "type": "object"
+        },
+        "spatial_graph": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ]
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check"
+      }
+    ],
+    "missing_apis": [
+      {
+        "capability_id": "entity_parsing",
+        "name": "空间实体拆分API",
+        "endpoint": "https://api.external.example.com/entity/parsing",
+        "reason": "补齐空间实体拆分能力",
+        "requires_key": true,
+        "api_key_env": "ENTITY_PARSING_API_KEY",
+        "provider": "external"
+      },
+      {
+        "capability_id": "spatial_graph_build",
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "provider": "external"
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "api",
+        "provider": "external",
+        "endpoint": "https://api.external.example.com/entity/parsing",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "ENTITY_PARSING_API_KEY"
+      },
+      {
+        "source_id": "api",
+        "provider": "external",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      "解析输入",
+      "地址标准化",
+      "地址验真",
+      "空间图谱构建"
+    ]
+  },
+  "scripts": [
+    {
+      "name": "run_pipeline.py",
+      "purpose": "执行治理流程",
+      "runtime": "python",
+      "entry": "python scripts/run_pipeline.py"
+    },
+    {
+      "name": "fetch_entity_parsing.py",
+      "purpose": "调用外部API补齐能力：空间实体拆分API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_entity_parsing.py",
+      "endpoint": "https://api.external.example.com/entity/parsing",
+      "api_key_env": "ENTITY_PARSING_API_KEY"
+    },
+    {
+      "name": "fetch_spatial_graph_build.py",
+      "purpose": "调用外部API补齐能力：空间图谱构建API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_spatial_graph_build.py",
+      "endpoint": "https://api.external.example.com/spatial/graph/build",
+      "api_key_env": "SPATIAL_GRAPH_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 1,
+    "schema_fix_rounds": [
+      {
+        "round": 1,
+        "errors": [
+          "architecture_context is required",
+          "architecture_context.runtime_env must be object",
+          "io_contract.input_schema must be object",
+          "io_contract.output_schema must be object",
+          "execution_plan.steps must be non-empty array",
+          "scripts must be non-empty array"
+        ]
+      }
+    ],
+    "autofill_applied_fields": [
+      "api_plan.registered_apis_used",
+      "architecture_context.layers",
+      "architecture_context.runtime_env",
+      "architecture_context.workpackage_lifecycle",
+      "execution_plan.steps",
+      "io_contract.input_schema",
+      "io_contract.output_schema",
+      "scripts"
+    ],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "cap-gap",
+  "version": "v1.0.0",
+  "objective": "数据治理任务执行",
+  "sources": [
+    "fengtu"
+  ]
+}

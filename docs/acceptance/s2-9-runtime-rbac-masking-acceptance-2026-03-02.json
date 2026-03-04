@@ -1,0 +1,14 @@
+{
+  "story": "S2-9",
+  "title": "观测权限脱敏与审计合规",
+  "date": "2026-03-02",
+  "result": "PASS",
+  "tests": [
+    "services/governance_api/tests/test_runtime_compliance_rbac.py",
+    "services/governance_api/tests/test_runtime_workpackage_observability_rbac.py"
+  ],
+  "no_fallback_verified": true,
+  "residual_risks": [
+    "角色扩展时需重新审计字段脱敏矩阵"
+  ]
+}

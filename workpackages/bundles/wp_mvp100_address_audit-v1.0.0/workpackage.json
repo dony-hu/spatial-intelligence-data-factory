@@ -1,0 +1,333 @@
+{
+  "workpackage": {
+    "name": "wp_mvp100_address_audit",
+    "version": "v1.0.0",
+    "objective": "workpackage_id@version=wp_mvp100_address_audit@1.0.0；基于MVP-100默认策略完成地址清洗、标准化、地理编码与审计产物生成，先生成可执行工作包，待Key就绪后执行dryrun并供人工确认。"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ],
+      "current_stage": "generate"
+    },
+    "runtime_env": {
+      "os": "Linux x86_64",
+      "python": "3.10+",
+      "container_image": "python:3.10-slim",
+      "network": "可访问 https://gis-apis.sf-express.com",
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "required_env": [
+        "FENGTU_API_KEY",
+        "FENGTU_API_SECRET",
+        "HTTP_TIMEOUT_MS=5000",
+        "MAX_RETRY_PER_API=1",
+        "MAX_CALL_PER_RECORD=6"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "input_file",
+        "config"
+      ],
+      "properties": {
+        "input_file": {
+          "type": "string",
+          "description": "CSV路径，UTF-8，首批处理前100条"
+        },
+        "config": {
+          "type": "object",
+          "required": [
+            "sample_size",
+            "confidence_threshold",
+            "coordinate_system",
+            "feature_switches"
+          ],
+          "properties": {
+            "sample_size": {
+              "type": "integer",
+              "const": 100
+            },
+            "confidence_threshold": {
+              "type": "number",
+              "const": 0.7
+            },
+            "coordinate_system": {
+              "type": "string",
+              "enum": [
+                "GCJ-02"
+              ]
+            },
+            "feature_switches": {
+              "type": "object",
+              "required": [
+                "address_aoi_keyword",
+                "address_type_identify",
+                "address_level_judge"
+              ],
+              "properties": {
+                "address_aoi_keyword": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "address_type_identify": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "address_level_judge": {
+                  "type": "boolean",
+                  "const": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "csv_columns": {
+        "required": [
+          "record_id",
+          "raw_address"
+        ],
+        "optional": [
+          "source_system"
+        ]
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "result.csv",
+        "failed.csv",
+        "audit.csv",
+        "graph_nodes.csv",
+        "graph_edges.csv",
+        "run_summary.txt"
+      ],
+      "properties": {
+        "result.csv": {
+          "columns": [
+            "record_id",
+            "raw_address",
+            "std_address",
+            "province",
+            "city",
+            "district",
+            "town",
+            "village",
+            "longitude",
+            "latitude",
+            "coord_sys",
+            "geocode_confidence",
+            "real_check_status",
+            "final_status",
+            "api_trace_id"
+          ]
+        },
+        "failed.csv": {
+          "columns": [
+            "record_id",
+            "raw_address",
+            "fail_reason",
+            "status"
+          ],
+          "status_enum": [
+            "pending_manual"
+          ]
+        },
+        "audit.csv": {
+          "columns": [
+            "record_id",
+            "step",
+            "api_interface_id",
+            "request_time",
+            "response_code",
+            "latency_ms",
+            "decision",
+            "error_message"
+          ]
+        },
+        "graph_nodes.csv": {
+          "columns": [
+            "node_id",
+            "node_type",
+            "name",
+            "attrs_json"
+          ]
+        },
+        "graph_edges.csv": {
+          "columns": [
+            "edge_id",
+            "from_node",
+            "to_node",
+            "relation",
+            "attrs_json"
+          ]
+        },
+        "run_summary.txt": {
+          "content_requirements": [
+            "总输入条数",
+            "成功条数",
+            "失败条数",
+            "低置信触发补救条数",
+            "各接口调用次数与成功率",
+            "平均耗时与P95"
+          ]
+        },
+        "package_name_rule": "mvp100_dryrun_YYYYMMDD_HHMM.zip"
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "method": "POST",
+        "purpose": "地址标准化预处理"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "method": "POST",
+        "purpose": "五级地址解析"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "method": "GET",
+        "purpose": "主地理编码"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_search_service",
+        "endpoint": "https://gis-apis.sf-express.com/zhs/bs/tips",
+        "method": "GET",
+        "purpose": "低置信补救-候选地址检索（confidence<0.70触发）"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "reverse_geocode",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "method": "GET",
+        "purpose": "低置信补救-逆地理核验"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "method": "GET",
+        "purpose": "地址真实性校验"
+      }
+    ],
+    "missing_apis": [],
+    "missing_apis_proposals": []
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": "S1",
+        "name": "环境与密钥校验",
+        "action": "校验FENGTU_API_KEY/FENGTU_API_SECRET、网络连通性、输入文件存在性",
+        "gate": "任一失败即终止，不进入调用环节"
+      },
+      {
+        "id": "S2",
+        "name": "输入校验与抽样",
+        "action": "校验CSV字段(record_id,raw_address,source_system?)并截取前100条，去重与空值标记"
+      },
+      {
+        "id": "S3",
+        "name": "标准化与L5解析",
+        "action": "按条调用address_standardize -> address_resolve_l5，落审计日志"
+      },
+      {
+        "id": "S4",
+        "name": "主编码与置信度判定",
+        "action": "调用geocode，若confidence>=0.70直接进入验真"
+      },
+      {
+        "id": "S5",
+        "name": "低置信补救链路",
+        "action": "confidence<0.70时执行address_search_service + reverse_geocode，重评结果"
+      },
+      {
+        "id": "S6",
+        "name": "真实性校验与结果决策",
+        "action": "调用address_real_check，生成final_status；无法通过规则则写入failed.csv(pending_manual)"
+      },
+      {
+        "id": "S7",
+        "name": "产物输出与打包",
+        "action": "生成result/failed/audit/graph/run_summary并压缩为mvp100_dryrun_YYYYMMDD_HHMM.zip"
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "run_mvp100_pipeline.py",
+      "purpose": "主执行脚本：串联输入校验、API调用、补救策略、结果输出",
+      "runtime": "python3.10",
+      "entry": "python run_mvp100_pipeline.py --input ./input.csv --outdir ./out --sample-size 100 --confidence-threshold 0.70 --coord GCJ-02",
+      "dependencies": [
+        "pandas==2.2.2",
+        "requests==2.32.3",
+        "python-dotenv==1.0.1",
+        "tenacity==8.5.0"
+      ]
+    },
+    {
+      "name": "preflight_check.py",
+      "purpose": "执行前检查：环境变量、网络、schema、配额参数",
+      "runtime": "python3.10",
+      "entry": "python preflight_check.py --input ./input.csv"
+    },
+    {
+      "name": "package_outputs.sh",
+      "purpose": "打包dryrun产物并按命名规则输出zip",
+      "runtime": "bash",
+      "entry": "bash package_outputs.sh ./out"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 0,
+    "schema_fix_rounds": [],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "wp_mvp100_address_audit",
+  "version": "v1.0.0",
+  "objective": "workpackage_id@version=wp_mvp100_address_audit@1.0.0；基于MVP-100默认策略完成地址清洗、标准化、地理编码与审计产物生成，先生成可执行工作包，待Key就绪后执行dryrun并供人工确认。",
+  "sources": [
+    "fengtu"
+  ]
+}

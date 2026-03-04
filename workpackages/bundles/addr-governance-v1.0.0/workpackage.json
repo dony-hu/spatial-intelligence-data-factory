@@ -1,0 +1,150 @@
+{
+  "workpackage": {
+    "name": "addr-governance",
+    "version": "v1.0.0",
+    "objective": "地址治理工作包"
+  },
+  "architecture_context": {
+    "factory_architecture": "治理工厂四层架构",
+    "runtime_env": {
+      "python": "3.11",
+      "queue": "sync"
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "raw_text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "raw_text"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "normalization": {
+          "type": "object"
+        },
+        "address_validation": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "normalization",
+        "address_validation"
+      ]
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "poi_risk_lookup",
+        "endpoint": "https://example.com/poi-risk",
+        "reason": "补充高风险POI识别",
+        "requires_key": true
+      },
+      {
+        "capability_id": "spatial_graph_build",
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "provider": "external"
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "poi_risk_lookup",
+        "provider": "poi_risk_lookup",
+        "endpoint": "https://example.com/poi-risk",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": ""
+      },
+      {
+        "source_id": "api",
+        "provider": "external",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      "解析输入",
+      "地址标准化",
+      "地址验真",
+      "空间图谱构建"
+    ]
+  },
+  "scripts": [
+    {
+      "name": "fetch_poi_risk.py",
+      "purpose": "拉取POI风险数据",
+      "runtime": "python",
+      "entry": "python scripts/fetch_poi_risk.py"
+    },
+    {
+      "name": "fetch_poi_risk_lookup.py",
+      "purpose": "调用外部API补齐能力：poi_risk_lookup",
+      "runtime": "python",
+      "entry": "python scripts/fetch_poi_risk_lookup.py",
+      "endpoint": "https://example.com/poi-risk",
+      "api_key_env": ""
+    },
+    {
+      "name": "fetch_spatial_graph_build.py",
+      "purpose": "调用外部API补齐能力：空间图谱构建API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_spatial_graph_build.py",
+      "endpoint": "https://api.external.example.com/spatial/graph/build",
+      "api_key_env": "SPATIAL_GRAPH_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 1,
+    "schema_fix_rounds": [
+      {
+        "round": 1,
+        "errors": [
+          "architecture_context is required",
+          "architecture_context.runtime_env must be object",
+          "io_contract.input_schema must be object",
+          "io_contract.output_schema must be object",
+          "execution_plan.steps must be non-empty array",
+          "scripts must be non-empty array"
+        ]
+      }
+    ],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "addr-governance",
+  "version": "v1.0.0",
+  "objective": "地址治理工作包",
+  "sources": [
+    "fengtu"
+  ]
+}

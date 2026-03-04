@@ -2,7 +2,7 @@
 
 - 日期：2026-02-15
 - 任务卡：TC-08
-- 工作包：`workpackages/wp-test-panel-sql-query-readonly-v0.1.0.json`
+- 工作包：`[legacy 已清理] workpackages/wp-test-panel-sql-query-readonly-v0.1.0.json`
 - 牵头：项目管理总控线
 
 ## 目标

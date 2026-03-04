@@ -1,0 +1,404 @@
+{
+  "workpackage": {
+    "name": "wp_addr_trusted_hub_opencode_20260303_001",
+    "version": "v1.0.0",
+    "objective": "生成并发布可执行地址治理工作包，严格绑定已注册可信接口（address_standardize + address_real_check + address_resolve_l5），通过 opencode 构建执行脚本并输出可审计交付物。workpackage_id@version=wp_addr_trusted_hub_opencode_20260303_001@1.0.0"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ],
+      "governance_rules": [
+        "仅使用已注册可信API完成核心链路",
+        "禁止mock",
+        "禁止fallback",
+        "禁止workground",
+        "全链路审计日志必出"
+      ]
+    },
+    "runtime_env": {
+      "os": "Linux",
+      "python": "3.10+",
+      "shell": "bash",
+      "network": "可访问 gis-apis.sf-express.com 与 opencode 服务",
+      "required_env": [
+        "FENGTU_APP_KEY",
+        "FENGTU_APP_SECRET",
+        "OPENCODE_API_KEY"
+      ],
+      "artifacts_dir": "./dist/wp_addr_trusted_hub_opencode_20260303_001/1.0.0"
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "input_file",
+        "file_type",
+        "columns",
+        "run_config"
+      ],
+      "properties": {
+        "input_file": {
+          "type": "string",
+          "description": "输入CSV/XLSX文件路径"
+        },
+        "file_type": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx"
+          ]
+        },
+        "columns": {
+          "type": "object",
+          "required": [
+            "record_id",
+            "raw_address"
+          ],
+          "properties": {
+            "record_id": {
+              "type": "string"
+            },
+            "raw_address": {
+              "type": "string"
+            }
+          }
+        },
+        "run_config": {
+          "type": "object",
+          "required": [
+            "batch_limit",
+            "review_enhance_ratio"
+          ],
+          "properties": {
+            "batch_limit": {
+              "type": "integer",
+              "maximum": 100
+            },
+            "review_enhance_ratio": {
+              "type": "number",
+              "maximum": 0.2
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "workpackage_ref",
+        "result_main",
+        "entity_l5",
+        "api_audit_log",
+        "review_queue",
+        "readme"
+      ],
+      "properties": {
+        "workpackage_ref": {
+          "type": "string",
+          "example": "wp_addr_trusted_hub_opencode_20260303_001@1.0.0"
+        },
+        "result_main": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "std_address",
+              "real_check_status",
+              "final_decision"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "std_address": {
+                "type": "string"
+              },
+              "real_check_status": {
+                "type": "string"
+              },
+              "final_decision": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "REVIEW",
+                  "FAIL"
+                ]
+              }
+            }
+          }
+        },
+        "entity_l5": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "town": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "api_audit_log": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "api",
+              "endpoint",
+              "method",
+              "request_time",
+              "response_code",
+              "latency_ms"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "api": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string"
+              },
+              "request_time": {
+                "type": "string"
+              },
+              "response_code": {
+                "type": "integer"
+              },
+              "latency_ms": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "review_queue": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "reason"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "readme": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "method": "POST",
+        "purpose": "地址标准化（核心必调）"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "method": "GET",
+        "purpose": "地址真实性校验（核心必调）"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "method": "POST",
+        "purpose": "五级地址拆分（核心必调）"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "method": "GET",
+        "purpose": "仅对REVIEW样本增强定位"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "reverse_geocode",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "method": "GET",
+        "purpose": "仅对REVIEW样本反查行政区一致性"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "opencode_build_api",
+        "endpoint": "https://api.opencode.ai/v1/build",
+        "reason": "当前注册目录未包含 opencode 构建接口，无法通过Hub统一鉴权调用构建服务",
+        "requires_key": true,
+        "api_key_env": "OPENCODE_API_KEY",
+        "register_plan": "在可信数据Hub新增source_id=opencode，登记/build、/runs、/artifacts接口；配置provider_group=tooling；完成连通性与密钥托管后纳入工作包执行层白名单"
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "opencode_build_api",
+        "provider": "opencode_build_api",
+        "endpoint": "https://api.opencode.ai/v1/build",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "OPENCODE_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": "S1",
+        "phase": "阶段1 架构与运行环境对齐",
+        "action": "校验运行时约束(no_mock/no_fallback/no_workground)与环境变量(FENGTU_APP_KEY/FENGTU_APP_SECRET/OPENCODE_API_KEY)",
+        "output": "env_check_report.json"
+      },
+      {
+        "id": "S2",
+        "phase": "阶段2 输入输出契约对齐",
+        "action": "对输入文件执行schema校验与字段映射(record_id/raw_address)",
+        "output": "contract_validation_report.json"
+      },
+      {
+        "id": "S3",
+        "phase": "阶段3 API绑定",
+        "action": "绑定已注册Fengtu核心API并执行连通性探测；记录opencode接口缺口与注册计划",
+        "output": "api_binding_report.json"
+      },
+      {
+        "id": "S4",
+        "phase": "阶段4 可执行脚本构建",
+        "action": "调用opencode构建脚本生成执行包与manifest",
+        "command": "bash scripts/build_workpackage_with_opencode.sh",
+        "output": "build_manifest.json"
+      },
+      {
+        "id": "S5",
+        "phase": "dryrun",
+        "action": "对<=100条样本执行主链路：standardize -> real_check -> resolve_l5；REVIEW样本触发增强链路",
+        "output": [
+          "result_main.csv",
+          "entity_l5.csv",
+          "api_audit_log.csv",
+          "review_queue.csv"
+        ]
+      },
+      {
+        "id": "S6",
+        "phase": "publish",
+        "action": "打包交付物与README，生成工作包引用",
+        "output": "wp_addr_trusted_hub_opencode_20260303_001@1.0.0"
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "scripts/build_workpackage_with_opencode.sh",
+      "purpose": "使用opencode构建工作包脚本与manifest",
+      "runtime": "bash",
+      "entry": "bash scripts/build_workpackage_with_opencode.sh",
+      "dependencies": [
+        "opencode-cli>=1.0.0",
+        "jq"
+      ]
+    },
+    {
+      "name": "scripts/run_pipeline.py",
+      "purpose": "执行地址治理主流程并生成结果与审计日志",
+      "runtime": "python3.10+",
+      "entry": "python scripts/run_pipeline.py --input {input_file} --type {file_type} --out ./dist/wp_addr_trusted_hub_opencode_20260303_001/1.0.0",
+      "dependencies": [
+        "pandas>=2.0.0",
+        "requests>=2.31.0",
+        "openpyxl>=3.1.0",
+        "pydantic>=2.0.0"
+      ]
+    },
+    {
+      "name": "scripts/publish_artifacts.sh",
+      "purpose": "打包并发布交付物，输出workpackage_id@version",
+      "runtime": "bash",
+      "entry": "bash scripts/publish_artifacts.sh ./dist/wp_addr_trusted_hub_opencode_20260303_001/1.0.0",
+      "dependencies": [
+        "tar",
+        "sha256sum"
+      ]
+    },
+    {
+      "name": "fetch_opencode_build_api.py",
+      "purpose": "调用外部API补齐能力：opencode_build_api",
+      "runtime": "python",
+      "entry": "python scripts/fetch_opencode_build_api.py",
+      "endpoint": "https://api.opencode.ai/v1/build",
+      "api_key_env": "OPENCODE_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 0,
+    "schema_fix_rounds": [],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "wp_addr_trusted_hub_opencode_20260303_001",
+  "version": "v1.0.0",
+  "objective": "生成并发布可执行地址治理工作包，严格绑定已注册可信接口（address_standardize + address_real_check + address_resolve_l5），通过 opencode 构建执行脚本并输出可审计交付物。workpackage_id@version=wp_addr_trusted_hub_opencode_20260303_001@1.0.0",
+  "sources": [
+    "fengtu"
+  ]
+}

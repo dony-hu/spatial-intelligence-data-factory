@@ -63,4 +63,38 @@ def test_runtime_workpackage_events_api_contract() -> None:
     row = items[0]
     for key in ("trace_id", "span_id", "parent_span_id", "source", "event_type", "occurred_at", "status", "payload_summary"):
         assert key in row
+    for key in ("description_zh", "source_zh", "event_type_zh", "status_zh"):
+        assert key in row
+        assert isinstance(row.get(key), str)
+        assert str(row.get(key) or "").strip() != ""
 
+    summary = row.get("payload_summary") or {}
+    assert "pipeline_stage_zh" in summary
+    assert isinstance(summary.get("pipeline_stage_zh"), str)
+
+
+def test_runtime_workpackage_events_unknown_stage_returns_error() -> None:
+    client = TestClient(app)
+    workpackage_id = "wp_obs_events_unknown_stage"
+    version = "v9.9.9"
+    REPOSITORY.record_observation_event(
+        source_service="factory_agent",
+        event_type="workpackage_packaged",
+        status="success",
+        trace_id="trace_unknown_stage",
+        span_id="span_unknown_stage",
+        workpackage_id=workpackage_id,
+        payload={
+            "pipeline_stage": "legacy_stage",
+            "client_type": "user",
+            "version": version,
+        },
+    )
+    resp = client.get(
+        "/v1/governance/observability/runtime/workpackage-events"
+        f"?workpackage_id={workpackage_id}&version={version}&window=24h"
+    )
+    assert resp.status_code == 400
+    detail = resp.json().get("detail") or {}
+    assert detail.get("code") == "INVALID_ARGUMENT"
+    assert "legacy_stage" in str(detail.get("message") or "")

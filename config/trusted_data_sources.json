@@ -93,9 +93,19 @@
       "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
       "trust_level": "high",
       "aliases": ["丰图", "FT", "Feng"],
+      "provider_groups": {
+        "group_a": {
+          "name": "地址解析与验真组",
+          "api_key_env": "FENGTU_AK_GROUP_A"
+        },
+        "group_b": {
+          "name": "标准化与地理编码组",
+          "api_key_env": "FENGTU_AK_GROUP_B"
+        }
+      },
       "requires_api_key": true,
       "request": {
-        "api_key_env": "FENGTU_AK_TEST",
+        "api_key_env": "FENGTU_AK_GROUP_B",
         "method": "GET",
         "headers": {
           "ak": "a0ece06a144a42228cd074e527a4f14f"
@@ -110,10 +120,11 @@
         {
           "interface_id": "address_level_judge",
           "name": "地址级别判断",
+          "provider_group": "group_a",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/209",
           "base_url": "https://gis-apis.sf-express.com/iad/api",
           "method": "GET",
-          "api_key_env": "FENGTU_AK_TEST2",
+          "api_key_env": "FENGTU_AK_GROUP_A",
           "headers": {},
           "ak_in": "query",
           "request_template": {
@@ -126,10 +137,11 @@
         {
           "interface_id": "address_real_check",
           "name": "地址真实性校验",
+          "provider_group": "group_a",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/182",
           "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
           "method": "GET",
-          "api_key_env": "FENGTU_AK_TEST2",
+          "api_key_env": "FENGTU_AK_GROUP_A",
           "headers": {
             "ak": "0748238c55024ea88a61815232a53714"
           },
@@ -146,10 +158,11 @@
         {
           "interface_id": "address_type_identify",
           "name": "地址类型识别",
+          "provider_group": "group_b",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/173",
           "base_url": "https://gis-apis.sf-express.com/atype/api",
           "method": "GET",
-          "api_key_env": "FENGTU_AK_TEST",
+          "api_key_env": "FENGTU_AK_GROUP_B",
           "headers": {},
           "ak_in": "query",
           "request_template": {
@@ -162,12 +175,74 @@
           }
         },
         {
+          "interface_id": "geocode",
+          "name": "地理编码",
+          "provider_group": "group_b",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/172",
+          "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_GROUP_B",
+          "headers": {
+            "ak": "a0ece06a144a42228cd074e527a4f14f"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "query": {
+              "address": "{address}",
+              "city": "{city}",
+              "cc": 1
+            }
+          }
+        },
+        {
+          "interface_id": "reverse_geocode",
+          "name": "逆地理编码",
+          "provider_group": "group_b",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/181",
+          "base_url": "https://gis-apis.sf-express.com/opquery/rgeo",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_GROUP_B",
+          "headers": {},
+          "ak_in": "query",
+          "request_template": {
+            "query": {
+              "x": "{x}",
+              "y": "{y}",
+              "cc": 1,
+              "poinum": 10,
+              "ak": "a0ece06a144a42228cd074e527a4f14f"
+            }
+          }
+        },
+        {
+          "interface_id": "address_search_service",
+          "name": "地址搜索服务",
+          "provider_group": "group_b",
+          "doc_url": "https://lbs.sfmap.com.cn/developDoc/171",
+          "base_url": "https://gis-apis.sf-express.com/zhs/bs/tips",
+          "method": "GET",
+          "api_key_env": "FENGTU_AK_GROUP_B",
+          "headers": {
+            "ak": "a0ece06a144a42228cd074e527a4f14f"
+          },
+          "ak_in": "header",
+          "request_template": {
+            "query": {
+              "query": "{query}",
+              "region": "{region}",
+              "page_num": "1",
+              "page_size": "10"
+            }
+          }
+        },
+        {
           "interface_id": "address_resolve_l5",
           "name": "五级地址解析",
+          "provider_group": "group_a",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/183",
           "base_url": "https://gis-apis.sf-express.com/opquery/addressResolve",
           "method": "POST",
-          "api_key_env": "FENGTU_AK_TEST2",
+          "api_key_env": "FENGTU_AK_GROUP_A",
           "headers": {
             "ak": "0748238c55024ea88a61815232a53714"
           },
@@ -185,10 +260,11 @@
         {
           "interface_id": "address_standardize",
           "name": "地址标准化",
+          "provider_group": "group_b",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/184",
           "base_url": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
           "method": "POST",
-          "api_key_env": "FENGTU_AK_TEST",
+          "api_key_env": "FENGTU_AK_GROUP_B",
           "headers": {
             "ak": "a0ece06a144a42228cd074e527a4f14f"
           },
@@ -203,10 +279,11 @@
         {
           "interface_id": "address_aoi_keyword",
           "name": "地址AOI聚合",
+          "provider_group": "group_b",
           "doc_url": "https://lbs.sfmap.com.cn/developDoc/185",
           "base_url": "https://gis-apis.sf-express.com/opquery/keyword",
           "method": "POST",
-          "api_key_env": "FENGTU_AK_TEST",
+          "api_key_env": "FENGTU_AK_GROUP_B",
           "headers": {
             "ak": "a0ece06a144a42228cd074e527a4f14f"
           },

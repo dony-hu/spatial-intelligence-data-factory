@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "addr-factory-pack-v2.0.0",
+  "name": "addr-factory-pack",
+  "version": "v2.0.0",
+  "objective": "地址治理工作包",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 4,
+  "line_metrics_path": "workpackages/bundles/addr-factory-pack-v2.0.0/observability/line_metrics.json",
+  "status": "success"
+}

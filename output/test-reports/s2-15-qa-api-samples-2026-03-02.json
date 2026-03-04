@@ -1,0 +1,891 @@
+{
+  "t1_success": {
+    "request": {
+      "batch_name": "qa-t1-success",
+      "workpackage_id": "wp_qa_t1_b898fd72",
+      "version": "v1.0.0",
+      "addresses": [
+        "上海市徐汇区肇嘉浜路111号",
+        "北京市朝阳区建国路88号"
+      ],
+      "confirmations": [
+        "confirm_generate",
+        "confirm_dryrun_result",
+        "confirm_publish"
+      ],
+      "actor": "qa_bot"
+    },
+    "status_code": 200,
+    "response": {
+      "task_id": "task_a96de7dcc322",
+      "trace_id": "trace_c8dc32b8641d",
+      "status": "SUCCEEDED",
+      "record_count": 2,
+      "workpackage_id": "wp_qa_t1_b898fd72",
+      "version": "v1.0.0",
+      "runtime_receipt_id": "receipt_2f9f5f1aab1f4163",
+      "dryrun_report": {
+        "batch_meta": {
+          "batch_name": "qa-t1-success",
+          "workpackage_id": "wp_qa_t1_b898fd72",
+          "version": "v1.0.0",
+          "trace_id": "trace_c8dc32b8641d",
+          "record_count": 2
+        },
+        "records": [
+          {
+            "input": {
+              "raw_id": "raw_upload_f2a2a3a2976340d0_0000",
+              "raw_text": "上海市徐汇区肇嘉浜路111号",
+              "source": "upload_batch"
+            },
+            "normalization": {
+              "status": "SUCCEEDED",
+              "normalized_address": "上海市徐汇区肇嘉浜路111号"
+            },
+            "entity_parsing": {
+              "status": "SUCCEEDED",
+              "entities": {
+                "province": "上海",
+                "city": "市徐",
+                "detail": "上海市徐汇区肇嘉浜路111号"
+              }
+            },
+            "address_validation": {
+              "status": "SUCCEEDED",
+              "provider": "mock_provider",
+              "reason": ""
+            },
+            "record_decision": "ACCEPTED",
+            "audit_refs": {
+              "trace_id": "trace_c8dc32b8641d",
+              "workpackage_id": "wp_qa_t1_b898fd72",
+              "version": "v1.0.0"
+            }
+          },
+          {
+            "input": {
+              "raw_id": "raw_upload_135ff3d7bbc5442f_0001",
+              "raw_text": "北京市朝阳区建国路88号",
+              "source": "upload_batch"
+            },
+            "normalization": {
+              "status": "SUCCEEDED",
+              "normalized_address": "北京市朝阳区建国路88号"
+            },
+            "entity_parsing": {
+              "status": "SUCCEEDED",
+              "entities": {
+                "province": "北京",
+                "city": "市朝",
+                "detail": "北京市朝阳区建国路88号"
+              }
+            },
+            "address_validation": {
+              "status": "SUCCEEDED",
+              "provider": "mock_provider",
+              "reason": ""
+            },
+            "record_decision": "ACCEPTED",
+            "audit_refs": {
+              "trace_id": "trace_c8dc32b8641d",
+              "workpackage_id": "wp_qa_t1_b898fd72",
+              "version": "v1.0.0"
+            }
+          }
+        ],
+        "spatial_graph": {
+          "graph_id": "graph_wp_qa_t1_b898fd72_v1.0.0",
+          "graph_version": "v1.0.0",
+          "build_status": "SUCCEEDED",
+          "input_rows_total": 2,
+          "rows_contributed": 2,
+          "rows_skipped": 0,
+          "nodes": [
+            {
+              "node_id": "node_0000",
+              "label": "上海市徐汇区肇嘉浜路111号",
+              "node_type": "address"
+            },
+            {
+              "node_id": "node_0001",
+              "label": "北京市朝阳区建国路88号",
+              "node_type": "address"
+            }
+          ],
+          "edges": [
+            {
+              "edge_id": "edge_0000",
+              "source": "node_0000",
+              "target": "node_0001",
+              "relation": "adjacent"
+            }
+          ],
+          "failed_row_refs": [],
+          "metrics": {
+            "node_count": 2,
+            "edge_count": 1,
+            "connected_components": 1
+          }
+        }
+      },
+      "confirm_timeline": [
+        "confirm_generate",
+        "confirm_dryrun_result",
+        "confirm_publish"
+      ]
+    }
+  },
+  "t1_missing_version": {
+    "request": {
+      "batch_name": "qa-t1-missing-version",
+      "workpackage_id": "wp_only_id",
+      "addresses": [
+        "上海市徐汇区肇嘉浜路111号"
+      ]
+    },
+    "status_code": 400,
+    "response": {
+      "detail": {
+        "code": "INVALID_PAYLOAD",
+        "message": "workpackage_id and version must be provided together"
+      }
+    }
+  },
+  "t1_conflict": {
+    "request": {
+      "batch_name": "qa-t1-conflict",
+      "workpackage_id": "wp_conflict",
+      "version": "v1.0.0",
+      "ruleset_id": "advanced_ruleset",
+      "addresses": [
+        "上海市徐汇区肇嘉浜路111号"
+      ]
+    },
+    "status_code": 400,
+    "response": {
+      "detail": {
+        "code": "INVALID_PAYLOAD",
+        "message": "ruleset_id conflicts with workpackage_id/version mapping"
+      }
+    }
+  },
+  "t2_gate_generate": {
+    "request": {
+      "batch_name": "qa-t2-gate-gen",
+      "workpackage_id": "wp_qa_t2_gen_1679e730",
+      "version": "v1.0.0",
+      "addresses": [
+        "上海市徐汇区肇嘉浜路111号"
+      ],
+      "confirmations": [
+        "confirm_dryrun_result",
+        "confirm_publish"
+      ],
+      "actor": "qa_bot"
+    },
+    "status_code": 409,
+    "response": {
+      "detail": {
+        "code": "WORKPACKAGE_GATE_BLOCKED",
+        "message": "missing confirm_generate; packaged is forbidden"
+      }
+    },
+    "events": {
+      "total": 3,
+      "items": [
+        {
+          "trace_id": "trace_wp_upload_49c1e8b3c0f9",
+          "span_id": "span_8d98765c72",
+          "parent_span_id": "",
+          "source": "factory_cli",
+          "source_zh": "工厂CLI",
+          "event_type": "workpackage_created",
+          "event_type_zh": "创建工作包",
+          "occurred_at": "2026-03-02T07:35:05.414562+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "工厂CLI在「已创建」阶段执行「创建工作包」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "created",
+            "pipeline_stage_zh": "已创建",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_49c1e8b3c0f9",
+          "span_id": "span_845726e27b",
+          "parent_span_id": "",
+          "source": "llm",
+          "source_zh": "大模型",
+          "event_type": "llm_request",
+          "event_type_zh": "LLM请求",
+          "occurred_at": "2026-03-02T07:35:05.415753+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "大模型在「需求已确认」阶段执行「LLM请求」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "llm_confirmed",
+            "pipeline_stage_zh": "需求已确认",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "doubao-seed-2-0-pro-260215",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_49c1e8b3c0f9",
+          "span_id": "span_df73fdd47e",
+          "parent_span_id": "",
+          "source": "llm",
+          "source_zh": "大模型",
+          "event_type": "llm_response",
+          "event_type_zh": "LLM响应",
+          "occurred_at": "2026-03-02T07:35:05.416950+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "大模型在「需求已确认」阶段执行「LLM响应」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "llm_confirmed",
+            "pipeline_stage_zh": "需求已确认",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "doubao-seed-2-0-pro-260215",
+            "message": ""
+          }
+        }
+      ]
+    }
+  },
+  "t2_gate_publish": {
+    "request": {
+      "batch_name": "qa-t2-gate-pub",
+      "workpackage_id": "wp_qa_t2_pub_50f22030",
+      "version": "v1.0.0",
+      "addresses": [
+        "上海市徐汇区肇嘉浜路111号",
+        "北京市朝阳区建国路88号"
+      ],
+      "confirmations": [
+        "confirm_generate",
+        "confirm_dryrun_result"
+      ],
+      "actor": "qa_bot"
+    },
+    "status_code": 200,
+    "response": {
+      "task_id": "",
+      "trace_id": "trace_wp_upload_1298a2c56e71",
+      "status": "BLOCKED",
+      "record_count": 2,
+      "workpackage_id": "wp_qa_t2_pub_50f22030",
+      "version": "v1.0.0",
+      "runtime_receipt_id": "",
+      "dryrun_report": {
+        "batch_meta": {
+          "batch_name": "qa-t2-gate-pub",
+          "workpackage_id": "wp_qa_t2_pub_50f22030",
+          "version": "v1.0.0",
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "record_count": 2
+        },
+        "records": [
+          {
+            "input": {
+              "raw_id": "raw_upload_7e94d38dbf3641ed_0000",
+              "raw_text": "上海市徐汇区肇嘉浜路111号",
+              "source": "upload_batch"
+            },
+            "normalization": {
+              "status": "SUCCEEDED",
+              "normalized_address": "上海市徐汇区肇嘉浜路111号"
+            },
+            "entity_parsing": {
+              "status": "SUCCEEDED",
+              "entities": {
+                "province": "上海",
+                "city": "市徐",
+                "detail": "上海市徐汇区肇嘉浜路111号"
+              }
+            },
+            "address_validation": {
+              "status": "SUCCEEDED",
+              "provider": "mock_provider",
+              "reason": ""
+            },
+            "record_decision": "ACCEPTED",
+            "audit_refs": {
+              "trace_id": "trace_wp_upload_1298a2c56e71",
+              "workpackage_id": "wp_qa_t2_pub_50f22030",
+              "version": "v1.0.0"
+            }
+          },
+          {
+            "input": {
+              "raw_id": "raw_upload_00c8056f78114516_0001",
+              "raw_text": "北京市朝阳区建国路88号",
+              "source": "upload_batch"
+            },
+            "normalization": {
+              "status": "SUCCEEDED",
+              "normalized_address": "北京市朝阳区建国路88号"
+            },
+            "entity_parsing": {
+              "status": "SUCCEEDED",
+              "entities": {
+                "province": "北京",
+                "city": "市朝",
+                "detail": "北京市朝阳区建国路88号"
+              }
+            },
+            "address_validation": {
+              "status": "SUCCEEDED",
+              "provider": "mock_provider",
+              "reason": ""
+            },
+            "record_decision": "ACCEPTED",
+            "audit_refs": {
+              "trace_id": "trace_wp_upload_1298a2c56e71",
+              "workpackage_id": "wp_qa_t2_pub_50f22030",
+              "version": "v1.0.0"
+            }
+          }
+        ],
+        "spatial_graph": {
+          "graph_id": "graph_wp_qa_t2_pub_50f22030_v1.0.0",
+          "graph_version": "v1.0.0",
+          "build_status": "SUCCEEDED",
+          "input_rows_total": 2,
+          "rows_contributed": 2,
+          "rows_skipped": 0,
+          "nodes": [
+            {
+              "node_id": "node_0000",
+              "label": "上海市徐汇区肇嘉浜路111号",
+              "node_type": "address"
+            },
+            {
+              "node_id": "node_0001",
+              "label": "北京市朝阳区建国路88号",
+              "node_type": "address"
+            }
+          ],
+          "edges": [
+            {
+              "edge_id": "edge_0000",
+              "source": "node_0000",
+              "target": "node_0001",
+              "relation": "adjacent"
+            }
+          ],
+          "failed_row_refs": [],
+          "metrics": {
+            "node_count": 2,
+            "edge_count": 1,
+            "connected_components": 1
+          }
+        }
+      },
+      "confirm_timeline": [
+        "confirm_generate",
+        "confirm_dryrun_result"
+      ]
+    },
+    "events": {
+      "total": 7,
+      "items": [
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_39e5ecc328",
+          "parent_span_id": "",
+          "source": "factory_cli",
+          "source_zh": "工厂CLI",
+          "event_type": "workpackage_created",
+          "event_type_zh": "创建工作包",
+          "occurred_at": "2026-03-02T07:35:05.454868+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "工厂CLI在「已创建」阶段执行「创建工作包」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "created",
+            "pipeline_stage_zh": "已创建",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_07c70403d4",
+          "parent_span_id": "",
+          "source": "llm",
+          "source_zh": "大模型",
+          "event_type": "llm_request",
+          "event_type_zh": "LLM请求",
+          "occurred_at": "2026-03-02T07:35:05.457375+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "大模型在「需求已确认」阶段执行「LLM请求」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "llm_confirmed",
+            "pipeline_stage_zh": "需求已确认",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "doubao-seed-2-0-pro-260215",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_8de915b03c",
+          "parent_span_id": "",
+          "source": "llm",
+          "source_zh": "大模型",
+          "event_type": "llm_response",
+          "event_type_zh": "LLM响应",
+          "occurred_at": "2026-03-02T07:35:05.459068+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "大模型在「需求已确认」阶段执行「LLM响应」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "llm_confirmed",
+            "pipeline_stage_zh": "需求已确认",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "doubao-seed-2-0-pro-260215",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_4f919bee60",
+          "parent_span_id": "",
+          "source": "factory_cli",
+          "source_zh": "工厂CLI",
+          "event_type": "human_confirm_generate",
+          "event_type_zh": "链路事件",
+          "occurred_at": "2026-03-02T07:35:05.460349+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "工厂CLI在「已打包」阶段执行「链路事件」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "packaged",
+            "pipeline_stage_zh": "已打包",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_a46235c053",
+          "parent_span_id": "",
+          "source": "factory_agent",
+          "source_zh": "工厂Agent",
+          "event_type": "workpackage_packaged",
+          "event_type_zh": "工作包打包",
+          "occurred_at": "2026-03-02T07:35:05.461416+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "工厂Agent在「已打包」阶段执行「工作包打包」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "packaged",
+            "pipeline_stage_zh": "已打包",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_51d5a33bba",
+          "parent_span_id": "",
+          "source": "governance_runtime",
+          "source_zh": "治理Runtime",
+          "event_type": "dryrun_finished",
+          "event_type_zh": "链路事件",
+          "occurred_at": "2026-03-02T07:35:05.463097+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "治理Runtime在「未知阶段」阶段执行「链路事件」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "dryrun_finished",
+            "pipeline_stage_zh": "未知阶段",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        },
+        {
+          "trace_id": "trace_wp_upload_1298a2c56e71",
+          "span_id": "span_105d9c9d0c",
+          "parent_span_id": "",
+          "source": "factory_cli",
+          "source_zh": "工厂CLI",
+          "event_type": "human_confirm_dryrun_result",
+          "event_type_zh": "链路事件",
+          "occurred_at": "2026-03-02T07:35:05.464102+00:00",
+          "status": "success",
+          "status_zh": "成功",
+          "description_zh": "工厂CLI在「未知阶段」阶段执行「链路事件」，结果：成功。",
+          "payload_summary": {
+            "pipeline_stage": "dryrun_finished",
+            "pipeline_stage_zh": "未知阶段",
+            "client_type": "user",
+            "version": "v1.0.0",
+            "runtime_receipt_id": "",
+            "model": "",
+            "message": ""
+          }
+        }
+      ]
+    }
+  },
+  "t4_zh_completeness": {
+    "total_events": 13,
+    "missing_count": 0,
+    "missing": []
+  },
+  "t6_audit_required_fields": {
+    "checked_events": 29,
+    "missing_count": 186,
+    "missing": [
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "workpackage_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "version"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_gate_blocked",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "decision"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "reason"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "timestamp"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "trace_id"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "actor"
+      },
+      {
+        "event_type": "runtime_upload_batch_submitted",
+        "field": "action"
+      }
+    ]
+  }
+}

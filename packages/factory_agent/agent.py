@@ -12,7 +12,8 @@ import os
 
 from packages.trust_hub import TrustHub
 from packages.factory_agent.dryrun_workflow import WorkpackageDryrunWorkflow
-from packages.factory_agent.llm_gateway import RequirementLLMGateway
+from packages.factory_agent.nanobot_adapter import NanobotAdapter
+from packages.factory_agent.opencode_workpackage_builder import OpenCodeWorkpackageBuilder
 from packages.factory_agent.publish_workflow import WorkpackagePublishWorkflow
 from packages.factory_agent.routing import detect_agent_intent
 
@@ -22,8 +23,9 @@ class FactoryAgent:
 
     def __init__(self):
         self._opencode_available = self._check_opencode()
+        self._nanobot = NanobotAdapter()
         self._trust_hub = TrustHub()
-        self._llm_gateway = RequirementLLMGateway()
+        self._workpackage_builder = OpenCodeWorkpackageBuilder()
         self._dryrun_workflow = WorkpackageDryrunWorkflow(
             bundle_root=Path("workpackages/bundles"),
             extract_bundle_name=self._extract_bundle_name,
@@ -38,6 +40,8 @@ class FactoryAgent:
             log_blocked=self._log_publish_blocked_event,
         )
         self._state: Dict[str, Any] = {}
+        self._trace_log_dir = Path(str(os.getenv("FACTORY_AGENT_TRACE_LOG_DIR") or "output/runtime_traces"))
+        self._trace_window_size = max(1, int(os.getenv("FACTORY_AGENT_TRACE_WINDOW", "30")))
 
     def _check_opencode(self):
         """检查 OpenCode 是否可用"""
@@ -48,50 +52,152 @@ class FactoryAgent:
         except Exception:
             return False
 
-    def converse(self, prompt):
+    def converse(self, prompt, session_id: Optional[str] = None):
         """对话接口 - 支持确定数据源、存储 API Key、生成工作包、workpackage 生命周期管理"""
         user_prompt = str(prompt or "").strip()
+        resolved_session = str(session_id or "").strip() or f"runtime_agent_{uuid4().hex[:8]}"
+        trace_id = f"trace_chat_{uuid4().hex[:10]}"
+        self._state["active_trace_context"] = {"session_id": resolved_session, "trace_id": trace_id}
         self._append_chat_history("user", user_prompt)
-        intent = detect_agent_intent(prompt)
-        if intent == "store_api_key":
-            result = self._handle_store_api_key(prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "list_workpackages":
-            result = self._handle_list_workpackages()
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "query_workpackage":
-            result = self._handle_query_workpackage(prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "dryrun_workpackage":
-            result = self._handle_dryrun_workpackage(prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "publish_workpackage":
-            result = self._handle_publish_workpackage(prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "list_sources":
-            result = self._handle_list_sources()
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if intent == "generate_workpackage":
-            result = self._handle_generate_workpackage(prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-            return result
-        if not self._is_data_governance_topic(user_prompt) and self._is_explicitly_non_governance_topic(user_prompt):
-            result = self._handle_out_of_scope_chat(user_prompt)
-            self._append_chat_history("assistant", str(result.get("message") or ""))
-            return result
-        if not self._requires_structured_requirement(user_prompt):
-            result = self._handle_general_governance_chat(user_prompt)
-            self._append_chat_history("assistant", str(result.get("message") or result.get("reply") or ""))
-            return result
-        result = self._handle_requirement_confirmation(prompt)
-        self._append_chat_history("assistant", str(result.get("message") or result.get("status") or ""))
-        return result
+        self._emit_trace_event(
+            channel="client_nanobot",
+            direction="client->nanobot",
+            stage="conversation",
+            event_type="message",
+            content_text=user_prompt,
+            content_json={"message": user_prompt},
+            status="success",
+        )
+        try:
+            intent = detect_agent_intent(prompt)
+            result: Dict[str, Any]
+            if intent == "store_api_key":
+                result = self._handle_store_api_key(prompt)
+            elif intent == "list_workpackages":
+                result = self._handle_list_workpackages()
+            elif intent == "query_workpackage":
+                result = self._handle_query_workpackage(prompt)
+            elif intent == "dryrun_workpackage":
+                result = self._handle_dryrun_workpackage(prompt)
+            elif intent == "publish_workpackage":
+                result = self._handle_publish_workpackage(prompt)
+            elif intent == "list_sources":
+                result = self._handle_list_sources()
+            elif intent == "generate_workpackage":
+                result = self._handle_generate_workpackage(prompt)
+            elif not self._is_data_governance_topic(user_prompt) and self._is_explicitly_non_governance_topic(user_prompt):
+                result = self._handle_out_of_scope_chat(user_prompt)
+            elif not self._requires_structured_requirement(user_prompt):
+                result = self._handle_general_governance_chat(user_prompt)
+            else:
+                result = self._handle_requirement_confirmation(prompt)
+
+            assistant_text = str(result.get("message") or result.get("reply") or result.get("status") or "").strip() or "已处理请求"
+            self._append_chat_history("assistant", assistant_text)
+            self._emit_trace_event(
+                channel="client_nanobot",
+                direction="nanobot->client",
+                stage=str(result.get("action") or "conversation"),
+                event_type="message",
+                content_text=assistant_text,
+                content_json=result,
+                status=str(result.get("status") or "success"),
+            )
+            final_result = dict(result)
+            final_result.setdefault("trace_id", trace_id)
+            final_result["nanobot_traces"] = self._get_trace_snapshot(resolved_session)
+            final_result["trace_log_path"] = self._get_trace_log_path(resolved_session)
+            return final_result
+        finally:
+            self._state.pop("active_trace_context", None)
+
+    def _active_trace_context(self) -> Dict[str, str]:
+        ctx = self._state.get("active_trace_context")
+        if isinstance(ctx, dict):
+            session_id = str(ctx.get("session_id") or "").strip()
+            trace_id = str(ctx.get("trace_id") or "").strip()
+            if session_id and trace_id:
+                return {"session_id": session_id, "trace_id": trace_id}
+        session_id = f"runtime_agent_{uuid4().hex[:8]}"
+        trace_id = f"trace_chat_{uuid4().hex[:10]}"
+        return {"session_id": session_id, "trace_id": trace_id}
+
+    def _trace_sessions(self) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        store = self._state.get("trace_sessions")
+        if isinstance(store, dict):
+            return store
+        created: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        self._state["trace_sessions"] = created
+        return created
+
+    def _trace_log_paths(self) -> Dict[str, str]:
+        store = self._state.get("trace_log_paths")
+        if isinstance(store, dict):
+            return store
+        created: Dict[str, str] = {}
+        self._state["trace_log_paths"] = created
+        return created
+
+    def _emit_trace_event(
+        self,
+        *,
+        channel: str,
+        direction: str,
+        stage: str,
+        event_type: str,
+        content_text: str,
+        content_json: Any = None,
+        artifacts: Optional[List[str]] = None,
+        status: str = "success",
+    ) -> Dict[str, Any]:
+        ctx = self._active_trace_context()
+        session_id = ctx["session_id"]
+        trace_id = ctx["trace_id"]
+        item: Dict[str, Any] = {
+            "session_id": session_id,
+            "trace_id": trace_id,
+            "channel": str(channel or ""),
+            "direction": str(direction or ""),
+            "stage": str(stage or ""),
+            "event_type": str(event_type or ""),
+            "content_text": str(content_text or ""),
+            "content_json": content_json if isinstance(content_json, (dict, list)) else {},
+            "artifacts": [str(x) for x in (artifacts or []) if str(x).strip()],
+            "status": str(status or "success"),
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+        sessions = self._trace_sessions()
+        session_store = sessions.setdefault(session_id, {"client_nanobot": [], "nanobot_opencode": []})
+        if channel not in session_store:
+            session_store[channel] = []
+        session_store[channel].append(item)
+        self._persist_trace_event(item)
+        return item
+
+    def _persist_trace_event(self, event: Dict[str, Any]) -> None:
+        session_id = str(event.get("session_id") or "").strip()
+        if not session_id:
+            return
+        self._trace_log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = self._trace_log_dir / f"{session_id}.jsonl"
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+        self._trace_log_paths()[session_id] = str(log_path)
+
+    def _get_trace_snapshot(self, session_id: str) -> Dict[str, List[Dict[str, Any]]]:
+        sid = str(session_id or "").strip()
+        sessions = self._trace_sessions()
+        session_store = sessions.get(sid) or {}
+        client_logs = session_store.get("client_nanobot") if isinstance(session_store.get("client_nanobot"), list) else []
+        opencode_logs = session_store.get("nanobot_opencode") if isinstance(session_store.get("nanobot_opencode"), list) else []
+        return {
+            "client_nanobot": client_logs[-self._trace_window_size :],
+            "nanobot_opencode": opencode_logs[-self._trace_window_size :],
+        }
+
+    def _get_trace_log_path(self, session_id: str) -> str:
+        sid = str(session_id or "").strip()
+        return str(self._trace_log_paths().get(sid) or "")
 
     def _handle_requirement_confirmation(self, prompt: str) -> Dict[str, Any]:
         """调用 LLM 确认治理需求；失败时阻塞并等待人工确认。"""
@@ -195,10 +301,44 @@ class FactoryAgent:
             }
 
     def _run_requirement_query(self, prompt: str) -> Dict[str, Any]:
-        return self._llm_gateway.query(prompt)
+        system_prompt = (
+            "你是地址治理工厂Agent。"
+            "请仅输出JSON对象，字段必须包含："
+            "target(string), data_sources(array), rule_points(array), outputs(array)。"
+        )
+        return self._nanobot.query_structured(
+            str(prompt or ""),
+            system_prompt=system_prompt,
+            session_key=f"factory_agent:requirement:{uuid4().hex[:8]}",
+            max_tokens=900,
+            temperature=0.1,
+        )
 
     def _run_general_chat_query(self, prompt: str) -> Dict[str, Any]:
-        return self._llm_gateway.query_dialogue(prompt, history=self._get_chat_history())
+        system_prompt = (
+            "你是数据治理工厂Agent。"
+            "请与用户自然沟通，给出清晰、简短、可执行的建议。"
+            "默认使用中文，避免长篇Markdown。"
+            "回答限制在180字以内，优先3~5条短句或短列表。"
+            "除非用户明确要求工作包/结构化需求，否则不要强制输出JSON模板。"
+        )
+        history_lines: List[str] = []
+        for row in self._get_chat_history()[-6:]:
+            role = str(row.get("role") or "").strip()
+            content = self._compact_history_text(str(row.get("content") or ""), limit=220)
+            if not role or not content:
+                continue
+            history_lines.append(f"{role}: {content}")
+        dialogue_input = str(prompt or "")
+        if history_lines:
+            dialogue_input = "历史对话：\n" + "\n".join(history_lines) + "\n\n当前用户输入：\n" + dialogue_input
+        return self._nanobot.chat(
+            dialogue_input,
+            system_prompt=system_prompt,
+            session_key=f"factory_agent:chat:{uuid4().hex[:8]}",
+            max_tokens=420,
+            temperature=0.2,
+        )
 
     def _run_workpackage_blueprint_query(
         self,
@@ -206,12 +346,58 @@ class FactoryAgent:
         context: Dict[str, Any],
         feedback: List[str] | None = None,
     ) -> Dict[str, Any]:
-        return self._llm_gateway.query_workpackage_blueprint(
-            user_prompt=prompt,
-            context=context,
-            feedback=feedback,
-            history=self._get_chat_history(),
+        system_prompt = (
+            "你是数据治理工厂的工作包设计Agent。"
+            "执行四阶段收敛："
+            "阶段1 架构与运行环境对齐；"
+            "阶段2 输入输出契约对齐；"
+            "阶段3 已注册API绑定与缺失API补齐计划；"
+            "阶段4 可执行脚本与执行计划输出。"
+            "最终必须输出一个JSON对象，不要输出额外说明文字。"
+            "JSON必须包含字段："
+            "workpackage{name,version,objective},"
+            "architecture_context{factory_architecture,runtime_env},"
+            "io_contract{input_schema,output_schema},"
+            "api_plan{registered_apis_used,missing_apis},"
+            "execution_plan{steps},"
+            "scripts[{name,purpose,runtime,entry,dependencies?}]。"
+            "missing_apis每项至少包含name,endpoint,reason,requires_key，可选api_key_env/register_plan。"
+            "若收到schema_error反馈，必须逐条修复并返回完整JSON。"
+            "禁止mock、禁止fallback、禁止workground，优先真实外部API方案。"
         )
+        payload_lines: List[str] = []
+        turns: List[Dict[str, str]] = []
+        for row in self._get_chat_history()[-8:]:
+            role = str(row.get("role") or "").strip()
+            content = self._compact_history_text(str(row.get("content") or ""), limit=280)
+            if role and content:
+                turns.append({"role": role, "content": content})
+        if turns:
+            payload_lines.append("历史对话:")
+            payload_lines.append(json.dumps(turns, ensure_ascii=False))
+        payload_lines.append("架构与API上下文:")
+        payload_lines.append(json.dumps(context, ensure_ascii=False))
+        if feedback:
+            payload_lines.append("上轮schema校验问题(逐条修复并重写完整JSON):")
+            payload_lines.append(json.dumps(feedback, ensure_ascii=False))
+        payload_lines.append("用户当前请求:")
+        payload_lines.append(str(prompt or ""))
+        request_text = "\n".join(payload_lines)
+        return self._nanobot.query_structured(
+            request_text,
+            system_prompt=system_prompt,
+            session_key=f"factory_agent:blueprint:{uuid4().hex[:8]}",
+            max_tokens=2200,
+            temperature=0.1,
+        )
+
+    def _compact_history_text(self, content: str, *, limit: int = 220) -> str:
+        text = re.sub(r"\s+", " ", str(content or "")).strip()
+        if not text:
+            return ""
+        if len(text) <= limit:
+            return text
+        return text[: max(1, limit - 3)].rstrip() + "..."
 
     def _get_chat_history(self) -> List[Dict[str, str]]:
         history = self._state.get("chat_history")
@@ -791,15 +977,18 @@ class FactoryAgent:
 
     def _handle_generate_workpackage(self, prompt):
         """处理生成工作包的对话：基于上下文 + LLM 蓝图迭代收敛。"""
+        llm_meta = self._resolve_llm_meta()
         context = self._build_workpackage_context(prompt)
         max_rounds = max(1, min(int(os.getenv("WORKPACKAGE_BLUEPRINT_MAX_ROUNDS", "2")), 8))
         feedback: List[str] = []
         schema_errors: List[str] = []
+        schema_fix_rounds: List[Dict[str, Any]] = []
         blueprint: Dict[str, Any] = {}
         llm_raw_text = ""
         llm_request: Dict[str, Any] = {}
         llm_raw_response: Dict[str, Any] = {}
         retry_count = 0
+        autofill_applied_fields: List[str] = []
 
         for idx in range(max_rounds):
             try:
@@ -815,13 +1004,44 @@ class FactoryAgent:
             if not schema_errors:
                 break
             retry_count += 1
+            schema_fix_rounds.append(
+                {
+                    "round": idx + 1,
+                    "errors": list(schema_errors),
+                }
+            )
             feedback = [f"schema_error: {item}" for item in schema_errors]
             if idx == max_rounds - 1:
+                before_autofill = json.loads(json.dumps(blueprint, ensure_ascii=False))
                 blueprint = self._autofill_blueprint_from_context(blueprint, context, prompt=prompt)
+                autofill_applied_fields = self._collect_applied_fields(before_autofill, blueprint)
                 schema_errors = self._validate_workpackage_blueprint(blueprint)
+                if schema_errors:
+                    schema_fix_rounds.append(
+                        {
+                            "round": idx + 1,
+                            "errors": list(schema_errors),
+                            "post_autofill": True,
+                        }
+                    )
                 break
 
         self._enrich_blueprint_with_api_gap_plan(blueprint, context, prompt=prompt)
+        blueprint["generation_trace"] = {
+            "generator": "factory_agent",
+            "llm_model": llm_meta.get("model") or "",
+            "llm_retry_count": retry_count,
+            "schema_fix_rounds": schema_fix_rounds,
+            "autofill_applied_fields": autofill_applied_fields,
+            "llm_contribution": [
+                "需求语义理解与工作包规划",
+                "I/O契约和API计划建议（不直接产出可执行脚本）",
+            ],
+            "opencode_contribution": [
+                "工作包文件落盘与脚本生成（OpenCode Builder）",
+                "schema修复反馈循环执行",
+            ],
+        }
         workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
         name = str(workpackage.get("name") or self._extract_name(prompt) or f"wp-{uuid4().hex[:8]}")
         version = str(workpackage.get("version") or "v1.0.0")
@@ -830,7 +1050,50 @@ class FactoryAgent:
         sources = self._resolve_blueprint_sources(blueprint, context)
         self._apply_missing_api_plan(blueprint)
         bundle_dir = Path(f"workpackages/bundles/{bundle_name}")
-        self._create_workpackage_bundle(bundle_dir, blueprint=blueprint, sources=sources)
+        self._emit_trace_event(
+            channel="nanobot_opencode",
+            direction="nanobot->opencode",
+            stage="bundle_build",
+            event_type="task_start",
+            content_text=f"生成工作包 {bundle_name}，开始调用 opencode 构建工件",
+            content_json={
+                "bundle_name": bundle_name,
+                "sources_used": sources,
+                "workpackage_blueprint_summary": self._build_workpackage_blueprint_summary(blueprint),
+            },
+            status="success",
+        )
+        try:
+            self._create_workpackage_bundle(bundle_dir, blueprint=blueprint, sources=sources)
+        except Exception as exc:
+            self._emit_trace_event(
+                channel="nanobot_opencode",
+                direction="opencode->nanobot",
+                stage="bundle_build",
+                event_type="task_finish",
+                content_text=f"opencode 构建失败：{bundle_name}",
+                content_json={"bundle_name": bundle_name, "error": str(exc)},
+                artifacts=[],
+                status="error",
+            )
+            raise
+        workpackage_blueprint_summary = self._build_workpackage_blueprint_summary(blueprint)
+        build_report_path = bundle_dir / "observability" / "opencode_build_report.json"
+        self._emit_trace_event(
+            channel="nanobot_opencode",
+            direction="opencode->nanobot",
+            stage="bundle_build",
+            event_type="task_finish",
+            content_text=f"opencode 已完成 {bundle_name} 工件生成",
+            content_json={
+                "bundle_name": bundle_name,
+                "bundle_path": str(bundle_dir),
+                "schema_fix_rounds": schema_fix_rounds,
+                "autofill_applied_fields": autofill_applied_fields,
+            },
+            artifacts=[str(bundle_dir / "workpackage.json"), str(build_report_path)],
+            status="success",
+        )
 
         return {
             "status": "ok",
@@ -843,96 +1106,31 @@ class FactoryAgent:
             "llm_raw_text": llm_raw_text,
             "llm_raw_response": llm_raw_response,
             "llm_request": llm_request,
+            "llm_model": llm_meta.get("model") or "",
             "workpackage_blueprint": blueprint,
+            "workpackage_blueprint_summary": workpackage_blueprint_summary,
+            "schema_fix_rounds": schema_fix_rounds,
+            "autofill_applied_fields": autofill_applied_fields,
             "message": f"工作包 {bundle_name} 已生成，包含架构上下文、I/O定义、API计划与可执行脚本。",
         }
 
     def _create_workpackage_bundle(self, bundle_dir: Path, *, blueprint: Dict[str, Any], sources: List[str]):
-        """创建工作包 bundle。"""
-        bundle_dir.mkdir(parents=True, exist_ok=True)
-
-        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
-        name = str(workpackage.get("name") or "workpackage")
-        version = str(workpackage.get("version") or "v1.0.0")
-        objective = str(workpackage.get("objective") or "数据治理执行")
-
-        (bundle_dir / "README.md").write_text(self._generate_readme(name, version, sources, objective), encoding="utf-8")
-
-        wp_config = dict(blueprint)
-        wp_config["name"] = name
-        wp_config["version"] = version
-        wp_config["objective"] = objective
-        wp_config["sources"] = sources
-        (bundle_dir / "workpackage.json").write_text(
-            json.dumps(wp_config, ensure_ascii=False, indent=2),
-            encoding="utf-8"
-        )
-
-        skills_dir = bundle_dir / "skills"
-        skills_dir.mkdir(exist_ok=True)
-        for source in sources:
-            skill_path = skills_dir / f"{source}_verification.md"
-            skill_path.write_text(
-                self._generate_skill_markdown(source),
-                encoding="utf-8"
-            )
-
-        scripts_dir = bundle_dir / "scripts"
-        scripts_dir.mkdir(exist_ok=True)
-
-        script_specs = blueprint.get("scripts") if isinstance(blueprint.get("scripts"), list) else []
-        generated_count = 0
-        for spec in script_specs:
-            if not isinstance(spec, dict):
-                continue
-            filename = re.sub(r"[^a-zA-Z0-9._-]", "_", str(spec.get("name") or "").strip()) or ""
-            if not filename.endswith(".py"):
-                continue
-            content = str(spec.get("content") or "").strip()
-            if not content:
-                content = self._generate_script_template(spec)
-            (scripts_dir / filename).write_text(content, encoding="utf-8")
-            generated_count += 1
-        if generated_count == 0:
-            (scripts_dir / "run_pipeline.py").write_text(self._generate_verify_script(sources), encoding="utf-8")
-
-        (bundle_dir / "entrypoint.sh").write_text(
-            self._generate_entrypoint_sh(),
-            encoding="utf-8"
-        )
-        (bundle_dir / "entrypoint.py").write_text(
-            self._generate_entrypoint_py(),
-            encoding="utf-8"
-        )
-        
-        observability_dir = bundle_dir / "observability"
-        observability_dir.mkdir(exist_ok=True)
-        (observability_dir / "line_metrics.json").write_text(
-            json.dumps({"sources": sources, "version": version, "objective": objective}, ensure_ascii=False, indent=2),
-            encoding="utf-8"
-        )
-        (observability_dir / "line_observe.py").write_text(
-            self._generate_observe_script(),
-            encoding="utf-8"
-        )
-
-        missing_apis = ((blueprint.get("api_plan") or {}).get("missing_apis") if isinstance(blueprint.get("api_plan"), dict) else []) or []
-        env_lines = ["# 需要用户补充的外部API Key", ""]
-        for item in missing_apis:
-            if not isinstance(item, dict):
-                continue
-            if not bool(item.get("requires_key")):
-                continue
-            env_name = str(item.get("api_key_env") or f"{str(item.get('name') or 'EXT_API').upper()}_API_KEY")
-            env_name = re.sub(r"[^A-Z0-9_]", "_", env_name.upper())
-            env_lines.append(f"{env_name}=")
-        if len(env_lines) > 2:
-            (bundle_dir / "config").mkdir(exist_ok=True)
-            (bundle_dir / "config" / "provider_keys.env.example").write_text("\n".join(env_lines) + "\n", encoding="utf-8")
+        """创建工作包 bundle。委托 OpenCode Builder 落地工件。"""
+        self._workpackage_builder.build_bundle(bundle_dir=bundle_dir, blueprint=blueprint, sources=sources)
 
     def _build_workpackage_context(self, prompt: str) -> Dict[str, Any]:
         catalog = self._load_registered_api_catalog()
         trusted_sources = self._trust_hub.list_sources()
+        schema_reference = {
+            "schema_version": "workpackage_schema.v1",
+            "schema_path": "workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json",
+        }
+        runtime_constraints = {
+            "no_fallback": True,
+            "no_mock": True,
+            "no_workground": True,
+            "requires_real_llm": True,
+        }
         architecture = {
             "layers": [
                 "Agent会话编排层",
@@ -949,12 +1147,54 @@ class FactoryAgent:
             "4) 若 API 不足，建议外部 API/数据源，生成脚本并说明 key 获取与注册步骤",
             "5) 在依赖明确后输出可执行工具脚本与执行计划",
         ]
+        conversation_facts = [
+            str(item.get("content") or "").strip()
+            for item in self._get_chat_history()[-8:]
+            if isinstance(item, dict) and str(item.get("content") or "").strip()
+        ]
+        registered_api_catalog_digest = hashlib.sha256(
+            json.dumps(catalog, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()
         return {
             "architecture_context": architecture,
             "registered_api_catalog": catalog,
+            "registered_api_catalog_digest": registered_api_catalog_digest,
             "trusted_hub_sources": trusted_sources,
+            "schema_reference": schema_reference,
+            "runtime_constraints": runtime_constraints,
+            "conversation_facts": conversation_facts,
             "alignment_checklist": alignment_checklist,
             "user_prompt": str(prompt or ""),
+        }
+
+    def _collect_applied_fields(self, before: Dict[str, Any], after: Dict[str, Any], prefix: str = "") -> List[str]:
+        applied: List[str] = []
+        before_obj = before if isinstance(before, dict) else {}
+        after_obj = after if isinstance(after, dict) else {}
+        for key, value in after_obj.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            if key not in before_obj:
+                applied.append(path)
+                continue
+            old = before_obj.get(key)
+            if isinstance(old, dict) and isinstance(value, dict):
+                applied.extend(self._collect_applied_fields(old, value, path))
+                continue
+            if old in ("", None, [], {}) and value not in ("", None, [], {}):
+                applied.append(path)
+        return sorted(set(applied))
+
+    def _build_workpackage_blueprint_summary(self, blueprint: Dict[str, Any]) -> Dict[str, Any]:
+        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
+        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
+        scripts = blueprint.get("scripts") if isinstance(blueprint.get("scripts"), list) else []
+        return {
+            "name": str(workpackage.get("name") or ""),
+            "version": str(workpackage.get("version") or ""),
+            "objective": str(workpackage.get("objective") or ""),
+            "api_count": len(api_plan.get("registered_apis_used") or []),
+            "missing_api_count": len(api_plan.get("missing_apis") or []),
+            "script_count": len(scripts),
         }
 
     def _load_registered_api_catalog(self) -> List[Dict[str, Any]]:
@@ -1095,12 +1335,12 @@ class FactoryAgent:
         fallback = [str(item).strip() for item in trusted_sources if str(item).strip()]
         if fallback:
             return fallback[:3]
-        return ["fengtu", "opencagedata", "nominatim_openstreetmap"]
+        return []
 
     def _apply_missing_api_plan(self, blueprint: Dict[str, Any]) -> None:
         api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
         missing = api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else []
-        registered_rows: List[Dict[str, Any]] = []
+        proposals: List[Dict[str, Any]] = []
         for item in missing:
             if not isinstance(item, dict):
                 continue
@@ -1109,18 +1349,18 @@ class FactoryAgent:
                 continue
             source_id = self._slugify_name(str(item.get("name") or "ext_api"))
             provider = str(item.get("provider") or source_id)
-            try:
-                capability = self._trust_hub.upsert_capability(
-                    source_id=source_id,
-                    provider=provider,
-                    endpoint=endpoint,
-                    tool_type="api",
-                    status="pending_key" if bool(item.get("requires_key")) else "active",
-                )
-                registered_rows.append(capability)
-            except Exception as exc:
-                registered_rows.append({"source_id": source_id, "endpoint": endpoint, "error": str(exc)})
-        api_plan["missing_apis_registered"] = registered_rows
+            proposals.append(
+                {
+                    "source_id": source_id,
+                    "provider": provider,
+                    "endpoint": endpoint,
+                    "status": "proposal_pending_confirmation",
+                    "requires_key": bool(item.get("requires_key")),
+                    "api_key_env": str(item.get("api_key_env") or ""),
+                }
+            )
+        # 两阶段策略：generate 阶段仅形成 proposal，不直接落 TrustHub。
+        api_plan["missing_apis_proposals"] = proposals
         blueprint["api_plan"] = api_plan
 
     def _slugify_name(self, value: str) -> str:
@@ -1376,6 +1616,8 @@ import json
 import os
 from pathlib import Path
 
+generated_by = "opencode_agent"
+
 def main() -> None:
     api_key = os.getenv("{key_env}", "")
     payload = {{
@@ -1419,6 +1661,7 @@ import json
 from pathlib import Path
 
 SOURCES = {json.dumps(sources, ensure_ascii=False)}
+generated_by = "opencode_agent"
 
 def main():
     print("沿街商铺 POI 可信度验证")
@@ -1482,6 +1725,7 @@ echo "======================================"
         return """#!/usr/bin/env python3
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 BUNDLE_DIR = Path(__file__).parent.resolve()
@@ -1503,12 +1747,12 @@ def main():
     if scripts_dir.exists():
         for script_file in scripts_dir.glob("*.py"):
             print(f"  - {script_file.name}")
-            exec(script_file.read_text(encoding="utf-8"))
+            subprocess.run(["python3", str(script_file)], cwd=str(BUNDLE_DIR), check=True)
     
     print("执行产线观测...")
     observe_script = BUNDLE_DIR / "observability" / "line_observe.py"
     if observe_script.exists():
-        exec(observe_script.read_text(encoding="utf-8"))
+        subprocess.run(["python3", str(observe_script)], cwd=str(BUNDLE_DIR), check=True)
     
     print("======================================")
     print("  WorkPackage 执行完成")

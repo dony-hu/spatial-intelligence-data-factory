@@ -1,0 +1,13 @@
+{
+  "story": "S2-5",
+  "title": "SLI/SLO 与告警策略闭环",
+  "date": "2026-03-02",
+  "result": "PASS",
+  "tests": [
+    "services/governance_api/tests/test_runtime_reliability_sli_slo.py"
+  ],
+  "no_fallback_verified": true,
+  "residual_risks": [
+    "需在真实流量窗口持续观察告警抑制阈值是否过宽"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "ctx-e2e-v1.0.0",
+  "name": "ctx-e2e",
+  "version": "v1.0.0",
+  "objective": "地址治理",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 1,
+  "line_metrics_path": "workpackages/bundles/ctx-e2e-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}

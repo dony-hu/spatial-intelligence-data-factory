@@ -1,0 +1,13 @@
+{
+  "story": "S2-8",
+  "title": "观测数据保留分区与查询性能治理",
+  "date": "2026-03-02",
+  "result": "PASS",
+  "tests": [
+    "services/governance_api/tests/test_runtime_performance_governance.py"
+  ],
+  "no_fallback_verified": true,
+  "residual_risks": [
+    "需要真实大数据量下持续压测"
+  ]
+}

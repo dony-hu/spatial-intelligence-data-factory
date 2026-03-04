@@ -98,3 +98,27 @@
    - 应对：固定种子与固定分层配比。
 3. 风险：阶段 B 扩展影响上线节奏。
    - 应对：阶段 A/阶段 B 分层验收与分层发布。
+
+## 10. 2026-03-02 刷新（基于中文链路 E2E）
+
+### 10.1 新增已验证项
+
+基于用例 `services/governance_api/tests/test_runtime_workpackage_events_api_contract.py`，新增确认以下口径：
+
+1. 运行态链路可在 E2E 中完成种子灌入、pipeline 查询、events 下钻闭环。
+2. `workpackage-events` 返回的中文可读字段已被自动化校验：
+   - `source_zh`
+   - `event_type_zh`
+   - `status_zh`
+   - `description_zh`
+3. `payload_summary.pipeline_stage_zh` 非空约束已被自动化校验。
+
+### 10.2 对 Epic3 的影响
+
+1. `S2-14` 的“链路事件可读性（中文）”口径已有自动化验收支撑。
+2. 运行态页面/接口在值班排障场景下具备更高可解释性，不再只依赖英文枚举。
+
+### 10.3 仍需推进项（不因本用例通过而消除）
+
+1. 发布前需补跑一次 UI E2E（当前已有后端 E2E 与契约回归通过）。
+2. 长压稳定性证据需继续累积多批次样本，完善事件覆盖率与字段完整率统计。

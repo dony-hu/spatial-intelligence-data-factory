@@ -1,0 +1,611 @@
+{
+  "workpackage": {
+    "name": "wp_address_to_records_spatial_graph",
+    "version": "v1.0.1",
+    "objective": "将输入 addresses[] 经过地址标准化、真实性校验、地理编码与逆编校验后生成 records[]，并基于距离矩阵构建 spatial_graph。"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "language": "Python 3.11",
+      "os": "Linux",
+      "container_image": "python:3.11-slim",
+      "network": "可访问 gis-apis.sf-express.com 与已审批外部地图API域名",
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "env_vars_required": [
+        "FENGTU_APP_KEY",
+        "FENGTU_APP_SECRET",
+        "AMAP_WEB_KEY"
+      ],
+      "observability": {
+        "log_format": "jsonl",
+        "metrics": [
+          "api_qps",
+          "api_latency_ms",
+          "success_rate",
+          "retry_count",
+          "dead_letter_count"
+        ],
+        "trace_id": "uuid4"
+      }
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "addresses"
+      ],
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "address_id",
+              "raw_address"
+            ],
+            "properties": {
+              "address_id": {
+                "type": "string",
+                "description": "输入地址唯一ID"
+              },
+              "raw_address": {
+                "type": "string",
+                "description": "原始地址文本"
+              },
+              "city_hint": {
+                "type": "string",
+                "description": "可选城市提示，提升地理编码准确率"
+              },
+              "biz_type": {
+                "type": "string",
+                "description": "业务类型标签，如pickup/delivery/site"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "graph_policy": {
+          "type": "object",
+          "description": "图构建策略",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "radius",
+                "knn",
+                "all_pairs"
+              ],
+              "default": "radius"
+            },
+            "radius_m": {
+              "type": "number",
+              "default": 3000
+            },
+            "k": {
+              "type": "integer",
+              "default": 5
+            },
+            "route_type": {
+              "type": "string",
+              "enum": [
+                "driving",
+                "walking"
+              ],
+              "default": "driving"
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "records",
+        "spatial_graph"
+      ],
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "address_id",
+              "raw_address",
+              "normalized_address",
+              "lng",
+              "lat",
+              "geocode_precision",
+              "adcode",
+              "quality_score",
+              "source_api",
+              "source_ts"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string",
+                "description": "hash(normalized_address) 生成的幂等ID"
+              },
+              "address_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "normalized_address": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "township": {
+                "type": "string"
+              },
+              "lng": {
+                "type": "number"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "geocode_precision": {
+                "type": "string"
+              },
+              "geocode_source": {
+                "type": "string"
+              },
+              "adcode": {
+                "type": "string"
+              },
+              "address_level": {
+                "type": "string"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "real_check_pass": {
+                "type": "boolean"
+              },
+              "reverse_formatted_address": {
+                "type": "string"
+              },
+              "quality_score": {
+                "type": "number"
+              },
+              "source_api": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "source_ts": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "trace_id": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "spatial_graph": {
+          "type": "object",
+          "required": [
+            "nodes",
+            "edges"
+          ],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "record_id",
+                  "lng",
+                  "lat"
+                ],
+                "properties": {
+                  "node_id": {
+                    "type": "string"
+                  },
+                  "record_id": {
+                    "type": "string"
+                  },
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "edge_id",
+                  "from_node",
+                  "to_node",
+                  "distance_m",
+                  "duration_s",
+                  "route_type",
+                  "source_api"
+                ],
+                "properties": {
+                  "edge_id": {
+                    "type": "string"
+                  },
+                  "from_node": {
+                    "type": "string"
+                  },
+                  "to_node": {
+                    "type": "string"
+                  },
+                  "distance_m": {
+                    "type": "number"
+                  },
+                  "duration_s": {
+                    "type": "number"
+                  },
+                  "route_type": {
+                    "type": "string"
+                  },
+                  "source_api": {
+                    "type": "string"
+                  },
+                  "source_ts": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "trace_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "graph_mode": {
+                  "type": "string"
+                },
+                "node_count": {
+                  "type": "integer"
+                },
+                "edge_count": {
+                  "type": "integer"
+                },
+                "build_ts": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "binding": {
+          "input_fields": [
+            "addresses[].raw_address"
+          ],
+          "output_fields": [
+            "records[].normalized_address",
+            "records[].province",
+            "records[].city",
+            "records[].district",
+            "records[].township"
+          ]
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "binding": {
+          "input_fields": [
+            "records[].normalized_address"
+          ],
+          "output_fields": [
+            "records[].real_check_pass",
+            "records[].quality_score"
+          ]
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/iad/api",
+        "binding": {
+          "input_fields": [
+            "records[].normalized_address"
+          ],
+          "output_fields": [
+            "records[].address_level"
+          ]
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/atype/api",
+        "binding": {
+          "input_fields": [
+            "records[].normalized_address"
+          ],
+          "output_fields": [
+            "records[].address_type"
+          ]
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "binding": {
+          "input_fields": [
+            "records[].normalized_address",
+            "addresses[].city_hint"
+          ],
+          "output_fields": [
+            "records[].lng",
+            "records[].lat",
+            "records[].geocode_precision",
+            "records[].geocode_source"
+          ]
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "provider": "Fengtu",
+        "interface_id": "reverse_geocode",
+        "name": "逆地理编码",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "binding": {
+          "input_fields": [
+            "records[].lng",
+            "records[].lat"
+          ],
+          "output_fields": [
+            "records[].reverse_formatted_address"
+          ]
+        }
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "行政区划匹配(点落区)API",
+        "endpoint": "https://restapi.amap.com/v3/geocode/regeo",
+        "reason": "当前注册API缺少稳定 adcode 点落区接口，records[].adcode 为必需字段。",
+        "requires_key": true,
+        "api_key_env": "AMAP_WEB_KEY",
+        "register_plan": "在可信数据Hub新增source_id=amap, interface_id=reverse_geocode_adcode，配置GET方法、限流与审计策略后发布到group_geo。"
+      },
+      {
+        "name": "距离矩阵OD API",
+        "endpoint": "https://restapi.amap.com/v3/distance",
+        "reason": "spatial_graph.edges 需要 distance_m/duration_s，当前注册目录中无OD矩阵能力。",
+        "requires_key": true,
+        "api_key_env": "AMAP_WEB_KEY",
+        "register_plan": "在可信数据Hub新增source_id=amap, interface_id=distance_matrix，绑定route_type参数(driving/walking)，审批QPS与日配额。"
+      },
+      {
+        "capability_id": "spatial_graph_build",
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "provider": "external"
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "api",
+        "provider": "api",
+        "endpoint": "https://restapi.amap.com/v3/geocode/regeo",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "AMAP_WEB_KEY"
+      },
+      {
+        "source_id": "od-api",
+        "provider": "od-api",
+        "endpoint": "https://restapi.amap.com/v3/distance",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "AMAP_WEB_KEY"
+      },
+      {
+        "source_id": "api",
+        "provider": "external",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": "S1",
+        "stage": "requirements_confirm",
+        "action": "锁定I/O契约：输入 addresses[]，输出 records[] 与 spatial_graph；确认图构建策略与route_type。"
+      },
+      {
+        "id": "S2",
+        "stage": "generate",
+        "action": "完成API绑定：Fengtu完成标准化/质检/编码，Amap补充adcode与OD矩阵；生成配置文件与脚本。"
+      },
+      {
+        "id": "S3",
+        "stage": "dryrun",
+        "action": "使用小样本地址执行端到端：校验records必填字段完整率>=99%，spatial_graph边生成成功率>=98%。"
+      },
+      {
+        "id": "S4",
+        "stage": "publish",
+        "action": "发布工作包版本1.0.1，冻结依赖版本与API配额，登记schema与运行参数。"
+      },
+      {
+        "id": "S5",
+        "stage": "runtime_upload",
+        "action": "批量运行并上传产物：out/records.json、out/spatial_graph.json、logs/dead_letter.jsonl、metrics/run_report.json。"
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "scripts/fetch_records.py",
+      "purpose": "读取addresses并调用Fengtu与Amap API生成records[]",
+      "runtime": "python3.11",
+      "entry": "python scripts/fetch_records.py --input data/addresses.json --output out/records.json --dead-letter logs/dead_letter.jsonl",
+      "dependencies": [
+        "httpx==0.27.0",
+        "tenacity==8.2.3",
+        "pydantic==2.7.1",
+        "orjson==3.10.3"
+      ]
+    },
+    {
+      "name": "scripts/build_spatial_graph.py",
+      "purpose": "基于records调用距离矩阵API构建spatial_graph",
+      "runtime": "python3.11",
+      "entry": "python scripts/build_spatial_graph.py --records out/records.json --output out/spatial_graph.json --mode radius --radius-m 3000 --route-type driving",
+      "dependencies": [
+        "httpx==0.27.0",
+        "networkx==3.3",
+        "orjson==3.10.3"
+      ]
+    },
+    {
+      "name": "scripts/validate_outputs.py",
+      "purpose": "按io_contract校验records与spatial_graph结构与必填字段",
+      "runtime": "python3.11",
+      "entry": "python scripts/validate_outputs.py --records out/records.json --graph out/spatial_graph.json",
+      "dependencies": [
+        "jsonschema==4.22.0",
+        "orjson==3.10.3"
+      ]
+    },
+    {
+      "name": "scripts/run_workpackage.sh",
+      "purpose": "一键执行工作包流程（generate->dryrun->publish前校验）",
+      "runtime": "bash",
+      "entry": "bash scripts/run_workpackage.sh data/addresses.json",
+      "dependencies": [
+        "python3.11",
+        "jq"
+      ]
+    },
+    {
+      "name": "fetch_api.py",
+      "purpose": "调用外部API补齐能力：行政区划匹配(点落区)API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_api.py",
+      "endpoint": "https://restapi.amap.com/v3/geocode/regeo",
+      "api_key_env": "AMAP_WEB_KEY"
+    },
+    {
+      "name": "fetch_od-api.py",
+      "purpose": "调用外部API补齐能力：距离矩阵OD API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_od-api.py",
+      "endpoint": "https://restapi.amap.com/v3/distance",
+      "api_key_env": "AMAP_WEB_KEY"
+    },
+    {
+      "name": "fetch_spatial_graph_build.py",
+      "purpose": "调用外部API补齐能力：空间图谱构建API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_spatial_graph_build.py",
+      "endpoint": "https://api.external.example.com/spatial/graph/build",
+      "api_key_env": "SPATIAL_GRAPH_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 1,
+    "schema_fix_rounds": [
+      {
+        "round": 1,
+        "errors": [
+          "llm_call_failed: LLM request failed: The read operation timed out"
+        ]
+      }
+    ],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "wp_address_to_records_spatial_graph",
+  "version": "v1.0.1",
+  "objective": "将输入 addresses[] 经过地址标准化、真实性校验、地理编码与逆编校验后生成 records[]，并基于距离矩阵构建 spatial_graph。",
+  "sources": [
+    "fengtu"
+  ]
+}

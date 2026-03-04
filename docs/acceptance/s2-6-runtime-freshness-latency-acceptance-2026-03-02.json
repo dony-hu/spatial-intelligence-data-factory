@@ -1,0 +1,13 @@
+{
+  "story": "S2-6",
+  "title": "数据新鲜度与端到端延迟观测",
+  "date": "2026-03-02",
+  "result": "PASS",
+  "tests": [
+    "services/governance_api/tests/test_runtime_freshness_latency.py"
+  ],
+  "no_fallback_verified": true,
+  "residual_risks": [
+    "需补充高峰时段多批次性能波动样本"
+  ]
+}

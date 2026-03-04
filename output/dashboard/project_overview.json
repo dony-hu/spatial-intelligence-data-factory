@@ -1,41 +1,15 @@
 {
   "project_id": "spatial-intelligence-data-factory",
   "project_name": "Spatial Intelligence Data Factory",
-  "iteration": "iteration-011-phase1-pg-foundation-prompts",
-  "as_of": "2026-02-16T03:25:32.285347+00:00",
+  "iteration": "iteration-003-test-panel-sql-query",
+  "as_of": "2026-03-04T05:29:11.938152+00:00",
   "overall_status": "red",
   "priority_summary": {
     "p0_open": 0,
-    "p1_open": 10,
+    "p1_open": 0,
     "p2_open": 0
   },
-  "key_milestones": [
-    {
-      "name": "wp-address-canonical-pg-baseline-v1.0.0",
-      "status": "in_progress",
-      "eta": "2026-02-16T11:22:20+08:00"
-    },
-    {
-      "name": "wp-address-topology-v1.0.1",
-      "status": "in_progress",
-      "eta": "2026-02-14T11:40:00"
-    },
-    {
-      "name": "wp-address-topology-v1.0.2",
-      "status": "in_progress",
-      "eta": "2026-02-14T14:50:00"
-    },
-    {
-      "name": "wp-core-engine-address-core-p0-v0.1.0",
-      "status": "in_progress",
-      "eta": "2026-02-15T19:10:00+08:00"
-    },
-    {
-      "name": "wp-core-engine-governance-api-lab-p0-v0.1.0",
-      "status": "in_progress",
-      "eta": "2026-02-15T19:10:00+08:00"
-    }
-  ],
+  "key_milestones": [],
   "top_risks": [
     {
       "id": "R-001",

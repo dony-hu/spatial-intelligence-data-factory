@@ -4,7 +4,7 @@
 - 派单角色：Orchestrator
 - 责任工作线：项目管理看板工作线
 - 任务卡：TC-07
-- 工作包：`workpackages/wp-pm-dashboard-test-progress-v0.1.0.json`
+- 工作包：`[legacy 已清理] workpackages/wp-pm-dashboard-test-progress-v0.1.0.json`
 
 ## 业务目标
 

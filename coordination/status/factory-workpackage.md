@@ -13,7 +13,8 @@
 - Blocker：无
 - ETA：2026-02-15 13:00（本地时间）完成 schema 自动校验接入
 - Artifacts：
-  - `contracts/workpackage.schema.json`
-  - `workpackages/wp-template-v1.json`
-  - `workpackages/wp-address-topology-v1.0.1.json`
-  - `workpackages/wp-address-topology-v1.0.2.json`
+  - `workpackage_schema/registry.json`
+  - `workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json`
+  - `workpackage_schema/examples/v1/address_batch_governance.workpackage_schema.v1.json`
+  - `workpackages/bundles/address-topology-v1.0.1/`
+  - `workpackages/bundles/address-topology-v1.0.2/`

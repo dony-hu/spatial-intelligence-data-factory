@@ -1,0 +1,61 @@
+{
+  "epic": "Runtime Observability V2",
+  "date": "2026-03-03",
+  "result": "PASS",
+  "summary": {
+    "generated_at": "2026-03-03T15:50:21.047658",
+    "commands": [
+      "PYTHONPATH=. .venv/bin/pytest -q services/governance_api/tests/test_runtime_workpackage_pipeline_api_contract.py",
+      "PYTHONPATH=. .venv/bin/pytest -q services/governance_api/tests/test_runtime_workpackage_events_api_contract.py",
+      "PYTHONPATH=. .venv/bin/pytest -q services/governance_api/tests/test_runtime_llm_interactions_api_contract.py",
+      "PYTHONPATH=. .venv/bin/pytest -q services/governance_api/tests/test_runtime_workpackage_observability_rbac.py",
+      "PYTHONPATH=. .venv/bin/pytest -q services/governance_api/tests/test_runtime_upload_batch.py",
+      "PYTHONPATH=. .venv/bin/pytest -q tests/web_e2e/test_runtime_observability_workpackage_search_ui.py"
+    ],
+    "results": [
+      {
+        "suite": "pipeline",
+        "passed": true,
+        "summary": ".                                                                        [100%]\n1 passed in 0.68s"
+      },
+      {
+        "suite": "events",
+        "passed": true,
+        "summary": ".                                                                        [100%]\n1 passed in 0.85s"
+      },
+      {
+        "suite": "llm",
+        "passed": true,
+        "summary": ".                                                                        [100%]\n1 passed in 0.88s"
+      },
+      {
+        "suite": "rbac",
+        "passed": true,
+        "summary": ".                                                                        [100%]\n1 passed in 0.85s"
+      },
+      {
+        "suite": "upload-batch",
+        "passed": true,
+        "summary": "......                                                                   [100%]\n6 passed in 45.95s"
+      },
+      {
+        "suite": "web-e2e-minimal",
+        "passed": true,
+        "summary": ".                                                                        [100%]\n1 passed in 5.28s"
+      }
+    ],
+    "failure_analysis": [],
+    "no_fallback_verdict": "PASS",
+    "covered_modules": [
+      "pipeline",
+      "events",
+      "llm",
+      "rbac",
+      "upload-batch"
+    ],
+    "decision": "GO"
+  },
+  "evidence": [
+    "/Users/huda/Code/spatial-intelligence-data-factory/output/test-reports/epic-3-regression-summary-2026-03-03.md"
+  ]
+}

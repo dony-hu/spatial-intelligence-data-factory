@@ -1,0 +1,64 @@
+{
+  "story_id": "OBS-RUNTIME-S2-15",
+  "title": "人机确认闭环与按工作包执行E2E可观测验收",
+  "date": "2026-03-02",
+  "status": "PASS",
+  "summary": {
+    "upload_batch_workpackage": "PASS",
+    "manual_gate_generate_publish": "PASS",
+    "dryrun_report_structure": "PASS",
+    "workpackage_events_zh_fields": "PASS",
+    "ui_testid_constraints": "PASS"
+  },
+  "requirements_coverage": [
+    {
+      "id": "R1",
+      "requirement": "先失败测试，再实现，再回归",
+      "result": "PASS"
+    },
+    {
+      "id": "R2",
+      "requirement": "upload-batch 支持 workpackage_id+version，冲突与缺参返回 400 INVALID_PAYLOAD",
+      "result": "PASS"
+    },
+    {
+      "id": "R3",
+      "requirement": "无 confirm_generate 禁止 packaged；无 confirm_publish 禁止 submitted",
+      "result": "PASS"
+    },
+    {
+      "id": "R4",
+      "requirement": "试运行报告包含 records[] 与 spatial_graph（nodes/edges/metrics/failed_row_refs/build_status）",
+      "result": "PASS"
+    },
+    {
+      "id": "R5",
+      "requirement": "workpackage-events 包含 source_zh/event_type_zh/status_zh/description_zh/pipeline_stage_zh",
+      "result": "PASS"
+    },
+    {
+      "id": "R6",
+      "requirement": "页面提供指定 data-testid",
+      "result": "PASS"
+    }
+  ],
+  "test_commands": [
+    {
+      "command": "PYTHONPATH=. DATABASE_URL='postgresql://si_factory_user:SiFactory2026@127.0.0.1:5432/si_factory' ./.venv/bin/pytest -q services/governance_api/tests/test_runtime_upload_batch.py",
+      "result": "6 passed"
+    },
+    {
+      "command": "PYTHONPATH=. DATABASE_URL='postgresql://si_factory_user:SiFactory2026@127.0.0.1:5432/si_factory' ./.venv/bin/pytest -q tests/web_e2e/test_runtime_observability_s2_15_ui.py --maxfail=1",
+      "result": "1 passed"
+    },
+    {
+      "command": "PYTHONPATH=. DATABASE_URL='postgresql://si_factory_user:SiFactory2026@127.0.0.1:5432/si_factory' ./.venv/bin/pytest -q services/governance_api/tests/test_runtime_upload_batch.py services/governance_api/tests/test_runtime_workpackage_events_api_contract.py tests/web_e2e/test_runtime_observability_upload_ui.py tests/web_e2e/test_runtime_observability_s2_15_ui.py",
+      "result": "9 passed"
+    }
+  ],
+  "artifacts": {
+    "api_contract": "services/governance_api/tests/test_runtime_upload_batch.py",
+    "events_contract": "services/governance_api/tests/test_runtime_workpackage_events_api_contract.py",
+    "web_e2e": "tests/web_e2e/test_runtime_observability_s2_15_ui.py"
+  }
+}

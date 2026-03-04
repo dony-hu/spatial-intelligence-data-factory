@@ -7,19 +7,19 @@
 ## 工作包与边界
 
 1. 包 A：Address Core 算法与测试
-- 文件：`workpackages/wp-core-engine-address-core-p0-v0.1.0.json`
+- 文件：`[legacy 已清理] workpackages/wp-core-engine-address-core-p0-v0.1.0.json`
 - 目录边界：`packages/address_core/`
 - 关键产出：算法收敛、模块单测与 smoke 基线、兼容性报告
 - 依赖：无前置硬依赖，可立即启动
 
 2. 包 B：Governance API + Lab
-- 文件：`workpackages/wp-core-engine-governance-api-lab-p0-v0.1.0.json`
+- 文件：`[legacy 已清理] workpackages/wp-core-engine-governance-api-lab-p0-v0.1.0.json`
 - 目录边界：`services/governance_api/`（允许关联契约与迁移脚本）
 - 关键产出：Python 3.11+ 运行时收敛、审批硬门控、观测回归
 - 依赖：需与总控统一运行时基线同步
 
 3. 包 C：Trust Data Hub
-- 文件：`workpackages/wp-core-engine-trust-data-hub-p0-v0.1.0.json`
+- 文件：`[legacy 已清理] workpackages/wp-core-engine-trust-data-hub-p0-v0.1.0.json`
 - 目录边界：`services/trust_data_hub/` + `database/trust_meta_schema.sql`
 - 关键产出：仓储持久化接线、fetch/parse 稳态、replay 证据契约
 - 依赖：可并行启动；联调阶段需与 B 的 validate 契约对齐

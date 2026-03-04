@@ -1,0 +1,482 @@
+{
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
+  "workpackage": {
+    "id": "addr-batch-governance",
+    "name": "地址批量治理工作包",
+    "version": "v1.0.0",
+    "objective": "输入一批地址字段，输出地址标准化、验真、实体拆分与空间图谱成果，并支持发布前预验证。",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "address_validation",
+        "entity_parsing",
+        "spatial_graph"
+      ],
+      "out_of_scope": [
+        "人工修复闭环平台",
+        "离线底图生产"
+      ]
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条地址都包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status",
+      "dryrun 可在无 fallback/mock 的真实链路执行"
+    ]
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        {
+          "name": "Agent会话编排层",
+          "responsibility": "需求对齐、schema修复反馈、多轮交互收敛"
+        },
+        {
+          "name": "可信数据Hub层",
+          "responsibility": "管理已注册API并承载缺失API扩展注册"
+        },
+        {
+          "name": "工作包执行层",
+          "responsibility": "执行标准化/验真/实体拆分/图谱构建脚本"
+        },
+        {
+          "name": "运行态可观测层",
+          "responsibility": "输出事件、指标、回执、审计轨迹"
+        }
+      ],
+      "lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ],
+      "data_flow": [
+        {
+          "from": "Agent会话编排层",
+          "to": "可信数据Hub层",
+          "payload": "registered_api_catalog"
+        },
+        {
+          "from": "工作包执行层",
+          "to": "运行态可观测层",
+          "payload": "records+spatial_graph+events"
+        }
+      ]
+    },
+    "runtime_env": {
+      "python_version": "3.11",
+      "database": {
+        "engine": "postgresql",
+        "dsn_env": "DATABASE_URL",
+        "docker_only": true
+      },
+      "network_policy": {
+        "allow_external_api": true,
+        "blocked_hosts": []
+      },
+      "fallback_policy": "disabled",
+      "required_env": [
+        "DATABASE_URL",
+        "TRUST_ALLOW_MEMORY_FALLBACK",
+        "GOVERNANCE_ALLOW_MEMORY_FALLBACK",
+        "FENGTU_AK_STANDARDIZE",
+        "FENGTU_AK_REALCHECK"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "addresses"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{6,64}$"
+        },
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "raw_id",
+              "raw_text"
+            ],
+            "properties": {
+              "raw_id": {
+                "type": "string"
+              },
+              "raw_text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "city_hint": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "records",
+        "spatial_graph"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "raw_id",
+              "normalization",
+              "entity_parsing",
+              "address_validation"
+            ],
+            "properties": {
+              "raw_id": {
+                "type": "string"
+              },
+              "normalization": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "standard_address",
+                  "confidence"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ok",
+                      "failed"
+                    ]
+                  },
+                  "standard_address": {
+                    "type": "string"
+                  },
+                  "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              },
+              "entity_parsing": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "entities"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ok",
+                      "failed"
+                    ]
+                  },
+                  "entities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "address_validation": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "is_real",
+                  "score"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ok",
+                      "failed"
+                    ]
+                  },
+                  "is_real": {
+                    "type": "boolean"
+                  },
+                  "score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "spatial_graph": {
+          "type": "object",
+          "required": [
+            "build_status",
+            "nodes",
+            "edges",
+            "metrics",
+            "failed_row_refs"
+          ],
+          "properties": {
+            "build_status": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "partial",
+                "failed"
+              ]
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "metrics": {
+              "type": "object",
+              "required": [
+                "node_count",
+                "edge_count"
+              ],
+              "properties": {
+                "node_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "edge_count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "failed_row_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "base_url": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "method": "POST",
+        "pipeline_stage": "normalization",
+        "request_mapping": {
+          "raw_text": "address"
+        },
+        "response_mapping": {
+          "standard_address": "formatted_address"
+        }
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "method": "GET",
+        "pipeline_stage": "address_validation",
+        "request_mapping": {
+          "raw_text": "address"
+        },
+        "response_mapping": {
+          "is_real": "result.real",
+          "score": "result.score"
+        }
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "空间实体拆分API",
+        "endpoint": "https://api.external.example.com/entity/parsing",
+        "reason": "已注册API不覆盖结构化实体拆分",
+        "requires_key": true,
+        "api_key_env": "ENTITY_PARSING_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "已注册API不覆盖图谱构建",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "step_id": "S01",
+        "name": "需求对齐",
+        "stage": "requirements_confirm",
+        "inputs": [
+          "user_prompt",
+          "registered_api_catalog"
+        ],
+        "outputs": [
+          "aligned_io_contract"
+        ],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 2,
+          "backoff_sec": 2
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "工作包生成",
+        "stage": "generate",
+        "inputs": [
+          "aligned_io_contract"
+        ],
+        "outputs": [
+          "workpackage.json"
+        ],
+        "timeout_sec": 600,
+        "retry": {
+          "max_attempts": 2,
+          "backoff_sec": 3
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "预验证",
+        "stage": "dryrun",
+        "inputs": [
+          "batch_addresses"
+        ],
+        "outputs": [
+          "dryrun_report"
+        ],
+        "timeout_sec": 1200,
+        "retry": {
+          "max_attempts": 1,
+          "backoff_sec": 0
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "发布",
+        "stage": "publish",
+        "inputs": [
+          "dryrun_report"
+        ],
+        "outputs": [
+          "publish_record"
+        ],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1,
+          "backoff_sec": 0
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": true,
+      "confirm_dryrun_result": true,
+      "confirm_publish": true
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "generate_fix_script_and_key_template"
+    }
+  },
+  "scripts": [
+    {
+      "name": "run_pipeline.py",
+      "purpose": "执行批量地址治理主流程",
+      "runtime": "python3",
+      "entry": "python scripts/run_pipeline.py",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pydantic>=2.6.0"
+      ]
+    },
+    {
+      "name": "fetch_entity_parsing.py",
+      "purpose": "调用外部实体拆分API并输出结构化实体",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_entity_parsing.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    },
+    {
+      "name": "fetch_spatial_graph_build.py",
+      "purpose": "调用外部图谱构建API生成图谱结果",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_spatial_graph_build.py",
+      "dependencies": [
+        "requests>=2.31.0",
+        "networkx>=3.2.1"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "address_governance_review",
+      "name": "地址治理规则审阅",
+      "path": "skills/address_governance_review.md",
+      "purpose": "为治理流程提供规则解释、冲突检查与人工确认建议",
+      "required": true
+    },
+    {
+      "skill_id": "spatial_graph_quality_check",
+      "name": "空间图谱质量检查",
+      "path": "skills/spatial_graph_quality_check.md",
+      "purpose": "校验图谱节点边一致性与异常指标",
+      "required": false
+    }
+  ]
+}

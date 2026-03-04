@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "ctx-pack-v1.0.0",
+  "name": "ctx-pack",
+  "version": "v1.0.0",
+  "objective": "上下文验证",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 1,
+  "line_metrics_path": "workpackages/bundles/ctx-pack-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}

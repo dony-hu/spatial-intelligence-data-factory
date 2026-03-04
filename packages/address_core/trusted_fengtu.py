@@ -75,9 +75,22 @@ class FengtuTrustedClient:
         return {}
 
     def _find_interface(self, interface_id: str) -> Optional[Dict[str, Any]]:
-        for src in list(self._config.get("trusted_sources") or []):
-            if str(src.get("source_id")) != "fengtu":
-                continue
+        trusted_sources = list(self._config.get("trusted_sources") or [])
+        fengtu_sources = [
+            src
+            for src in trusted_sources
+            if str(src.get("source_id") or "").startswith("fengtu")
+            or str(src.get("provider") or "").lower() == "fengtu"
+        ]
+        preferred_group = str(os.getenv("FENGTU_PROVIDER_GROUP") or "").strip().lower()
+        if preferred_group:
+            for src in fengtu_sources:
+                for item in list(src.get("trusted_interfaces") or []):
+                    if str(item.get("interface_id")) != interface_id:
+                        continue
+                    if str(item.get("provider_group") or "").strip().lower() == preferred_group:
+                        return item
+        for src in fengtu_sources:
             for item in list(src.get("trusted_interfaces") or []):
                 if str(item.get("interface_id")) == interface_id:
                     return item

@@ -1,15 +1,67 @@
-project: spatial-intelligence-data-factory
-sprint: "2026-02-27-observability-pg-unified"
-updated_at: "2026-02-27T14:50:00Z"
+# generated: 2026-03-02T10:27:00+08:00
+# project: spatial-intelligence-data-factory
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /Users/huda/Code/spatial-intelligence-data-factory/_bmad-output/implementation-artifacts
+#
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
 
-# bmad-story-deliver 约定输入：
-# 键名格式：X-Y-story-name
-# 值：backlog | ready-for-dev | in-progress | done
-stories:
+generated: "2026-03-03T16:05:00+08:00"
+project: spatial-intelligence-data-factory
+project_key: NOKEY
+tracking_system: file-system
+story_location: /Users/huda/Code/spatial-intelligence-data-factory/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: done
   1-1-cli-agent-llm-confirmation: done
   1-2-dryrun-flow-no-fallback: done
   1-3-workpackage-publish-runtime: done
   1-4-pipeline-no-fallback-gate: done
   1-5-trust-hub-capability-persistence: done
   1-6-runtime-db-query-and-e2e-acceptance: done
+  epic-1-retrospective: optional
+
+  epic-2: done
   2-1-observability-pg-unified-foundation: done
+  epic-2-retrospective: optional
+
+  epic-3: done
+  3-1-runtime-aggregation-api-and-metrics-unification: done
+  3-2-runtime-observability-page-refactor-and-interaction-linkage: done
+  3-3-address-governance-seed-pack-and-empty-state-guidance: done
+  3-4-task-drilldown-traceability-and-regression-acceptance-closure: done
+  3-14-new-governance-workpackage-pipeline-observability-and-acceptance-closure: done
+  3-5-sli-slo-and-alert-policy-closure: done
+  3-6-data-freshness-and-end-to-end-latency-observability: done
+  3-7-address-governance-quality-drift-and-anomaly-detection: done
+  3-8-observability-data-retention-partition-and-query-performance-governance: done
+  3-9-observability-permission-masking-and-audit-compliance: done
+  epic-3-retrospective: done
+
+  epic-4: done
+  4-1-ir-p0-01-db-baseline-and-migration-smoke: done
+  4-2-ir-p0-02-epic3-core-acceptance-rerun-and-report: done
+  4-3-ir-p0-03-runtime-stage-enum-dictionary-unification: done
+  4-4-ir-p0-04-evidence-index-and-legacy-test-path-fix: done
+  epic-4-retrospective: optional

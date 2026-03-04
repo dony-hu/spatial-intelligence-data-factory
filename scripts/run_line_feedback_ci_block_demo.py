@@ -11,8 +11,9 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_WORKPACKAGE = PROJECT_ROOT / "workpackages" / "wp-core-engine-p0-stabilization-v0.1.0.json"
-DEFAULT_SCHEMA = PROJECT_ROOT / "contracts" / "workpackage.schema.json"
+DEFAULT_WORKPACKAGE = (
+    PROJECT_ROOT / "workpackage_schema" / "examples" / "v1" / "address_batch_governance.workpackage_schema.v1.json"
+)
 DEFAULT_FEEDBACK = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.json"
 DEFAULT_EVIDENCE_JSON = PROJECT_ROOT / "output" / "workpackages" / "line_feedback_ci_block_demo.latest.json"
 DEFAULT_EVIDENCE_MD = PROJECT_ROOT / "output" / "workpackages" / "line_feedback_ci_block_demo.latest.md"
@@ -30,6 +31,17 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 def _write_md(path: Path, lines: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _resolve_default_schema_path(project_root: Path = PROJECT_ROOT) -> Path:
+    registry = json.loads((project_root / "workpackage_schema" / "registry.json").read_text(encoding="utf-8"))
+    current_version = str(registry.get("current_version") or "").strip()
+    versions = registry.get("versions") if isinstance(registry, dict) else {}
+    version_meta = versions.get(current_version) if isinstance(versions, dict) else None
+    schema_file = str((version_meta or {}).get("schema_file") or "").strip()
+    if not schema_file:
+        raise ValueError("workpackage_schema registry missing current schema_file")
+    return project_root / "workpackage_schema" / schema_file
 
 
 def main() -> int:
@@ -51,7 +63,7 @@ def main() -> int:
             "--workpackage",
             str(DEFAULT_WORKPACKAGE),
             "--schema",
-            str(DEFAULT_SCHEMA),
+            str(_resolve_default_schema_path()),
             "--line-feedback-input",
             str(tampered_payload),
             "--line-feedback-hash",

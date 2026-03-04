@@ -10,12 +10,18 @@ def test_detect_agent_intent_matrix() -> None:
     assert detect_agent_intent("query workpackage demo-v1.0.0") == "query_workpackage"
     assert detect_agent_intent("试运行 demo-v1.0.0") == "dryrun_workpackage"
     assert detect_agent_intent("publish demo-v1.0.0 runtime") == "publish_workpackage"
+    assert detect_agent_intent("发布 demo-v1.0.0 到 runtime") == "publish_workpackage"
     assert detect_agent_intent("列出数据源") == "list_sources"
     assert detect_agent_intent("generate workpackage") == "generate_workpackage"
     assert detect_agent_intent("请生成地址治理 MVP 方案") == "confirm_requirement"
+    assert (
+        detect_agent_intent("数据源使用顺丰地图 API；目标是先跑通预验证再发布。")
+        == "confirm_requirement"
+    )
 
 
 def test_converse_dispatches_by_detected_intent(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
     agent = FactoryAgent()
     monkeypatch.setattr(agent, "_handle_store_api_key", lambda _p: {"action": "store_api_key"})
     monkeypatch.setattr(agent, "_handle_list_workpackages", lambda: {"action": "list_workpackages"})
@@ -31,6 +37,7 @@ def test_converse_dispatches_by_detected_intent(monkeypatch) -> None:
     assert agent.converse("query workpackage demo-v1.0.0")["action"] == "query_workpackage"
     assert agent.converse("试运行 demo-v1.0.0")["action"] == "dryrun_workpackage"
     assert agent.converse("publish demo-v1.0.0 runtime")["action"] == "publish_workpackage"
+    assert agent.converse("发布 demo-v1.0.0 到 runtime")["action"] == "publish_workpackage"
     assert agent.converse("列出数据源")["action"] == "list_sources"
     assert agent.converse("generate workpackage")["action"] == "generate_workpackage"
     assert agent.converse("请生成地址治理 MVP 方案")["action"] == "confirm_requirement"

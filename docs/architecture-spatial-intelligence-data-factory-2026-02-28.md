@@ -112,6 +112,13 @@
 3. 向量与检索索引：向量库或 PG 向量扩展（按场景扩展）。
 4. 审计与证据产物：`output/` 统一归档（JSON/JSONL/Markdown）。
 
+## 7.1 WorkPackage Schema 与 Contracts 关系
+
+1. `workpackage_schema` 位于项目一级目录：`/workpackage_schema`，作为工作包协议唯一入口。
+2. `workpackage_schema/registry.json` 负责版本索引与当前版本路由，消费者禁止硬编码 schema 文件路径。
+3. `contracts/` 继续承载运行时其他契约（API、数据、事件等），`workpackage_schema` 在架构上属于“工作包协议域”的独立模块，通过文档化边界与 `registry` 对接 `contracts` 治理规范。
+4. 工作包发布物必须位于 `/workpackages/bundles/<bundle>/`，并通过 `workpackage.json + skills/` 共同构成可执行包。
+
 ## 8. 非功能落地设计
 
 ### 8.1 性能

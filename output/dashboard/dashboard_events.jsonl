@@ -87,3 +87,6 @@
 {"time": "2026-02-16T03:10:19.665381+00:00", "event_type": "task_dispatched", "workpackage_id": "wp-pg-only-integration-baseline-v1.0.0", "summary": "下发Phase1工作包提示词与结构化回写契约", "operator": "project-manager", "payload": {}}
 {"time": "2026-02-16T11:22:20+08:00", "event_type": "task_dispatched", "workpackage_id": "wp-orchestrator-phase1-crossline-closure-v1.0.0", "summary": "刷新各条线Phase1工作包文件与提示词（dispatch-phase1-pg-foundation-002）", "operator": "project-manager"}
 {"time": "2026-02-16T03:25:32.285140+00:00", "event_type": "status_collected", "workpackage_id": "line-address-manual-review", "summary": "manual review status check", "operator": "codex", "payload": {}}
+{"time": "2026-03-02T02:43:23.552516+00:00", "event_type": "test_synced", "workpackage_id": "", "summary": "manual test board sync for status review", "operator": "codex", "payload": {}}
+{"time": "2026-03-02T02:43:23.552515+00:00", "event_type": "status_collected", "workpackage_id": "", "summary": "manual status review refresh", "operator": "codex", "payload": {}}
+{"time": "2026-03-04T05:29:11.937950+00:00", "event_type": "status_collected", "workpackage_id": "wp-project-status-snapshot", "summary": "manual W-ARC status analysis refresh", "operator": "codex", "payload": {"source": "codex", "mode": "W-ARC"}}

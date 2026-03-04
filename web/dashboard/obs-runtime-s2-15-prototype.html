@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OBS-RUNTIME-S2-15 人机确认闭环原型</title>
+    <style>
+      :root {
+        --bg: #f3f6ef;
+        --panel: #ffffff;
+        --ink: #172320;
+        --muted: #4c5c57;
+        --line: #d5ddd4;
+        --brand: #0e6a5a;
+        --brand-soft: #d9efe9;
+        --warn: #b96e13;
+        --bad: #b13a2e;
+        --ok: #1a7a57;
+        --focus: #0b8d74;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Avenir Next", "Source Han Sans SC", "PingFang SC", sans-serif;
+        background:
+          radial-gradient(900px 420px at 110% -10%, rgba(14, 106, 90, 0.22), transparent 60%),
+          radial-gradient(700px 300px at -10% -10%, rgba(221, 145, 40, 0.2), transparent 58%),
+          linear-gradient(145deg, #e8efe6 0%, #f6f8f2 65%);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 22px;
+      }
+
+      .hero {
+        border: 1px solid #22574c;
+        border-radius: 16px;
+        padding: 18px;
+        background: linear-gradient(130deg, #0b5d4f, #13836e);
+        color: #f5fffc;
+        box-shadow: 0 14px 30px rgba(18, 62, 53, 0.24);
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: 30px;
+        letter-spacing: 0.2px;
+      }
+
+      .hero p {
+        margin: 8px 0 0;
+        opacity: 0.92;
+      }
+
+      .grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1.2fr 1fr;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(31, 52, 45, 0.1);
+        padding: 14px;
+        animation: rise 360ms ease;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 19px;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        border: 1px solid #b8c7bd;
+        border-radius: 10px;
+        font: inherit;
+      }
+
+      input,
+      select,
+      textarea {
+        padding: 8px 10px;
+        background: #fbfdf9;
+        color: #13201d;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      button {
+        padding: 9px 12px;
+        background: #eef7f2;
+        color: #18493d;
+        cursor: pointer;
+      }
+
+      button.primary {
+        background: linear-gradient(120deg, #0f725f, #159579);
+        border-color: #0a5a4b;
+        color: #f6fffc;
+      }
+
+      button:disabled {
+        opacity: 0.56;
+        cursor: not-allowed;
+      }
+
+      .kpi {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .kpi article {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      .kpi .v {
+        font-size: 28px;
+        font-weight: 760;
+        line-height: 1.1;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .banner {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #e6ce9f;
+        background: #fff6e6;
+        color: #7d5310;
+      }
+
+      .banner.bad {
+        border-color: #e8b6b0;
+        background: #fff0ee;
+        color: #912f27;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 8px;
+      }
+
+      .step {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .step.done {
+        border-color: #acd5c8;
+        background: #ebf8f2;
+      }
+
+      .step.blocked {
+        border-color: #e8b6b0;
+        background: #fff1ef;
+      }
+
+      .badge {
+        border-radius: 999px;
+        font-size: 12px;
+        padding: 3px 8px;
+        border: 1px solid #c6d3ca;
+        background: #f4f8f5;
+      }
+
+      .badge.ok {
+        border-color: #98ccb7;
+        background: #e4f5ed;
+        color: var(--ok);
+      }
+
+      .badge.bad {
+        border-color: #e2b3ae;
+        background: #ffeceb;
+        color: var(--bad);
+      }
+
+      .table-wrap {
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e2e8e2;
+        padding: 7px 8px;
+        white-space: nowrap;
+        text-align: left;
+      }
+
+      th {
+        background: #f1f6f2;
+      }
+
+      .mono {
+        font-family: "SF Mono", "Menlo", monospace;
+      }
+
+      .tabs {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+
+      .tabs button {
+        border: 0;
+        border-right: 1px solid var(--line);
+        border-radius: 0;
+        background: #f8fbf8;
+      }
+
+      .tabs button:last-child {
+        border-right: 0;
+      }
+
+      .tabs button.active {
+        background: var(--brand-soft);
+        color: #115145;
+      }
+
+      pre {
+        margin: 8px 0 0;
+        max-height: 220px;
+        overflow: auto;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #dae2da;
+        background: #f7faf7;
+        font-size: 12px;
+      }
+
+      .audit {
+        margin-top: 8px;
+        border: 1px dashed #c5d2c9;
+        border-radius: 10px;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .kpi {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <h1>OBS-RUNTIME-S2-15 人机确认闭环原型</h1>
+        <p>治理看板 / 人工审核闭环 / 按工作包执行 E2E 可观测验收</p>
+      </header>
+
+      <section class="kpi" aria-label="核心指标">
+        <article><div class="hint">工作包</div><div class="v" id="kpiWp">3</div></article>
+        <article><div class="hint">确认节点完成率</div><div class="v" id="kpiGate">66%</div></article>
+        <article><div class="hint">门禁阻断数</div><div class="v" id="kpiBlocked">1</div></article>
+        <article><div class="hint">可追溯回执数</div><div class="v" id="kpiReceipt">2</div></article>
+      </section>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>上传执行区</h2>
+          <div class="row">
+            <label for="window">时间窗</label>
+            <select id="window">
+              <option>1h</option>
+              <option selected>24h</option>
+              <option>7d</option>
+              <option>30d</option>
+            </select>
+
+            <label for="wpInput">工作包</label>
+            <input id="wpInput" data-testid="wp-selector" placeholder="例如 wp_addr_20260302@v3" />
+            <button id="fillWp">填充样例</button>
+          </div>
+
+          <div style="margin-top: 8px">
+            <label for="csvInput">CSV 内容（示例按换行）</label>
+            <textarea id="csvInput" data-testid="csv-upload-input" placeholder="上海市徐汇区肇嘉浜路111号\n北京市朝阳区建国路88号"></textarea>
+          </div>
+
+          <div class="row" style="margin-top: 8px">
+            <button class="primary" id="execBtn" data-testid="upload-exec-button" disabled>上传并执行</button>
+            <button id="confirmGenerateBtn">执行 confirm_generate</button>
+            <button id="confirmPublishBtn">执行 confirm_publish</button>
+            <span class="hint" id="uploadStatus">等待输入</span>
+          </div>
+
+          <div class="banner bad" id="gateBanner" data-testid="gate-blocking-banner" style="display:none"></div>
+
+          <div class="audit">
+            <div><strong>Runtime 回执：</strong><span class="mono" id="receipt" data-testid="runtime-receipt-id">-</span></div>
+            <div><strong>trace_id：</strong><span class="mono" id="trace">trace_obs_runtime_s2_15_demo</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>人机确认时间线</h2>
+          <div class="timeline" data-testid="confirm-timeline-panel" id="timeline"></div>
+        </section>
+      </div>
+
+      <div class="grid">
+        <section class="panel">
+          <h2>试运行报告</h2>
+          <div class="row">
+            <button id="openReport" data-testid="dryrun-report-open">查看试运行报告</button>
+            <span class="hint" id="reportHint">状态：待生成</span>
+          </div>
+          <div class="table-wrap" style="margin-top:10px">
+            <table data-testid="dryrun-records-table">
+              <thead>
+                <tr>
+                  <th>input</th>
+                  <th>normalization</th>
+                  <th>entity_parsing</th>
+                  <th>address_validation</th>
+                  <th>record_decision</th>
+                </tr>
+              </thead>
+              <tbody id="records"></tbody>
+            </table>
+          </div>
+          <div class="audit" data-testid="dryrun-graph-card" id="graphCard"></div>
+        </section>
+
+        <section class="panel">
+          <h2>事件下钻</h2>
+          <div class="row">
+            <div class="tabs">
+              <button class="active" id="zhBtn" data-testid="event-view-mode-toggle">中文叙述</button>
+              <button id="jsonBtn">JSON 原文</button>
+            </div>
+            <span class="hint">默认中文可读，支持审计回放</span>
+          </div>
+
+          <div class="table-wrap" style="margin-top:10px">
+            <table data-testid="events-table">
+              <thead>
+                <tr>
+                  <th>source_zh</th>
+                  <th>event_type_zh</th>
+                  <th>status_zh</th>
+                  <th>description_zh</th>
+                  <th>pipeline_stage_zh</th>
+                </tr>
+              </thead>
+              <tbody id="eventsZh"></tbody>
+            </table>
+          </div>
+
+          <pre id="eventsJson" style="display:none"></pre>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const state = {
+        confirmGenerate: false,
+        confirmDryrun: true,
+        confirmPublish: false,
+        currentWp: "",
+        receipt: "",
+      };
+
+      const sampleRecords = [
+        {
+          input: "上海市徐汇区肇嘉浜路111号",
+          normalization: "上海市徐汇区肇嘉浜路111号",
+          entity_parsing: "city=上海;district=徐汇;road=肇嘉浜路;no=111",
+          address_validation: "PASSED",
+          record_decision: "AUTO_PASS"
+        },
+        {
+          input: "北京市朝阳区建国路88号",
+          normalization: "北京市朝阳区建国路88号",
+          entity_parsing: "city=北京;district=朝阳;road=建国路;no=88",
+          address_validation: "BLOCKED",
+          record_decision: "MANUAL_REVIEW"
+        }
+      ];
+
+      const sampleGraph = {
+        graph_id: "graph_obs_batch_20260302",
+        graph_version: "v1",
+        build_status: "PARTIAL",
+        input_rows_total: 2,
+        rows_contributed: 1,
+        rows_skipped: 1,
+        failed_row_refs: ["row_2"],
+        metrics: { node_count: 4, edge_count: 3, connected_components: 1 }
+      };
+
+      const events = [
+        {
+          source_zh: "工厂 CLI",
+          event_type_zh: "创建治理意图",
+          status_zh: "成功",
+          description_zh: "用户提交地址治理目标，系统创建工作包草案。",
+          pipeline_stage_zh: "创建",
+          trace_id: "trace_obs_runtime_s2_15_demo",
+          actor: "oncall"
+        },
+        {
+          source_zh: "Factory Agent",
+          event_type_zh: "人机确认生成",
+          status_zh: "待确认",
+          description_zh: "等待 confirm_generate 后进入打包阶段。",
+          pipeline_stage_zh: "确认",
+          trace_id: "trace_obs_runtime_s2_15_demo",
+          actor: "oncall"
+        },
+        {
+          source_zh: "治理 Runtime",
+          event_type_zh: "提交执行",
+          status_zh: "阻断",
+          description_zh: "缺少 confirm_publish，禁止 runtime_submit_requested。",
+          pipeline_stage_zh: "发布",
+          trace_id: "trace_obs_runtime_s2_15_demo",
+          actor: "system"
+        }
+      ];
+
+      const ids = {
+        wpInput: document.getElementById("wpInput"),
+        csvInput: document.getElementById("csvInput"),
+        execBtn: document.getElementById("execBtn"),
+        uploadStatus: document.getElementById("uploadStatus"),
+        gateBanner: document.getElementById("gateBanner"),
+        timeline: document.getElementById("timeline"),
+        receipt: document.getElementById("receipt"),
+        trace: document.getElementById("trace"),
+        fillWp: document.getElementById("fillWp"),
+        confirmGenerateBtn: document.getElementById("confirmGenerateBtn"),
+        confirmPublishBtn: document.getElementById("confirmPublishBtn"),
+        records: document.getElementById("records"),
+        graphCard: document.getElementById("graphCard"),
+        reportHint: document.getElementById("reportHint"),
+        openReport: document.getElementById("openReport"),
+        eventsZh: document.getElementById("eventsZh"),
+        eventsJson: document.getElementById("eventsJson"),
+        zhBtn: document.getElementById("zhBtn"),
+        jsonBtn: document.getElementById("jsonBtn"),
+        kpiGate: document.getElementById("kpiGate"),
+        kpiBlocked: document.getElementById("kpiBlocked"),
+        kpiReceipt: document.getElementById("kpiReceipt"),
+      };
+
+      function hasValidWp(value) {
+        return /.+@v?\d+/.test((value || "").trim());
+      }
+
+      function hasCsvInput(value) {
+        return (value || "").trim().split(/\n+/).filter(Boolean).length > 0;
+      }
+
+      function auditInfo(action, decision) {
+        return `actor=oncall; action=${action}; decision=${decision}; reason=story_s2_15_demo; timestamp=${new Date().toISOString()}; trace_id=${ids.trace.textContent}; workpackage_id_version=${state.currentWp || "-"}`;
+      }
+
+      function renderTimeline() {
+        const nodes = [
+          {
+            key: "confirm_generate",
+            label: "confirm_generate",
+            done: state.confirmGenerate,
+            blocked: false,
+            audit: auditInfo("confirm_generate", state.confirmGenerate ? "approved" : "pending")
+          },
+          {
+            key: "confirm_dryrun_result",
+            label: "confirm_dryrun_result",
+            done: state.confirmDryrun,
+            blocked: false,
+            audit: auditInfo("confirm_dryrun_result", "approved")
+          },
+          {
+            key: "confirm_publish",
+            label: "confirm_publish",
+            done: state.confirmPublish,
+            blocked: !state.confirmPublish,
+            audit: auditInfo("confirm_publish", state.confirmPublish ? "approved" : "pending")
+          },
+        ];
+
+        ids.timeline.innerHTML = nodes
+          .map((node) => {
+            const cls = node.done ? "step done" : (node.blocked ? "step blocked" : "step");
+            const badge = node.done ? '<span class="badge ok">已确认</span>' : (node.blocked ? '<span class="badge bad">阻断</span>' : '<span class="badge">待处理</span>');
+            return `<div class="${cls}"><div><strong>${node.label}</strong><div class="hint">${node.audit}</div></div><div>${badge}</div></div>`;
+          })
+          .join("");
+
+        const gatePercent = [state.confirmGenerate, state.confirmDryrun, state.confirmPublish].filter(Boolean).length / 3;
+        ids.kpiGate.textContent = `${Math.round(gatePercent * 100)}%`;
+        ids.kpiBlocked.textContent = state.confirmPublish ? "0" : "1";
+      }
+
+      function renderReport() {
+        ids.records.innerHTML = sampleRecords
+          .map((r) => {
+            const blockedStyle = r.address_validation === "BLOCKED" ? " style=\"color:#b13a2e;font-weight:700\"" : "";
+            return `<tr>
+              <td>${r.input}</td>
+              <td>${r.normalization}</td>
+              <td>${r.entity_parsing}</td>
+              <td${blockedStyle}>${r.address_validation}</td>
+              <td>${r.record_decision}</td>
+            </tr>`;
+          })
+          .join("");
+
+        ids.graphCard.innerHTML = `
+          <strong>spatial_graph</strong><br />
+          graph_id=${sampleGraph.graph_id}; graph_version=${sampleGraph.graph_version}; build_status=<strong>${sampleGraph.build_status}</strong><br />
+          input_rows_total=${sampleGraph.input_rows_total}; rows_contributed=${sampleGraph.rows_contributed}; rows_skipped=${sampleGraph.rows_skipped}<br />
+          failed_row_refs=${sampleGraph.failed_row_refs.join(", ")}<br />
+          metrics=node_count:${sampleGraph.metrics.node_count}, edge_count:${sampleGraph.metrics.edge_count}, connected_components:${sampleGraph.metrics.connected_components}
+        `;
+      }
+
+      function renderEventsZh() {
+        ids.eventsZh.innerHTML = events
+          .map((e) => `<tr>
+            <td>${e.source_zh}</td>
+            <td>${e.event_type_zh}</td>
+            <td>${e.status_zh}</td>
+            <td>${e.description_zh}</td>
+            <td>${e.pipeline_stage_zh}</td>
+          </tr>`)
+          .join("");
+        ids.eventsJson.textContent = JSON.stringify(events, null, 2);
+      }
+
+      function refreshButtonState() {
+        const canExec = hasValidWp(ids.wpInput.value) && hasCsvInput(ids.csvInput.value);
+        ids.execBtn.disabled = !canExec;
+      }
+
+      ids.fillWp.addEventListener("click", () => {
+        ids.wpInput.value = "wp_addr_20260302@v3";
+        state.currentWp = ids.wpInput.value;
+        refreshButtonState();
+      });
+
+      ids.wpInput.addEventListener("input", () => {
+        state.currentWp = ids.wpInput.value.trim();
+        refreshButtonState();
+      });
+
+      ids.csvInput.addEventListener("input", refreshButtonState);
+
+      ids.confirmGenerateBtn.addEventListener("click", () => {
+        state.confirmGenerate = true;
+        renderTimeline();
+        ids.uploadStatus.textContent = "已执行 confirm_generate，可继续 dry-run。";
+      });
+
+      ids.confirmPublishBtn.addEventListener("click", () => {
+        if (!state.confirmGenerate) {
+          ids.gateBanner.style.display = "block";
+          ids.gateBanner.textContent = "流程阻断：请先完成 confirm_generate。";
+          return;
+        }
+        state.confirmPublish = true;
+        ids.gateBanner.style.display = "none";
+        renderTimeline();
+        ids.uploadStatus.textContent = "已执行 confirm_publish，允许提交 Runtime。";
+      });
+
+      ids.execBtn.addEventListener("click", () => {
+        if (!state.confirmGenerate) {
+          ids.gateBanner.style.display = "block";
+          ids.gateBanner.textContent = "流程阻断：缺少 confirm_generate，禁止打包。";
+          ids.uploadStatus.textContent = "执行被阻断";
+          return;
+        }
+
+        if (!state.confirmPublish) {
+          ids.gateBanner.style.display = "block";
+          ids.gateBanner.textContent = "流程阻断：缺少 confirm_publish，禁止提交 Runtime。";
+          ids.uploadStatus.textContent = "执行被阻断";
+          return;
+        }
+
+        ids.gateBanner.style.display = "none";
+        const receipt = `receipt_${Date.now()}`;
+        state.receipt = receipt;
+        ids.receipt.textContent = receipt;
+        ids.uploadStatus.textContent = `执行已创建：${state.currentWp}`;
+        ids.reportHint.textContent = "状态：dry-run 已完成，可下钻。";
+        ids.kpiReceipt.textContent = "3";
+
+        events.push({
+          source_zh: "治理 Runtime",
+          event_type_zh: "运行提交成功",
+          status_zh: "成功",
+          description_zh: `已提交并接收回执 ${receipt}`,
+          pipeline_stage_zh: "提交",
+          trace_id: ids.trace.textContent,
+          actor: "system"
+        });
+        renderEventsZh();
+      });
+
+      ids.openReport.addEventListener("click", () => {
+        renderReport();
+        ids.reportHint.textContent = "状态：报告已展开（records + spatial_graph）。";
+      });
+
+      ids.zhBtn.addEventListener("click", () => {
+        ids.zhBtn.classList.add("active");
+        ids.jsonBtn.classList.remove("active");
+        ids.eventsJson.style.display = "none";
+        ids.eventsZh.parentElement.parentElement.style.display = "block";
+      });
+
+      ids.jsonBtn.addEventListener("click", () => {
+        ids.jsonBtn.classList.add("active");
+        ids.zhBtn.classList.remove("active");
+        ids.eventsJson.style.display = "block";
+        ids.eventsZh.parentElement.parentElement.style.display = "none";
+      });
+
+      renderTimeline();
+      renderEventsZh();
+      renderReport();
+      refreshButtonState();
+    </script>
+  </body>
+</html>

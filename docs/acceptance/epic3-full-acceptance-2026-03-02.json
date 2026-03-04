@@ -1,0 +1,23 @@
+{
+  "epic": "Runtime Observability V2",
+  "date": "2026-03-02",
+  "stories_covered": ["S2-1", "S2-2", "S2-3", "S2-4", "S2-5", "S2-6", "S2-7", "S2-8", "S2-9", "S2-14"],
+  "result": "PASS",
+  "summary": {
+    "contract_and_regression": "PASS",
+    "rbac_and_masking": "PASS",
+    "pipeline_observability": "PASS",
+    "no_fallback": "PASS",
+    "zh_event_readability_e2e": "PASS"
+  },
+  "evidence": [
+    "docs/acceptance/s2-14-runtime-observability-acceptance-2026-03-01.json",
+    "docs/acceptance/s2-5-runtime-reliability-sli-slo-acceptance-2026-03-02.json",
+    "docs/acceptance/s2-6-runtime-freshness-latency-acceptance-2026-03-02.json",
+    "docs/acceptance/s2-7-runtime-quality-drift-acceptance-2026-03-02.json",
+    "docs/acceptance/s2-8-runtime-performance-governance-acceptance-2026-03-02.json",
+    "docs/acceptance/s2-9-runtime-rbac-masking-acceptance-2026-03-02.json",
+    "output/test-reports/epic-3-regression-summary-2026-03-02.md",
+    "services/governance_api/tests/test_runtime_workpackage_events_api_contract.py"
+  ]
+}

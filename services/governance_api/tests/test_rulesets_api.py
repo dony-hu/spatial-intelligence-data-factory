@@ -22,6 +22,16 @@ def test_ruleset_update_and_publish_is_blocked_without_approval_gate() -> None:
 def test_change_request_and_activation_hard_gate() -> None:
     client = TestClient(app)
 
+    ensure_default_resp = client.put(
+        "/v1/governance/rulesets/default",
+        json={
+            "version": "v1",
+            "is_active": True,
+            "config_json": {"thresholds": {"t_high": 0.8, "t_low": 0.6}},
+        },
+    )
+    assert ensure_default_resp.status_code == 200
+
     create_ruleset_resp = client.put(
         "/v1/governance/rulesets/rule-b",
         json={

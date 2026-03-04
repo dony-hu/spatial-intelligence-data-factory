@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "addr-governance-v1.0.0",
+  "name": "addr-governance",
+  "version": "v1.0.0",
+  "objective": "地址治理工作包",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 3,
+  "line_metrics_path": "workpackages/bundles/addr-governance-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}

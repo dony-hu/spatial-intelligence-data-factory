@@ -1,16 +1,102 @@
 {
-  "高德": {
-    "name": "高德",
-    "provider": "amap",
-    "api_key": "_e2e_123",
-    "api_endpoint": "",
-    "is_active": true
+  "sources": {
+    "高德": {
+      "name": "高德",
+      "provider": "amap",
+      "api_key": "_e2e_123",
+      "api_endpoint": "",
+      "is_active": true
+    },
+    "百度": {
+      "name": "百度",
+      "provider": "baidu",
+      "api_key": "_e2e_456",
+      "api_endpoint": "",
+      "is_active": true
+    }
   },
-  "百度": {
-    "name": "百度",
-    "provider": "baidu",
-    "api_key": "_e2e_456",
-    "api_endpoint": "",
-    "is_active": true
-  }
+  "capabilities": [
+    {
+      "capability_id": "cap_302aefd015df",
+      "source_id": "poi_risk_lookup",
+      "provider": "poi_risk_lookup",
+      "endpoint": "https://example.com/poi-risk",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T04:18:45.526725+00:00"
+    },
+    {
+      "capability_id": "cap_28743295d531",
+      "source_id": "nlp",
+      "provider": "nlp",
+      "endpoint": "https://aip.baidubce.com/rpc/2.0/nlp/v1/lexer",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-02T16:03:09.889308+00:00"
+    },
+    {
+      "capability_id": "cap_87a92d906ae3",
+      "source_id": "wp_6e0cbd11",
+      "provider": "wp_6e0cbd11",
+      "endpoint": "https://restapi.amap.com/v3/config/district",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-02T16:03:09.938600+00:00"
+    },
+    {
+      "capability_id": "cap_ab4c698d1d20",
+      "source_id": "poi",
+      "provider": "poi",
+      "endpoint": "https://restapi.amap.com/v3/assistant/inputtips",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-02T16:03:09.978079+00:00"
+    },
+    {
+      "capability_id": "cap_4267907341ec",
+      "source_id": "poi",
+      "provider": "poi",
+      "endpoint": "https://restapi.amap.com/v3/place/detail",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T00:19:00.074707+00:00"
+    },
+    {
+      "capability_id": "cap_7052d90a6985",
+      "source_id": "wp_b66e6633",
+      "provider": "wp_b66e6633",
+      "endpoint": "https://restapi.amap.com/v3/config/district",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T00:19:00.138374+00:00"
+    },
+    {
+      "capability_id": "cap_9dee440b1082",
+      "source_id": "place-api",
+      "provider": "place-api",
+      "endpoint": "https://api.map.baidu.com/place/v2/search",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T00:19:00.166550+00:00"
+    },
+    {
+      "capability_id": "cap_ccbdf882474b",
+      "source_id": "api",
+      "provider": "external",
+      "endpoint": "https://api.external.example.com/entity/parsing",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T04:58:24.701026+00:00"
+    },
+    {
+      "capability_id": "cap_c244de506f99",
+      "source_id": "api",
+      "provider": "external",
+      "endpoint": "https://api.external.example.com/spatial/graph/build",
+      "tool_type": "api",
+      "status": "pending_key",
+      "updated_at": "2026-03-03T04:58:24.745773+00:00"
+    }
+  ],
+  "samples": []
 }

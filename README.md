@@ -129,6 +129,7 @@ Lakehouse 负责生长与试错，DW 负责权威输出与治理审计。
 - `AGENTS.md`：方法仓引用规则与优先级
 - `bmad/config.yaml`：方法仓路径、回退环境变量、资产要求
 - `docs/bmm-workflow-status.yaml`：BMAD 工作流状态
+- `docs/bmad-shortcuts.md`：BMAD 指令/工作流/角色中英文缩略语速查表
 
 当默认路径不可用时，可通过环境变量覆盖：
 
@@ -182,7 +183,7 @@ scripts/testdata/verify.sh geo_poi_smoke_p0
 
 ## P0 核心引擎工作包执行
 
-P0 工作包：`workpackages/wp-core-engine-p0-stabilization-v0.1.0.json`
+默认工作包（v1 示例）：`workpackage_schema/examples/v1/address_batch_governance.workpackage_schema.v1.json`
 
 本地执行（建议 Python 3.11+）：
 

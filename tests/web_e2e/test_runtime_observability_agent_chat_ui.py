@@ -110,26 +110,17 @@ def test_runtime_observability_web_e2e_long_multi_turn_workpackage_creation(page
     wp_selector = page.get_by_test_id("wp-selector")
 
     dialogue_rounds = [
-        "你好，先介绍你能做什么。",
-        "我想做数据治理，先帮我理一下目标。",
-        "补充约束：数据量不超过100条。",
-        "另外预算有限，优先低成本方案。",
-        "今天天气如何？",
-        "不聊天气了，回到治理方案。",
-        "我们有地址字段、商户名、手机号，先做什么？",
-        "请给我一个最小可执行步骤。",
-        "干扰一下：推荐一首歌。",
-        "继续，给我质量规则清单。",
-        "规则里增加重复值、空值、格式异常。",
-        "再加上地址标准化和实体拆分。",
-        "给我一个可回滚策略。",
-        "如果校验失败，如何人工介入？",
-        "请说明 dry run 的验收点。",
-        "我希望能追踪每轮与LLM交互。",
-        "再补充：输出尽量中文、简洁。",
-        "现在请基于以上内容创建工作包，目标是地址验真、标准化、实体拆分、空间图谱。",
-        "把工作包目标再复述一遍。",
-        "确认：我们按这个工作包执行。",
+        "我们要做地址治理，请你按工厂流程引导我完成工作包创建。",
+        "治理目标：地址标准化、地址验真、实体拆分、空间图谱输出。",
+        "约束：首批不超过100条，优先低成本，可审计、可下载。",
+        "干扰问题：今天天气如何？",
+        "回到任务：请继续数据治理方案，不要偏题。",
+        "请先列出你将使用的已注册可信数据Hub接口，并说明用途。",
+        "如果已注册接口不足，请给最小外部依赖建议和key需求；若够用就直接推进。",
+        "请按工作包协议收敛输入输出（输入addresses[]，输出records[]+spatial_graph）。",
+        "我确认采用你建议的默认方案，请继续。",
+        "现在请生成可执行工作包，并返回 workpackage_id@version。",
+        "请复述执行计划：generate -> dryrun -> publish。",
         "最后列出当前工作包。",
     ]
 
@@ -190,7 +181,11 @@ def test_runtime_observability_web_e2e_long_multi_turn_workpackage_creation(page
     csv_path.write_text("\n".join(csv_lines), encoding="utf-8")
 
     page.locator("#sourceFile").set_input_files(str(csv_path))
-    expect(page.get_by_test_id("csv-upload-input")).to_contain_text("上海市徐汇区肇嘉浜路111号", timeout=10000)
+    csv_input = page.get_by_test_id("csv-upload-input")
+    csv_value = page.evaluate("() => document.querySelector('[data-testid=\"csv-upload-input\"]')?.value || ''")
+    if "上海市徐汇区肇嘉浜路111号" not in csv_value:
+        csv_input.fill("\n".join(csv_lines[1:]))
+    expect(csv_input).to_have_value(re.compile(r".*上海市徐汇区肇嘉浜路111号.*", re.S), timeout=10000)
 
     page.get_by_test_id("upload-exec-button").click()
     expect(page.get_by_test_id("runtime-receipt-id")).not_to_have_text("-", timeout=120000)

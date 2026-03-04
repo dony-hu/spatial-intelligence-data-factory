@@ -6,10 +6,10 @@
 
 | 组件 | 字段 | 当前值 | 来源 |
 |---|---|---|---|
-| WorkPackage | `workpackage_version` | `1.0.1` | `workpackages/wp-address-topology-v1.0.1.json` |
-| 工艺版本 | `process_version` | `process-v1.0.1` | `workpackages/wp-address-topology-v1.0.1.json` |
-| 工具包版本 | `tool_bundle_version` | `tools-v1.0.1` | `workpackages/wp-address-topology-v1.0.1.json` |
-| 执行引擎版本 | `engine_version` | `engine-v1.0.1` | `workpackages/wp-address-topology-v1.0.1.json` |
+| WorkPackage | `workpackage_version` | `1.0.1` | `workpackage_schema/examples/v1/address_batch_governance.workpackage_schema.v1.json` |
+| 工艺版本 | `process_version` | `process-v1.0.1` | `workpackages/bundles/address-topology-v1.0.1/` |
+| 工具包版本 | `tool_bundle_version` | `tools-v1.0.1` | `workpackages/bundles/address-topology-v1.0.1/` |
+| 执行引擎版本 | `engine_version` | `engine-v1.0.1` | `workpackages/bundles/address-topology-v1.0.1/` |
 | Terraform CLI 约束 | `terraform_required_version` | `>= 1.5.0` | `infra/terraform/volcengine/versions.tf` |
 | Terraform 安装脚本版本 | `terraform_install_version` | `1.7.5` | `scripts/cloud/install_local_prereqs.sh` |
 | Terraform Provider | `volcengine_provider_version` | `>= 0.0.159` | `infra/terraform/volcengine/versions.tf` |

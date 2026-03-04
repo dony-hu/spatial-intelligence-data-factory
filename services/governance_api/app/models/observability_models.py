@@ -78,3 +78,31 @@ class ObservationSnapshotResponse(BaseModel):
     kpis: Dict[str, Any] = Field(default_factory=dict)
     metrics: List[ObservationMetricPoint] = Field(default_factory=list)
     alerts: List[ObservationAlert] = Field(default_factory=list)
+
+
+class RuntimeWorkpackageRecord(BaseModel):
+    workpackage_id: str
+    version: str
+    name: str = ""
+    objective: str = ""
+    status: str = "created"
+    deleted_at: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+    updated_by: str = ""
+
+
+class RuntimeWorkpackageCreateRequest(BaseModel):
+    workpackage_id: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+    name: str = ""
+    objective: str = Field(min_length=1)
+    status: str = "created"
+    actor: str = ""
+
+
+class RuntimeWorkpackageUpdateRequest(BaseModel):
+    name: str | None = None
+    objective: str | None = None
+    status: str | None = None
+    actor: str = ""

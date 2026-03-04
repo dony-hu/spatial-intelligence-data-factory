@@ -15,8 +15,9 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_WORKPACKAGE = PROJECT_ROOT / "workpackages" / "wp-core-engine-p0-stabilization-v0.1.0.json"
-DEFAULT_SCHEMA = PROJECT_ROOT / "contracts" / "workpackage.schema.json"
+DEFAULT_WORKPACKAGE = (
+    PROJECT_ROOT / "workpackage_schema" / "examples" / "v1" / "address_batch_governance.workpackage_schema.v1.json"
+)
 DEFAULT_OUTPUT = PROJECT_ROOT / "output" / "workpackages" / "wp-core-engine-p0-stabilization-v0.1.0.report.json"
 DEFAULT_LINE_FEEDBACK = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.json"
 DEFAULT_LINE_FEEDBACK_HASH = PROJECT_ROOT / "output" / "workpackages" / "line_feedback.latest.sha256"
@@ -31,6 +32,17 @@ def _now() -> str:
 
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _resolve_default_schema_path(project_root: Path = PROJECT_ROOT) -> Path:
+    registry = _load_json(project_root / "workpackage_schema" / "registry.json")
+    current_version = str(registry.get("current_version") or "").strip()
+    versions = registry.get("versions") if isinstance(registry, dict) else {}
+    version_meta = versions.get(current_version) if isinstance(versions, dict) else None
+    schema_file = str((version_meta or {}).get("schema_file") or "").strip()
+    if not schema_file:
+        raise ValueError("workpackage_schema registry missing current schema_file")
+    return project_root / "workpackage_schema" / schema_file
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -325,7 +337,7 @@ def _run_package_tests() -> tuple[list[dict[str, Any]], bool]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run P0 stabilization workpackage and emit GO/NO_GO report")
     parser.add_argument("--workpackage", default=str(DEFAULT_WORKPACKAGE))
-    parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
+    parser.add_argument("--schema", default=str(_resolve_default_schema_path()))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--line-feedback-input", "--line-feedback-output", dest="line_feedback_input", default=str(DEFAULT_LINE_FEEDBACK))
     parser.add_argument("--line-feedback-hash", dest="line_feedback_hash", default=str(DEFAULT_LINE_FEEDBACK_HASH))

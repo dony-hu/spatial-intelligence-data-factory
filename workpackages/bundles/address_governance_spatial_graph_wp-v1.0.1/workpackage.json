@@ -1,0 +1,557 @@
+{
+  "workpackage": {
+    "name": "address_governance_spatial_graph_wp",
+    "version": "v1.0.1",
+    "objective": "对输入地址集合完成标准化、解析、真实性与类型识别、地理编码，并生成可用于下游分析的 records[] 与 spatial_graph。"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "python": "3.10+",
+      "os": "Linux",
+      "network": "需可访问可信数据Hub与外部API公网地址",
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "required_env": [
+        "FENGTU_API_KEY",
+        "GAODE_API_KEY",
+        "BAIDU_AK"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "address_id": {
+                "type": "string"
+              },
+              "raw_text": {
+                "type": "string"
+              },
+              "city_hint": {
+                "type": "string"
+              },
+              "province_hint": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string",
+                "default": "CN"
+              }
+            },
+            "required": [
+              "address_id",
+              "raw_text"
+            ]
+          }
+        },
+        "graph_config": {
+          "type": "object",
+          "properties": {
+            "distance_metric": {
+              "type": "string",
+              "enum": [
+                "haversine",
+                "driving"
+              ],
+              "default": "haversine"
+            },
+            "adjacency_threshold_m": {
+              "type": "number",
+              "default": 1000
+            },
+            "knn_k": {
+              "type": "integer",
+              "default": 5
+            }
+          }
+        }
+      },
+      "required": [
+        "addresses"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address_id": {
+                "type": "string"
+              },
+              "raw_text": {
+                "type": "string"
+              },
+              "standardized_address": {
+                "type": "string"
+              },
+              "parsed_level": {
+                "type": "string"
+              },
+              "is_real_address": {
+                "type": "boolean"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "town": {
+                "type": "string"
+              },
+              "street": {
+                "type": "string"
+              },
+              "longitude": {
+                "type": "number"
+              },
+              "latitude": {
+                "type": "number"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "source_trace": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "address_id",
+              "raw_text",
+              "standardized_address",
+              "longitude",
+              "latitude"
+            ]
+          }
+        },
+        "spatial_graph": {
+          "type": "object",
+          "properties": {
+            "graph_type": {
+              "type": "string",
+              "enum": [
+                "distance_threshold",
+                "knn"
+              ]
+            },
+            "metric": {
+              "type": "string",
+              "enum": [
+                "haversine",
+                "driving"
+              ]
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "node_id": {
+                    "type": "string"
+                  },
+                  "address_id": {
+                    "type": "string"
+                  },
+                  "lon": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "address_id",
+                  "lon",
+                  "lat"
+                ]
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "distance_m": {
+                    "type": "number"
+                  },
+                  "travel_time_s": {
+                    "type": "number"
+                  },
+                  "weight": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "source",
+                  "target",
+                  "distance_m",
+                  "weight"
+                ]
+              }
+            }
+          },
+          "required": [
+            "graph_type",
+            "metric",
+            "nodes",
+            "edges"
+          ]
+        }
+      },
+      "required": [
+        "records",
+        "spatial_graph"
+      ]
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "purpose": "统一格式、纠错与补全"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "name": "五级地址解析",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "purpose": "提取省市区镇街等结构化字段"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/iad/api",
+        "purpose": "判断地址颗粒度与完整度"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "purpose": "真实性识别与质量分层"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/atype/api",
+        "purpose": "识别住宅/商办/园区等类型"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "purpose": "生成经纬度用于图构建"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "reverse_geocode",
+        "name": "逆地理编码",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "purpose": "经纬度回填行政区与语义校验"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "name": "地址AOI聚合",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/keyword",
+        "purpose": "补充POI/AOI上下文特征"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "高德路径规划矩阵",
+        "endpoint": "https://restapi.amap.com/v3/distance",
+        "reason": "构建spatial_graph时若使用driving指标，需要真实道路距离/时长；已注册API中无路网矩阵能力",
+        "requires_key": true,
+        "api_key_env": "GAODE_API_KEY",
+        "register_plan": "在可信数据Hub新增source_id=gaode，登记distance矩阵接口、QPS、计费与错误码映射后纳管"
+      },
+      {
+        "name": "百度路线矩阵",
+        "endpoint": "https://api.map.baidu.com/routematrix/v2/driving",
+        "reason": "作为高德的独立供应商补充，满足多源校验与供应商容灾需求（非fallback，按策略多源比对）",
+        "requires_key": true,
+        "api_key_env": "BAIDU_AK",
+        "register_plan": "在可信数据Hub新增source_id=baidu，登记routematrix接口并配置ak签名策略"
+      },
+      {
+        "capability_id": "spatial_graph_build",
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "provider": "external"
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "wp_db1c9cd4",
+        "provider": "wp_db1c9cd4",
+        "endpoint": "https://restapi.amap.com/v3/distance",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "GAODE_API_KEY"
+      },
+      {
+        "source_id": "wp_76067318",
+        "provider": "wp_76067318",
+        "endpoint": "https://api.map.baidu.com/routematrix/v2/driving",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "BAIDU_AK"
+      },
+      {
+        "source_id": "api",
+        "provider": "external",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": "S1",
+        "phase": "requirements_confirm",
+        "action": "确认输入addresses[]字段完整性、graph_config参数与输出records[]+spatial_graph约束",
+        "input": [
+          "任务需求",
+          "input_schema"
+        ],
+        "output": [
+          "已确认参数清单"
+        ]
+      },
+      {
+        "id": "S2",
+        "phase": "generate",
+        "action": "调用地址标准化、五级解析、级别判断、真实性校验、类型识别API，生成治理中间表",
+        "apis": [
+          "address_standardize",
+          "address_resolve_l5",
+          "address_level_judge",
+          "address_real_check",
+          "address_type_identify"
+        ],
+        "script": "fetch_and_standardize_addresses.py",
+        "output": [
+          "normalized_records.jsonl"
+        ]
+      },
+      {
+        "id": "S3",
+        "phase": "generate",
+        "action": "调用geocode/reverse_geocode与AOI聚合，补齐坐标与空间语义特征",
+        "apis": [
+          "geocode",
+          "reverse_geocode",
+          "address_aoi_keyword"
+        ],
+        "script": "enrich_geocode_and_quality.py",
+        "output": [
+          "enriched_records.jsonl"
+        ]
+      },
+      {
+        "id": "S4",
+        "phase": "generate",
+        "action": "构建spatial_graph：默认haversine；若metric=driving则调用高德或百度路线矩阵",
+        "apis": [
+          "gaode_distance_matrix",
+          "baidu_routematrix_driving"
+        ],
+        "script": "build_spatial_graph.py",
+        "output": [
+          "spatial_graph.json"
+        ]
+      },
+      {
+        "id": "S5",
+        "phase": "dryrun",
+        "action": "小样本连通性、边权范围、坐标有效性与字段必填校验",
+        "script": "run_workpackage.py",
+        "output": [
+          "dryrun_report.json"
+        ]
+      },
+      {
+        "id": "S6",
+        "phase": "publish",
+        "action": "产出最终records与spatial_graph，生成版本化产物清单",
+        "output": [
+          "records.json",
+          "spatial_graph.json",
+          "manifest.json"
+        ]
+      },
+      {
+        "id": "S7",
+        "phase": "runtime_upload",
+        "action": "上传工作包产物与运行日志到运行态可观测层",
+        "output": [
+          "upload_receipt.json"
+        ]
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "fetch_and_standardize_addresses.py",
+      "purpose": "读取输入地址并完成标准化、五级解析、级别与真实性与类型识别",
+      "runtime": "python3.10",
+      "entry": "python fetch_and_standardize_addresses.py --input input.json --output normalized_records.jsonl",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pydantic>=2.6.0",
+        "tenacity>=8.2.3"
+      ]
+    },
+    {
+      "name": "enrich_geocode_and_quality.py",
+      "purpose": "对标准化结果进行地理编码、逆编码和AOI特征补齐",
+      "runtime": "python3.10",
+      "entry": "python enrich_geocode_and_quality.py --input normalized_records.jsonl --output enriched_records.jsonl",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pandas>=2.1.0"
+      ]
+    },
+    {
+      "name": "build_spatial_graph.py",
+      "purpose": "基于经纬度或道路矩阵生成空间图（nodes/edges）",
+      "runtime": "python3.10",
+      "entry": "python build_spatial_graph.py --input enriched_records.jsonl --output spatial_graph.json --metric haversine --threshold 1000 --knn 5",
+      "dependencies": [
+        "networkx>=3.2.1",
+        "numpy>=1.26.0",
+        "requests>=2.31.0"
+      ]
+    },
+    {
+      "name": "run_workpackage.py",
+      "purpose": "串联全流程执行并输出records.json与spatial_graph.json",
+      "runtime": "python3.10",
+      "entry": "python run_workpackage.py --input input.json --outdir dist/",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pandas>=2.1.0",
+        "networkx>=3.2.1",
+        "jsonschema>=4.21.1"
+      ]
+    },
+    {
+      "name": "fetch_wp_20dca9a0.py",
+      "purpose": "调用外部API补齐能力：高德路径规划矩阵",
+      "runtime": "python",
+      "entry": "python scripts/fetch_wp_20dca9a0.py",
+      "endpoint": "https://restapi.amap.com/v3/distance",
+      "api_key_env": "GAODE_API_KEY"
+    },
+    {
+      "name": "fetch_wp_e797167d.py",
+      "purpose": "调用外部API补齐能力：百度路线矩阵",
+      "runtime": "python",
+      "entry": "python scripts/fetch_wp_e797167d.py",
+      "endpoint": "https://api.map.baidu.com/routematrix/v2/driving",
+      "api_key_env": "BAIDU_AK"
+    },
+    {
+      "name": "fetch_spatial_graph_build.py",
+      "purpose": "调用外部API补齐能力：空间图谱构建API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_spatial_graph_build.py",
+      "endpoint": "https://api.external.example.com/spatial/graph/build",
+      "api_key_env": "SPATIAL_GRAPH_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 1,
+    "schema_fix_rounds": [
+      {
+        "round": 1,
+        "errors": [
+          "llm_call_failed: LLM request failed: <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)>"
+        ]
+      }
+    ],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "address_governance_spatial_graph_wp",
+  "version": "v1.0.1",
+  "objective": "对输入地址集合完成标准化、解析、真实性与类型识别、地理编码，并生成可用于下游分析的 records[] 与 spatial_graph。",
+  "sources": [
+    "fengtu"
+  ]
+}

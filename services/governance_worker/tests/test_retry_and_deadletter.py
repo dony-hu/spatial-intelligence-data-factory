@@ -19,6 +19,7 @@ def test_enqueue_unknown_mode_is_unsupported(monkeypatch) -> None:
 
 def test_enqueue_rq_mode_returns_error_when_rq_unavailable(monkeypatch) -> None:
     monkeypatch.setenv("GOVERNANCE_QUEUE_MODE", "rq")
+    monkeypatch.setenv("REDIS_URL", "redis://127.0.0.1:6399/0")
     result = enqueue_task({"task_id": "task_rq_unavailable"})
     assert result.queued is False
     assert result.backend == "rq"

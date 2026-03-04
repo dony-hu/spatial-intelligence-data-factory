@@ -44,7 +44,7 @@
 |---|---|---|---|---|
 | PGO-S1 | 治理仓储与服务入口 PG-only 硬切 | 关闭主链路 sqlite:// 入口 | `services/governance_api/app/repositories/*` | 非 PG 数据源 fail-fast，仓储不再接受 sqlite:// |
 | PGO-S2 | MVP 验收脚本 PG-only 改造 | 验收 profile 全切 PG | `scripts/run_address_governance_mvp_acceptance*.py` | 验收脚本不再初始化 SQLite，PG profile 全通过 |
-| PGO-S3 | 契约与工作包 SQLite 引用收敛 | 发布契约改为 PG-only | `contracts/workpackage.schema.json`、`workpackages/*` | 运行契约不再允许 sqlite:// |
+| PGO-S3 | 契约与工作包 SQLite 引用收敛 | 发布契约改为 PG-only | `workpackage_schema/*`、`workpackages/bundles/*` | 运行契约不再允许 sqlite:// |
 | PGO-S4 | 主线测试集 PG-only 重构 | 移除主线测试 SQLite 假设 | `tests/*`、`services/*/tests/*` | 主线测试按 PG-only 口径回归通过 |
 | PGO-S5 | CI 与仓库卫生 SQLite 回流硬门 | 防止 SQLite 回流 | `scripts/check_repo_hygiene.sh`、`.github/workflows/*` | 运行主链路出现 SQLite 引用即 NO_GO |
 | PGO-S6 | 全量移除代码中 SQLite 相关内容 | 清理代码与测试中的 SQLite 逻辑 | `services/*`、`packages/*`、`scripts/*`、`tests/*` | 代码目录不再保留 SQLite 运行路径与依赖入口 |

@@ -1,0 +1,13 @@
+{
+  "story": "S2-7",
+  "title": "地址治理质量漂移与异常检测",
+  "date": "2026-03-02",
+  "result": "PASS",
+  "tests": [
+    "services/governance_api/tests/test_runtime_quality_drift.py"
+  ],
+  "no_fallback_verified": true,
+  "residual_risks": [
+    "基线配置仍需按周复核阈值"
+  ]
+}

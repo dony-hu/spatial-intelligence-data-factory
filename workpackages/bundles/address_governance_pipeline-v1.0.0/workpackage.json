@@ -1,0 +1,456 @@
+{
+  "workpackage": {
+    "name": "address_governance_pipeline",
+    "version": "v1.0.0",
+    "objective": "构建可执行的地址治理工作包：完成地址清洗、标准化、真实性校验、五级解析、地理编码与质量评分，并产出可发布到运行态的治理结果与审计日志。"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "recommended_runtime": "Python 3.10+",
+      "network_requirement": "可访问 https://gis-apis.sf-express.com 与外部补齐API域名",
+      "secrets_env": [
+        "FENGTU_APP_KEY",
+        "AMAP_API_KEY"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "records"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "description": "批次唯一标识"
+        },
+        "source_system": {
+          "type": "string",
+          "description": "来源系统标识"
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string",
+                "minLength": 3
+              },
+              "receiver_name": {
+                "type": "string"
+              },
+              "receiver_phone": {
+                "type": "string"
+              },
+              "city_hint": {
+                "type": "string"
+              },
+              "province_hint": {
+                "type": "string"
+              },
+              "lon": {
+                "type": "number"
+              },
+              "lat": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "processed_at",
+        "results",
+        "summary"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "processed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "standard_address",
+              "address_level",
+              "address_type",
+              "real_check_pass",
+              "resolved_l1_l5",
+              "geocode",
+              "quality_score",
+              "quality_label"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "standard_address": {
+                "type": "string"
+              },
+              "address_level": {
+                "type": "string"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "real_check_pass": {
+                "type": "boolean"
+              },
+              "resolved_l1_l5": {
+                "type": "object",
+                "properties": {
+                  "province": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  },
+                  "township": {
+                    "type": "string"
+                  },
+                  "village_or_road": {
+                    "type": "string"
+                  }
+                }
+              },
+              "geocode": {
+                "type": "object",
+                "properties": {
+                  "lon": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  },
+                  "gcj02_lon": {
+                    "type": "number"
+                  },
+                  "gcj02_lat": {
+                    "type": "number"
+                  }
+                }
+              },
+              "quality_score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "quality_label": {
+                "type": "string",
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              "api_trace": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "api": {
+                      "type": "string"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "latency_ms": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "pass_count": {
+              "type": "integer"
+            },
+            "fail_count": {
+              "type": "integer"
+            },
+            "avg_quality_score": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "method": "POST",
+        "purpose": "将原始地址归一化，消除噪声和同义表达"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "method": "GET",
+        "purpose": "校验地址是否真实可投递"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "endpoint": "https://gis-apis.sf-express.com/iad/api",
+        "method": "GET",
+        "purpose": "判定地址颗粒度（省/市/区/街道/门牌）"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "endpoint": "https://gis-apis.sf-express.com/atype/api",
+        "method": "GET",
+        "purpose": "识别住宅/商业/园区等类型标签"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "name": "五级地址解析",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "method": "POST",
+        "purpose": "解析省市区乡镇及末级地址结构"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "method": "GET",
+        "purpose": "将标准地址转换为经纬度"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "reverse_geocode",
+        "name": "逆地理编码",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "method": "GET",
+        "purpose": "反查经纬度对应地址用于闭环核验"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "高德行政区划查询API",
+        "endpoint": "https://restapi.amap.com/v3/config/district",
+        "reason": "现有注册API缺少独立行政区划权威树校验能力，需用于adcode与省市区层级一致性核验",
+        "requires_key": true,
+        "api_key_env": "AMAP_API_KEY",
+        "register_plan": [
+          "在可信数据Hub新增source_id=amap，provider=高德",
+          "登记接口元数据（method=GET，QPS限制，错误码）",
+          "在密钥中心写入AMAP_API_KEY并绑定执行环境",
+          "补充契约测试样例：省市区一致性、旧区划兼容、空结果处理"
+        ]
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "api",
+        "provider": "api",
+        "endpoint": "https://restapi.amap.com/v3/config/district",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": "AMAP_API_KEY"
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": "S1",
+        "phase": "requirements_confirm",
+        "name": "需求与口径确认",
+        "actions": [
+          "确认输入字段、数据量、时效要求、质量评分规则",
+          "确认是否启用高德行政区划补齐API",
+          "确认密钥可用性：FENGTU_APP_KEY、AMAP_API_KEY"
+        ]
+      },
+      {
+        "id": "S2",
+        "phase": "generate",
+        "name": "生成治理流程与契约",
+        "actions": [
+          "固化input/output schema并生成校验器",
+          "配置API调用顺序：标准化→真实性→级别→类型→五级解析→地理编码→逆地理闭环",
+          "定义质量评分公式与A/B/C/D分档"
+        ]
+      },
+      {
+        "id": "S3",
+        "phase": "generate",
+        "name": "API绑定与补齐注册",
+        "actions": [
+          "绑定已注册Fengtu接口",
+          "补齐并注册高德行政区划API",
+          "完成调用鉴权与限流参数配置"
+        ]
+      },
+      {
+        "id": "S4",
+        "phase": "dryrun",
+        "name": "小样本联调与验收",
+        "actions": [
+          "执行100-1000条样本干跑",
+          "输出字段完整性、API成功率、延迟、质量分分布",
+          "修复异常地址规则并复测"
+        ]
+      },
+      {
+        "id": "S5",
+        "phase": "publish",
+        "name": "发布工作包",
+        "actions": [
+          "冻结版本v1.0.0",
+          "发布脚本与参数模板",
+          "生成操作手册与回滚说明"
+        ]
+      },
+      {
+        "id": "S6",
+        "phase": "runtime_upload",
+        "name": "运行态上传与可观测接入",
+        "actions": [
+          "上传执行镜像/脚本到工作包执行层",
+          "接入运行态日志、指标、追踪",
+          "开启批处理调度并监控SLA"
+        ]
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "validate_contract.py",
+      "purpose": "校验输入数据是否符合input_schema并生成错误报告",
+      "runtime": "python3.10",
+      "entry": "python validate_contract.py --input ./data/input.json --schema ./schema/input.schema.json --out ./data/validated.json",
+      "dependencies": [
+        "jsonschema>=4.21.0",
+        "pydantic>=2.6.0"
+      ]
+    },
+    {
+      "name": "run_address_governance.py",
+      "purpose": "执行地址治理主流程（Fengtu API调用、结构化、质量评分）",
+      "runtime": "python3.10",
+      "entry": "python run_address_governance.py --input ./data/validated.json --output ./data/governed.json --fengtu-key-env FENGTU_APP_KEY",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pandas>=2.2.0",
+        "tenacity>=8.2.0"
+      ]
+    },
+    {
+      "name": "district_consistency_check.py",
+      "purpose": "调用高德行政区划API进行adcode层级一致性校验并回填区划标准码",
+      "runtime": "python3.10",
+      "entry": "python district_consistency_check.py --input ./data/governed.json --output ./data/governed_with_district.json --amap-key-env AMAP_API_KEY",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pandas>=2.2.0"
+      ]
+    },
+    {
+      "name": "publish_artifacts.py",
+      "purpose": "生成最终产物、汇总指标并发布到运行态",
+      "runtime": "python3.10",
+      "entry": "python publish_artifacts.py --input ./data/governed_with_district.json --out ./dist --metrics ./dist/metrics.json",
+      "dependencies": [
+        "pyyaml>=6.0.1"
+      ]
+    },
+    {
+      "name": "fetch_api.py",
+      "purpose": "调用外部API补齐能力：高德行政区划查询API",
+      "runtime": "python",
+      "entry": "python scripts/fetch_api.py",
+      "endpoint": "https://restapi.amap.com/v3/config/district",
+      "api_key_env": "AMAP_API_KEY"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 0,
+    "schema_fix_rounds": [],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "address_governance_pipeline",
+  "version": "v1.0.0",
+  "objective": "构建可执行的地址治理工作包：完成地址清洗、标准化、真实性校验、五级解析、地理编码与质量评分，并产出可发布到运行态的治理结果与审计日志。",
+  "sources": [
+    "fengtu"
+  ]
+}

@@ -1,0 +1,378 @@
+{
+  "workpackage": {
+    "name": "wp_address_governance_batch01",
+    "version": "v1.0.0",
+    "objective": "基于已注册可信接口完成地址治理dry run与可发布执行包构建，产出01_result_main.csv、02_entity_l5.csv、03_api_audit_log.csv、04_review_queue.csv及address_governance_batch01.zip；workpackage_id@version=wp_address_governance_batch01@1.0.0"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "os": "Linux",
+      "language": "Python 3.10+",
+      "package_manager": "pip",
+      "orchestrator": "opencode",
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "required_env": [
+        "FENGTU_APP_ID",
+        "FENGTU_APP_KEY",
+        "FENGTU_SIGN_SECRET",
+        "INPUT_FILE_PATH",
+        "OUTPUT_DIR"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "description": "批次标识"
+        },
+        "input_file": {
+          "type": "string",
+          "description": "CSV/XLSX文件路径"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "dedupe_by": {
+              "type": "string",
+              "enum": [
+                "raw_address"
+              ],
+              "default": "raw_address"
+            },
+            "need_geocode_for": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "review"
+                ]
+              },
+              "default": [
+                "pass",
+                "review"
+              ]
+            },
+            "review_ratio_alert": {
+              "type": "number",
+              "default": 0.15
+            },
+            "max_records": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          "required": [
+            "dedupe_by",
+            "need_geocode_for",
+            "review_ratio_alert",
+            "max_records"
+          ]
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "recipient_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mobile": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "raw_address"
+            ]
+          }
+        }
+      },
+      "required": [
+        "batch_id",
+        "input_file",
+        "format"
+      ]
+    },
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "workpackage_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "artifacts": {
+          "type": "object",
+          "properties": {
+            "result_main_csv": {
+              "type": "string"
+            },
+            "entity_l5_csv": {
+              "type": "string"
+            },
+            "api_audit_log_csv": {
+              "type": "string"
+            },
+            "review_queue_csv": {
+              "type": "string"
+            },
+            "zip_package": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "result_main_csv",
+            "entity_l5_csv",
+            "api_audit_log_csv",
+            "review_queue_csv",
+            "zip_package"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "pass_count": {
+              "type": "integer"
+            },
+            "review_count": {
+              "type": "integer"
+            },
+            "fail_count": {
+              "type": "integer"
+            },
+            "review_ratio": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "total",
+            "pass_count",
+            "review_count",
+            "fail_count",
+            "review_ratio"
+          ]
+        }
+      },
+      "required": [
+        "workpackage_id",
+        "version",
+        "artifacts",
+        "metrics"
+      ]
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "interface_id": "address_standardize",
+        "provider": "Fengtu",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/stdAddr/api",
+        "usage": "主流程必调，地址标准化",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "address_real_check",
+        "provider": "Fengtu",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "usage": "主流程必调，真实性校验",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "address_level_judge",
+        "provider": "Fengtu",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/iad/api",
+        "usage": "问题件条件调用，级别判断",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "address_resolve_l5",
+        "provider": "Fengtu",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/addressResolve",
+        "usage": "问题件条件调用，五级拆分",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "geocode",
+        "provider": "Fengtu",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "usage": "pass/review地址坐标解析",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "reverse_geocode",
+        "provider": "Fengtu",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/rgeo",
+        "usage": "疑似不一致时正逆校验",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "address_search_service",
+        "provider": "Fengtu",
+        "method": "GET",
+        "endpoint": "https://gis-apis.sf-express.com/zhs/bs/tips",
+        "usage": "fail/review召回候选地址",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      },
+      {
+        "interface_id": "address_aoi_keyword",
+        "provider": "Fengtu",
+        "method": "POST",
+        "endpoint": "https://gis-apis.sf-express.com/opquery/keyword",
+        "usage": "AOI关键词补全与修正",
+        "requires_key": true,
+        "api_key_env": "FENGTU_APP_KEY"
+      }
+    ],
+    "missing_apis": [],
+    "missing_apis_proposals": []
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "id": 1,
+        "stage": "阶段1 架构与运行环境对齐",
+        "action": "校验工厂分层、生命周期、运行约束与环境变量，确认opencode可执行"
+      },
+      {
+        "id": 2,
+        "stage": "阶段2 输入输出契约对齐",
+        "action": "加载输入文件并按schema校验，补齐record_id，按raw_address去重，生成预检报告"
+      },
+      {
+        "id": 3,
+        "stage": "阶段3 已注册API绑定",
+        "action": "绑定8个已注册Fengtu接口，配置签名鉴权、QPS与重试策略，生成API路由表"
+      },
+      {
+        "id": 4,
+        "stage": "阶段3 执行主流程",
+        "action": "顺序执行address_standardize与address_real_check，生成初判标签"
+      },
+      {
+        "id": 5,
+        "stage": "阶段3 执行条件流程",
+        "action": "对问题件执行address_level_judge/address_resolve_l5；对pass/review执行geocode；疑似冲突执行reverse_geocode；fail/review执行address_search_service与address_aoi_keyword"
+      },
+      {
+        "id": 6,
+        "stage": "阶段4 结果落盘与审计",
+        "action": "输出四类CSV并写入完整API审计日志（调用参数摘要、响应码、耗时、时间戳）"
+      },
+      {
+        "id": 7,
+        "stage": "阶段4 opencode构建与发布",
+        "action": "调用opencode构建脚本生成可执行工作包，打包zip并输出workpackage_id@version"
+      }
+    ]
+  },
+  "scripts": [
+    {
+      "name": "build_workpackage_opencode.sh",
+      "purpose": "使用opencode构建并产出可执行工作包清单与版本产物",
+      "runtime": "bash",
+      "entry": "opencode build --config ./opencode/workpackage.yaml --output ./dist/wp_address_governance_batch01_1.0.0"
+    },
+    {
+      "name": "run_address_governance.py",
+      "purpose": "执行地址治理主流程与条件流程，生成四类结果文件",
+      "runtime": "python3",
+      "entry": "python3 scripts/run_address_governance.py --input ${INPUT_FILE_PATH} --output ${OUTPUT_DIR} --batch-id batch01 --max-records 100 --review-ratio-alert 0.15",
+      "dependencies": [
+        "pandas>=2.0.0",
+        "openpyxl>=3.1.0",
+        "requests>=2.31.0",
+        "pydantic>=2.5.0"
+      ]
+    },
+    {
+      "name": "package_artifacts.sh",
+      "purpose": "打包交付物并生成address_governance_batch01.zip",
+      "runtime": "bash",
+      "entry": "cd ${OUTPUT_DIR} && zip -j address_governance_batch01.zip 01_result_main.csv 02_entity_l5.csv 03_api_audit_log.csv 04_review_queue.csv"
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 0,
+    "schema_fix_rounds": [],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "wp_address_governance_batch01",
+  "version": "v1.0.0",
+  "objective": "基于已注册可信接口完成地址治理dry run与可发布执行包构建，产出01_result_main.csv、02_entity_l5.csv、03_api_audit_log.csv、04_review_queue.csv及address_governance_batch01.zip；workpackage_id@version=wp_address_governance_batch01@1.0.0",
+  "sources": [
+    "高德",
+    "百度"
+  ]
+}

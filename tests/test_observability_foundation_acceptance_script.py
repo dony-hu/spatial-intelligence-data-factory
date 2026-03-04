@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -10,7 +11,7 @@ def test_run_observability_foundation_acceptance_script() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     output_dir = repo_root / "output" / "acceptance"
     cmd = [
-        "python3",
+        sys.executable,
         "scripts/run_observability_pg_foundation_acceptance.py",
         "--output-dir",
         "output/acceptance",

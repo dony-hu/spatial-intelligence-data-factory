@@ -1,0 +1,87 @@
+{
+  "workpackage": {
+    "name": "proposal-pack",
+    "version": "v1.0.0",
+    "objective": "proposal"
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "a"
+      ]
+    },
+    "runtime_env": {
+      "python": "3.11"
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object"
+    },
+    "output_schema": {
+      "type": "object"
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [],
+    "missing_apis": [
+      {
+        "name": "ext-a",
+        "endpoint": "https://ext-a.example.com",
+        "reason": "need",
+        "requires_key": true
+      }
+    ],
+    "missing_apis_proposals": [
+      {
+        "source_id": "ext-a",
+        "provider": "ext-a",
+        "endpoint": "https://ext-a.example.com",
+        "status": "proposal_pending_confirmation",
+        "requires_key": true,
+        "api_key_env": ""
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      "s1"
+    ]
+  },
+  "scripts": [
+    {
+      "name": "run_pipeline.py",
+      "entry": "python scripts/run_pipeline.py"
+    },
+    {
+      "name": "fetch_ext-a.py",
+      "purpose": "调用外部API补齐能力：ext-a",
+      "runtime": "python",
+      "entry": "python scripts/fetch_ext-a.py",
+      "endpoint": "https://ext-a.example.com",
+      "api_key_env": ""
+    }
+  ],
+  "generation_trace": {
+    "generator": "factory_agent",
+    "llm_model": "gpt-5.3-codex",
+    "llm_retry_count": 0,
+    "schema_fix_rounds": [],
+    "autofill_applied_fields": [],
+    "llm_contribution": [
+      "需求语义理解与工作包规划",
+      "I/O契约和API计划建议（不直接产出可执行脚本）"
+    ],
+    "opencode_contribution": [
+      "工作包文件落盘与脚本生成（OpenCode Builder）",
+      "schema修复反馈循环执行"
+    ]
+  },
+  "name": "proposal-pack",
+  "version": "v1.0.0",
+  "objective": "proposal",
+  "sources": [
+    "高德",
+    "百度"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "proposal-pack-v1.0.0",
+  "name": "proposal-pack",
+  "version": "v1.0.0",
+  "objective": "proposal",
+  "sources": [
+    "高德",
+    "百度"
+  ],
+  "script_count": 2,
+  "line_metrics_path": "workpackages/bundles/proposal-pack-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}
