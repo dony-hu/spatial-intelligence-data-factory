@@ -1,4 +1,0 @@
-# Epic3 Full Acceptance (2026-03-03)
-
-- 结论：`PASS`
-- 汇总：`/Users/huda/Code/spatial-intelligence-data-factory/output/test-reports/epic-3-regression-summary-2026-03-03.md`

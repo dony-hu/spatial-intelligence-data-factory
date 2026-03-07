@@ -1,0 +1,509 @@
+{
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
+  "workpackage": {
+    "id": "addr-governance-spatial-graph",
+    "name": "addr_governance_spatial_graph",
+    "version": "v1.0.1",
+    "objective": "对输入addresses[]执行地址标准化、五级解析、地理编码与真实性校验，输出records[]与spatial_graph，并在dryrun阶段完成100条抽样评估与指标产出。",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "python": "3.10+",
+      "network": "可访问已注册Fengtu API与经审批外部API",
+      "secrets_env": [
+        "FENGTU_APP_KEY",
+        "FENGTU_APP_SECRET",
+        "GAODE_WEB_API_KEY"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "addresses"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "description": "批次ID"
+        },
+        "dryrun": {
+          "type": "boolean",
+          "default": true
+        },
+        "sample_size": {
+          "type": "integer",
+          "default": 100,
+          "minimum": 1
+        },
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "biz_tag": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "records",
+        "spatial_graph",
+        "metrics"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "standardized_address",
+              "admin_level",
+              "geo",
+              "risk",
+              "status"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "standardized_address": {
+                "type": "string"
+              },
+              "admin_level": {
+                "type": "object",
+                "properties": {
+                  "province": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  },
+                  "town": {
+                    "type": "string"
+                  },
+                  "village": {
+                    "type": "string"
+                  }
+                }
+              },
+              "geo": {
+                "type": "object",
+                "properties": {
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  },
+                  "confidence": {
+                    "type": "number"
+                  },
+                  "source": {
+                    "type": "string"
+                  }
+                }
+              },
+              "risk": {
+                "type": "object",
+                "properties": {
+                  "is_real_address": {
+                    "type": "boolean"
+                  },
+                  "level": {
+                    "type": "string"
+                  },
+                  "flags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "success",
+                  "failed"
+                ]
+              },
+              "error_message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "spatial_graph": {
+          "type": "object",
+          "required": [
+            "nodes",
+            "edges"
+          ],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "type",
+                  "name"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "source",
+                  "target",
+                  "relation"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "relation": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "required": [
+            "standardization_rate",
+            "low_confidence_rate",
+            "risk_hit_rate",
+            "parse_failure_rate"
+          ],
+          "properties": {
+            "standardization_rate": {
+              "type": "number"
+            },
+            "low_confidence_rate": {
+              "type": "number"
+            },
+            "risk_hit_rate": {
+              "type": "number"
+            },
+            "parse_failure_rate": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "method": "GET"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "行政区划主数据校验API",
+        "endpoint": "/hub/mdm/geo/admin_division/validate",
+        "reason": "当前注册目录无明确行政区划主数据接口，无法对省市区代码与名称进行主数据一致性校验",
+        "requires_key": false,
+        "api_key_env": "API_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "审计日志写入API",
+        "endpoint": "/hub/audit/logs/write",
+        "reason": "当前注册目录未提供统一审计留痕接口，工作包发布与运行态需记录API调用与质量指标",
+        "requires_key": false,
+        "api_key_env": "API_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "高德地理编码补充API",
+        "endpoint": "https://restapi.amap.com/v3/geocode/geo",
+        "reason": "当dryrun出现标准化率<0.9或低置信率>0.1时，需要外部真实地图数据源进行补充核验",
+        "requires_key": true,
+        "api_key_env": "GAODE_WEB_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "step_id": "S01",
+        "name": "step-1",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "step-2",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "step-3",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "step-4",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S05",
+        "name": "step-5",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
+  },
+  "scripts": [
+    {
+      "name": "run_address_governance.py",
+      "purpose": "执行地址标准化、五级解析、地理编码、真实性校验并输出records与metrics",
+      "runtime": "python3",
+      "entry": "python scripts/run_address_governance.py --input data/input.json --output data/records_output.json --dryrun true --sample-size 100",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pydantic>=2.6.0"
+      ]
+    },
+    {
+      "name": "build_spatial_graph.py",
+      "purpose": "根据records构建spatial_graph节点与边关系",
+      "runtime": "python3",
+      "entry": "python scripts/build_spatial_graph.py --records data/records_output.json --output data/spatial_graph.json",
+      "dependencies": [
+        "networkx>=3.2.1"
+      ]
+    },
+    {
+      "name": "publish_workpackage.py",
+      "purpose": "校验产物、生成发布清单并执行工作包发布",
+      "runtime": "python3",
+      "entry": "python scripts/publish_workpackage.py --workpackage-id addr-governance-spatial-graph --version 1.0.1 --input data/input.json --records data/records_output.json --graph data/spatial_graph.json --dist dist/",
+      "dependencies": [
+        "jsonschema>=4.21.1"
+      ]
+    },
+    {
+      "name": "fetch_api.py",
+      "purpose": "调用外部API补齐能力：行政区划主数据校验API",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_api.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
+  ]
+}

@@ -1,40 +1,54 @@
-# Story {{epic_num}}.{{story_num}}: {{story_title}}
+# Story {{epic_num}}.{{story_num}}：{{story_title}}
 
-Status: ready-for-dev
+状态：ready-for-dev
 
-<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+<!-- 说明：生成 Story 时必须填写“架构归属声明”。未明确所属面/允许依赖/禁止依赖的 Story 不可进入开发。 -->
 
-## Story
+## 用户故事
 
-As a {{role}},
-I want {{action}},
-so that {{benefit}}.
+作为 {{role}}，
+我希望 {{action}}，
+以便 {{benefit}}。
 
-## Acceptance Criteria
+## 验收标准
 
-1. [Add acceptance criteria from epics/PRD]
+1. [根据 Epic/PRD 补充验收标准]
 
-## Tasks / Subtasks
+## 架构归属声明
 
-- [ ] Task 1 (AC: #)
-  - [ ] Subtask 1.1
-- [ ] Task 2 (AC: #)
-  - [ ] Subtask 2.1
+- 所属面：[`控制面` / `执行面` / `资产面` / `证据面`]
+- 允许依赖：
+  - [列出允许直接依赖的模块、服务、契约或文档]
+- 禁止依赖：
+  - [列出禁止直接依赖的模块、服务、运行时内部实现]
+- 架构真相源：
+  - `docs/02_总体架构/架构索引.md`
+  - `docs/02_总体架构/系统总览.md`
+  - `docs/02_总体架构/数据工厂技术架构.md`
+  - `docs/02_总体架构/模块边界.md`
+  - `docs/02_总体架构/依赖关系.md`
 
-## Dev Notes
+## 任务拆分
 
-- Relevant architecture patterns and constraints
-- Source tree components to touch
-- Testing standards summary
+- [ ] 任务 1（AC: #）
+  - [ ] 子任务 1.1
+- [ ] 任务 2（AC: #）
+  - [ ] 子任务 2.1
 
-### Project Structure Notes
+## 开发说明
 
-- Alignment with unified project structure (paths, modules, naming)
-- Detected conflicts or variances (with rationale)
+- 相关架构模式与强约束
+- 需要触达的源码目录或文档目录
+- 测试/验收约束摘要
 
-### References
+### 项目结构说明
 
-- Cite all technical details with source paths and sections, e.g. [Source: docs/<file>.md#Section]
+- 与当前项目结构的一致性（路径、模块、命名）
+- 若存在边界冲突或偏差，说明原因与处理方式
+
+### 参考资料
+
+- 所有技术细节必须引用来源路径与章节，例如：`docs/<file>.md#章节`
 
 ## Dev Agent Record
 

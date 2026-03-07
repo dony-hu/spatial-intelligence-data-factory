@@ -1,0 +1,542 @@
+{
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
+  "workpackage": {
+    "id": "wp_address_governance_records_spatial",
+    "name": "address_governance_records_spatial",
+    "version": "v1.0.0",
+    "objective": "对输入addresses[]执行地址标准化、五级解析、真实性与类型识别、地理编码一致性校验，产出records[]与spatial_graph，并输出可审计失败码与SLA统计。",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "targets": {
+        "qps_min": 50,
+        "availability_sla_min": 0.999,
+        "timeout_ms_max": 2000
+      },
+      "security": {
+        "https_required": true,
+        "ip_whitelist_required": true,
+        "api_key_or_signature_required": true,
+        "pii_masking_required": true,
+        "audit_log_required": true
+      }
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "addresses"
+      ],
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string"
+              },
+              "id_no": {
+                "type": "string"
+              },
+              "mobile": {
+                "type": "string"
+              },
+              "ext": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "callback_url": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "records",
+        "spatial_graph"
+      ],
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "standard_address",
+              "province",
+              "city",
+              "district",
+              "town",
+              "village",
+              "lng",
+              "lat",
+              "geocode_confidence",
+              "address_level",
+              "address_type",
+              "real_check_pass",
+              "status",
+              "error_code"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "standard_address": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "town": {
+                "type": "string"
+              },
+              "village": {
+                "type": "string"
+              },
+              "adcode": {
+                "type": "string"
+              },
+              "lng": {
+                "type": "number"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "geocode_confidence": {
+                "type": "number"
+              },
+              "address_level": {
+                "type": "string"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "real_check_pass": {
+                "type": "boolean"
+              },
+              "identity_verify_pass": {
+                "type": "boolean"
+              },
+              "risk_hit": {
+                "type": "boolean"
+              },
+              "risk_tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SUCCESS",
+                  "FAILED"
+                ]
+              },
+              "error_code": {
+                "type": "string"
+              },
+              "error_message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "spatial_graph": {
+          "type": "object",
+          "required": [
+            "nodes",
+            "edges"
+          ],
+          "properties": {
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "node_id",
+                  "node_type"
+                ],
+                "properties": {
+                  "node_id": {
+                    "type": "string"
+                  },
+                  "node_type": {
+                    "type": "string",
+                    "enum": [
+                      "address",
+                      "poi",
+                      "aoi",
+                      "adcode"
+                    ]
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to",
+                  "relation"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "relation": {
+                    "type": "string",
+                    "enum": [
+                      "LOCATED_IN",
+                      "NEAR",
+                      "SAME_AOI",
+                      "GEOCODE_MATCH"
+                    ]
+                  },
+                  "weight": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "integer"
+            },
+            "failed": {
+              "type": "integer"
+            },
+            "hit_rate": {
+              "type": "number"
+            },
+            "p95_latency_ms": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "name": "五级地址解析",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "reverse_geocode",
+        "name": "逆地理编码",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_aoi_keyword",
+        "name": "地址AOI聚合",
+        "method": "POST"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "主体三要素核验",
+        "endpoint": "https://api.tianyancha.com/services/open/ic/baseV4/element/verify",
+        "reason": "当前注册目录缺少姓名-证件号-手机号一致性核验能力",
+        "requires_key": true,
+        "api_key_env": "TIANYANCHA_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "风险名单命中查询",
+        "endpoint": "https://api.qichacha.com/ECIException/GetRiskList",
+        "reason": "当前注册目录缺少黑名单/异常主体风险命中能力",
+        "requires_key": true,
+        "api_key_env": "QCC_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "空间图谱构建API",
+        "endpoint": "https://api.external.example.com/spatial/graph/build",
+        "reason": "补齐空间图谱输出能力",
+        "requires_key": true,
+        "api_key_env": "SPATIAL_GRAPH_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "step_id": "S01",
+        "name": "step-1",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "step-2",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "step-3",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "step-4",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
+  },
+  "scripts": [
+    {
+      "name": "run_pipeline.py",
+      "purpose": "主执行脚本：读取addresses[]并串联标准化、解析、编码、复核、构图",
+      "runtime": "python3",
+      "entry": "python run_pipeline.py --input ./input.json --out_records ./records.json --out_graph ./spatial_graph.json",
+      "dependencies": [
+        "requests>=2.31.0",
+        "pydantic>=2.6.0",
+        "tenacity>=8.2.0",
+        "networkx>=3.2.1"
+      ]
+    },
+    {
+      "name": "dryrun_1000-sh.py",
+      "purpose": "执行1000条样本压测与质量校验",
+      "runtime": "python3",
+      "entry": "bash dryrun_1000.sh ./samples_1000.json",
+      "dependencies": []
+    },
+    {
+      "name": "sla_probe.py",
+      "purpose": "接口SLA探测：QPS、P95、可用性与超时统计",
+      "runtime": "python3",
+      "entry": "python sla_probe.py --qps 50 --timeout_ms 2000 --duration_sec 300",
+      "dependencies": [
+        "httpx>=0.27.0",
+        "pandas>=2.2.0"
+      ]
+    },
+    {
+      "name": "publish_workpackage-sh.py",
+      "purpose": "发布工作包并回传runtime_upload元数据",
+      "runtime": "python3",
+      "entry": "bash publish_workpackage.sh wp_address_governance_records_spatial 1.0.0",
+      "dependencies": []
+    },
+    {
+      "name": "fetch_wp_a8892a62.py",
+      "purpose": "调用外部API补齐能力：主体三要素核验",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_wp_a8892a62.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    },
+    {
+      "name": "fetch_wp_3e4d7033.py",
+      "purpose": "调用外部API补齐能力：风险名单命中查询",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_wp_3e4d7033.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    },
+    {
+      "name": "fetch_api.py",
+      "purpose": "调用外部API补齐能力：空间图谱构建API",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_api.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
+  ]
+}

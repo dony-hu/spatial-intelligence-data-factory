@@ -66,10 +66,10 @@
 | `coordination/dispatch` | 任务派发目录，记录跨角色派单与推进节奏。 | `coordination/dispatch/iteration-001-r2.md`<br>`coordination/dispatch/iteration-001.md`<br>`coordination/dispatch/iteration-002-core-engine-p0-split.md` |
 | `coordination/status` | 状态同步目录，记录各角色/工作线状态与风险。 | `coordination/status/address-line-observability-demo-path-2026-02-15.md`<br>`coordination/status/address-line-observability-rollout-2026-02-15.md`<br>`coordination/status/engineering-supervisor.md` |
 | `database/postgres` | 子模块目录，用于组织当前业务域的实现与配套资产。 | - |
-| `docs/acceptance` | 验收文档目录，记录功能/链路验收结论与证据。 | `docs/acceptance/s2-14-runtime-observability-acceptance-2026-03-01.json`<br>`docs/acceptance/s2-14-runtime-observability-acceptance-2026-03-01.md` |
-| `docs/architecture` | 架构设计目录，定义系统分层、模块边界与技术约束。 | `docs/architecture/architecture-runtime-observability-v2-2026-02-28.md`<br>`docs/architecture/dependency_map.md`<br>`docs/architecture/module_boundaries.md` |
-| `docs/stories` | Story 目录，沉淀可执行故事卡、验收标准与上下文。 | `docs/stories/MVP-A1-CLI-Agent-LLM-对话确认治理需求.md`<br>`docs/stories/MVP-A2-地址治理流程试运行.md`<br>`docs/stories/MVP-A3-工作包发布到数据治理Runtime.md` |
-| `docs/testing` | 测试设计目录，沉淀测试策略、用例设计与测试目录索引。 | `docs/testing/test_case_catalog.md`<br>`docs/testing/test_case_design_full.md` |
+| `docs/acceptance` | 验收文档目录，记录功能/链路验收结论与证据。 | `docs/epics/runtime-observability-v2/acceptance/s2-14-acceptance.json`<br>`docs/epics/runtime-observability-v2/acceptance/s2-14-acceptance.md` |
+| `docs/architecture` | 架构设计目录，定义系统分层、模块边界与技术约束；当前引用入口以架构真相源清单为准。 | `docs/02_总体架构/架构索引.md`<br>`docs/02_总体架构/系统总览.md`<br>`docs/02_总体架构/模块边界.md`<br>`docs/02_总体架构/依赖关系.md` |
+| `docs/stories` | Story 目录，沉淀可执行故事卡、验收标准与上下文。 | `docs/epics/address-governance-mvp/stories/MVP-A1-CLI-Agent-LLM-对话确认治理需求.md`<br>`docs/epics/address-governance-mvp/stories/MVP-A2-地址治理流程试运行.md`<br>`docs/epics/address-governance-mvp/stories/MVP-A3-工作包发布到数据治理Runtime.md` |
+| `docs/testing` | 测试设计目录，沉淀测试策略、用例设计与测试目录索引。 | `docs/09_测试与验收/测试用例目录.md`<br>`docs/09_测试与验收/全链路测试设计.md` |
 | `infra/ansible` | 子模块目录，主要承载：文档说明。 | `infra/ansible/README.md`<br>`infra/ansible/ansible.cfg`<br>`infra/ansible/inventory.example.ini` |
 | `infra/terraform` | 子模块目录，用于组织当前业务域的实现与配套资产。 | - |
 | `logs/daily` | 子模块目录，主要承载：文档说明。 | `logs/daily/2026-02-09.md`<br>`logs/daily/2026-02-10.md`<br>`logs/daily/2026-02-11.md` |

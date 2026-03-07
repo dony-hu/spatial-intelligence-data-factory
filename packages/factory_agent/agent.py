@@ -5,10 +5,13 @@ from pathlib import Path
 import json
 import re
 import subprocess
+from copy import deepcopy
 from datetime import datetime, timezone
 from uuid import uuid4
 import hashlib
 import os
+
+from jsonschema import Draft202012Validator
 
 from packages.trust_hub import TrustHub
 from packages.factory_agent.dryrun_workflow import WorkpackageDryrunWorkflow
@@ -42,6 +45,8 @@ class FactoryAgent:
         self._state: Dict[str, Any] = {}
         self._trace_log_dir = Path(str(os.getenv("FACTORY_AGENT_TRACE_LOG_DIR") or "output/runtime_traces"))
         self._trace_window_size = max(1, int(os.getenv("FACTORY_AGENT_TRACE_WINDOW", "30")))
+        self._memory_window_size = max(10, int(os.getenv("FACTORY_AGENT_MEMORY_WINDOW", "60")))
+        self._workpackage_schema_validator: Draft202012Validator | None = None
 
     def _check_opencode(self):
         """检查 OpenCode 是否可用"""
@@ -58,6 +63,7 @@ class FactoryAgent:
         resolved_session = str(session_id or "").strip() or f"runtime_agent_{uuid4().hex[:8]}"
         trace_id = f"trace_chat_{uuid4().hex[:10]}"
         self._state["active_trace_context"] = {"session_id": resolved_session, "trace_id": trace_id}
+        self._ensure_session_memory(resolved_session, user_prompt=user_prompt)
         self._append_chat_history("user", user_prompt)
         self._emit_trace_event(
             channel="client_nanobot",
@@ -107,6 +113,7 @@ class FactoryAgent:
             final_result.setdefault("trace_id", trace_id)
             final_result["nanobot_traces"] = self._get_trace_snapshot(resolved_session)
             final_result["trace_log_path"] = self._get_trace_log_path(resolved_session)
+            final_result["memory_objects"] = self._get_memory_snapshot(resolved_session)
             return final_result
         finally:
             self._state.pop("active_trace_context", None)
@@ -199,6 +206,208 @@ class FactoryAgent:
         sid = str(session_id or "").strip()
         return str(self._trace_log_paths().get(sid) or "")
 
+    def _memory_sessions(self) -> Dict[str, Dict[str, Any]]:
+        store = self._state.get("memory_sessions")
+        if isinstance(store, dict):
+            return store
+        created: Dict[str, Dict[str, Any]] = {}
+        self._state["memory_sessions"] = created
+        return created
+
+    def _memory_template(self) -> Dict[str, Any]:
+        return {
+            "boot_context": {},
+            "discovery_facts": {},
+            "capability_snapshot": {},
+            "blueprint_attempts": [],
+            "opencode_task_ticket": {},
+            "build_artifacts_index": {},
+            "blocker_ticket": {},
+            "gate_state": {},
+            "runtime_evidence": {},
+            "publish_decision": {},
+            "timeline": [],
+        }
+
+    def _get_session_memory(self) -> Dict[str, Any]:
+        ctx = self._active_trace_context()
+        sid = str(ctx.get("session_id") or "").strip()
+        return self._memory_sessions().setdefault(sid, self._memory_template())
+
+    def _get_memory_snapshot(self, session_id: str) -> Dict[str, Any]:
+        sid = str(session_id or "").strip()
+        session_memory = self._memory_sessions().get(sid)
+        if not isinstance(session_memory, dict):
+            return self._memory_template()
+        return deepcopy(session_memory)
+
+    def _append_memory_timeline(
+        self,
+        session_memory: Dict[str, Any],
+        *,
+        stage: str,
+        status: str,
+        summary: str,
+        memory_object: str = "",
+    ) -> None:
+        rows = session_memory.get("timeline") if isinstance(session_memory.get("timeline"), list) else []
+        rows.append(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "stage": str(stage or ""),
+                "status": str(status or "success"),
+                "summary": str(summary or ""),
+                "memory_object": str(memory_object or ""),
+            }
+        )
+        session_memory["timeline"] = rows[-self._memory_window_size :]
+
+    def _set_memory_object(
+        self,
+        key: str,
+        payload: Any,
+        *,
+        stage: str = "",
+        status: str = "success",
+        summary: str = "",
+    ) -> None:
+        if not str(key or "").strip():
+            return
+        session_memory = self._get_session_memory()
+        session_memory[str(key)] = deepcopy(payload)
+        if stage:
+            self._append_memory_timeline(
+                session_memory,
+                stage=stage,
+                status=status,
+                summary=summary or f"updated {key}",
+                memory_object=str(key),
+            )
+
+    def _append_memory_object(
+        self,
+        key: str,
+        payload: Dict[str, Any],
+        *,
+        stage: str = "",
+        status: str = "success",
+        summary: str = "",
+    ) -> None:
+        if not str(key or "").strip():
+            return
+        session_memory = self._get_session_memory()
+        rows = session_memory.get(str(key))
+        if not isinstance(rows, list):
+            rows = []
+        rows.append(deepcopy(payload if isinstance(payload, dict) else {}))
+        session_memory[str(key)] = rows[-self._memory_window_size :]
+        if stage:
+            self._append_memory_timeline(
+                session_memory,
+                stage=stage,
+                status=status,
+                summary=summary or f"append {key}",
+                memory_object=str(key),
+            )
+
+    def _ensure_session_memory(self, session_id: str, *, user_prompt: str) -> None:
+        sid = str(session_id or "").strip()
+        if not sid:
+            return
+        sessions = self._memory_sessions()
+        session_memory = sessions.setdefault(sid, self._memory_template())
+        if not isinstance(session_memory.get("boot_context"), dict) or not session_memory.get("boot_context"):
+            session_memory["boot_context"] = self._build_boot_context_memory()
+            self._append_memory_timeline(
+                session_memory,
+                stage="BOOTSTRAP",
+                status="success",
+                summary="加载编排契约与边界约束",
+                memory_object="boot_context",
+            )
+        discovery = session_memory.get("discovery_facts") if isinstance(session_memory.get("discovery_facts"), dict) else {}
+        discovery["goal_text"] = str(user_prompt or "")
+        discovery["objective"] = str(user_prompt or "")
+        discovery["constraints"] = {
+            "no_mock": True,
+            "no_fallback": True,
+            "no_workground": True,
+            "requires_real_llm": True,
+        }
+        session_memory["discovery_facts"] = discovery
+        self._append_memory_timeline(
+            session_memory,
+            stage="DISCOVERY",
+            status="success",
+            summary="接收并记录用户治理目标",
+            memory_object="discovery_facts",
+        )
+
+    def _build_boot_context_memory(self) -> Dict[str, Any]:
+        catalog = self._load_registered_api_catalog()
+        compact_catalog: List[Dict[str, Any]] = []
+        for row in catalog:
+            if not isinstance(row, dict):
+                continue
+            compact_catalog.append(
+                {
+                    "source_id": str(row.get("source_id") or ""),
+                    "interface_id": str(row.get("interface_id") or ""),
+                    "base_url": str(row.get("base_url") or ""),
+                    "auth_type": str(row.get("auth_type") or row.get("authentication") or ""),
+                    "key_env": str(row.get("key_env") or row.get("api_key_env") or ""),
+                    "rate_limit": str(row.get("rate_limit") or ""),
+                }
+            )
+        return {
+            "role_contract": {
+                "agent_name": "nanobot",
+                "mission": "编排数据治理工作包全流程",
+                "responsibilities": [
+                    "需求收敛",
+                    "驱动LLM蓝图推理",
+                    "驱动opencode工件生成",
+                    "推进门禁确认与发布",
+                ],
+            },
+            "boundary_contract": {
+                "dev_chain": "nanobot<->opencode",
+                "runtime_chain": "worker executes workpackage_id@version entrypoint",
+                "forbidden": ["mock", "fallback", "workground", "worker_direct_opencode", "worker_direct_address_core"],
+            },
+            "schema_contract": {
+                "schema_id": "workpackage_schema.v1",
+                "schema_path": "workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json",
+                "required_top_level": [
+                    "workpackage",
+                    "architecture_context",
+                    "io_contract",
+                    "api_plan",
+                    "execution_plan",
+                    "scripts",
+                ],
+            },
+            "acceptance_contract": {
+                "gates": ["confirm_generate", "confirm_dryrun_result", "confirm_publish"],
+                "dryrun_required_outputs": [
+                    "records[].normalization/entity_parsing/address_validation",
+                    "spatial_graph.nodes/edges/metrics/failed_row_refs/build_status",
+                ],
+                "events_required_zh_fields": [
+                    "source_zh",
+                    "event_type_zh",
+                    "status_zh",
+                    "description_zh",
+                    "pipeline_stage_zh",
+                ],
+            },
+            "capability_contract": {
+                "source": "trust_hub_registered_api_catalog",
+                "provider_count": len({str(item.get("source_id") or "") for item in compact_catalog if str(item.get("source_id") or "")}),
+                "apis": compact_catalog[:20],
+            },
+        }
+
     def _handle_requirement_confirmation(self, prompt: str) -> Dict[str, Any]:
         """调用 LLM 确认治理需求；失败时阻塞并等待人工确认。"""
         workpackage_id = str(self._extract_bundle_name(prompt) or f"wp_req_{uuid4().hex[:8]}")
@@ -270,6 +479,7 @@ class FactoryAgent:
                 "message": "已完成治理需求确认，可进入 dry run 与工作包发布阶段",
             }
         except Exception as exc:
+            error_text = self._normalize_exception_message(exc)
             self._record_observation_event(
                 source_service="llm",
                 event_type="llm_response",
@@ -282,7 +492,7 @@ class FactoryAgent:
                     "version": "",
                     "model": llm_meta["model"],
                     "base_url": llm_meta["base_url"],
-                    "failure_reason": str(exc),
+                    "failure_reason": error_text,
                     "prompt": str(prompt or ""),
                     "response": "",
                 },
@@ -296,22 +506,25 @@ class FactoryAgent:
                 "llm_request": {},
                 "reason": "llm_blocked",
                 "requires_user_confirmation": True,
-                "error": str(exc),
+                "error": error_text,
                 "message": "LLM 需求确认阻塞，已停止后续流程，请人工确认处置方案",
             }
 
     def _run_requirement_query(self, prompt: str) -> Dict[str, Any]:
         system_prompt = (
             "你是地址治理工厂Agent。"
-            "请仅输出JSON对象，字段必须包含："
-            "target(string), data_sources(array), rule_points(array), outputs(array)。"
+            "请只输出一个紧凑JSON对象，必须包含字段："
+            "target(字符串), data_sources(字符串数组), rule_points(字符串数组), outputs(字符串数组)。"
+            "每个数组仅输出1-2个短词，不要解释文本，不要Markdown。"
         )
+        timeout_sec = max(5, int(os.getenv("FACTORY_AGENT_REQUIREMENT_TIMEOUT_SEC", "20")))
         return self._nanobot.query_structured(
             str(prompt or ""),
             system_prompt=system_prompt,
             session_key=f"factory_agent:requirement:{uuid4().hex[:8]}",
-            max_tokens=900,
-            temperature=0.1,
+            max_tokens=96,
+            temperature=0.0,
+            timeout_sec=timeout_sec,
         )
 
     def _run_general_chat_query(self, prompt: str) -> Dict[str, Any]:
@@ -332,12 +545,14 @@ class FactoryAgent:
         dialogue_input = str(prompt or "")
         if history_lines:
             dialogue_input = "历史对话：\n" + "\n".join(history_lines) + "\n\n当前用户输入：\n" + dialogue_input
+        chat_timeout_sec = max(5, int(os.getenv("FACTORY_AGENT_GENERAL_CHAT_TIMEOUT_SEC", "20")))
         return self._nanobot.chat(
             dialogue_input,
             system_prompt=system_prompt,
             session_key=f"factory_agent:chat:{uuid4().hex[:8]}",
             max_tokens=420,
             temperature=0.2,
+            timeout_sec=chat_timeout_sec,
         )
 
     def _run_workpackage_blueprint_query(
@@ -367,29 +582,59 @@ class FactoryAgent:
         )
         payload_lines: List[str] = []
         turns: List[Dict[str, str]] = []
-        for row in self._get_chat_history()[-8:]:
+        for row in self._get_chat_history()[-4:]:
             role = str(row.get("role") or "").strip()
-            content = self._compact_history_text(str(row.get("content") or ""), limit=280)
+            content = self._compact_history_text(str(row.get("content") or ""), limit=160)
             if role and content:
                 turns.append({"role": role, "content": content})
         if turns:
             payload_lines.append("历史对话:")
             payload_lines.append(json.dumps(turns, ensure_ascii=False))
         payload_lines.append("架构与API上下文:")
-        payload_lines.append(json.dumps(context, ensure_ascii=False))
+        payload_lines.append(json.dumps(self._compact_workpackage_context_for_llm(context), ensure_ascii=False))
         if feedback:
             payload_lines.append("上轮schema校验问题(逐条修复并重写完整JSON):")
             payload_lines.append(json.dumps(feedback, ensure_ascii=False))
         payload_lines.append("用户当前请求:")
         payload_lines.append(str(prompt or ""))
         request_text = "\n".join(payload_lines)
+        timeout_sec = max(5, int(os.getenv("FACTORY_AGENT_BLUEPRINT_TIMEOUT_SEC", "45")))
         return self._nanobot.query_structured(
             request_text,
             system_prompt=system_prompt,
             session_key=f"factory_agent:blueprint:{uuid4().hex[:8]}",
-            max_tokens=2200,
+            max_tokens=1200,
             temperature=0.1,
+            timeout_sec=timeout_sec,
         )
+
+    def _compact_workpackage_context_for_llm(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        src = context if isinstance(context, dict) else {}
+        api_rows = src.get("registered_api_catalog") if isinstance(src.get("registered_api_catalog"), list) else []
+        compact_apis: List[Dict[str, Any]] = []
+        for row in api_rows[:12]:
+            if not isinstance(row, dict):
+                continue
+            compact_apis.append(
+                {
+                    "source_id": str(row.get("source_id") or ""),
+                    "interface_id": str(row.get("interface_id") or ""),
+                    "name": str(row.get("name") or ""),
+                    "base_url": str(row.get("base_url") or ""),
+                    "method": str(row.get("method") or ""),
+                }
+            )
+        return {
+            "architecture_context": src.get("architecture_context") if isinstance(src.get("architecture_context"), dict) else {},
+            "schema_reference": src.get("schema_reference") if isinstance(src.get("schema_reference"), dict) else {},
+            "runtime_constraints": src.get("runtime_constraints") if isinstance(src.get("runtime_constraints"), dict) else {},
+            "alignment_checklist": src.get("alignment_checklist") if isinstance(src.get("alignment_checklist"), list) else [],
+            "registered_api_catalog_digest": str(src.get("registered_api_catalog_digest") or ""),
+            "registered_api_catalog_top": compact_apis,
+            "trusted_hub_source_count": len(src.get("trusted_hub_sources") or []) if isinstance(src.get("trusted_hub_sources"), list) else 0,
+            "conversation_facts": src.get("conversation_facts")[-4:] if isinstance(src.get("conversation_facts"), list) else [],
+            "user_prompt": str(src.get("user_prompt") or ""),
+        }
 
     def _compact_history_text(self, content: str, *, limit: int = 220) -> str:
         text = re.sub(r"\s+", " ", str(content or "")).strip()
@@ -510,6 +755,7 @@ class FactoryAgent:
                 "message": natural_reply or "已完成回复",
             }
         except Exception as exc:
+            error_text = self._normalize_exception_message(exc)
             return {
                 "status": "blocked",
                 "action": "general_governance_chat",
@@ -519,9 +765,15 @@ class FactoryAgent:
                 "llm_request": {},
                 "reason": "llm_blocked",
                 "requires_user_confirmation": True,
-                "error": str(exc),
+                "error": error_text,
                 "message": "LLM 对话阻塞，请稍后重试或改为明确的数据治理问题。",
             }
+
+    def _normalize_exception_message(self, exc: Exception) -> str:
+        text = str(exc or "").strip()
+        if text:
+            return text
+        return exc.__class__.__name__
 
     def _extract_natural_dialogue_reply(self, answer: str) -> str:
         raw = str(answer or "").strip()
@@ -548,7 +800,7 @@ class FactoryAgent:
         obj = self._extract_json_object(answer)
         if not obj:
             raise RuntimeError("llm output missing json object")
-        target = str(obj.get("target") or obj.get("goal") or "").strip()
+        target = self._coerce_target_text(obj.get("target") or obj.get("goal"))
         data_sources = self._as_string_list(obj.get("data_sources") or obj.get("sources"))
         rule_points = self._as_string_list(obj.get("rule_points") or obj.get("rules"))
         outputs = self._as_string_list(obj.get("outputs") or obj.get("deliverables"))
@@ -585,6 +837,21 @@ class FactoryAgent:
         if isinstance(value, str) and value.strip():
             return [value.strip()]
         return []
+
+    def _coerce_target_text(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, list):
+            for item in value:
+                text = str(item).strip()
+                if text:
+                    return text
+        if isinstance(value, dict):
+            for key in ("name", "title", "target", "goal"):
+                text = str(value.get(key) or "").strip()
+                if text:
+                    return text
+        return ""
 
     def _handle_store_api_key(self, prompt):
         """处理存储 API Key 的对话"""
@@ -675,7 +942,53 @@ class FactoryAgent:
 
     def _handle_dryrun_workpackage(self, prompt):
         """处理 dryrun 工作包的对话"""
-        return self._dryrun_workflow.run(prompt)
+        result = self._dryrun_workflow.run(prompt)
+        bundle_name = str((result.get("bundle_name") if isinstance(result, dict) else "") or self._extract_bundle_name(prompt) or "")
+        if str((result.get("status") if isinstance(result, dict) else "") or "").lower() == "ok":
+            dryrun = result.get("dryrun") if isinstance(result.get("dryrun"), dict) else {}
+            output_summary = dryrun.get("output_summary") if isinstance(dryrun.get("output_summary"), dict) else {}
+            input_summary = dryrun.get("input_summary") if isinstance(dryrun.get("input_summary"), dict) else {}
+            self._set_memory_object(
+                "runtime_evidence",
+                {
+                    "receipt_id": f"dryrun_{uuid4().hex[:10]}",
+                    "dryrun_at": datetime.now(timezone.utc).isoformat(),
+                    "bundle_name": bundle_name,
+                    "records_summary": {
+                        "total": int(input_summary.get("records_count") or 0),
+                        "pass": int(output_summary.get("result_count") or 0),
+                        "fail": max(0, int(input_summary.get("records_count") or 0) - int(output_summary.get("result_count") or 0)),
+                    },
+                    "spatial_graph": {
+                        "nodes": 0,
+                        "edges": 0,
+                        "metrics": {},
+                        "failed_row_refs": [],
+                        "build_status": "success",
+                    },
+                    "artifacts": dryrun.get("artifacts") if isinstance(dryrun.get("artifacts"), dict) else {},
+                },
+                stage="VERIFY",
+                status="success",
+                summary="dry-run 验证通过并记录运行证据",
+            )
+        else:
+            self._set_memory_object(
+                "blocker_ticket",
+                {
+                    "phase": "VERIFY",
+                    "type": "DRYRUN_FAILED",
+                    "error_message": str((result.get("message") if isinstance(result, dict) else "") or "dryrun_failed"),
+                    "error_code": str((result.get("reason") if isinstance(result, dict) else "") or "dryrun_failed"),
+                    "attempt_count": 1,
+                    "max_attempts": 1,
+                    "user_action_required": [{"action": "confirm_dryrun_result", "params": {"bundle_name": bundle_name}}],
+                },
+                stage="VERIFY",
+                status="blocked",
+                summary="dry-run 失败，等待人工确认或修复",
+            )
+        return result
 
     def _execute_workpackage_entrypoint(self, *, bundle_dir: Path, bundle_name: str, report_name: str) -> Dict[str, Any]:
         observability_dir = bundle_dir / "observability"
@@ -842,6 +1155,50 @@ class FactoryAgent:
                     "failure_reason": str(result.get("reason") or result.get("message") or "publish_blocked"),
                 },
             )
+        if str(result.get("status") or "").lower() == "ok":
+            self._set_memory_object(
+                "publish_decision",
+                {
+                    "publish_id": f"publish_{uuid4().hex[:10]}",
+                    "approver": "runtime_view_user",
+                    "approved_at": datetime.now(timezone.utc).isoformat(),
+                    "bundle_name": bundle_name,
+                    "version": version,
+                    "runtime_receipt_id": runtime_receipt_id,
+                },
+                stage="GATE",
+                status="success",
+                summary="发布门禁通过并完成提交",
+            )
+            self._set_memory_object(
+                "gate_state",
+                {
+                    "status": "submitted",
+                    "confirm_generate": {"required": True, "confirmed": True},
+                    "confirm_dryrun_result": {"required": True, "confirmed": True},
+                    "confirm_publish": {"required": True, "confirmed": True},
+                    "runtime_receipt_id": runtime_receipt_id,
+                },
+                stage="GATE",
+                status="success",
+                summary="门禁状态更新为 submitted",
+            )
+        else:
+            self._set_memory_object(
+                "blocker_ticket",
+                {
+                    "phase": "GATE",
+                    "type": "PUBLISH_BLOCKED",
+                    "error_message": str(result.get("message") or "publish blocked"),
+                    "error_code": str(result.get("reason") or "publish_blocked"),
+                    "attempt_count": 1,
+                    "max_attempts": 1,
+                    "user_action_required": [{"action": "confirm_publish", "params": {"bundle_name": bundle_name}}],
+                },
+                stage="GATE",
+                status="blocked",
+                summary="发布阶段阻塞，等待人工确认",
+            )
         return result
 
     def _resolve_llm_meta(self) -> Dict[str, str]:
@@ -979,6 +1336,39 @@ class FactoryAgent:
         """处理生成工作包的对话：基于上下文 + LLM 蓝图迭代收敛。"""
         llm_meta = self._resolve_llm_meta()
         context = self._build_workpackage_context(prompt)
+        catalog = context.get("registered_api_catalog") if isinstance(context.get("registered_api_catalog"), list) else []
+        capability_rows: List[Dict[str, Any]] = []
+        for row in catalog:
+            if not isinstance(row, dict):
+                continue
+            capability_rows.append(
+                {
+                    "source_id": str(row.get("source_id") or ""),
+                    "interface_id": str(row.get("interface_id") or ""),
+                    "base_url": str(row.get("base_url") or ""),
+                    "auth_type": str(row.get("auth_type") or row.get("authentication") or ""),
+                    "key_env": str(row.get("key_env") or row.get("api_key_env") or ""),
+                    "rate_limit": str(row.get("rate_limit") or ""),
+                }
+            )
+        self._set_memory_object(
+            "capability_snapshot",
+            {
+                "snapshot_at": datetime.now(timezone.utc).isoformat(),
+                "provider_count": len(
+                    {
+                        str(item.get("source_id") or "")
+                        for item in capability_rows
+                        if str(item.get("source_id") or "")
+                    }
+                ),
+                "apis": capability_rows,
+                "missing_capabilities": [],
+            },
+            stage="ALIGN_IO",
+            status="success",
+            summary="加载可信数据Hub已注册 API 清单",
+        )
         max_rounds = max(1, min(int(os.getenv("WORKPACKAGE_BLUEPRINT_MAX_ROUNDS", "2")), 8))
         feedback: List[str] = []
         schema_errors: List[str] = []
@@ -989,6 +1379,8 @@ class FactoryAgent:
         llm_raw_response: Dict[str, Any] = {}
         retry_count = 0
         autofill_applied_fields: List[str] = []
+        llm_call_failures = 0
+        last_llm_error = ""
 
         for idx in range(max_rounds):
             try:
@@ -999,8 +1391,39 @@ class FactoryAgent:
                 candidate = self._extract_json_object(llm_raw_text)
                 blueprint = self._normalize_workpackage_blueprint(candidate, prompt=prompt)
                 schema_errors = self._validate_workpackage_blueprint(blueprint)
+                self._append_memory_object(
+                    "blueprint_attempts",
+                    {
+                        "round": idx + 1,
+                        "stage": "BLUEPRINT_LOOP",
+                        "status": "success" if not schema_errors else "schema_invalid",
+                        "schema_passed": not schema_errors,
+                        "schema_errors": list(schema_errors),
+                        "llm_model": llm_meta.get("model") or "",
+                        "latency_ms": result.get("latency_ms"),
+                    },
+                    stage="BLUEPRINT_LOOP",
+                    status="success" if not schema_errors else "blocked",
+                    summary=f"蓝图收敛第 {idx + 1} 轮",
+                )
             except Exception as exc:
+                llm_call_failures += 1
+                last_llm_error = str(exc)
                 schema_errors = [f"llm_call_failed: {exc}"]
+                self._append_memory_object(
+                    "blueprint_attempts",
+                    {
+                        "round": idx + 1,
+                        "stage": "BLUEPRINT_LOOP",
+                        "status": "error",
+                        "schema_passed": False,
+                        "schema_errors": list(schema_errors),
+                        "llm_model": llm_meta.get("model") or "",
+                    },
+                    stage="BLUEPRINT_LOOP",
+                    status="error",
+                    summary=f"蓝图收敛第 {idx + 1} 轮调用失败",
+                )
             if not schema_errors:
                 break
             retry_count += 1
@@ -1026,8 +1449,38 @@ class FactoryAgent:
                     )
                 break
 
+        # Ring0：LLM 全轮失败时必须阻断，不允许用 autofill 伪造成功工作包。
+        if llm_call_failures >= max_rounds and not str(llm_raw_text or "").strip():
+            self._set_memory_object(
+                "blocker_ticket",
+                {
+                    "phase": "BLUEPRINT_LOOP",
+                    "type": "LLM_CALL_FAILED",
+                    "error_message": last_llm_error or "llm_call_failed_all_rounds",
+                    "error_code": "llm_blocked",
+                    "attempt_count": llm_call_failures,
+                    "max_attempts": max_rounds,
+                    "user_action_required": [
+                        {"action": "check_llm_credentials", "params": {"required_env": "LLM_API_KEY"}},
+                        {"action": "retry_after_fix", "params": {"stage": "BLUEPRINT_LOOP"}},
+                    ],
+                },
+                stage="BLUEPRINT_LOOP",
+                status="blocked",
+                summary="LLM 连续失败，蓝图收敛阻塞",
+            )
+            return {
+                "status": "blocked",
+                "action": "generate_workpackage",
+                "reason": "llm_blocked",
+                "requires_user_confirmation": True,
+                "error": last_llm_error or "llm_call_failed_all_rounds",
+                "schema_fix_rounds": schema_fix_rounds,
+                "message": "LLM 工作包生成阻塞（全轮调用失败），已停止自动生成，请先修复 LLM 鉴权/连通性。",
+            }
+
         self._enrich_blueprint_with_api_gap_plan(blueprint, context, prompt=prompt)
-        blueprint["generation_trace"] = {
+        generation_trace = {
             "generator": "factory_agent",
             "llm_model": llm_meta.get("model") or "",
             "llm_retry_count": retry_count,
@@ -1050,6 +1503,29 @@ class FactoryAgent:
         sources = self._resolve_blueprint_sources(blueprint, context)
         self._apply_missing_api_plan(blueprint)
         bundle_dir = Path(f"workpackages/bundles/{bundle_name}")
+        self._set_memory_object(
+            "opencode_task_ticket",
+            {
+                "ticket_id": f"ticket_{uuid4().hex[:10]}",
+                "phase": "BUILD_WITH_OPENCODE",
+                "bundle_name": bundle_name,
+                "bundle_dir": str(bundle_dir),
+                "task_list": [
+                    "生成 workpackage.json/entrypoint/README",
+                    "生成 scripts 与 observability 工件",
+                    "保证 schema 与运行约束一致",
+                ],
+                "artifacts_expected": [
+                    "workpackage.json",
+                    "entrypoint.py|entrypoint.sh",
+                    "scripts/run_pipeline.py",
+                    "observability/line_metrics.json",
+                ],
+            },
+            stage="BUILD_WITH_OPENCODE",
+            status="success",
+            summary="向 opencode 下发工作包构建任务单",
+        )
         self._emit_trace_event(
             channel="nanobot_opencode",
             direction="nanobot->opencode",
@@ -1066,6 +1542,23 @@ class FactoryAgent:
         try:
             self._create_workpackage_bundle(bundle_dir, blueprint=blueprint, sources=sources)
         except Exception as exc:
+            self._set_memory_object(
+                "blocker_ticket",
+                {
+                    "phase": "BUILD_WITH_OPENCODE",
+                    "type": "OPENCODE_BUILD_FAILED",
+                    "error_message": str(exc),
+                    "error_code": "opencode_build_failed",
+                    "attempt_count": 1,
+                    "max_attempts": 1,
+                    "user_action_required": [
+                        {"action": "check_opencode_runtime", "params": {"command": "opencode --version"}},
+                    ],
+                },
+                stage="BUILD_WITH_OPENCODE",
+                status="error",
+                summary="opencode 构建失败，等待修复后重试",
+            )
             self._emit_trace_event(
                 channel="nanobot_opencode",
                 direction="opencode->nanobot",
@@ -1094,6 +1587,45 @@ class FactoryAgent:
             artifacts=[str(bundle_dir / "workpackage.json"), str(build_report_path)],
             status="success",
         )
+        self._set_memory_object(
+            "build_artifacts_index",
+            {
+                "bundle_name": bundle_name,
+                "bundle_path": str(bundle_dir),
+                "workpackage_id": str(workpackage_blueprint_summary.get("name") or ""),
+                "version": str(workpackage_blueprint_summary.get("version") or ""),
+                "files": [
+                    {
+                        "path": "workpackage.json",
+                        "size": (bundle_dir / "workpackage.json").stat().st_size if (bundle_dir / "workpackage.json").exists() else 0,
+                    },
+                    {
+                        "path": "observability/opencode_build_report.json",
+                        "size": build_report_path.stat().st_size if build_report_path.exists() else 0,
+                    },
+                ],
+            },
+            stage="BUILD_WITH_OPENCODE",
+            status="success",
+            summary="工作包构建工件已落盘",
+        )
+        gates = (
+            ((blueprint.get("execution_plan") or {}).get("gates") if isinstance(blueprint.get("execution_plan"), dict) else {})
+            if isinstance(blueprint, dict)
+            else {}
+        )
+        self._set_memory_object(
+            "gate_state",
+            {
+                "status": "packaged",
+                "confirm_generate": {"required": bool((gates or {}).get("confirm_generate")), "confirmed": False},
+                "confirm_dryrun_result": {"required": bool((gates or {}).get("confirm_dryrun_result")), "confirmed": False},
+                "confirm_publish": {"required": bool((gates or {}).get("confirm_publish")), "confirmed": False},
+            },
+            stage="GATE",
+            status="success",
+            summary="工作包已生成，进入门禁确认阶段",
+        )
 
         return {
             "status": "ok",
@@ -1111,6 +1643,7 @@ class FactoryAgent:
             "workpackage_blueprint_summary": workpackage_blueprint_summary,
             "schema_fix_rounds": schema_fix_rounds,
             "autofill_applied_fields": autofill_applied_fields,
+            "generation_trace": generation_trace,
             "message": f"工作包 {bundle_name} 已生成，包含架构上下文、I/O定义、API计划与可执行脚本。",
         }
 
@@ -1197,8 +1730,20 @@ class FactoryAgent:
             "script_count": len(scripts),
         }
 
+    def _resolve_project_root(self) -> Path:
+        return Path(__file__).resolve().parents[2]
+
+    def _resolve_project_path(self, relative_path: str) -> Path:
+        candidate = Path(str(relative_path or "")).expanduser()
+        if candidate.is_absolute():
+            return candidate
+        cwd_path = Path.cwd() / candidate
+        if cwd_path.exists():
+            return cwd_path
+        return self._resolve_project_root() / candidate
+
     def _load_registered_api_catalog(self) -> List[Dict[str, Any]]:
-        config_path = Path("config/trusted_data_sources.json")
+        config_path = self._resolve_project_path("config/trusted_data_sources.json")
         if not config_path.exists():
             return []
         try:
@@ -1232,9 +1777,11 @@ class FactoryAgent:
         return rows
 
     def _normalize_workpackage_blueprint(self, obj: Dict[str, Any], *, prompt: str) -> Dict[str, Any]:
-        workpackage = obj.get("workpackage") if isinstance(obj.get("workpackage"), dict) else {}
-        name = str(workpackage.get("name") or self._slugify_name(self._extract_name(prompt) or "governance-workpackage"))
-        version = str(workpackage.get("version") or "v1.0.0")
+        source = obj if isinstance(obj, dict) else {}
+        wp_raw = source.get("workpackage") if isinstance(source.get("workpackage"), dict) else {}
+        raw_name = str(wp_raw.get("name") or "").strip()
+        name = raw_name or self._slugify_name(self._extract_name(prompt) or "governance-workpackage")
+        version = str(wp_raw.get("version") or "v1.0.0").strip()
         if version and not version.startswith("v"):
             version = f"v{version}"
         merged = re.match(r"^(.+)-v(\d+\.\d+\.\d+)$", name)
@@ -1243,81 +1790,279 @@ class FactoryAgent:
             extracted_version = f"v{str(merged.group(2) or '').strip()}"
             if extracted_name:
                 name = extracted_name
-            if not str(version or "").strip() or str(version or "").strip() == "v1.0.0":
+            if version == "v1.0.0":
                 version = extracted_version
-        objective = str(workpackage.get("objective") or "数据治理任务执行")
-        architecture_context = obj.get("architecture_context") if isinstance(obj.get("architecture_context"), dict) else {}
-        io_contract = obj.get("io_contract") if isinstance(obj.get("io_contract"), dict) else {}
-        api_plan = obj.get("api_plan") if isinstance(obj.get("api_plan"), dict) else {}
-        execution_plan = obj.get("execution_plan") if isinstance(obj.get("execution_plan"), dict) else {}
-        scripts = obj.get("scripts") if isinstance(obj.get("scripts"), list) else []
+        wp_id = str(wp_raw.get("id") or "").strip() or self._slugify_name(name)
+        objective = str(wp_raw.get("objective") or "数据治理任务执行与可观测验收").strip()
+        if len(objective) < 10:
+            objective = f"{objective}，并输出可观测验收结果"
+
+        scope_raw = wp_raw.get("scope") if isinstance(wp_raw.get("scope"), dict) else {}
+        in_scope = self._as_string_list(scope_raw.get("in_scope"))
+        out_of_scope = self._as_string_list(scope_raw.get("out_of_scope"))
+        if not in_scope:
+            in_scope = ["normalization", "entity_parsing", "address_validation", "spatial_graph"]
+
+        owner_raw = wp_raw.get("owner") if isinstance(wp_raw.get("owner"), dict) else {}
+        owner_role = str(owner_raw.get("role") or "dev").strip()
+        if owner_role not in {"pm", "architect", "dev", "qa", "ops"}:
+            owner_role = "dev"
+        owner = {
+            "team": str(owner_raw.get("team") or "governance-factory").strip() or "governance-factory",
+            "role": owner_role,
+            "contact": str(owner_raw.get("contact") or "factory-oncall").strip() or "factory-oncall",
+        }
+        priority = str(wp_raw.get("priority") or "P1").strip().upper()
+        if priority not in {"P0", "P1", "P2", "P3"}:
+            priority = "P1"
+        status = str(wp_raw.get("status") or "aligned").strip()
+        if status not in {"draft", "aligned", "ready_for_generate", "generated"}:
+            status = "aligned"
+        acceptance = self._as_string_list(wp_raw.get("acceptance_criteria"))
+        if not acceptance:
+            acceptance = [
+                "records[] 每条包含 normalization/entity_parsing/address_validation",
+                "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status",
+            ]
+
+        architecture_raw = source.get("architecture_context") if isinstance(source.get("architecture_context"), dict) else {}
+        factory_arch = (
+            architecture_raw.get("factory_architecture")
+            if isinstance(architecture_raw.get("factory_architecture"), dict)
+            else {}
+        )
+        runtime_env = architecture_raw.get("runtime_env") if isinstance(architecture_raw.get("runtime_env"), dict) else {}
+        architecture_context = {"factory_architecture": factory_arch, "runtime_env": runtime_env}
+
+        io_raw = source.get("io_contract") if isinstance(source.get("io_contract"), dict) else {}
+        input_schema = io_raw.get("input_schema") if isinstance(io_raw.get("input_schema"), dict) else {}
+        output_schema = io_raw.get("output_schema") if isinstance(io_raw.get("output_schema"), dict) else {}
+        io_contract = {"input_schema": input_schema, "output_schema": output_schema}
+
+        api_raw = source.get("api_plan") if isinstance(source.get("api_plan"), dict) else {}
+        registered_apis_raw = api_raw.get("registered_apis_used") if isinstance(api_raw.get("registered_apis_used"), list) else []
+        registered_apis: List[Dict[str, Any]] = []
+        for item in registered_apis_raw:
+            if not isinstance(item, dict):
+                continue
+            row: Dict[str, Any] = {}
+            for key in (
+                "source_id",
+                "interface_id",
+                "name",
+                "base_url",
+                "method",
+                "pipeline_stage",
+                "request_mapping",
+                "response_mapping",
+            ):
+                value = item.get(key)
+                if value in ("", None):
+                    continue
+                row[key] = value
+            if row:
+                registered_apis.append(row)
+
+        missing_apis_raw = api_raw.get("missing_apis") if isinstance(api_raw.get("missing_apis"), list) else []
+        missing_apis: List[Dict[str, Any]] = []
+        for item in missing_apis_raw:
+            if not isinstance(item, dict):
+                continue
+            name_value = str(item.get("name") or "").strip()
+            endpoint = str(item.get("endpoint") or "").strip()
+            reason = str(item.get("reason") or "补齐缺失治理能力").strip()
+            requires_key = bool(item.get("requires_key"))
+            env_name = str(item.get("api_key_env") or "").strip()
+            if not env_name:
+                env_seed = self._slugify_name(name_value or "external_api").upper().replace("-", "_")
+                env_name = f"{env_seed}_API_KEY"
+            register_plan_raw = item.get("register_plan") if isinstance(item.get("register_plan"), dict) else {}
+            register_plan = {
+                "target": str(register_plan_raw.get("target") or "trust_hub"),
+                "tool_type": str(register_plan_raw.get("tool_type") or "api"),
+                "status_on_register": str(register_plan_raw.get("status_on_register") or "pending_key"),
+            }
+            missing_apis.append(
+                {
+                    "name": name_value or "external_api",
+                    "endpoint": endpoint or "https://example.com/api",
+                    "reason": reason or "补齐缺失治理能力",
+                    "requires_key": requires_key,
+                    "api_key_env": env_name,
+                    "register_plan": register_plan,
+                }
+            )
+
+        execution_raw = source.get("execution_plan") if isinstance(source.get("execution_plan"), dict) else {}
+        steps_raw = execution_raw.get("steps") if isinstance(execution_raw.get("steps"), list) else []
+        steps: List[Dict[str, Any]] = []
+        for idx, step in enumerate(steps_raw):
+            if isinstance(step, dict):
+                step_id = str(step.get("step_id") or f"S{idx + 1:02d}").strip() or f"S{idx + 1:02d}"
+                steps.append(
+                    {
+                        "step_id": step_id,
+                        "name": str(step.get("name") or f"step-{idx + 1}"),
+                        "stage": str(step.get("stage") or "custom"),
+                        "inputs": self._as_string_list(step.get("inputs")),
+                        "outputs": self._as_string_list(step.get("outputs")),
+                        "timeout_sec": int(step.get("timeout_sec") or 300),
+                        "retry": step.get("retry") if isinstance(step.get("retry"), dict) else {"max_attempts": 1},
+                    }
+                )
+            elif isinstance(step, str) and step.strip():
+                steps.append(
+                    {
+                        "step_id": f"S{idx + 1:02d}",
+                        "name": step.strip(),
+                        "stage": "custom",
+                        "inputs": [],
+                        "outputs": [],
+                        "timeout_sec": 300,
+                        "retry": {"max_attempts": 1},
+                    }
+                )
+        gates_raw = execution_raw.get("gates") if isinstance(execution_raw.get("gates"), dict) else {}
+        gates = {
+            "confirm_generate": bool(gates_raw.get("confirm_generate")),
+            "confirm_dryrun_result": bool(gates_raw.get("confirm_dryrun_result")),
+            "confirm_publish": bool(gates_raw.get("confirm_publish")),
+        }
+        failure_raw = execution_raw.get("failure_handling") if isinstance(execution_raw.get("failure_handling"), dict) else {}
+        failure_handling = {
+            "on_schema_mismatch": "continue_llm_interaction_until_valid",
+            "on_api_failure": "block_error_no_fallback",
+            "on_dependency_missing": str(failure_raw.get("on_dependency_missing") or "ask_user_for_key_and_register"),
+        }
+
+        scripts_raw = source.get("scripts") if isinstance(source.get("scripts"), list) else []
+        scripts: List[Dict[str, Any]] = []
+        for item in scripts_raw:
+            if not isinstance(item, dict):
+                continue
+            script_name = str(item.get("name") or "").strip()
+            if not script_name:
+                continue
+            if not script_name.endswith(".py"):
+                script_name = f"{self._slugify_name(script_name)}.py"
+            purpose = str(item.get("purpose") or f"执行脚本 {script_name}").strip()
+            entry = str(item.get("entry") or "").strip() or f"python scripts/{script_name}"
+            dependencies = item.get("dependencies") if isinstance(item.get("dependencies"), list) else []
+            scripts.append(
+                {
+                    "name": script_name,
+                    "purpose": purpose or f"执行脚本 {script_name}",
+                    "runtime": "python3",
+                    "entry": entry,
+                    "dependencies": [str(dep).strip() for dep in dependencies if str(dep).strip()],
+                }
+            )
+        if not scripts:
+            scripts = [
+                {
+                    "name": "run_pipeline.py",
+                    "purpose": "执行治理流程",
+                    "runtime": "python3",
+                    "entry": "python scripts/run_pipeline.py",
+                    "dependencies": [],
+                }
+            ]
+
+        skills_raw = source.get("skills") if isinstance(source.get("skills"), list) else []
+        skills: List[Dict[str, Any]] = []
+        for item in skills_raw:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("skill_id") or "").strip()
+            name_value = str(item.get("name") or "").strip()
+            path = str(item.get("path") or "").strip()
+            purpose = str(item.get("purpose") or "").strip()
+            if not sid or not name_value or not path or not purpose:
+                continue
+            row: Dict[str, Any] = {
+                "skill_id": sid,
+                "name": name_value,
+                "path": path,
+                "purpose": purpose,
+            }
+            if "required" in item:
+                row["required"] = bool(item.get("required"))
+            skills.append(row)
+        if not skills:
+            skills = [
+                {
+                    "skill_id": "nanobot_workpackage_schema_orchestrator",
+                    "name": "nanobot 工作包协议编排",
+                    "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+                    "purpose": "引导用户补齐工作包 schema 并持续收敛",
+                    "required": True,
+                },
+                {
+                    "skill_id": "opencode_workpackage_builder_guardrails",
+                    "name": "opencode 工作包构建护栏",
+                    "path": "skills/opencode_workpackage_builder_guardrails.md",
+                    "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+                    "required": True,
+                },
+            ]
+
         return {
-            "workpackage": {"name": name, "version": version, "objective": objective},
+            "schema_version": "workpackage_schema.v1",
+            "mode": "blueprint_mode",
+            "workpackage": {
+                "id": wp_id,
+                "name": name,
+                "version": version,
+                "objective": objective,
+                "scope": {"in_scope": in_scope, "out_of_scope": out_of_scope},
+                "owner": owner,
+                "priority": priority,
+                "status": status,
+                "acceptance_criteria": acceptance,
+            },
             "architecture_context": architecture_context,
             "io_contract": io_contract,
             "api_plan": {
-                "registered_apis_used": api_plan.get("registered_apis_used") if isinstance(api_plan.get("registered_apis_used"), list) else [],
-                "missing_apis": api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else [],
+                "registered_apis_used": registered_apis,
+                "missing_apis": missing_apis,
             },
-            "execution_plan": {"steps": execution_plan.get("steps") if isinstance(execution_plan.get("steps"), list) else []},
+            "execution_plan": {
+                "steps": steps,
+                "gates": gates,
+                "failure_handling": failure_handling,
+            },
             "scripts": scripts,
+            "skills": skills,
         }
 
     def _validate_workpackage_blueprint(self, blueprint: Dict[str, Any]) -> List[str]:
+        validator = self._get_workpackage_schema_validator()
         errors: List[str] = []
-        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
-        if not str(workpackage.get("name") or "").strip():
-            errors.append("workpackage.name is required")
-        if not str(workpackage.get("version") or "").strip():
-            errors.append("workpackage.version is required")
-        if not str(workpackage.get("objective") or "").strip():
-            errors.append("workpackage.objective is required")
-
-        architecture_context = blueprint.get("architecture_context") if isinstance(blueprint.get("architecture_context"), dict) else {}
-        if not architecture_context:
-            errors.append("architecture_context is required")
-        if not isinstance(architecture_context.get("runtime_env"), dict):
-            errors.append("architecture_context.runtime_env must be object")
-
-        io_contract = blueprint.get("io_contract") if isinstance(blueprint.get("io_contract"), dict) else {}
-        if not isinstance(io_contract.get("input_schema"), dict):
-            errors.append("io_contract.input_schema must be object")
-        if not isinstance(io_contract.get("output_schema"), dict):
-            errors.append("io_contract.output_schema must be object")
-
-        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
-        if not isinstance(api_plan.get("registered_apis_used"), list):
-            errors.append("api_plan.registered_apis_used must be array")
-        if not isinstance(api_plan.get("missing_apis"), list):
-            errors.append("api_plan.missing_apis must be array")
-        for idx, item in enumerate(api_plan.get("missing_apis") or []):
-            if not isinstance(item, dict):
-                errors.append(f"api_plan.missing_apis[{idx}] must be object")
-                continue
-            if not str(item.get("name") or "").strip():
-                errors.append(f"api_plan.missing_apis[{idx}].name is required")
-            if not str(item.get("endpoint") or "").strip():
-                errors.append(f"api_plan.missing_apis[{idx}].endpoint is required")
-            if "requires_key" not in item:
-                errors.append(f"api_plan.missing_apis[{idx}].requires_key is required")
-
-        execution_plan = blueprint.get("execution_plan") if isinstance(blueprint.get("execution_plan"), dict) else {}
-        if not isinstance(execution_plan.get("steps"), list) or not execution_plan.get("steps"):
-            errors.append("execution_plan.steps must be non-empty array")
-
-        scripts = blueprint.get("scripts")
-        if not isinstance(scripts, list) or not scripts:
-            errors.append("scripts must be non-empty array")
-        else:
-            for idx, item in enumerate(scripts):
-                if not isinstance(item, dict):
-                    errors.append(f"scripts[{idx}] must be object")
-                    continue
-                if not str(item.get("name") or "").strip():
-                    errors.append(f"scripts[{idx}].name is required")
-                if not str(item.get("entry") or "").strip():
-                    errors.append(f"scripts[{idx}].entry is required")
+        for err in sorted(validator.iter_errors(blueprint), key=lambda e: list(e.path)):
+            path = ".".join(str(x) for x in err.path)
+            if path:
+                errors.append(f"{path}: {err.message}")
+            else:
+                errors.append(str(err.message))
         return errors
+
+    def _get_workpackage_schema_validator(self) -> Draft202012Validator:
+        if self._workpackage_schema_validator is not None:
+            return self._workpackage_schema_validator
+        registry_path = self._resolve_project_path("workpackage_schema/registry.json")
+        schema_path = self._resolve_project_path("workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json")
+        if registry_path.exists():
+            try:
+                registry = json.loads(registry_path.read_text(encoding="utf-8"))
+                current = str(registry.get("current_version") or "v1")
+                schema_rel = str((((registry.get("versions") or {}).get(current) or {}).get("schema_file") or "")).strip()
+                if schema_rel:
+                    schema_path = registry_path.parent / schema_rel
+            except Exception:
+                schema_path = self._resolve_project_path("workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json")
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        self._workpackage_schema_validator = Draft202012Validator(schema)
+        return self._workpackage_schema_validator
 
     def _resolve_blueprint_sources(self, blueprint: Dict[str, Any], context: Dict[str, Any]) -> List[str]:
         api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
@@ -1339,28 +2084,10 @@ class FactoryAgent:
 
     def _apply_missing_api_plan(self, blueprint: Dict[str, Any]) -> None:
         api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
-        missing = api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else []
-        proposals: List[Dict[str, Any]] = []
-        for item in missing:
-            if not isinstance(item, dict):
-                continue
-            endpoint = str(item.get("endpoint") or "").strip()
-            if not endpoint.startswith("http"):
-                continue
-            source_id = self._slugify_name(str(item.get("name") or "ext_api"))
-            provider = str(item.get("provider") or source_id)
-            proposals.append(
-                {
-                    "source_id": source_id,
-                    "provider": provider,
-                    "endpoint": endpoint,
-                    "status": "proposal_pending_confirmation",
-                    "requires_key": bool(item.get("requires_key")),
-                    "api_key_env": str(item.get("api_key_env") or ""),
-                }
-            )
-        # 两阶段策略：generate 阶段仅形成 proposal，不直接落 TrustHub。
-        api_plan["missing_apis_proposals"] = proposals
+        if not isinstance(api_plan.get("registered_apis_used"), list):
+            api_plan["registered_apis_used"] = []
+        if not isinstance(api_plan.get("missing_apis"), list):
+            api_plan["missing_apis"] = []
         blueprint["api_plan"] = api_plan
 
     def _slugify_name(self, value: str) -> str:
@@ -1371,64 +2098,113 @@ class FactoryAgent:
         return text or f"wp_{uuid4().hex[:8]}"
 
     def _autofill_blueprint_from_context(self, blueprint: Dict[str, Any], context: Dict[str, Any], *, prompt: str) -> Dict[str, Any]:
-        workpackage = blueprint.get("workpackage") if isinstance(blueprint.get("workpackage"), dict) else {}
-        if not str(workpackage.get("name") or "").strip():
-            workpackage["name"] = self._slugify_name(self._extract_name(prompt) or "governance-workpackage")
-        if not str(workpackage.get("version") or "").strip():
-            workpackage["version"] = "v1.0.0"
-        if not str(workpackage.get("objective") or "").strip():
-            workpackage["objective"] = "地址治理工作包（标准化/验真/空间图谱）"
-        blueprint["workpackage"] = workpackage
+        candidate = dict(blueprint if isinstance(blueprint, dict) else {})
 
-        architecture_context = blueprint.get("architecture_context") if isinstance(blueprint.get("architecture_context"), dict) else {}
-        if not architecture_context:
-            architecture_context = dict(context.get("architecture_context") or {})
-        if not isinstance(architecture_context.get("runtime_env"), dict):
-            architecture_context["runtime_env"] = {"python": "3.11", "queue": "sync"}
-        blueprint["architecture_context"] = architecture_context
+        architecture = candidate.get("architecture_context") if isinstance(candidate.get("architecture_context"), dict) else {}
+        factory_arch = architecture.get("factory_architecture") if isinstance(architecture.get("factory_architecture"), dict) else {}
+        runtime_env = architecture.get("runtime_env") if isinstance(architecture.get("runtime_env"), dict) else {}
+        context_arch = context.get("architecture_context") if isinstance(context.get("architecture_context"), dict) else {}
+        if not factory_arch:
+            source_arch = context_arch.get("factory_architecture")
+            factory_arch = source_arch if isinstance(source_arch, dict) else {
+                "layers": ["Agent会话编排层", "可信数据Hub层", "工作包执行层", "运行态可观测层"],
+                "workpackage_lifecycle": ["requirements_confirm", "generate", "dryrun", "publish", "runtime_upload"],
+            }
+        if not runtime_env:
+            runtime_env = {
+                "python": "3.11",
+                "database": "postgresql",
+                "no_fallback": True,
+            }
+        architecture["factory_architecture"] = factory_arch
+        architecture["runtime_env"] = runtime_env
+        candidate["architecture_context"] = architecture
 
-        io_contract = blueprint.get("io_contract") if isinstance(blueprint.get("io_contract"), dict) else {}
-        if not isinstance(io_contract.get("input_schema"), dict):
+        io_contract = candidate.get("io_contract") if isinstance(candidate.get("io_contract"), dict) else {}
+        if not isinstance(io_contract.get("input_schema"), dict) or not io_contract.get("input_schema"):
             io_contract["input_schema"] = {
                 "type": "object",
-                "properties": {"raw_text": {"type": "string"}},
-                "required": ["raw_text"],
+                "required": ["addresses"],
+                "properties": {"addresses": {"type": "array", "items": {"type": "string"}, "minItems": 1}},
             }
-        if not isinstance(io_contract.get("output_schema"), dict):
+        if not isinstance(io_contract.get("output_schema"), dict) or not io_contract.get("output_schema"):
             io_contract["output_schema"] = {
                 "type": "object",
+                "required": ["records", "spatial_graph"],
                 "properties": {
-                    "normalization": {"type": "object"},
-                    "entity_parsing": {"type": "object"},
-                    "address_validation": {"type": "object"},
+                    "records": {"type": "array", "items": {"type": "object"}},
                     "spatial_graph": {"type": "object"},
                 },
-                "required": ["normalization", "entity_parsing", "address_validation", "spatial_graph"],
             }
-        blueprint["io_contract"] = io_contract
+        candidate["io_contract"] = io_contract
 
-        api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
-        if not isinstance(api_plan.get("registered_apis_used"), list) or not api_plan.get("registered_apis_used"):
-            api_plan["registered_apis_used"] = [
-                {"source_id": "fengtu", "interface_id": "address_standardize"},
-                {"source_id": "fengtu", "interface_id": "address_real_check"},
+        execution_plan = candidate.get("execution_plan") if isinstance(candidate.get("execution_plan"), dict) else {}
+        steps = execution_plan.get("steps") if isinstance(execution_plan.get("steps"), list) else []
+        if not steps:
+            execution_plan["steps"] = [
+                {"step_id": "S01", "name": "需求确认", "stage": "requirements_confirm"},
+                {"step_id": "S02", "name": "生成工作包", "stage": "generate"},
+                {"step_id": "S03", "name": "试运行验证", "stage": "dryrun"},
+                {"step_id": "S04", "name": "发布执行", "stage": "publish"},
             ]
-        if not isinstance(api_plan.get("missing_apis"), list):
-            api_plan["missing_apis"] = []
-        blueprint["api_plan"] = api_plan
+        gates = execution_plan.get("gates") if isinstance(execution_plan.get("gates"), dict) else {}
+        execution_plan["gates"] = {
+            "confirm_generate": bool(gates.get("confirm_generate")),
+            "confirm_dryrun_result": bool(gates.get("confirm_dryrun_result")),
+            "confirm_publish": bool(gates.get("confirm_publish")),
+        }
+        failure = execution_plan.get("failure_handling") if isinstance(execution_plan.get("failure_handling"), dict) else {}
+        execution_plan["failure_handling"] = {
+            "on_schema_mismatch": "continue_llm_interaction_until_valid",
+            "on_api_failure": "block_error_no_fallback",
+            "on_dependency_missing": str(failure.get("on_dependency_missing") or "ask_user_for_key_and_register"),
+        }
+        candidate["execution_plan"] = execution_plan
 
-        execution_plan = blueprint.get("execution_plan") if isinstance(blueprint.get("execution_plan"), dict) else {}
-        if not isinstance(execution_plan.get("steps"), list) or not execution_plan.get("steps"):
-            execution_plan["steps"] = ["解析输入", "地址标准化", "地址验真", "空间图谱构建"]
-        blueprint["execution_plan"] = execution_plan
+        api_plan = candidate.get("api_plan") if isinstance(candidate.get("api_plan"), dict) else {}
+        registered = api_plan.get("registered_apis_used") if isinstance(api_plan.get("registered_apis_used"), list) else []
+        if not registered:
+            catalog = context.get("registered_api_catalog") if isinstance(context.get("registered_api_catalog"), list) else []
+            for row in catalog[:4]:
+                if not isinstance(row, dict):
+                    continue
+                registered.append(
+                    {
+                        "source_id": str(row.get("source_id") or ""),
+                        "interface_id": str(row.get("interface_id") or ""),
+                        "name": str(row.get("name") or ""),
+                        "base_url": str(row.get("base_url") or ""),
+                        "method": str(row.get("method") or ""),
+                    }
+                )
+        api_plan["registered_apis_used"] = registered
+        api_plan["missing_apis"] = api_plan.get("missing_apis") if isinstance(api_plan.get("missing_apis"), list) else []
+        candidate["api_plan"] = api_plan
 
-        scripts = blueprint.get("scripts")
+        scripts = candidate.get("scripts")
         if not isinstance(scripts, list) or not scripts:
-            scripts = [
-                {"name": "run_pipeline.py", "purpose": "执行治理流程", "runtime": "python", "entry": "python scripts/run_pipeline.py"},
+            candidate["scripts"] = [
+                {
+                    "name": "run_pipeline.py",
+                    "purpose": "执行治理流程",
+                    "runtime": "python3",
+                    "entry": "python scripts/run_pipeline.py",
+                    "dependencies": [],
+                }
             ]
-        blueprint["scripts"] = scripts
-        return blueprint
+
+        skills = candidate.get("skills")
+        if not isinstance(skills, list) or not skills:
+            candidate["skills"] = [
+                {
+                    "skill_id": "nanobot_workpackage_schema_orchestrator",
+                    "name": "nanobot 工作包协议编排",
+                    "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+                    "purpose": "引导用户补齐工作包 schema 并持续收敛",
+                    "required": True,
+                }
+            ]
+        return self._normalize_workpackage_blueprint(candidate, prompt=prompt)
 
     def _enrich_blueprint_with_api_gap_plan(self, blueprint: Dict[str, Any], context: Dict[str, Any], *, prompt: str) -> None:
         api_plan = blueprint.get("api_plan") if isinstance(blueprint.get("api_plan"), dict) else {}
@@ -1437,20 +2213,24 @@ class FactoryAgent:
 
         registered_ids = self._collect_registered_interface_ids(registered_used, context)
         required = self._derive_required_capabilities(prompt=prompt, io_contract=blueprint.get("io_contract"))
-        missing_by_capability = {str(item.get("capability_id") or ""): item for item in missing if isinstance(item, dict)}
+        missing_by_name = {str(item.get("name") or ""): item for item in missing if isinstance(item, dict)}
         for capability in required:
-            cap_id = str(capability.get("capability_id") or "").strip()
-            if not cap_id or cap_id in registered_ids or cap_id in missing_by_capability:
+            interface_id = str(capability.get("interface_id") or "").strip()
+            cap_name = str(capability.get("name") or "").strip()
+            if (not interface_id and not cap_name) or interface_id in registered_ids or cap_name in missing_by_name:
                 continue
             missing.append(
                 {
-                    "capability_id": cap_id,
-                    "name": str(capability.get("name") or cap_id),
+                    "name": cap_name or interface_id,
                     "endpoint": str(capability.get("endpoint") or ""),
                     "reason": str(capability.get("reason") or "补足治理能力"),
-                    "requires_key": True,
-                    "api_key_env": str(capability.get("api_key_env") or f"{cap_id.upper()}_API_KEY"),
-                    "provider": str(capability.get("provider") or "external"),
+                    "requires_key": bool(capability.get("requires_key", True)),
+                    "api_key_env": str(capability.get("api_key_env") or "EXTERNAL_API_KEY"),
+                    "register_plan": {
+                        "target": "trust_hub",
+                        "tool_type": "api",
+                        "status_on_register": "pending_key",
+                    },
                 }
             )
         api_plan["missing_apis"] = missing
@@ -1493,45 +2273,45 @@ class FactoryAgent:
         required: List[Dict[str, str]] = []
         required.append(
             {
-                "capability_id": "address_standardize",
+                "interface_id": "address_standardize",
                 "name": "地址标准化API",
                 "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/geo",
                 "reason": "执行地址标准化",
-                "api_key_env": "FENGTU_AK_STANDARDIZE",
-                "provider": "sfmap",
+                "api_key_env": "FENGTU_AK_GROUP_B",
+                "requires_key": True,
             }
         )
         if "验真" in text or "真实性" in text or "address_validation" in str(props):
             required.append(
                 {
-                    "capability_id": "address_real_check",
+                    "interface_id": "address_real_check",
                     "name": "地址真实性校验API",
                     "endpoint": "https://gis-apis.sf-express.com/all/api/geocode/realcheck",
                     "reason": "执行地址验真",
-                    "api_key_env": "FENGTU_AK_REALCHECK",
-                    "provider": "sfmap",
+                    "api_key_env": "FENGTU_AK_GROUP_A",
+                    "requires_key": True,
                 }
             )
         if "实体拆分" in text or "entity_parsing" in str(props):
             required.append(
                 {
-                    "capability_id": "entity_parsing",
+                    "interface_id": "entity_parsing",
                     "name": "空间实体拆分API",
                     "endpoint": "https://api.external.example.com/entity/parsing",
                     "reason": "补齐空间实体拆分能力",
                     "api_key_env": "ENTITY_PARSING_API_KEY",
-                    "provider": "external",
+                    "requires_key": True,
                 }
             )
         if "空间图谱" in text or "spatial_graph" in str(props):
             required.append(
                 {
-                    "capability_id": "spatial_graph_build",
+                    "interface_id": "spatial_graph_build",
                     "name": "空间图谱构建API",
                     "endpoint": "https://api.external.example.com/spatial/graph/build",
                     "reason": "补齐空间图谱输出能力",
                     "api_key_env": "SPATIAL_GRAPH_API_KEY",
-                    "provider": "external",
+                    "requires_key": True,
                 }
             )
         return required
@@ -1543,7 +2323,7 @@ class FactoryAgent:
         for item in missing:
             if not isinstance(item, dict):
                 continue
-            cap_id = self._slugify_name(str(item.get("capability_id") or item.get("name") or "external_api"))
+            cap_id = self._slugify_name(str(item.get("name") or "external_api"))
             script_name = f"fetch_{cap_id}.py"
             if script_name in existing_names:
                 continue
@@ -1551,10 +2331,9 @@ class FactoryAgent:
                 {
                     "name": script_name,
                     "purpose": f"调用外部API补齐能力：{str(item.get('name') or cap_id)}",
-                    "runtime": "python",
+                    "runtime": "python3",
                     "entry": f"python scripts/{script_name}",
-                    "endpoint": str(item.get("endpoint") or ""),
-                    "api_key_env": str(item.get("api_key_env") or ""),
+                    "dependencies": ["requests>=2.31.0"],
                 }
             )
             existing_names.add(script_name)

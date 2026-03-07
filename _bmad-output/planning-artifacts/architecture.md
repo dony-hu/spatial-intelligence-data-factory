@@ -7,7 +7,7 @@ inputDocuments:
   - docs/ux-runtime-observability-s2-15-page-design-2026-03-02.md
   - docs/ux-obs-runtime-s2-15-human-loop-e2e-2026-03-02.md
   - docs/architecture-spatial-intelligence-data-factory-2026-02-28.md
-  - docs/architecture/module_boundaries.md
+  - docs/architecture/模块边界.md
   - docs/architecture/workpackage-schema-address-governance-case-v1-2026-03-03.md
 workflowType: 'architecture'
 lastStep: 8

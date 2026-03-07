@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "addr_governance_spatial_graph-v1.0.1",
+  "name": "addr_governance_spatial_graph",
+  "version": "v1.0.1",
+  "objective": "对输入addresses[]执行地址标准化、五级解析、地理编码与真实性校验，输出records[]与spatial_graph，并在dryrun阶段完成100条抽样评估与指标产出。",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 4,
+  "line_metrics_path": "workpackages/bundles/addr_governance_spatial_graph-v1.0.1/observability/line_metrics.json",
+  "status": "success"
+}

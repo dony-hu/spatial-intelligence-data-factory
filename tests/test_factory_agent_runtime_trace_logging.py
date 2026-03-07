@@ -35,6 +35,15 @@ def test_factory_agent_converse_writes_runtime_trace_file_and_returns_trace_payl
     assert len(lines) >= 2
     assert {str(item.get("channel") or "") for item in lines}.issuperset({"client_nanobot"})
 
+    memory = result.get("memory_objects") or {}
+    assert isinstance(memory, dict)
+    boot_context = memory.get("boot_context") or {}
+    assert str((boot_context.get("role_contract") or {}).get("agent_name") or "") == "nanobot"
+    assert bool((boot_context.get("boundary_contract") or {}).get("forbidden"))
+    discovery = memory.get("discovery_facts") or {}
+    assert "数据治理目标" in str(discovery.get("goal_text") or "")
+    assert isinstance(memory.get("timeline"), list)
+
 
 def test_factory_agent_generate_workpackage_returns_nanobot_opencode_trace_events(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
@@ -61,3 +70,13 @@ def test_factory_agent_generate_workpackage_returns_nanobot_opencode_trace_event
     assert len(opencode_logs) >= 2
     assert str(opencode_logs[0].get("direction") or "") == "nanobot->opencode"
     assert str(opencode_logs[1].get("direction") or "") == "opencode->nanobot"
+
+    memory = result.get("memory_objects") or {}
+    assert isinstance(memory, dict)
+    attempts = memory.get("blueprint_attempts") or []
+    assert isinstance(attempts, list) and attempts
+    assert str((attempts[0] or {}).get("stage") or "") == "BLUEPRINT_LOOP"
+    opencode_ticket = memory.get("opencode_task_ticket") or {}
+    assert str(opencode_ticket.get("phase") or "") == "BUILD_WITH_OPENCODE"
+    artifacts = memory.get("build_artifacts_index") or {}
+    assert str(artifacts.get("bundle_name") or "").startswith("trace-case-v1.0.0")

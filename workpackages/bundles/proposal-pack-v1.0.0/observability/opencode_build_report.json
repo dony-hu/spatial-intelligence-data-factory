@@ -3,10 +3,9 @@
   "bundle_name": "proposal-pack-v1.0.0",
   "name": "proposal-pack",
   "version": "v1.0.0",
-  "objective": "proposal",
+  "objective": "proposal，并输出可观测验收结果",
   "sources": [
-    "高德",
-    "百度"
+    "fengtu"
   ],
   "script_count": 2,
   "line_metrics_path": "workpackages/bundles/proposal-pack-v1.0.0/observability/line_metrics.json",

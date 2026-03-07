@@ -1,0 +1,149 @@
+{
+  "schema_version": "orchestration_context.v1",
+  "boot_context": {
+    "role_contract": {
+      "agent_name": "nanobot",
+      "mission": "编排数据治理工作包全流程"
+    },
+    "boundary_contract": {
+      "dev_chain": "nanobot<->opencode",
+      "runtime_chain": "worker executes workpackage_id@version entrypoint",
+      "forbidden": ["mock", "fallback", "workground"]
+    },
+    "schema_contract": {
+      "schema_id": "workpackage_schema.v1",
+      "schema_path": "workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json"
+    },
+    "capability_contract": {
+      "source": "trust_hub_registered_api_catalog"
+    },
+    "acceptance_contract": {
+      "gates": ["confirm_generate", "confirm_dryrun_result", "confirm_publish"]
+    }
+  },
+  "discovery_facts": {
+    "goal_text": "创建地址治理工作包并完成发布",
+    "objective": "地址标准化、验真、实体拆分、空间图谱",
+    "constraints": {
+      "no_mock": true,
+      "no_fallback": true,
+      "requires_real_llm": true
+    }
+  },
+  "capability_snapshot": {
+    "snapshot_at": "2026-03-05T10:10:00+00:00",
+    "provider_count": 2,
+    "apis": [
+      {
+        "source_id": "sfmap",
+        "interface_id": "address_standardize",
+        "base_url": "https://gis-apis.sf-express.com",
+        "auth_type": "ak",
+        "key_env": "FENGTU_AK_GROUP_B",
+        "rate_limit": "60/min"
+      }
+    ],
+    "missing_capabilities": []
+  },
+  "blueprint_attempts": [
+    {
+      "round": 1,
+      "stage": "BLUEPRINT_LOOP",
+      "status": "schema_invalid",
+      "schema_passed": false,
+      "schema_errors": ["io_contract.output_schema is required"]
+    },
+    {
+      "round": 2,
+      "stage": "BLUEPRINT_LOOP",
+      "status": "success",
+      "schema_passed": true,
+      "schema_errors": []
+    }
+  ],
+  "opencode_task_ticket": {
+    "ticket_id": "ticket_abc123",
+    "phase": "BUILD_WITH_OPENCODE",
+    "bundle_name": "addr-governance-v1.0.0",
+    "task_list": ["生成 run_pipeline.py", "生成 entrypoint"]
+  },
+  "build_artifacts_index": {
+    "bundle_name": "addr-governance-v1.0.0",
+    "bundle_path": "workpackages/bundles/addr-governance-v1.0.0",
+    "files": [
+      {"path": "workpackage.json", "size": 2048}
+    ]
+  },
+  "interaction_state": {
+    "current_stage": "WAIT_USER_INPUT",
+    "status": "waiting_user_input",
+    "reason_code": "API_AUTH_MISSING",
+    "retry_count": 1,
+    "max_retry": 1,
+    "user_action_required": true,
+    "resume_from_stage": "ALIGN_IO",
+    "next_action": "等待用户提供 SPATIAL_GRAPH_API_KEY 或确认移除图谱构建能力",
+    "updated_at": "2026-03-05T10:18:00+00:00"
+  },
+  "blocker_ticket": {
+    "active": true,
+    "code": "API_AUTH_MISSING",
+    "stage": "BUILD_WITH_OPENCODE",
+    "summary": "图谱构建 API 缺少可用密钥，当前无法生成可运行 bundle。",
+    "impact": "空间图谱能力无法进入当前工作包，整体目标无法按原范围继续。",
+    "user_actions": [
+      "提供 SPATIAL_GRAPH_API_KEY",
+      "或确认当前版本移除 spatial_graph 能力"
+    ],
+    "resume_condition": "密钥已提供，或用户确认裁剪范围并重新对齐 I/O",
+    "resume_from_stage": "ALIGN_IO",
+    "auto_retryable": false,
+    "retry_exhausted": true
+  },
+  "gate_state": {
+    "status": "blocked",
+    "pending_gate": "none",
+    "confirm_generate": {"required": true, "confirmed": false},
+    "confirm_dryrun_result": {"required": true, "confirmed": false},
+    "confirm_publish": {"required": true, "confirmed": false}
+  },
+  "runtime_evidence": {},
+  "publish_decision": {},
+  "timeline": [
+    {
+      "ts": "2026-03-05T10:00:00+00:00",
+      "stage": "DISCOVERY",
+      "status": "success",
+      "summary": "接收并记录用户治理目标",
+      "memory_object": "discovery_facts"
+    },
+    {
+      "ts": "2026-03-05T10:10:00+00:00",
+      "stage": "ALIGN_IO",
+      "status": "success",
+      "summary": "拉取 TrustHub 能力快照并完成初版 I/O 对齐",
+      "memory_object": "capability_snapshot"
+    },
+    {
+      "ts": "2026-03-05T10:14:00+00:00",
+      "stage": "BLUEPRINT_LOOP",
+      "status": "success",
+      "summary": "第二轮蓝图通过 schema 校验",
+      "memory_object": "blueprint_attempts"
+    },
+    {
+      "ts": "2026-03-05T10:16:00+00:00",
+      "stage": "BUILD_WITH_OPENCODE",
+      "status": "partial",
+      "summary": "已生成 workpackage.json，但图谱构建依赖缺少密钥",
+      "memory_object": "build_artifacts_index"
+    },
+    {
+      "ts": "2026-03-05T10:18:00+00:00",
+      "stage": "WAIT_USER_INPUT",
+      "status": "waiting",
+      "summary": "请求用户补充图谱构建 API 密钥或裁剪 spatial_graph 能力",
+      "memory_object": "blocker_ticket"
+    }
+  ]
+}

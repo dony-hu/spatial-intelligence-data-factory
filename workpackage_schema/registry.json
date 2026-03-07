@@ -11,7 +11,9 @@
       "schema_file": "schemas/v1/workpackage_schema.v1.schema.json",
       "companion_artifacts": {
         "readme_template": "templates/v1/workpackage_bundle.README.v1.md",
-        "bundle_structure_template": "templates/v1/workpackage_bundle.structure.v1.md"
+        "bundle_structure_template": "templates/v1/workpackage_bundle.structure.v1.md",
+        "orchestration_context_schema": "schemas/v1/orchestration_context.v1.schema.json",
+        "orchestration_context_example": "examples/v1/nanobot_orchestration_memory.v1.json"
       },
       "examples": [
         "examples/v1/address_batch_governance.workpackage_schema.v1.json"

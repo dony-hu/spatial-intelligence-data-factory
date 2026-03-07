@@ -3,7 +3,7 @@
   "bundle_name": "addr-governance-v1.0.0",
   "name": "addr-governance",
   "version": "v1.0.0",
-  "objective": "地址治理工作包",
+  "objective": "地址治理工作包，并输出可观测验收结果",
   "sources": [
     "fengtu"
   ],

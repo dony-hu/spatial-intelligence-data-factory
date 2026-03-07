@@ -271,3 +271,37 @@ def test_runtime_agent_chat_api_writes_runtime_api_trace_log(monkeypatch, tmp_pa
     assert trace_path.exists()
     rows = [json.loads(x) for x in trace_path.read_text(encoding="utf-8").splitlines() if x.strip()]
     assert any(str((row.get("event_type") or "")) == "runtime_agent_chat" for row in rows)
+
+
+def test_runtime_agent_chat_api_passthroughs_memory_objects(monkeypatch) -> None:
+    monkeypatch.setattr(observability.GOVERNANCE_SERVICE, "log_audit_event", lambda **_kwargs: None)
+    expected_memory = {
+        "boot_context": {
+            "role_contract": {"agent_name": "nanobot", "mission": "编排数据治理工作包全流程"},
+            "boundary_contract": {"forbidden": ["mock", "fallback", "workground"]},
+        },
+        "discovery_facts": {"goal_text": "创建地址治理工作包并发布"},
+        "timeline": [{"stage": "DISCOVERY", "status": "ok"}],
+    }
+
+    class _FakeAgent:
+        def converse(self, _message: str, session_id: str | None = None):
+            return {
+                "status": "ok",
+                "action": "generate_workpackage",
+                "bundle_name": "memory-case-v1.0.0",
+                "message": "工作包已生成",
+                "nanobot_traces": {"client_nanobot": [], "nanobot_opencode": []},
+                "memory_objects": expected_memory,
+            }
+
+    observability._FACTORY_AGENT = _FakeAgent()
+    client = TestClient(app)
+    resp = client.post(
+        "/v1/governance/observability/runtime/agent-chat",
+        json={"session_id": "runtime-memory-pass-001", "message": "创建工作包"},
+    )
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload.get("memory_objects") == expected_memory
+    assert ((payload.get("result") or {}).get("memory_objects") or {}) == expected_memory

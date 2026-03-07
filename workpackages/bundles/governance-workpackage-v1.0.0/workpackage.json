@@ -1,185 +1,218 @@
 {
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
   "workpackage": {
+    "id": "governance-workpackage",
     "name": "governance-workpackage",
     "version": "v1.0.0",
-    "objective": "地址治理工作包（标准化/验真/空间图谱）"
+    "objective": "数据治理任务执行与可观测验收",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
   },
   "architecture_context": {
-    "layers": [
-      "Agent会话编排层",
-      "可信数据Hub层",
-      "工作包执行层",
-      "运行态可观测层"
-    ],
-    "workpackage_lifecycle": [
-      "requirements_confirm",
-      "generate",
-      "dryrun",
-      "publish",
-      "runtime_upload"
-    ],
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
     "runtime_env": {
       "python": "3.11",
-      "queue": "sync"
+      "database": "postgresql",
+      "no_fallback": true
     }
   },
   "io_contract": {
     "input_schema": {
       "type": "object",
-      "properties": {
-        "raw_text": {
-          "type": "string"
-        }
-      },
       "required": [
-        "raw_text"
-      ]
+        "addresses"
+      ],
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
     },
     "output_schema": {
       "type": "object",
+      "required": [
+        "records",
+        "spatial_graph"
+      ],
       "properties": {
-        "normalization": {
-          "type": "object"
-        },
-        "entity_parsing": {
-          "type": "object"
-        },
-        "address_validation": {
-          "type": "object"
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
         },
         "spatial_graph": {
           "type": "object"
         }
-      },
-      "required": [
-        "normalization",
-        "entity_parsing",
-        "address_validation",
-        "spatial_graph"
-      ]
+      }
     }
   },
   "api_plan": {
     "registered_apis_used": [
       {
         "source_id": "fengtu",
-        "interface_id": "address_standardize"
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "base_url": "https://gis-apis.sf-express.com/iad/api",
+        "method": "GET"
       },
       {
         "source_id": "fengtu",
-        "interface_id": "address_real_check"
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "base_url": "https://gis-apis.sf-express.com/opquery/addressRealCheck",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "base_url": "https://gis-apis.sf-express.com/atype/api",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "base_url": "https://gis-apis.sf-express.com/all/api/geocode/geo",
+        "method": "GET"
       }
     ],
     "missing_apis": [
       {
-        "capability_id": "entity_parsing",
-        "name": "空间实体拆分API",
-        "endpoint": "https://api.external.example.com/entity/parsing",
-        "reason": "补齐空间实体拆分能力",
-        "requires_key": true,
-        "api_key_env": "ENTITY_PARSING_API_KEY",
-        "provider": "external"
-      },
-      {
-        "capability_id": "spatial_graph_build",
         "name": "空间图谱构建API",
         "endpoint": "https://api.external.example.com/spatial/graph/build",
         "reason": "补齐空间图谱输出能力",
         "requires_key": true,
         "api_key_env": "SPATIAL_GRAPH_API_KEY",
-        "provider": "external"
-      }
-    ],
-    "missing_apis_proposals": [
-      {
-        "source_id": "api",
-        "provider": "external",
-        "endpoint": "https://api.external.example.com/entity/parsing",
-        "status": "proposal_pending_confirmation",
-        "requires_key": true,
-        "api_key_env": "ENTITY_PARSING_API_KEY"
-      },
-      {
-        "source_id": "api",
-        "provider": "external",
-        "endpoint": "https://api.external.example.com/spatial/graph/build",
-        "status": "proposal_pending_confirmation",
-        "requires_key": true,
-        "api_key_env": "SPATIAL_GRAPH_API_KEY"
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
       }
     ]
   },
   "execution_plan": {
     "steps": [
-      "解析输入",
-      "地址标准化",
-      "地址验真",
-      "空间图谱构建"
-    ]
+      {
+        "step_id": "S01",
+        "name": "需求确认",
+        "stage": "requirements_confirm",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "生成工作包",
+        "stage": "generate",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "试运行验证",
+        "stage": "dryrun",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "发布执行",
+        "stage": "publish",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
   },
   "scripts": [
     {
       "name": "run_pipeline.py",
       "purpose": "执行治理流程",
-      "runtime": "python",
-      "entry": "python scripts/run_pipeline.py"
+      "runtime": "python3",
+      "entry": "python scripts/run_pipeline.py",
+      "dependencies": []
     },
     {
-      "name": "fetch_entity_parsing.py",
-      "purpose": "调用外部API补齐能力：空间实体拆分API",
-      "runtime": "python",
-      "entry": "python scripts/fetch_entity_parsing.py",
-      "endpoint": "https://api.external.example.com/entity/parsing",
-      "api_key_env": "ENTITY_PARSING_API_KEY"
-    },
-    {
-      "name": "fetch_spatial_graph_build.py",
+      "name": "fetch_api.py",
       "purpose": "调用外部API补齐能力：空间图谱构建API",
-      "runtime": "python",
-      "entry": "python scripts/fetch_spatial_graph_build.py",
-      "endpoint": "https://api.external.example.com/spatial/graph/build",
-      "api_key_env": "SPATIAL_GRAPH_API_KEY"
+      "runtime": "python3",
+      "entry": "python scripts/fetch_api.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
     }
   ],
-  "generation_trace": {
-    "generator": "factory_agent",
-    "llm_model": "gpt-5.3-codex",
-    "llm_retry_count": 2,
-    "schema_fix_rounds": [
-      {
-        "round": 1,
-        "errors": [
-          "llm_call_failed: "
-        ]
-      },
-      {
-        "round": 2,
-        "errors": [
-          "llm_call_failed: "
-        ]
-      }
-    ],
-    "autofill_applied_fields": [
-      "api_plan",
-      "architecture_context",
-      "execution_plan",
-      "io_contract",
-      "scripts",
-      "workpackage"
-    ],
-    "llm_contribution": [
-      "需求语义理解与工作包规划",
-      "I/O契约和API计划建议（不直接产出可执行脚本）"
-    ],
-    "opencode_contribution": [
-      "工作包文件落盘与脚本生成（OpenCode Builder）",
-      "schema修复反馈循环执行"
-    ]
-  },
-  "name": "governance-workpackage",
-  "version": "v1.0.0",
-  "objective": "地址治理工作包（标准化/验真/空间图谱）",
-  "sources": [
-    "fengtu"
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    }
   ]
 }

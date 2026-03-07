@@ -54,6 +54,26 @@
         background: #fcfefd;
         padding: 10px;
       }
+      .memory-shell {
+        border: 1px solid #d9e4e1;
+        border-radius: 0.75rem;
+        background: #fbfdfd;
+        min-height: 180px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 10px;
+      }
+      .memory-kv {
+        border: 1px solid #dce8e4;
+        border-radius: 0.75rem;
+        background: #fcfefe;
+        padding: 10px;
+      }
+      .memory-kv h6 {
+        font-size: 13px;
+        margin-bottom: 8px;
+        color: #395a52;
+      }
     </style>
   </head>
   <body>
@@ -110,6 +130,51 @@
                 <div class="col-md-6">
                   <div class="small text-secondary mb-2">nanobot ↔ opencode</div>
                   <div class="accordion" id="opencodeAccordion" data-testid="nanobot-opencode-panel"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel-card mb-3" data-testid="nanobot-memory-panel">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+              <h5 class="mb-1">2.5) nanobot 关键记忆对象</h5>
+              <p class="text-secondary small mb-0">展示编排上下文、需求收敛与蓝图/构建/门禁的关键状态。</p>
+            </div>
+            <div class="card-body">
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <div class="small text-secondary mb-2">记忆时间线</div>
+                  <div id="memoryTimeline" class="memory-shell mono small" data-testid="memory-timeline-panel">暂无记忆时间线</div>
+                </div>
+                <div class="col-md-6">
+                  <div class="small text-secondary mb-2">记忆摘要</div>
+                  <div id="memorySummary" class="memory-shell mono small" data-testid="memory-summary-panel">暂无记忆摘要</div>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="memory-kv">
+                    <h6>boot_context</h6>
+                    <pre id="memoryBootContext" class="mono small mb-0" data-testid="memory-boot-context">{}</pre>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="memory-kv">
+                    <h6>discovery_facts</h6>
+                    <pre id="memoryDiscoveryFacts" class="mono small mb-0" data-testid="memory-discovery-facts">{}</pre>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="memory-kv">
+                    <h6>capability_snapshot</h6>
+                    <pre id="memoryCapabilitySnapshot" class="mono small mb-0" data-testid="memory-capability-snapshot">{}</pre>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="memory-kv">
+                    <h6>gate_state / blocker_ticket</h6>
+                    <pre id="memoryGateBlocker" class="mono small mb-0" data-testid="memory-gate-blocker">{}</pre>
+                  </div>
                 </div>
               </div>
             </div>
@@ -286,6 +351,7 @@
         eventViewMode: "zh",
         confirmations: new Set(),
         lastDryrunReport: null,
+        memoryObjects: {},
         chatSending: false,
         lastChatSubmit: { text: "", at: 0 },
       };
@@ -362,6 +428,12 @@
         wpSearchBtn: document.getElementById("wpSearchBtn"),
         wpSearchReset: document.getElementById("wpSearchReset"),
         wpSearchResults: document.getElementById("wpSearchResults"),
+        memoryTimeline: document.getElementById("memoryTimeline"),
+        memorySummary: document.getElementById("memorySummary"),
+        memoryBootContext: document.getElementById("memoryBootContext"),
+        memoryDiscoveryFacts: document.getElementById("memoryDiscoveryFacts"),
+        memoryCapabilitySnapshot: document.getElementById("memoryCapabilitySnapshot"),
+        memoryGateBlocker: document.getElementById("memoryGateBlocker"),
       };
 
       el.windowFilter.value = "__DEFAULT_WINDOW__";
@@ -680,6 +752,45 @@
           .join("");
       }
 
+      function renderMemoryObjects(memoryObjects) {
+        const m = memoryObjects && typeof memoryObjects === "object" ? memoryObjects : {};
+        const timeline = Array.isArray(m.timeline) ? m.timeline : [];
+        const attempts = Array.isArray(m.blueprint_attempts) ? m.blueprint_attempts : [];
+        const capabilityApis = Array.isArray((m.capability_snapshot || {}).apis) ? (m.capability_snapshot || {}).apis : [];
+        const summaryRows = [
+          { key: "timeline_events", value: timeline.length },
+          { key: "blueprint_attempts", value: attempts.length },
+          { key: "capability_apis", value: capabilityApis.length },
+          { key: "has_opencode_ticket", value: !!((m.opencode_task_ticket || {}).phase) },
+          { key: "gate_status", value: String((m.gate_state || {}).status || "-") },
+          { key: "has_blocker", value: !!((m.blocker_ticket || {}).type) },
+        ];
+
+        el.memoryTimeline.textContent = timeline.length
+          ? timeline
+              .slice(-30)
+              .map((row, idx) => {
+                const ts = String(row.ts || "-");
+                const stage = String(row.stage || "-");
+                const status = String(row.status || "-");
+                const summary = String(row.summary || "-");
+                const memObj = String(row.memory_object || "-");
+                return `${idx + 1}. ${ts} | ${stage} | ${status} | ${memObj}\n   ${summary}`;
+              })
+              .join("\n")
+          : "暂无记忆时间线";
+        el.memorySummary.textContent = summaryRows.map((row) => `${row.key}: ${row.value}`).join("\n");
+        el.memoryBootContext.textContent = safeJson(m.boot_context || {});
+        el.memoryDiscoveryFacts.textContent = safeJson(m.discovery_facts || {});
+        el.memoryCapabilitySnapshot.textContent = safeJson(m.capability_snapshot || {});
+        el.memoryGateBlocker.textContent = safeJson({
+          gate_state: m.gate_state || {},
+          blocker_ticket: m.blocker_ticket || {},
+          runtime_evidence: m.runtime_evidence || {},
+          publish_decision: m.publish_decision || {},
+        });
+      }
+
       function setWorkpackageOptions(items) {
         el.wpOptions.innerHTML = (items || []).map((row) => {
           const key = `${row.workpackage_id || ""}@${row.version || ""}`;
@@ -884,12 +995,15 @@
           const result = payload.result || {};
           const workpackageRef = String(payload.workpackage_ref || "");
           const traces = payload.nanobot_traces || {};
+          const memoryObjects = payload.memory_objects || result.memory_objects || {};
           const clientLogs = Array.isArray(traces.client_nanobot) ? traces.client_nanobot : [];
           const opencodeLogs = Array.isArray(traces.nanobot_opencode) ? traces.nanobot_opencode : [];
           state.nanobotClientLogs = clientLogs;
           state.nanobotOpencodeLogs = opencodeLogs;
+          state.memoryObjects = memoryObjects;
           state.rounds = clientLogs;
           renderLlmRounds();
+          renderMemoryObjects(memoryObjects);
 
           if (workpackageRef) {
             el.wpSelector.value = workpackageRef;
@@ -1081,6 +1195,7 @@
         renderTimeline();
         renderLlmRounds();
         renderMaintLogs();
+        renderMemoryObjects({});
         await Promise.all([loadSummary(), loadPipeline()]);
         await loadWorkpackageBlueprint(el.wpSelector.value || "");
         await loadWorkpackageSearchResults();

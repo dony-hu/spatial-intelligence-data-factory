@@ -1,0 +1,7 @@
+{
+  "sources": [
+    "fengtu"
+  ],
+  "version": "v1.0.0",
+  "objective": "地址标准化与验真，并输出可观测验收结果"
+}

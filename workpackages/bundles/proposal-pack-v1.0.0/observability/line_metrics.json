@@ -1,8 +1,7 @@
 {
   "sources": [
-    "高德",
-    "百度"
+    "fengtu"
   ],
   "version": "v1.0.0",
-  "objective": "proposal"
+  "objective": "proposal，并输出可观测验收结果"
 }

@@ -292,7 +292,46 @@
           }
         }
       }
-    }
+    },
+    "input_bindings": [
+      {
+        "binding_id": "input_batch_file",
+        "role": "primary",
+        "mode": "file",
+        "format": "csv",
+        "delivery_semantics": "batch",
+        "resource": {
+          "path": "input/sample_addresses_10.csv",
+          "path_env": "WORKPACKAGE_INPUT_FILE"
+        }
+      }
+    ],
+    "output_bindings": [
+      {
+        "binding_id": "output_governance_records",
+        "role": "primary",
+        "mode": "database",
+        "format": "none",
+        "delivery_semantics": "batch",
+        "resource": {
+          "engine": "postgresql",
+          "dsn_env": "DATABASE_URL",
+          "schema": "governance",
+          "table": "canonical_record",
+          "write_mode": "upsert"
+        }
+      },
+      {
+        "binding_id": "output_runtime_evidence",
+        "role": "evidence",
+        "mode": "file",
+        "format": "json",
+        "delivery_semantics": "batch",
+        "resource": {
+          "path": "output/runtime_output.json"
+        }
+      }
+    ]
   },
   "api_plan": {
     "registered_apis_used": [
@@ -366,6 +405,12 @@
         "outputs": [
           "aligned_io_contract"
         ],
+        "input_bindings": [
+          "input_batch_file"
+        ],
+        "output_bindings": [
+          "output_runtime_evidence"
+        ],
         "timeout_sec": 300,
         "retry": {
           "max_attempts": 2,
@@ -381,6 +426,12 @@
         ],
         "outputs": [
           "workpackage.json"
+        ],
+        "input_bindings": [
+          "input_batch_file"
+        ],
+        "output_bindings": [
+          "output_runtime_evidence"
         ],
         "timeout_sec": 600,
         "retry": {
@@ -398,6 +449,12 @@
         "outputs": [
           "dryrun_report"
         ],
+        "input_bindings": [
+          "input_batch_file"
+        ],
+        "output_bindings": [
+          "output_runtime_evidence"
+        ],
         "timeout_sec": 1200,
         "retry": {
           "max_attempts": 1,
@@ -413,6 +470,13 @@
         ],
         "outputs": [
           "publish_record"
+        ],
+        "input_bindings": [
+          "input_batch_file"
+        ],
+        "output_bindings": [
+          "output_governance_records",
+          "output_runtime_evidence"
         ],
         "timeout_sec": 300,
         "retry": {
@@ -441,6 +505,13 @@
       "dependencies": [
         "requests>=2.31.0",
         "pydantic>=2.6.0"
+      ],
+      "consumes": [
+        "input_batch_file"
+      ],
+      "produces": [
+        "output_governance_records",
+        "output_runtime_evidence"
       ]
     },
     {
@@ -450,6 +521,12 @@
       "entry": "python scripts/fetch_entity_parsing.py",
       "dependencies": [
         "requests>=2.31.0"
+      ],
+      "consumes": [
+        "input_batch_file"
+      ],
+      "produces": [
+        "output_governance_records"
       ]
     },
     {
@@ -460,6 +537,12 @@
       "dependencies": [
         "requests>=2.31.0",
         "networkx>=3.2.1"
+      ],
+      "consumes": [
+        "input_batch_file"
+      ],
+      "produces": [
+        "output_runtime_evidence"
       ]
     }
   ],

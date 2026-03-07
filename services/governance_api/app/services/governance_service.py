@@ -32,15 +32,29 @@ class GovernanceService:
         # Pass-through for read-only/simple repository operations.
         return getattr(self._repo, name)
 
-    def submit_task(self, batch_name: str, ruleset_id: str, records: list[dict[str, Any]]) -> dict[str, Any]:
+    def submit_task(
+        self,
+        batch_name: str,
+        ruleset_id: str,
+        records: list[dict[str, Any]],
+        *,
+        workpackage_id: str = "",
+        version: str = "",
+    ) -> dict[str, Any]:
         task_id = f"task_{uuid4().hex[:12]}"
         trace_id = f"trace_{uuid4().hex[:12]}"
+        target_workpackage_id = str(workpackage_id or "").strip()
+        target_version = str(version or "").strip()
+        if bool(target_workpackage_id) != bool(target_version):
+            raise ValueError("workpackage_id and version must be provided together")
         task_payload = {
             "task_id": task_id,
             "trace_id": trace_id,
             "batch_name": batch_name,
             "ruleset_id": ruleset_id,
             "records": records,
+            "workpackage_id": target_workpackage_id,
+            "version": target_version,
         }
 
         self._repo.create_task(
@@ -123,8 +137,10 @@ class GovernanceService:
         target_workpackage_id = str(workpackage_id or "").strip()
         target_version = str(version or "").strip()
         has_workpackage = bool(target_workpackage_id or target_version)
+        if not has_workpackage:
+            raise ValueError("workpackage_id and version are required in runtime execution mode")
 
-        if has_workpackage and (not target_workpackage_id or not target_version):
+        if not target_workpackage_id or not target_version:
             raise ValueError("workpackage_id and version must be provided together")
         if has_workpackage and str(ruleset_id or "").strip() and str(ruleset_id or "default").strip() != "default":
             raise ValueError("ruleset_id conflicts with workpackage_id/version mapping")
@@ -266,6 +282,15 @@ class GovernanceService:
                 payload={"actor": actor_name, "action": "confirm_publish", "decision": "approved"},
             )
             _emit("publish_confirmed", "publish_confirmed", source="factory_agent")
+            self._repo.create_runtime_workpackage_record(
+                workpackage_id=target_workpackage_id,
+                version=target_version,
+                name=target_workpackage_id,
+                objective="runtime upload execution",
+                status="published",
+                actor=actor_name,
+                upsert=True,
+            )
 
         original_mode = os.getenv("GOVERNANCE_QUEUE_MODE")
         os.environ["GOVERNANCE_QUEUE_MODE"] = "sync"
@@ -274,6 +299,8 @@ class GovernanceService:
                 batch_name=str(batch_name or "runtime-upload-batch"),
                 ruleset_id=str(ruleset_id or "default"),
                 records=records,
+                workpackage_id=target_workpackage_id,
+                version=target_version,
             )
         finally:
             if original_mode is None:
@@ -1209,6 +1236,21 @@ class GovernanceService:
             for item in (workpackage_config.get("sources") if isinstance(workpackage_config.get("sources"), list) else [])
             if str(item).strip()
         ]
+        if not selected_sources:
+            api_plan = workpackage_config.get("api_plan") if isinstance(workpackage_config.get("api_plan"), dict) else {}
+            registered_apis_used = (
+                api_plan.get("registered_apis_used")
+                if isinstance(api_plan.get("registered_apis_used"), list)
+                else []
+            )
+            dedup_sources: list[str] = []
+            for item in registered_apis_used:
+                if not isinstance(item, dict):
+                    continue
+                source_id = str(item.get("source_id") or "").strip()
+                if source_id and source_id not in dedup_sources:
+                    dedup_sources.append(source_id)
+            selected_sources = dedup_sources
         registered_apis = self._resolve_registered_apis(selected_sources)
         return {
             "workpackage_id": target_workpackage,

@@ -12,7 +12,7 @@ def main() -> None:
     payload = {
         "script": "fetch_ext-a.py",
         "purpose": "调用外部API补齐能力：ext-a",
-        "endpoint": "https://ext-a.example.com",
+        "endpoint": "",
         "api_key_provided": bool(api_key),
         "status": "ready" if api_key else "waiting_for_api_key",
     }

@@ -1,0 +1,23 @@
+{
+  "epic": "Runtime Observability V2",
+  "date": "2026-03-02",
+  "stories_covered": ["S2-1", "S2-2", "S2-3", "S2-4", "S2-5", "S2-6", "S2-7", "S2-8", "S2-9", "S2-14"],
+  "result": "PASS",
+  "summary": {
+    "contract_and_regression": "PASS",
+    "rbac_and_masking": "PASS",
+    "pipeline_observability": "PASS",
+    "no_fallback": "PASS",
+    "zh_event_readability_e2e": "PASS"
+  },
+  "evidence": [
+    "docs/epics/runtime-observability-v2/acceptance/s2-14-acceptance.json",
+    "docs/epics/runtime-observability-v2/acceptance/s2-5-acceptance.json",
+    "docs/epics/runtime-observability-v2/acceptance/s2-6-acceptance.json",
+    "docs/epics/runtime-observability-v2/acceptance/s2-7-acceptance.json",
+    "docs/epics/runtime-observability-v2/acceptance/s2-8-acceptance.json",
+    "docs/epics/runtime-observability-v2/acceptance/s2-9-acceptance.json",
+    "output/test-reports/epic-3-regression-summary-2026-03-02.md",
+    "services/governance_api/tests/test_runtime_workpackage_events_api_contract.py"
+  ]
+}

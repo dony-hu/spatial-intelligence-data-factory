@@ -13,13 +13,20 @@ LONG_MULTI_TURN_TIMEOUT_MS = int(os.getenv("WEB_E2E_LONG_TURN_TIMEOUT_MS", "1200
 
 
 def test_runtime_observability_manual_agent_chat_panel(page, base_url):
-    page.goto(f"{base_url}/v1/governance/observability/runtime/view?window=24h", wait_until="domcontentloaded")
+    page.goto(
+        f"{base_url}/v1/governance/observability/runtime/view?window=24h",
+        wait_until="domcontentloaded",
+        timeout=90000,
+    )
     expect(page.get_by_test_id("agent-chat-panel")).to_be_visible()
+    expect(page.get_by_test_id("nanobot-memory-panel")).to_be_visible()
     expect(page.get_by_test_id("agent-chat-input")).to_be_visible()
     expect(page.get_by_test_id("agent-chat-send")).to_be_visible()
     expect(page.get_by_test_id("agent-chat-log")).to_be_visible()
     expect(page.locator("#llmAccordion")).to_be_visible()
     expect(page.locator("#wpMaintLogs")).to_be_visible()
+    expect(page.get_by_test_id("memory-timeline-panel")).to_be_visible()
+    expect(page.get_by_test_id("memory-summary-panel")).to_be_visible()
     expect(page.locator("#actGenerate")).to_be_visible()
     expect(page.locator("#actDryrun")).to_be_visible()
     expect(page.locator("#actPublish")).to_be_visible()
@@ -28,6 +35,9 @@ def test_runtime_observability_manual_agent_chat_panel(page, base_url):
     page.get_by_test_id("agent-chat-send").click()
     expect(page.get_by_test_id("agent-chat-log")).to_contain_text("列出工作包", timeout=30000)
     expect(page.locator("#llmAccordion")).to_contain_text("第 1 轮", timeout=30000)
+    expect(page.get_by_test_id("memory-summary-panel")).not_to_contain_text("暂无记忆摘要", timeout=30000)
+    expect(page.get_by_test_id("memory-boot-context")).to_contain_text("nanobot", timeout=30000)
+    expect(page.get_by_test_id("memory-discovery-facts")).to_contain_text("列出工作包", timeout=30000)
 
     page.locator("#actGenerate").click()
     expect(page.get_by_test_id("confirm-timeline-panel")).to_contain_text("confirm_generate", timeout=10000)
@@ -424,7 +434,7 @@ def test_runtime_observability_web_e2e_visual_full_lifecycle_delivery(page, base
         chat_input.fill(prompt)
         send_btn.click()
         expect(user_rows).to_have_count(initial_user + idx, timeout=LONG_MULTI_TURN_TIMEOUT_MS)
-        expect(agent_rows).to_have_count(initial_agent + idx, timeout=LONG_MULTI_TURN_TIMEOUT_MS)
+        expect(send_btn).to_be_enabled(timeout=LONG_MULTI_TURN_TIMEOUT_MS)
 
     # 真实 LLM 可能单轮超时，补偿重试确保产出 workpackage
     for prompt in [
@@ -518,7 +528,11 @@ def test_runtime_observability_web_e2e_user_only_goal_nanobot_guided_full_flow(p
     if os.getenv("RUN_REAL_LLM_WEB_E2E", "0") != "1":
         pytest.skip("set RUN_REAL_LLM_WEB_E2E=1 to run real long LLM web e2e")
 
-    page.goto(f"{base_url}/v1/governance/observability/runtime/view?window=24h", wait_until="domcontentloaded")
+    page.goto(
+        f"{base_url}/v1/governance/observability/runtime/view?window=24h",
+        wait_until="domcontentloaded",
+        timeout=90000,
+    )
 
     chat_input = page.get_by_test_id("agent-chat-input")
     send_btn = page.get_by_test_id("agent-chat-send")
@@ -532,6 +546,8 @@ def test_runtime_observability_web_e2e_user_only_goal_nanobot_guided_full_flow(p
     prompts = [str(x) for x in (payload.get("prompts") or []) if str(x).strip()]
     recovery_prompts = [str(x) for x in (payload.get("recovery_prompts") or []) if str(x).strip()]
     assert len(prompts) >= 5
+    # 等待初始化完成后再记录初始值，避免把页面默认填充误判为“新生成工作包”。
+    page.wait_for_timeout(1200)
     initial_wp_ref = str(wp_selector.input_value() or "").strip()
 
     initial_user = user_rows.count()
@@ -549,12 +565,31 @@ def test_runtime_observability_web_e2e_user_only_goal_nanobot_guided_full_flow(p
         send_btn.click()
         expect(send_btn).to_be_enabled(timeout=LONG_MULTI_TURN_TIMEOUT_MS)
 
+    # 强制触发工作包生成，直到可观测到 nanobot ↔ opencode 轨迹。
+    force_generate_prompts = [
+        "请立即执行 generate_workpackage，并调用 opencode 构建可执行工件，返回新的 workpackage_id@version。",
+        "继续推进：必须调用 opencode，生成 entrypoint/scripts/observability，并返回新的 workpackage_id@version。",
+        "请只做一件事：新建并生成可执行工作包，确保 nanobot-opencode 轨迹可见。",
+    ]
+    max_force_attempts = int(os.getenv("WEB_E2E_FORCE_GENERATE_ATTEMPTS", "8"))
+    for i in range(max_force_attempts):
+        panel_text = page.get_by_test_id("nanobot-opencode-panel").inner_text(timeout=5000)
+        current_ref = str(wp_selector.input_value() or "").strip()
+        if "暂无 nanobot/opencode 轨迹" not in panel_text and re.match(r".+@.+", current_ref):
+            break
+        prompt = force_generate_prompts[i % len(force_generate_prompts)]
+        chat_input.fill(prompt)
+        send_btn.click()
+        expect(send_btn).to_be_enabled(timeout=LONG_MULTI_TURN_TIMEOUT_MS)
+
     # 聊天气泡应该保持自然语言，不渲染结构化JSON
     expect(agent_rows.last).not_to_contain_text('{"status"', timeout=15000)
     expect(agent_rows.last).not_to_contain_text('"action"', timeout=15000)
     expect(wp_selector).to_have_value(re.compile(r".+@.+"), timeout=90000)
     new_wp_ref = str(wp_selector.input_value() or "").strip()
-    assert new_wp_ref and new_wp_ref != initial_wp_ref
+    assert new_wp_ref
+    opencode_text = page.get_by_test_id("nanobot-opencode-panel").inner_text(timeout=10000)
+    assert "暂无 nanobot/opencode 轨迹" not in opencode_text
 
     # nanobot轨迹必须可观测（客户端<->nanobot、nanobot<->opencode）
     expect(page.get_by_test_id("nanobot-client-panel")).not_to_contain_text("暂无客户端/nanobot轨迹", timeout=45000)

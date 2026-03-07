@@ -1,4 +1,11 @@
+import pytest
+
 from packages.factory_agent.agent import FactoryAgent
+
+
+@pytest.fixture(autouse=True)
+def _llm_env_for_factory_agent_tests(monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "sk-test-for-unit")
 
 
 def test_factory_agent_has_no_llm_gateway_member(monkeypatch) -> None:
@@ -9,15 +16,25 @@ def test_factory_agent_has_no_llm_gateway_member(monkeypatch) -> None:
 
 def test_run_requirement_query_calls_nanobot_adapter(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("FACTORY_AGENT_REQUIREMENT_TIMEOUT_SEC", "10")
     agent = FactoryAgent()
     captured = {}
 
-    def _fake_query_structured(requirement, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+    def _fake_query_structured(
+        requirement,
+        *,
+        system_prompt="",
+        session_key=None,
+        max_tokens=None,
+        temperature=None,
+        timeout_sec=None,
+    ):
         captured["requirement"] = requirement
         captured["system_prompt"] = system_prompt
         captured["session_key"] = session_key
         captured["max_tokens"] = max_tokens
         captured["temperature"] = temperature
+        captured["timeout_sec"] = timeout_sec
         return {"status": "ok", "answer": "{}"}
 
     monkeypatch.setattr(agent._nanobot, "query_structured", _fake_query_structured)
@@ -25,23 +42,27 @@ def test_run_requirement_query_calls_nanobot_adapter(monkeypatch) -> None:
     result = agent._run_requirement_query("请生成地址治理 MVP 方案")
     assert result["status"] == "ok"
     assert captured.get("requirement") == "请生成地址治理 MVP 方案"
-    assert "target(string)" in str(captured.get("system_prompt") or "")
+    assert "target(字符串)" in str(captured.get("system_prompt") or "")
     assert str(captured.get("session_key") or "").startswith("factory_agent:requirement:")
+    assert int(captured.get("max_tokens") or 0) == 96
+    assert int(captured.get("timeout_sec") or 0) == 10
 
 
 def test_run_general_chat_query_includes_recent_history(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("FACTORY_AGENT_GENERAL_CHAT_TIMEOUT_SEC", "10")
     agent = FactoryAgent()
     agent._append_chat_history("user", "第一轮")
     agent._append_chat_history("assistant", "收到")
     captured = {}
 
-    def _fake_chat(prompt, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+    def _fake_chat(prompt, *, system_prompt="", session_key=None, max_tokens=None, temperature=None, timeout_sec=None):
         captured["prompt"] = prompt
         captured["system_prompt"] = system_prompt
         captured["session_key"] = session_key
         captured["max_tokens"] = max_tokens
         captured["temperature"] = temperature
+        captured["timeout_sec"] = timeout_sec
         return {"status": "ok", "answer": "好的"}
 
     monkeypatch.setattr(agent._nanobot, "chat", _fake_chat)
@@ -52,17 +73,28 @@ def test_run_general_chat_query_includes_recent_history(monkeypatch) -> None:
     assert "当前用户输入：" in str(captured.get("prompt") or "")
     assert "自然沟通" in str(captured.get("system_prompt") or "")
     assert str(captured.get("session_key") or "").startswith("factory_agent:chat:")
+    assert int(captured.get("timeout_sec") or 0) == 10
 
 
 def test_run_workpackage_blueprint_query_calls_nanobot_adapter_with_feedback(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("FACTORY_AGENT_BLUEPRINT_TIMEOUT_SEC", "10")
     agent = FactoryAgent()
     captured = {}
 
-    def _fake_query_structured(requirement, *, system_prompt="", session_key=None, max_tokens=None, temperature=None):
+    def _fake_query_structured(
+        requirement,
+        *,
+        system_prompt="",
+        session_key=None,
+        max_tokens=None,
+        temperature=None,
+        timeout_sec=None,
+    ):
         captured["requirement"] = requirement
         captured["system_prompt"] = system_prompt
         captured["session_key"] = session_key
+        captured["timeout_sec"] = timeout_sec
         return {"status": "ok", "answer": "{}"}
 
     monkeypatch.setattr(agent._nanobot, "query_structured", _fake_query_structured)
@@ -78,6 +110,7 @@ def test_run_workpackage_blueprint_query_calls_nanobot_adapter_with_feedback(mon
     assert "schema_error" in str(captured.get("requirement") or "")
     assert "最终必须输出一个JSON对象" in str(captured.get("system_prompt") or "")
     assert str(captured.get("session_key") or "").startswith("factory_agent:blueprint:")
+    assert int(captured.get("timeout_sec") or 0) == 10
 
 
 def test_build_workpackage_context_contains_protocol_alignment_fields(monkeypatch) -> None:
@@ -94,6 +127,29 @@ def test_build_workpackage_context_contains_protocol_alignment_fields(monkeypatc
     assert isinstance(context.get("registered_api_catalog_digest"), str)
 
 
+def test_compact_workpackage_context_for_llm_limits_api_payload(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    context = {
+        "architecture_context": {"layers": ["L1"]},
+        "schema_reference": {"schema_version": "workpackage_schema.v1"},
+        "runtime_constraints": {"no_mock": True},
+        "alignment_checklist": ["a", "b"],
+        "registered_api_catalog_digest": "abc",
+        "registered_api_catalog": [
+            {"source_id": "s", "interface_id": f"i{k}", "name": "n", "base_url": "u", "method": "GET"} for k in range(20)
+        ],
+        "trusted_hub_sources": [{"source_id": "s1"}, {"source_id": "s2"}],
+        "conversation_facts": ["x1", "x2", "x3", "x4", "x5"],
+        "user_prompt": "p",
+    }
+    compact = agent._compact_workpackage_context_for_llm(context)
+    assert isinstance(compact, dict)
+    assert len(compact.get("registered_api_catalog_top") or []) == 12
+    assert compact.get("trusted_hub_source_count") == 2
+    assert compact.get("conversation_facts") == ["x2", "x3", "x4", "x5"]
+
+
 def test_converse_returns_blocked_when_llm_fails(monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", "")
     agent = FactoryAgent()
@@ -107,6 +163,20 @@ def test_converse_returns_blocked_when_llm_fails(monkeypatch) -> None:
     assert result["status"] == "blocked"
     assert result["action"] == "confirm_requirement"
     assert "llm" in str(result.get("reason", "")).lower()
+
+
+def test_converse_exposes_exception_class_when_llm_error_message_empty(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+
+    def _raise(_prompt: str):
+        raise TimeoutError()
+
+    monkeypatch.setattr(agent, "_run_general_chat_query", _raise)
+    result = agent.converse("请给出数据治理建议")
+    assert result["status"] == "blocked"
+    assert result["action"] == "general_governance_chat"
+    assert "TimeoutError" in str(result.get("error") or "")
 
 
 def test_converse_returns_structured_summary_when_llm_ok(monkeypatch) -> None:
@@ -127,6 +197,15 @@ def test_converse_returns_structured_summary_when_llm_ok(monkeypatch) -> None:
     assert result["action"] == "confirm_requirement"
     assert result["summary"]["target"] == "地址标准化与去重"
     assert result["summary"]["data_sources"] == ["gaode_api", "baidu_api"]
+
+
+def test_extract_requirement_summary_coerces_target_from_array(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    agent = FactoryAgent()
+    summary = agent._extract_requirement_summary(
+        '{"target":["地址标准化","地址验真"],"data_sources":["gaode_api"],"rule_points":["结构化解析"],"outputs":["workpackage"]}'
+    )
+    assert summary["target"] == "地址标准化"
 
 
 def test_converse_returns_friendly_reply_for_non_governance_topic(monkeypatch) -> None:
@@ -372,13 +451,30 @@ def test_generate_workpackage_returns_schema_fix_rounds_and_generation_trace(mon
     fix_rounds = result.get("schema_fix_rounds")
     assert isinstance(fix_rounds, list)
     assert len(fix_rounds) >= 1
-    assert isinstance((result.get("workpackage_blueprint") or {}).get("generation_trace"), dict)
+    assert isinstance(result.get("generation_trace"), dict)
     from pathlib import Path
     import json
 
     bundle_path = Path(str(result.get("bundle_path") or ""))
     payload = json.loads((bundle_path / "workpackage.json").read_text(encoding="utf-8"))
-    assert isinstance(payload.get("generation_trace"), dict)
+    assert payload.get("generation_trace") is None
+    assert payload.get("schema_version") == "workpackage_schema.v1"
+
+
+def test_generate_workpackage_blocks_when_all_llm_calls_fail(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("WORKPACKAGE_BLUEPRINT_MAX_ROUNDS", "2")
+    agent = FactoryAgent()
+
+    def _raise_llm_401(*_args, **_kwargs):
+        raise RuntimeError("Error: Error code: 401 - {'error': 'Invalid API key'}")
+
+    monkeypatch.setattr(agent, "_run_workpackage_blueprint_query", _raise_llm_401)
+    result = agent.converse("创建地址治理工作包并生成脚本")
+    assert result.get("status") == "blocked"
+    assert result.get("action") == "generate_workpackage"
+    assert result.get("requires_user_confirmation") is True
+    assert "401" in str(result.get("error") or "")
 
 
 def test_generate_workpackage_ignores_llm_script_content_and_uses_opencode_builder(monkeypatch) -> None:

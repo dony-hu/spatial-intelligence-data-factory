@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "address-governance-records-spatial-v1.0.1",
+  "name": "address-governance-records-spatial",
+  "version": "v1.0.1",
+  "objective": "对输入地址批次执行地址标准化、地址验真、空间实体拆分，并输出可查询的空间图谱（nodes/edges）及质量报告。",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 6,
+  "line_metrics_path": "workpackages/bundles/address-governance-records-spatial-v1.0.1/observability/line_metrics.json",
+  "status": "success"
+}

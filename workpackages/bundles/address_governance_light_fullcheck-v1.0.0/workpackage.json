@@ -1,0 +1,483 @@
+{
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
+  "workpackage": {
+    "id": "address_governance_light_fullcheck",
+    "name": "address_governance_light_fullcheck",
+    "version": "v1.0.0",
+    "objective": "面向<=100条地址数据执行全量治理：完成地址标准化、五级解析、真实性校验、地址类型识别、地理编码与质量评分，产出可发布的治理结果与问题清单。",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "schema_version": "workpackage_schema.v1",
+      "schema_path": "workpackage_schema/schemas/v1/workpackage_schema.v1.schema.json",
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "trusted_hub_sources": [
+        "高德",
+        "百度"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "records"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "description": "本次治理批次ID"
+        },
+        "records": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "recipient_name": {
+                "type": "string"
+              },
+              "mobile": {
+                "type": "string"
+              },
+              "province_hint": {
+                "type": "string"
+              },
+              "city_hint": {
+                "type": "string"
+              },
+              "district_hint": {
+                "type": "string"
+              },
+              "source_system": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "rule_config": {
+          "type": "object",
+          "properties": {
+            "full_check": {
+              "type": "boolean",
+              "default": true
+            },
+            "min_quality_score": {
+              "type": "number",
+              "default": 80
+            }
+          }
+        }
+      }
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "processed_at",
+        "summary",
+        "records"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "processed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "summary": {
+          "type": "object",
+          "required": [
+            "total",
+            "pass_count",
+            "fail_count",
+            "avg_quality_score"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "pass_count": {
+              "type": "integer"
+            },
+            "fail_count": {
+              "type": "integer"
+            },
+            "avg_quality_score": {
+              "type": "number"
+            }
+          }
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "standard_address",
+              "parsed_l1_l5",
+              "real_check",
+              "address_type",
+              "geo",
+              "quality_score",
+              "issues",
+              "status"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "standard_address": {
+                "type": "string"
+              },
+              "parsed_l1_l5": {
+                "type": "object",
+                "properties": {
+                  "province": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "district": {
+                    "type": "string"
+                  },
+                  "township": {
+                    "type": "string"
+                  },
+                  "detail": {
+                    "type": "string"
+                  }
+                }
+              },
+              "real_check": {
+                "type": "object"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "geo": {
+                "type": "object",
+                "properties": {
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  },
+                  "geocode_precision": {
+                    "type": "string"
+                  }
+                }
+              },
+              "quality_score": {
+                "type": "number"
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "REVIEW",
+                  "FAIL"
+                ]
+              }
+            }
+          }
+        },
+        "lineage": {
+          "type": "object",
+          "properties": {
+            "api_calls": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "rule_version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "name": "五级地址解析",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "method": "GET"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "高德行政区划查询（Adcode）",
+        "endpoint": "https://restapi.amap.com/v3/config/district",
+        "reason": "现有已注册接口未直接提供国家标准行政区划编码映射，无法完成统一主数据编码对齐。",
+        "requires_key": true,
+        "api_key_env": "AMAP_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      },
+      {
+        "name": "国家统计局行政区划代码数据源",
+        "endpoint": "https://www.stats.gov.cn/sj/tjbz/tjyqhdmhcxhfdm/",
+        "reason": "需要权威区划代码离线对照表用于治理结果最终编码校验与审计留痕。",
+        "requires_key": false,
+        "api_key_env": "WP_5DCE9DD8_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "step_id": "S01",
+        "name": "step-1",
+        "stage": "requirements_confirm",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "step-2",
+        "stage": "generate",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "step-3",
+        "stage": "dryrun",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "step-4",
+        "stage": "publish",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S05",
+        "name": "step-5",
+        "stage": "runtime_upload",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
+  },
+  "scripts": [
+    {
+      "name": "01_validate_input.py",
+      "purpose": "按input_schema校验输入并做字段预清洗（去空格、全半角统一）",
+      "runtime": "python3",
+      "entry": "python scripts/01_validate_input.py --input data/input.json --schema schemas/input_schema.json --output run/validated.json",
+      "dependencies": [
+        "jsonschema==4.23.0",
+        "pandas==2.2.2"
+      ]
+    },
+    {
+      "name": "02_call_address_apis.py",
+      "purpose": "串行调用已注册Fengtu API完成标准化、解析、真实性、类型识别、地理编码与级别判断",
+      "runtime": "python3",
+      "entry": "python scripts/02_call_address_apis.py --input run/validated.json --output run/api_enriched.json --api-key-env FENGTU_API_KEY",
+      "dependencies": [
+        "requests==2.32.3",
+        "tenacity==8.5.0",
+        "pandas==2.2.2"
+      ]
+    },
+    {
+      "name": "03_score_and_rules.py",
+      "purpose": "执行质量规则并计算quality_score，生成PASS/REVIEW/FAIL",
+      "runtime": "python3",
+      "entry": "python scripts/03_score_and_rules.py --input run/api_enriched.json --rules rules/address_quality_rules.yaml --output run/scored.json",
+      "dependencies": [
+        "pyyaml==6.0.2",
+        "pandas==2.2.2"
+      ]
+    },
+    {
+      "name": "04_build_outputs.py",
+      "purpose": "按output_schema封装最终结果、问题清单与调用血缘",
+      "runtime": "python3",
+      "entry": "python scripts/04_build_outputs.py --input run/scored.json --output outputs/final_result.json --report outputs/quality_report.json",
+      "dependencies": [
+        "jsonschema==4.23.0",
+        "pandas==2.2.2"
+      ]
+    },
+    {
+      "name": "fetch_adcode.py",
+      "purpose": "调用外部API补齐能力：高德行政区划查询（Adcode）",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_adcode.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    },
+    {
+      "name": "fetch_wp_dd6e5d9f.py",
+      "purpose": "调用外部API补齐能力：国家统计局行政区划代码数据源",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_wp_dd6e5d9f.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
+  ]
+}

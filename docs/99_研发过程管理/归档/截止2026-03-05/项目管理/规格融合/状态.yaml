@@ -1,0 +1,99 @@
+version: "v1"
+generated_at: "2026-02-27"
+owner: "bmad-architecture"
+baseline:
+  prd: "archive/docs/formal/product/prd-2026-02-27.md"
+  mvp_epic: "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/主题说明.md"
+  obs_epic: "docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/主题说明.md"
+sources:
+  trae_specs_root: ".trae/specs"
+  trae_docs_root: ".trae/documents"
+  current_docs_root: "docs"
+fusion:
+  - id: "poi-shop-trust-verification"
+    source_spec: ".trae/specs/poi-shop-trust-verification/spec.md"
+    mapped_current:
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/主题说明.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A1-CLI-Agent-LLM-对话确认治理需求.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A2-地址治理流程试运行.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A3-工作包发布到数据治理Runtime.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A5-可信数据Hub能力沉淀.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A6-数据库模型与持久化闭环补齐.md"
+    status: "merged"
+    confidence: "high"
+    notes: "Story1/Story2 已映射到 MVP-A1~A6，代码与测试已覆盖。"
+
+  - id: "workpackage-structure-design"
+    source_spec: ".trae/specs/workpackage-structure-design/spec.md"
+    mapped_current:
+      - "docs/03_数据处理工艺/地址治理处理架构.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A3-工作包发布到数据治理Runtime.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A4-地址治理流水线最小构建.md"
+    status: "merged"
+    confidence: "high"
+    notes: "workpackage 目录契约与 entrypoint/dryrun/publish 已落地。"
+
+  - id: "real-db-integration-and-dashboard"
+    source_spec: ".trae/specs/real-db-integration-and-dashboard/spec.md"
+    mapped_current:
+      - "docs/03_数据处理工艺/地址治理处理架构.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/主题说明.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/故事/OBS-PG-S1-系统可观测性与PG库一体化构建.md"
+    status: "merged"
+    confidence: "medium"
+    notes: "真实 DB 与 dashboard 需求已纳入 OBS-PG-S1，仍有治理页面持续优化项。"
+
+  - id: "observability-dashboard-enhancement"
+    source_spec: ".trae/specs/observability-dashboard-enhancement/spec.md"
+    mapped_current:
+      - "docs/07_系统运行与运维/系统可观测性能力设计.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/故事/OBS-PG-S1-系统可观测性与PG库一体化构建.md"
+    status: "partially_merged"
+    confidence: "medium"
+    notes: "能力面板与 POI 验证展示需求已进入可观测性主线，但并非全部完成。"
+
+  - id: "observability-and-docs-improvement"
+    source_spec: ".trae/specs/observability-and-docs-improvement/spec.md"
+    mapped_current:
+      - "archive/docs/reviews/prd-review-address-governance-mvp-2026-02-27.md"
+      - "docs/99_研发过程管理/归档/截止2026-03-05/项目管理/开发环境治理.md"
+      - "archive/docs/reviews/prd-progress-report-mvp-observability-2026-02-27.md"
+    status: "merged"
+    confidence: "high"
+    notes: ".venv ignore 与治理已启动，文档规范化已纳入持续治理。"
+
+  - id: "address-governance-e2e-suite"
+    source_spec: ".trae/specs/address-governance-e2e-suite/spec.md"
+    mapped_current:
+      - "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/主题说明.md"
+      - "archive/docs/reviews/prd-progress-report-mvp-observability-2026-02-27.md"
+      - "tests/e2e"
+    status: "merged"
+    confidence: "medium"
+    notes: "E2E 场景覆盖已并入现有测试与验收脚本。"
+
+  - id: "system-status-planning"
+    source_spec: ".trae/specs/system-status-planning/spec.md"
+    mapped_current:
+      - "docs/99_研发过程管理/归档/截止2026-03-05/项目管理/冲刺计划.md"
+      - "docs/99_研发过程管理/工作流状态.yaml"
+      - "archive/docs/reviews/architecture-progress-review-mvp-2026-02-27.md"
+    status: "merged"
+    confidence: "high"
+    notes: "任务优先级与状态口径已并入当前 sprint 与架构进展文档。"
+open_items:
+  - id: "obs-dashboard-capability-panels"
+    severity: "P1"
+    description: "把 Trae 规格中的能力面板与使用观测项完全映射到现有可观测页面契约。"
+    planned_in:
+      - "docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/故事/OBS-PG-S1-系统可观测性与PG库一体化构建.md#OBS-PG-S1-T1"
+    owner: "architecture+dev-story"
+    target_date: "2026-03-03"
+    status: "planned"
+  - id: "spec-source-single-truth"
+    severity: "P1"
+    description: "将新建规格统一收口到 docs 主线，Trae 保留历史参考。"
+    controls:
+      - "specs/README.md"
+      - "docs/99_研发过程管理/工作流状态.yaml"
+    status: "in_progress"

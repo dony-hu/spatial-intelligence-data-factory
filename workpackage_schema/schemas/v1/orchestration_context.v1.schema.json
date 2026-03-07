@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spatial-intelligence-data-factory/workpackage_schema/orchestration_context.v1.schema.json",
+  "title": "NanobotOrchestrationContextV1",
+  "description": "nanobot 会话编排过程中的关键记忆对象协议，用于调试、验收与可观测分析。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "boot_context",
+    "discovery_facts",
+    "capability_snapshot",
+    "blueprint_attempts",
+    "opencode_task_ticket",
+    "build_artifacts_index",
+    "interaction_state",
+    "blocker_ticket",
+    "gate_state",
+    "runtime_evidence",
+    "publish_decision",
+    "timeline"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "orchestration_context.v1",
+      "description": "记忆对象协议版本。"
+    },
+    "boot_context": {
+      "type": "object",
+      "description": "启动时注入的角色/边界/schema/能力/验收契约。"
+    },
+    "discovery_facts": {
+      "type": "object",
+      "description": "用户需求收敛结果。",
+      "properties": {
+        "goal_text": { "type": "string" },
+        "objective": { "type": "string" },
+        "constraints": { "type": "object" }
+      },
+      "required": ["goal_text"]
+    },
+    "capability_snapshot": {
+      "type": "object",
+      "description": "TrustHub API 清单快照。",
+      "properties": {
+        "snapshot_at": { "type": "string" },
+        "provider_count": { "type": "integer", "minimum": 0 },
+        "apis": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source_id": { "type": "string" },
+              "interface_id": { "type": "string" },
+              "base_url": { "type": "string" },
+              "auth_type": { "type": "string" },
+              "key_env": { "type": "string" },
+              "rate_limit": { "type": "string" }
+            }
+          }
+        },
+        "missing_capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["snapshot_at", "provider_count", "apis"]
+    },
+    "blueprint_attempts": {
+      "type": "array",
+      "description": "蓝图迭代轮次记录。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "round": { "type": "integer", "minimum": 1 },
+          "stage": { "type": "string" },
+          "status": { "type": "string" },
+          "schema_passed": { "type": "boolean" },
+          "schema_errors": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["round", "stage", "status", "schema_passed"]
+      }
+    },
+    "opencode_task_ticket": {
+      "type": "object",
+      "description": "nanobot 下发给 opencode 的任务单。",
+      "properties": {
+        "ticket_id": { "type": "string" },
+        "phase": { "type": "string" },
+        "bundle_name": { "type": "string" },
+        "task_list": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["phase"]
+    },
+    "build_artifacts_index": {
+      "type": "object",
+      "description": "opencode 生成工件索引。"
+    },
+    "interaction_state": {
+      "type": "object",
+      "description": "当前人机协同状态机快照。用于表达是否继续自动执行、等待用户输入、等待门禁或进入阻塞。",
+      "additionalProperties": false,
+      "required": [
+        "current_stage",
+        "status",
+        "reason_code",
+        "retry_count",
+        "max_retry",
+        "user_action_required",
+        "next_action",
+        "updated_at"
+      ],
+      "properties": {
+        "current_stage": {
+          "type": "string",
+          "enum": [
+            "DISCOVERY",
+            "ALIGN_IO",
+            "BLUEPRINT_LOOP",
+            "WAIT_USER_INPUT",
+            "BUILD_WITH_OPENCODE",
+            "VERIFY",
+            "WAIT_USER_GATE",
+            "PUBLISH",
+            "BLOCKED",
+            "COMPLETED"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "in_progress",
+            "waiting_user_input",
+            "waiting_user_gate",
+            "blocked",
+            "completed"
+          ]
+        },
+        "reason_code": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "USER_GOAL_AMBIGUOUS",
+            "IO_BINDING_UNRESOLVED",
+            "CAPABILITY_GAP",
+            "API_AUTH_MISSING",
+            "DEPENDENCY_MISSING",
+            "SCHEMA_INVALID",
+            "RUNTIME_FAIL",
+            "GATE_CONFIRM_REQUIRED",
+            "USER_DECISION_REQUIRED"
+          ]
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_retry": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "user_action_required": {
+          "type": "boolean"
+        },
+        "resume_from_stage": {
+          "type": "string",
+          "enum": [
+            "DISCOVERY",
+            "ALIGN_IO",
+            "BLUEPRINT_LOOP",
+            "BUILD_WITH_OPENCODE",
+            "VERIFY",
+            "WAIT_USER_GATE",
+            "PUBLISH"
+          ]
+        },
+        "next_action": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      }
+    },
+    "blocker_ticket": {
+      "type": "object",
+      "description": "失败升级票据。用于标准化表达为什么必须用户介入，以及恢复条件是什么。",
+      "additionalProperties": false,
+      "required": [
+        "active",
+        "code",
+        "stage",
+        "summary",
+        "impact",
+        "user_actions",
+        "resume_condition",
+        "resume_from_stage",
+        "auto_retryable",
+        "retry_exhausted"
+      ],
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "USER_GOAL_AMBIGUOUS",
+            "IO_BINDING_UNRESOLVED",
+            "CAPABILITY_GAP",
+            "API_AUTH_MISSING",
+            "DEPENDENCY_MISSING",
+            "SCHEMA_INVALID",
+            "RUNTIME_FAIL",
+            "GATE_CONFIRM_REQUIRED",
+            "USER_DECISION_REQUIRED"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "DISCOVERY",
+            "ALIGN_IO",
+            "BLUEPRINT_LOOP",
+            "WAIT_USER_INPUT",
+            "BUILD_WITH_OPENCODE",
+            "VERIFY",
+            "WAIT_USER_GATE",
+            "PUBLISH",
+            "BLOCKED",
+            "COMPLETED"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "user_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resume_condition": {
+          "type": "string"
+        },
+        "resume_from_stage": {
+          "type": "string",
+          "enum": [
+            "DISCOVERY",
+            "ALIGN_IO",
+            "BLUEPRINT_LOOP",
+            "BUILD_WITH_OPENCODE",
+            "VERIFY",
+            "WAIT_USER_GATE",
+            "PUBLISH"
+          ]
+        },
+        "auto_retryable": {
+          "type": "boolean"
+        },
+        "retry_exhausted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gate_state": {
+      "type": "object",
+      "description": "门禁状态快照。",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "pending_gate",
+        "confirm_generate",
+        "confirm_dryrun_result",
+        "confirm_publish"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "aligned",
+            "packaged",
+            "verified",
+            "ready_to_publish",
+            "submitted",
+            "blocked"
+          ]
+        },
+        "pending_gate": {
+          "type": "string",
+          "enum": [
+            "none",
+            "confirm_generate",
+            "confirm_dryrun_result",
+            "confirm_publish"
+          ]
+        },
+        "confirm_generate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required",
+            "confirmed"
+          ],
+          "properties": {
+            "required": { "type": "boolean" },
+            "confirmed": { "type": "boolean" }
+          }
+        },
+        "confirm_dryrun_result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required",
+            "confirmed"
+          ],
+          "properties": {
+            "required": { "type": "boolean" },
+            "confirmed": { "type": "boolean" }
+          }
+        },
+        "confirm_publish": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required",
+            "confirmed"
+          ],
+          "properties": {
+            "required": { "type": "boolean" },
+            "confirmed": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "runtime_evidence": {
+      "type": "object",
+      "description": "dry-run/运行态证据。"
+    },
+    "publish_decision": {
+      "type": "object",
+      "description": "发布确认与回执。"
+    },
+    "timeline": {
+      "type": "array",
+      "description": "关键事件时间线。",
+      "items": {
+        "type": "object",
+        "required": ["ts", "stage", "status", "summary"],
+        "properties": {
+          "ts": { "type": "string" },
+          "stage": { "type": "string" },
+          "status": { "type": "string" },
+          "summary": { "type": "string" },
+          "memory_object": { "type": "string" }
+        }
+      }
+    }
+  }
+}

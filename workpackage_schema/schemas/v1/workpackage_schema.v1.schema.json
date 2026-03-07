@@ -17,6 +17,262 @@
     "scripts",
     "skills"
   ],
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "description": "输入输出绑定定义。用于把数据格式与读写协议拆开表达，支撑生成可直接运行的脚本。",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "role",
+        "mode",
+        "format",
+        "delivery_semantics",
+        "resource"
+      ],
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,80}$",
+          "description": "绑定唯一标识。供 steps 与 scripts 引用。"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "evidence",
+            "control"
+          ],
+          "description": "绑定角色。"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "file",
+            "database",
+            "http",
+            "kafka",
+            "stream"
+          ],
+          "description": "协议/介质类型。"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "json",
+            "jsonl",
+            "csv",
+            "parquet",
+            "avro",
+            "none"
+          ],
+          "description": "序列化格式。database 模式可使用 none。"
+        },
+        "delivery_semantics": {
+          "type": "string",
+          "enum": [
+            "batch",
+            "request_response",
+            "at_least_once",
+            "exactly_once"
+          ],
+          "description": "交付语义。"
+        },
+        "resource": {
+          "type": "object",
+          "description": "具体资源定位信息，按 mode 分支约束。"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "file"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resource": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "path_env": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{2,64}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "database"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resource": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "engine",
+                  "dsn_env",
+                  "schema",
+                  "table"
+                ],
+                "properties": {
+                  "engine": {
+                    "type": "string",
+                    "enum": [
+                      "postgresql"
+                    ]
+                  },
+                  "dsn_env": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{2,64}$"
+                  },
+                  "schema": {
+                    "type": "string"
+                  },
+                  "table": {
+                    "type": "string"
+                  },
+                  "write_mode": {
+                    "type": "string",
+                    "enum": [
+                      "append",
+                      "upsert",
+                      "replace"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "http"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resource": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "base_url",
+                  "path",
+                  "method"
+                ],
+                "properties": {
+                  "base_url": {
+                    "type": "string",
+                    "pattern": "^https?://.+"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT"
+                    ]
+                  },
+                  "auth_env": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{2,64}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "kafka"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resource": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "brokers_env",
+                  "topic"
+                ],
+                "properties": {
+                  "brokers_env": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]{2,64}$"
+                  },
+                  "topic": {
+                    "type": "string"
+                  },
+                  "group_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "stream"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "resource": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "engine",
+                  "stream_name"
+                ],
+                "properties": {
+                  "engine": {
+                    "type": "string"
+                  },
+                  "stream_name": {
+                    "type": "string"
+                  },
+                  "consumer_group": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
   "properties": {
     "schema_version": {
       "type": "string",
@@ -187,11 +443,13 @@
     },
     "io_contract": {
       "type": "object",
-      "description": "输入输出契约。用于LLM对齐、运行时校验及结果验收。",
+      "description": "输入输出契约。用于LLM对齐、运行时校验、脚本生成及结果验收。",
       "additionalProperties": false,
       "required": [
         "input_schema",
-        "output_schema"
+        "output_schema",
+        "input_bindings",
+        "output_bindings"
       ],
       "properties": {
         "input_schema": {
@@ -201,6 +459,22 @@
         "output_schema": {
           "type": "object",
           "description": "输出结构定义（建议包含 normalization/entity_parsing/address_validation/spatial_graph）。需与 dryrun 报告字段一致。"
+        },
+        "input_bindings": {
+          "type": "array",
+          "description": "输入绑定列表，定义输入从哪里读、用什么协议读。",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        },
+        "output_bindings": {
+          "type": "array",
+          "description": "输出绑定列表，定义结果往哪里写、用什么协议写。",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
         }
       }
     },
@@ -366,6 +640,24 @@
                   "description": "单条输出引用。"
                 }
               },
+              "input_bindings": {
+                "type": "array",
+                "description": "该步骤直接消费的输入绑定 ID。",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{2,80}$"
+                }
+              },
+              "output_bindings": {
+                "type": "array",
+                "description": "该步骤直接产出的输出绑定 ID。",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{2,80}$"
+                }
+              },
               "timeout_sec": {
                 "type": "integer",
                 "description": "该步骤超时时间（秒）。"
@@ -442,7 +734,9 @@
           "purpose",
           "runtime",
           "entry",
-          "dependencies"
+          "dependencies",
+          "consumes",
+          "produces"
         ],
         "properties": {
           "name": {
@@ -474,6 +768,24 @@
             "items": {
               "type": "string",
               "description": "单条依赖包定义（建议带版本约束）。"
+            }
+          },
+          "consumes": {
+            "type": "array",
+            "description": "脚本直接消费的 binding_id 列表。",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{2,80}$"
+            }
+          },
+          "produces": {
+            "type": "array",
+            "description": "脚本直接产出的 binding_id 列表。",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]{2,80}$"
             }
           }
         }

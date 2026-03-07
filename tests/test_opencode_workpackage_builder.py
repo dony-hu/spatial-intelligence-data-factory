@@ -49,4 +49,5 @@ def test_opencode_workpackage_builder_generates_bundle_from_plan_only(tmp_path: 
     assert str(build_report.get("bundle_name") or "") == "wp-demo-v1.0.0"
 
     payload = json.loads((bundle_dir / "workpackage.json").read_text(encoding="utf-8"))
-    assert payload.get("name") == "wp-demo"
+    assert payload.get("name") is None
+    assert str(((payload.get("workpackage") or {}).get("name")) or "") == "wp-demo"

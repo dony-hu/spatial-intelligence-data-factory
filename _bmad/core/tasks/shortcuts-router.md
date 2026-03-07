@@ -1,16 +1,17 @@
 ---
 name: shortcuts-router
-description: 'Resolve shorthand BMAD aliases into standard commands/workflows/agents/tasks and route execution.'
+description: 'Resolve shorthand BMAD and SpecKit aliases into standard commands/workflows/agents/tasks and route execution.'
 ---
 
-# Task: BMAD Shortcuts Router
+# Task: BMAD + SpecKit Shortcuts Router
 
-Use this task when the user enters shorthand aliases such as `W-ARC`, `A-PM + W-PRD`, or `C-STS`.
+Use this task when the user enters shorthand aliases such as `W-ARC`, `S-PLN`, `A-PM + W-PRD`, or `C-STS`.
 
 ## Alias Prefixes
 
 - `C-` = CLI command
 - `W-` = workflow
+- `S-` = SpecKit command
 - `A-` = agent
 - `T-` = core task
 
@@ -55,6 +56,18 @@ Use this task when the user enters shorthand aliases such as `W-ARC`, `A-PM + W-
 - `W-DOC` / `W-项目文档` -> `bmad-bmm-document-project`
 - `W-E2E` / `W-端到端测` -> `bmad-bmm-qa-generate-e2e-tests`
 
+### SpecKit (`S-`)
+
+- `S-SPC` / `S-specify` / `S-规格定义` -> `/speckit.specify`
+- `S-CLF` / `S-clarify` / `S-规格澄清` -> `/speckit.clarify`
+- `S-PLN` / `S-plan` / `S-实现规划` -> `/speckit.plan`
+- `S-TSK` / `S-tasks` / `S-任务拆解` -> `/speckit.tasks`
+- `S-IMP` / `S-implement` / `S-任务实施` -> `/speckit.implement`
+- `S-ANL` / `S-analyze` / `S-一致性分析` -> `/speckit.analyze`
+- `S-CHK` / `S-checklist` / `S-验收清单` -> `/speckit.checklist`
+- `S-T2I` / `S-taskstoissues` / `S-任务建单` -> `/speckit.taskstoissues`
+- `S-CST` / `S-constitution` / `S-宪章更新` -> `/speckit.constitution`
+
 ### Agents (`A-`)
 
 - `A-BMAD` / `A-总控` -> `bmad-agent-bmad-master`
@@ -79,7 +92,8 @@ Use this task when the user enters shorthand aliases such as `W-ARC`, `A-PM + W-
 1. Echo the parsed route before execution: `input -> target`.
 2. For `C-`: run the CLI command and summarize result.
 3. For `W-`/`A-`/`T-`: route to the mapped BMAD command/agent/task exactly.
-4. If a step fails in a sequence, stop and ask whether to continue.
+4. For `S-`: route to the mapped SpecKit command exactly.
+5. If a step fails in a sequence, stop and ask whether to continue.
 
 ## Safety Rules
 

@@ -1,41 +1,11 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime, timezone
 
-from packages.address_core.pipeline import run as run_address_pipeline
-from packages.agent_runtime.runtime_selector import get_runtime
 from services.governance_api.app.repositories.governance_repository import REPOSITORY
 from services.governance_worker.app.jobs.ingest_job import run as ingest_run
 from services.governance_worker.app.jobs.result_persist_job import persist_results
-
-
-def _resolve_ruleset_context(ruleset_id: str) -> dict:
-    context = {"ruleset_id": ruleset_id}
-    ruleset = REPOSITORY.get_ruleset(ruleset_id)
-    config = ruleset.get("config_json") if isinstance(ruleset, dict) else None
-    if isinstance(config, dict):
-        context.update(config)
-    return context
-
-
-def _new_trust_provider():
-    from services.trust_data_hub.app.repositories.trustdb_persister import TrustDbPersister
-
-    return TrustDbPersister()
-
-
-def _resolve_trust_provider(ruleset_context: dict):
-    trust_required = bool(ruleset_context.get("require_trust_enhancement", False))
-    trust_namespace = str(ruleset_context.get("trust_namespace") or "").strip()
-    if not trust_required and not trust_namespace:
-        return None
-    provider = _new_trust_provider()
-    if provider.enabled():
-        return provider
-    if trust_required:
-        raise RuntimeError("blocked: trust provider unavailable")
-    return None
+from services.governance_worker.app.runtime.workpackage_executor import WorkpackageExecutor
 
 
 def run(task_payload: dict) -> dict:
@@ -53,21 +23,21 @@ def run(task_payload: dict) -> dict:
     )
     try:
         processed = ingest_run(task_payload)
-        ruleset_context = _resolve_ruleset_context(str(processed.get("ruleset_id", "default")))
-        trust_provider = _resolve_trust_provider(ruleset_context)
-        if trust_provider is None:
-            pipeline_outputs = run_address_pipeline(
-                processed.get("records", []),
-                ruleset_context,
-            )
-        else:
-            pipeline_outputs = run_address_pipeline(
-                processed.get("records", []),
-                ruleset_context,
-                trust_provider=trust_provider,
-            )
-        runtime = get_runtime()
-        runtime_result = runtime.run_task(
+        workpackage_id = str(processed.get("workpackage_id") or "").strip()
+        version = str(processed.get("version") or "").strip()
+        if not workpackage_id or not version:
+            raise RuntimeError("blocked: worker requires workpackage_id/version")
+        published = REPOSITORY.get_runtime_workpackage_record(
+            workpackage_id=workpackage_id,
+            version=version,
+            include_deleted=False,
+        )
+        if not published:
+            raise RuntimeError(f"blocked: runtime workpackage record not found: {workpackage_id}@{version}")
+        executor = WorkpackageExecutor()
+        execution = executor.execute(
+            workpackage_id=workpackage_id,
+            version=version,
             task_context={
                 "task_id": processed.get("task_id"),
                 "trace_id": trace_id,
@@ -75,7 +45,7 @@ def run(task_payload: dict) -> dict:
             },
             ruleset={"ruleset_id": processed.get("ruleset_id", "default")},
         )
-        output = persist_results(processed, runtime_result.model_dump(), pipeline_outputs)
+        output = persist_results(processed, execution.runtime_result, execution.records)
         REPOSITORY.record_observation_event(
             source_service="governance_worker",
             event_type="task_succeeded",
@@ -83,7 +53,12 @@ def run(task_payload: dict) -> dict:
             trace_id=trace_id,
             task_id=str(task_id or ""),
             ruleset_id=str(task_payload.get("ruleset_id") or ""),
-            payload={"result_status": output.get("status", "")},
+            payload={
+                "result_status": output.get("status", ""),
+                "workpackage_id": workpackage_id,
+                "version": version,
+                "runtime_report_path": execution.report_path,
+            },
         )
         return output
     except Exception as exc:

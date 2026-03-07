@@ -1,11 +1,34 @@
 {
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
   "workpackage": {
+    "id": "addr-factory-pack",
     "name": "addr-factory-pack",
     "version": "v2.0.0",
-    "objective": "地址治理工作包"
+    "objective": "地址治理工作包，并输出可观测验收结果",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
   },
   "architecture_context": {
-    "factory_architecture": "治理工厂四层架构",
+    "factory_architecture": {},
     "runtime_env": {
       "python": "3.11",
       "queue": "sync"
@@ -55,94 +78,134 @@
         "name": "poi_risk_lookup",
         "endpoint": "https://example.com/poi-risk",
         "reason": "补充风险识别",
-        "requires_key": true
+        "requires_key": true,
+        "api_key_env": "POI_RISK_LOOKUP_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
       },
       {
-        "capability_id": "entity_parsing",
         "name": "空间实体拆分API",
         "endpoint": "https://api.external.example.com/entity/parsing",
         "reason": "补齐空间实体拆分能力",
         "requires_key": true,
         "api_key_env": "ENTITY_PARSING_API_KEY",
-        "provider": "external"
-      }
-    ],
-    "missing_apis_proposals": [
-      {
-        "source_id": "poi_risk_lookup",
-        "provider": "poi_risk_lookup",
-        "endpoint": "https://example.com/poi-risk",
-        "status": "proposal_pending_confirmation",
-        "requires_key": true,
-        "api_key_env": ""
-      },
-      {
-        "source_id": "api",
-        "provider": "external",
-        "endpoint": "https://api.external.example.com/entity/parsing",
-        "status": "proposal_pending_confirmation",
-        "requires_key": true,
-        "api_key_env": "ENTITY_PARSING_API_KEY"
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
       }
     ]
   },
   "execution_plan": {
     "steps": [
-      "输入校验",
-      "标准化",
-      "验真",
-      "图谱构建"
-    ]
+      {
+        "step_id": "S01",
+        "name": "输入校验",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "标准化",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "验真",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "图谱构建",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
   },
   "scripts": [
     {
       "name": "fetch_poi_risk.py",
       "purpose": "拉取风险POI",
-      "runtime": "python",
-      "entry": "python scripts/fetch_poi_risk.py"
+      "runtime": "python3",
+      "entry": "python scripts/fetch_poi_risk.py",
+      "dependencies": []
     },
     {
       "name": "run_pipeline.py",
       "purpose": "执行治理流程",
-      "runtime": "python",
-      "entry": "python scripts/run_pipeline.py"
+      "runtime": "python3",
+      "entry": "python scripts/run_pipeline.py",
+      "dependencies": []
     },
     {
       "name": "fetch_poi_risk_lookup.py",
       "purpose": "调用外部API补齐能力：poi_risk_lookup",
-      "runtime": "python",
+      "runtime": "python3",
       "entry": "python scripts/fetch_poi_risk_lookup.py",
-      "endpoint": "https://example.com/poi-risk",
-      "api_key_env": ""
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
     },
     {
-      "name": "fetch_entity_parsing.py",
+      "name": "fetch_api.py",
       "purpose": "调用外部API补齐能力：空间实体拆分API",
-      "runtime": "python",
-      "entry": "python scripts/fetch_entity_parsing.py",
-      "endpoint": "https://api.external.example.com/entity/parsing",
-      "api_key_env": "ENTITY_PARSING_API_KEY"
+      "runtime": "python3",
+      "entry": "python scripts/fetch_api.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
     }
   ],
-  "generation_trace": {
-    "generator": "factory_agent",
-    "llm_model": "gpt-5.3-codex",
-    "llm_retry_count": 0,
-    "schema_fix_rounds": [],
-    "autofill_applied_fields": [],
-    "llm_contribution": [
-      "需求语义理解与工作包规划",
-      "I/O契约和API计划建议（不直接产出可执行脚本）"
-    ],
-    "opencode_contribution": [
-      "工作包文件落盘与脚本生成（OpenCode Builder）",
-      "schema修复反馈循环执行"
-    ]
-  },
-  "name": "addr-factory-pack",
-  "version": "v2.0.0",
-  "objective": "地址治理工作包",
-  "sources": [
-    "fengtu"
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
   ]
 }

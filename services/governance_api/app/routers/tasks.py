@@ -15,11 +15,16 @@ router = APIRouter()
 
 @router.post("/tasks", response_model=TaskSubmitResponse)
 def submit_task(payload: TaskSubmitRequest) -> TaskSubmitResponse:
-    submitted = GOVERNANCE_SERVICE.submit_task(
-        batch_name=payload.batch_name,
-        ruleset_id=payload.ruleset_id,
-        records=[item.model_dump() for item in payload.records],
-    )
+    try:
+        submitted = GOVERNANCE_SERVICE.submit_task(
+            batch_name=payload.batch_name,
+            ruleset_id=payload.ruleset_id,
+            records=[item.model_dump() for item in payload.records],
+            workpackage_id=str(payload.workpackage_id or ""),
+            version=str(payload.version or ""),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return TaskSubmitResponse(
         task_id=str(submitted.get("task_id") or ""),
         status=str(submitted.get("status") or "FAILED"),

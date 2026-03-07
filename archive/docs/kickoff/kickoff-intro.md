@@ -21,7 +21,7 @@
 
 1. 先 ` /workflow-status` 看当前位置。
 2. 执行推荐工作流（`/product-brief`、`/prd`、`/architecture` 等）。
-3. 产物落仓并更新 `docs/bmm-workflow-status.yaml`。
+3. 产物落仓并更新 `docs/project-management/workflow-status.yaml`。
 4. 回到 ` /workflow-status` 进入下一轮。
 
 ## 4. 四阶段与必交付物

@@ -1,11 +1,34 @@
 {
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
   "workpackage": {
+    "id": "ctx-pack",
     "name": "ctx-pack",
     "version": "v1.0.0",
-    "objective": "上下文验证"
+    "objective": "上下文验证，并输出可观测验收结果",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
   },
   "architecture_context": {
-    "factory_architecture": "四层",
+    "factory_architecture": {},
     "runtime_env": {
       "python": "3.11"
     }
@@ -25,39 +48,56 @@
         "interface_id": "address_standardize"
       }
     ],
-    "missing_apis": [],
-    "missing_apis_proposals": []
+    "missing_apis": []
   },
   "execution_plan": {
     "steps": [
-      "a"
-    ]
+      {
+        "step_id": "S01",
+        "name": "a",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
   },
   "scripts": [
     {
       "name": "run_pipeline.py",
-      "entry": "python scripts/run_pipeline.py"
+      "purpose": "执行脚本 run_pipeline.py",
+      "runtime": "python3",
+      "entry": "python scripts/run_pipeline.py",
+      "dependencies": []
     }
   ],
-  "generation_trace": {
-    "generator": "factory_agent",
-    "llm_model": "gpt-5.3-codex",
-    "llm_retry_count": 0,
-    "schema_fix_rounds": [],
-    "autofill_applied_fields": [],
-    "llm_contribution": [
-      "需求语义理解与工作包规划",
-      "I/O契约和API计划建议（不直接产出可执行脚本）"
-    ],
-    "opencode_contribution": [
-      "工作包文件落盘与脚本生成（OpenCode Builder）",
-      "schema修复反馈循环执行"
-    ]
-  },
-  "name": "ctx-pack",
-  "version": "v1.0.0",
-  "objective": "上下文验证",
-  "sources": [
-    "fengtu"
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
   ]
 }

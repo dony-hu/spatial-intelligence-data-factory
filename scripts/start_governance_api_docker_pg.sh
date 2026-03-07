@@ -38,6 +38,14 @@ if [[ "${DATABASE_URL}" != *":55432/"* ]]; then
   echo "[ERROR] DATABASE_URL must point to docker pg on :55432" >&2
   exit 2
 fi
+if [[ -z "${LLM_API_KEY:-}" ]]; then
+  echo "[ERROR] LLM_API_KEY is empty. Export a real key before starting governance api." >&2
+  exit 2
+fi
+if [[ "${LLM_API_KEY}" == "\${LLM_API_KEY}" ]]; then
+  echo "[ERROR] LLM_API_KEY is unresolved placeholder string." >&2
+  exit 2
+fi
 
 docker compose up -d postgres >/dev/null
 

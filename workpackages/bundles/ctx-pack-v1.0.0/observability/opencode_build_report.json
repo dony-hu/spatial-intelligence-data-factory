@@ -3,7 +3,7 @@
   "bundle_name": "ctx-pack-v1.0.0",
   "name": "ctx-pack",
   "version": "v1.0.0",
-  "objective": "上下文验证",
+  "objective": "上下文验证，并输出可观测验收结果",
   "sources": [
     "fengtu"
   ],

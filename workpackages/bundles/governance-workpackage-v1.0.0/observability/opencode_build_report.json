@@ -3,11 +3,11 @@
   "bundle_name": "governance-workpackage-v1.0.0",
   "name": "governance-workpackage",
   "version": "v1.0.0",
-  "objective": "地址治理工作包（标准化/验真/空间图谱）",
+  "objective": "数据治理任务执行与可观测验收",
   "sources": [
     "fengtu"
   ],
-  "script_count": 3,
+  "script_count": 2,
   "line_metrics_path": "workpackages/bundles/governance-workpackage-v1.0.0/observability/line_metrics.json",
   "status": "success"
 }

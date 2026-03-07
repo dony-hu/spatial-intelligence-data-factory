@@ -19,11 +19,8 @@ class OpenCodeWorkpackageBuilder:
 
         (bundle_dir / "README.md").write_text(self._generate_readme(name, version, sources, objective), encoding="utf-8")
 
+        # `workpackage.json` 必须保持与 workpackage_schema.v1 严格一致，不追加旧版顶层字段。
         wp_config = dict(blueprint)
-        wp_config["name"] = name
-        wp_config["version"] = version
-        wp_config["objective"] = objective
-        wp_config["sources"] = sources
         (bundle_dir / "workpackage.json").write_text(json.dumps(wp_config, ensure_ascii=False, indent=2), encoding="utf-8")
 
         skills_dir = bundle_dir / "skills"

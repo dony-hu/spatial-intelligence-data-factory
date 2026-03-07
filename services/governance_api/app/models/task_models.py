@@ -19,6 +19,8 @@ class TaskSubmitRequest(BaseModel):
     idempotency_key: str = Field(min_length=6, max_length=128)
     batch_name: str = Field(min_length=1, max_length=255)
     ruleset_id: str = Field(min_length=1, max_length=64)
+    workpackage_id: Optional[str] = Field(default=None, min_length=1, max_length=128)
+    version: Optional[str] = Field(default=None, min_length=1, max_length=32)
     records: List[AddressRecordInput] = Field(min_length=1, max_length=2000)
 
 

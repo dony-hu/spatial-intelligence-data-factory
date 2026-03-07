@@ -1,0 +1,12 @@
+{
+  "workpackage_id": "cn_address_governance_pipeline",
+  "version": "v1.0.1",
+  "command": [
+    "bash",
+    "entrypoint.sh"
+  ],
+  "return_code": 1,
+  "stdout": "======================================\n  执行 WorkPackage: cn_address_governance_pipeline-v1.0.1\n======================================\n加载技能...\n  - fengtu_verification.md\n执行脚本...\n  - build_spatial_graph.py\n",
+  "stderr": "  File \"/Users/huda/Code/spatial-intelligence-data-factory/workpackages/bundles/cn_address_governance_pipeline-v1.0.1/scripts/build_spatial_graph.py\", line 10\n    def main() -> None:\n               ^\nSyntaxError: invalid syntax\n",
+  "executed_at": "2026-03-05T11:27:23.453095+00:00"
+}

@@ -9,6 +9,7 @@
   - 协议变更记录。
 - `schemas/<version>/`
   - 存放该版本 schema 文件，例如 `schemas/v1/workpackage_schema.v1.schema.json`。
+  - 编排记忆对象协议也在此目录维护，例如 `schemas/v1/orchestration_context.v1.schema.json`。
 - `templates/<version>/`
   - 存放该版本配套模板（README 模板、目录结构模板等）。
 - `examples/<version>/`
@@ -23,6 +24,7 @@
 每个 schema 版本必须提供并登记：
 1. `README 模板`
 2. `目录结构模板`
+3. `编排上下文/记忆对象协议（如适用）`
 
 登记位置：
 - `registry.json -> versions.<version>.companion_artifacts`
@@ -37,3 +39,12 @@
    - `companion_artifacts`
    - `examples`
 3. 任何消费者读取版本时只能通过 `registry.json` 解析，不允许硬编码文件路径。
+
+## 推荐阅读顺序
+
+1. `docs/04_系统组件设计/工厂Agent与工作包工程化设计.md`
+   - 先看总设计，理解 Factory Agent、工作包协议、记忆对象、人机协同的整体关系。
+2. `docs/04_系统组件设计/工作包协议IO绑定工程化设计.md`
+   - 再看工作包 I/O binding 设计。
+3. `docs/04_系统组件设计/工厂Agent人机协同状态机.md`
+   - 最后看用户介入、阻塞与恢复状态机。

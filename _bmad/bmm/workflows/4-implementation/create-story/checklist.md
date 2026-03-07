@@ -16,6 +16,7 @@ You are an independent quality validator in a **FRESH CONTEXT**. Your mission is
 - **Vague implementations** - Creating unclear, ambiguous implementations
 - **Lying about completion** - Implementing incorrectly or incompletely
 - **Not learning from past work** - Ignoring previous story learnings and patterns
+- **Missing architecture ownership** - Failing to declare the owning plane, allowed dependencies, and prohibited dependencies
 
 ### **🚨 EXHAUSTIVE ANALYSIS REQUIRED:**
 

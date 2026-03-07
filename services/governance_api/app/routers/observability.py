@@ -745,6 +745,9 @@ def runtime_agent_chat(payload: dict[str, Any]) -> dict:
     trace_payload = (result or {}).get("nanobot_traces") if isinstance(result, dict) else {}
     if not isinstance(trace_payload, dict):
         trace_payload = {"client_nanobot": [], "nanobot_opencode": []}
+    memory_payload = (result or {}).get("memory_objects") if isinstance(result, dict) else {}
+    if not isinstance(memory_payload, dict):
+        memory_payload = {}
     _AGENT_TRACE_SESSIONS[session_id] = {
         "client_nanobot": list(trace_payload.get("client_nanobot") or []),
         "nanobot_opencode": list(trace_payload.get("nanobot_opencode") or []),
@@ -785,6 +788,7 @@ def runtime_agent_chat(payload: dict[str, Any]) -> dict:
         "trace_log_path": str((result or {}).get("trace_log_path") or ""),
         "schema_fix_rounds": (result or {}).get("schema_fix_rounds") if isinstance(result, dict) else [],
         "workpackage_blueprint_summary": (result or {}).get("workpackage_blueprint_summary") if isinstance(result, dict) else {},
+        "memory_objects": memory_payload,
         "history": history[-20:],
     }
 
@@ -851,29 +855,35 @@ def runtime_preflight(
     # 4) real external LLM connectivity
     if verify_llm:
         try:
-            from tools.agent_cli import load_config, run_requirement_query
-
-            config_path = Path(__file__).resolve().parents[4] / "config" / "llm_api.json"
-            config = load_config(str(config_path))
-            config["timeout_sec"] = int(llm_timeout_sec)
-            config["max_tokens"] = min(int(config.get("max_tokens") or 1200), 32)
             llm_error = ""
-            answer = ""
+            llm_detail = ""
+            llm_ok = False
+            agent = _get_factory_agent()
             for _ in range(max(1, int(llm_retries))):
                 try:
-                    ping = run_requirement_query(
-                        "请仅回复: OK",
-                        config,
-                        system_prompt_override="你是连通性探针，请只输出OK",
+                    ping = agent.converse(
+                        "请给出一条地址治理建议（20字以内）。",
+                        session_id="runtime_preflight_probe",
                     )
-                    answer = str(ping.get("answer") or "").strip()
-                    if answer:
+                    status = str((ping or {}).get("status") or "").strip().lower()
+                    llm_status = str((ping or {}).get("llm_status") or "").strip().lower()
+                    action = str((ping or {}).get("action") or "").strip().lower()
+                    message = str((ping or {}).get("message") or (ping or {}).get("reply") or "").strip()
+                    error_text = str((ping or {}).get("error") or "").strip()
+                    llm_detail = message or status or "empty_response"
+                    if error_text:
+                        llm_detail = f"{llm_detail} | error={error_text}"
+                    # Must be explicit success from agent chat route.
+                    if status == "ok" and llm_status != "blocked" and action != "general_governance_chat_blocked":
+                        llm_ok = True
                         break
+                    llm_error = llm_detail
                 except Exception as exc:
                     llm_error = str(exc)
-            checks["llm"] = {"ok": bool(answer), "detail": (answer or llm_error)[:200]}
-            if not answer:
-                errors.append(f"llm: {llm_error or 'empty response'}")
+                    llm_detail = llm_error
+            checks["llm"] = {"ok": llm_ok, "detail": (llm_detail or llm_error or "empty response")[:200]}
+            if not llm_ok:
+                errors.append(f"llm: {llm_detail or llm_error or 'empty response'}")
         except Exception as exc:
             checks["llm"] = {"ok": False, "detail": str(exc)}
             errors.append(f"llm: {exc}")

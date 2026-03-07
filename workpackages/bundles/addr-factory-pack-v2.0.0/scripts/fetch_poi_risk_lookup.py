@@ -12,7 +12,7 @@ def main() -> None:
     payload = {
         "script": "fetch_poi_risk_lookup.py",
         "purpose": "调用外部API补齐能力：poi_risk_lookup",
-        "endpoint": "https://example.com/poi-risk",
+        "endpoint": "",
         "api_key_provided": bool(api_key),
         "status": "ready" if api_key else "waiting_for_api_key",
     }

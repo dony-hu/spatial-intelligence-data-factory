@@ -1,0 +1,81 @@
+version: "6.0.0"
+last_updated: "2026-03-07"
+project:
+  name: "spatial-intelligence-data-factory"
+  type: "other"
+  level: 4
+
+current_phase: "implementation"
+current_workflow: "retrospective"
+overall_status: "completed"
+
+phases:
+  analysis:
+    status: "completed"
+    workflows:
+      product-brief:
+        required: false
+        status: "completed"
+        output: "docs/01_产品与业务/产品简述.md"
+      brainstorm:
+        required: false
+        status: "completed"
+        output: "archive/docs/discovery/brainstorm-spatial-intelligence-data-factory-2026-02-28.md"
+      research:
+        required: false
+        status: "not_started"
+        output: ""
+
+  planning:
+    status: "completed"
+    workflows:
+      prd:
+        required: true
+        status: "completed"
+        output: "docs/01_产品与业务/产品需求文档.md"
+      tech-spec:
+        required: false
+        status: "not_started"
+        output: ""
+
+  solutioning:
+    status: "completed"
+    workflows:
+      architecture:
+        required: true
+        status: "completed"
+        output: "docs/02_总体架构/架构索引.md; docs/02_总体架构/系统总体架构图.md; docs/02_总体架构/系统总览.md; docs/02_总体架构/数据工厂技术架构.md; docs/02_总体架构/系统分层设计.md; docs/02_总体架构/模块边界.md; docs/02_总体架构/依赖关系.md; docs/02_总体架构/核心设计原则.md"
+
+  implementation:
+    status: "completed"
+    workflows:
+      sprint-planning:
+        required: true
+        status: "completed"
+        output: "docs/99_研发过程管理/冲刺计划.md; docs/99_研发过程管理/归档/截止2026-03-05/运行态可观测性V2/冲刺计划.md"
+      create-story:
+        required: true
+        status: "completed"
+        output: "docs/99_研发过程管理/归档/截止2026-03-05/架构收敛/故事/S1-A1-治理任务状态机稳定化.md; docs/99_研发过程管理/归档/截止2026-03-05/架构收敛/故事/S1-A2-结果契约强校验.md; docs/99_研发过程管理/归档/截止2026-03-05/架构收敛/故事/S1-A3-人工审核闭环补齐.md; docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/故事/OBS-PG-S1-系统可观测性与PG库一体化构建.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S1-治理仓储与服务入口PG-only硬切.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S2-MVP验收脚本PG-only改造.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S3-契约与工作包SQLite引用收敛.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S4-主线测试集PG-only重构.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S5-CI与仓库卫生SQLite回流硬门.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S6-全量移除代码中SQLite相关内容.md"
+      dev-story:
+        required: true
+        status: "completed"
+        output: "docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/主题说明.md; docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/主题说明.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/主题说明.md; docs/99_研发过程管理/归档/截止2026-03-05/架构收敛/主题说明.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A1-CLI-Agent-LLM-对话确认治理需求.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A2-地址治理流程试运行.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A3-工作包发布到数据治理Runtime.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A4-地址治理流水线最小构建.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A5-可信数据Hub能力沉淀.md; docs/99_研发过程管理/归档/截止2026-03-05/地址治理MVP/故事/MVP-A6-数据库模型与持久化闭环补齐.md; docs/99_研发过程管理/归档/截止2026-03-05/可观测性与PG一体化/故事/OBS-PG-S1-系统可观测性与PG库一体化构建.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S1-治理仓储与服务入口PG-only硬切.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S2-MVP验收脚本PG-only改造.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S3-契约与工作包SQLite引用收敛.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S4-主线测试集PG-only重构.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S5-CI与仓库卫生SQLite回流硬门.md; docs/99_研发过程管理/归档/截止2026-03-05/PG-only与SQLite退役/故事/PGO-S6-全量移除代码中SQLite相关内容.md"
+      code-review:
+        required: true
+        status: "completed"
+        output: "docs/99_研发过程管理/归档/截止2026-03-05/架构收敛/评审记录.md; docs/99_研发过程管理/归档/截止2026-03-05/运行态可观测性V2/评审记录.md"
+      retrospective:
+        required: false
+        status: "completed"
+        output: "docs/99_研发过程管理/归档/截止2026-03-05/运行态可观测性V2/复盘记录.md"
+
+recommendation:
+  next_workflow: "retrospective"
+  reason: "研发主题 3（运行态可观测性 V2）已完成验收收口，当前进入复盘与下一迭代硬约束冻结阶段。"
+
+references:
+  spec_fusion:
+    report: "docs/99_研发过程管理/规格融合/报告.md"
+    status_yaml: "docs/99_研发过程管理/规格融合/状态.yaml"
+    baseline_readme: "specs/README.md"

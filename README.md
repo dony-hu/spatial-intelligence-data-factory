@@ -128,8 +128,8 @@ Lakehouse 负责生长与试错，DW 负责权威输出与治理审计。
 
 - `AGENTS.md`：方法仓引用规则与优先级
 - `bmad/config.yaml`：方法仓路径、回退环境变量、资产要求
-- `docs/bmm-workflow-status.yaml`：BMAD 工作流状态
-- `docs/bmad-shortcuts.md`：BMAD 指令/工作流/角色中英文缩略语速查表
+- `docs/12_项目管理/工作流状态.yaml`：BMAD 工作流状态
+- `docs/12_项目管理/BMAD快捷入口.md`：BMAD 指令/工作流/角色中英文缩略语速查表
 
 当默认路径不可用时，可通过环境变量覆盖：
 

@@ -31,7 +31,7 @@
 - 子线不得越权改动其他子线状态文件。
 - 状态更新建议每 30-90 分钟一次。
 - 工作线命名以本文件为准，禁止在派单与看板中使用旧命名别名。
-- 研发角色体系统一采用 Build-time 口径（治理角色 + 工作线角色 + Agent 能力域），映射规范见 `docs/codex-bmad-role-mapping-v1-2026-02-15.md`。
+- 研发角色体系统一采用 Build-time 口径（治理角色 + 工作线角色 + Agent 能力域），其中 A-角色缩写映射规范见 `docs/12_项目管理/BMAD快捷入口.md`。
 - 运营使用者角色（Run-time）不得写入研发派单责任字段。
 - 每次任务推进必须同步刷新看板落盘：`task_dispatched`、`progress_refreshed`、`status_collected`、`test_synced` 四类事件均需写入 `output/dashboard/dashboard_events.jsonl`，并刷新 `project_overview/worklines_overview/workpackages_live/test_status_board/dashboard_manifest`。
 - 派单时间口径统一使用本地时间（CST），下发提示词与看板展示不再使用 UTC 字段。
@@ -50,7 +50,7 @@
 - `A_role`：治理最终负责角色
 - `R_owner`：工作线执行 Owner
 - `agent_capabilities`：主 Agent 能力域（建议 1-2 个）
-- `skill_profile`：BMAD skills 配置档（对应角色映射文档中的默认 skill 链）
+- `skill_profile`：BMAD skills 配置档（按派单约定的默认 skill 链）
 - `skill_entry`：本次执行起始 skill（如 `specify` / `plan` / `implement`）
 - `skill_exit_gate`：本次完成门禁（如 `analyze_pass` / `checklist_pass`）
 - `go_no_go_gate`：可量化验收门槛
@@ -60,6 +60,6 @@
 
 ## BMAD Skills 执行约定（研发期）
 
-- 默认 skill 链映射见：`docs/codex-bmad-role-mapping-v1-2026-02-15.md`
+- 默认 A-角色缩写映射见：`docs/12_项目管理/BMAD快捷入口.md`
 - 同一任务默认只允许 1 条主 skill 链，避免并发执行导致口径冲突
 - `analyze/checklist` 未通过时，状态必须保持 `NO_GO`，不得直接标记“已完成”

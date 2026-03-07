@@ -1,0 +1,446 @@
+{
+  "schema_version": "workpackage_schema.v1",
+  "mode": "blueprint_mode",
+  "workpackage": {
+    "id": "address-governance-light-lte100",
+    "name": "address_governance_light_lte100",
+    "version": "v1.0.1",
+    "objective": "面向不超过100条地址数据，按工厂四阶段完成地址标准化、真实性校验、五级解析、地理编码与质量报告输出，形成可发布、可复跑、可审计的轻量治理工作包。",
+    "scope": {
+      "in_scope": [
+        "normalization",
+        "entity_parsing",
+        "address_validation",
+        "spatial_graph"
+      ],
+      "out_of_scope": []
+    },
+    "owner": {
+      "team": "governance-factory",
+      "role": "dev",
+      "contact": "factory-oncall"
+    },
+    "priority": "P1",
+    "status": "aligned",
+    "acceptance_criteria": [
+      "records[] 每条包含 normalization/entity_parsing/address_validation",
+      "spatial_graph 输出 nodes/edges/metrics/failed_row_refs/build_status"
+    ]
+  },
+  "architecture_context": {
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
+    "runtime_env": {
+      "python": "3.10+",
+      "os": "Linux/Unix",
+      "max_records": 100,
+      "constraints": {
+        "no_fallback": true,
+        "no_mock": true,
+        "no_workground": true,
+        "requires_real_llm": true
+      },
+      "env_vars_required": [
+        "FENGTU_APP_KEY",
+        "FENGTU_APP_SECRET",
+        "AMAP_API_KEY"
+      ]
+    }
+  },
+  "io_contract": {
+    "input_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "records"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_address": {
+                "type": "string",
+                "minLength": 3
+              },
+              "consignee": {
+                "type": "string"
+              },
+              "mobile": {
+                "type": "string"
+              },
+              "city_hint": {
+                "type": "string"
+              },
+              "province_hint": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "output_schema": {
+      "type": "object",
+      "required": [
+        "batch_id",
+        "summary",
+        "results",
+        "quality_report"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "object",
+          "required": [
+            "total",
+            "success",
+            "failed"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "success": {
+              "type": "integer"
+            },
+            "failed": {
+              "type": "integer"
+            }
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "record_id",
+              "raw_address",
+              "standard_address",
+              "address_level",
+              "address_type",
+              "is_real_address",
+              "l5_components",
+              "geocode",
+              "quality_flags"
+            ],
+            "properties": {
+              "record_id": {
+                "type": "string"
+              },
+              "raw_address": {
+                "type": "string"
+              },
+              "standard_address": {
+                "type": "string"
+              },
+              "address_level": {
+                "type": "string"
+              },
+              "address_type": {
+                "type": "string"
+              },
+              "is_real_address": {
+                "type": "boolean"
+              },
+              "l5_components": {
+                "type": "object"
+              },
+              "geocode": {
+                "type": "object",
+                "properties": {
+                  "lng": {
+                    "type": "number"
+                  },
+                  "lat": {
+                    "type": "number"
+                  }
+                }
+              },
+              "quality_flags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "error_message": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "quality_report": {
+          "type": "object",
+          "required": [
+            "rule_metrics",
+            "top_issues",
+            "generated_at"
+          ],
+          "properties": {
+            "rule_metrics": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "top_issues": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "generated_at": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "api_plan": {
+    "registered_apis_used": [
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_standardize",
+        "name": "地址标准化",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_real_check",
+        "name": "地址真实性校验",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_resolve_l5",
+        "name": "五级地址解析",
+        "method": "POST"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_level_judge",
+        "name": "地址级别判断",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "address_type_identify",
+        "name": "地址类型识别",
+        "method": "GET"
+      },
+      {
+        "source_id": "fengtu",
+        "interface_id": "geocode",
+        "name": "地理编码",
+        "method": "GET"
+      }
+    ],
+    "missing_apis": [
+      {
+        "name": "行政区划代码权威校验",
+        "endpoint": "https://restapi.amap.com/v3/config/district",
+        "reason": "现有注册API可完成地址解析，但缺少对国家/省市区划编码权威映射校验能力，用于输出标准adcode并辅助主数据对齐。",
+        "requires_key": true,
+        "api_key_env": "AMAP_API_KEY",
+        "register_plan": {
+          "target": "trust_hub",
+          "tool_type": "api",
+          "status_on_register": "pending_key"
+        }
+      }
+    ]
+  },
+  "execution_plan": {
+    "steps": [
+      {
+        "step_id": "S01",
+        "name": "step-1",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S02",
+        "name": "step-2",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S03",
+        "name": "step-3",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S04",
+        "name": "step-4",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S05",
+        "name": "step-5",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S06",
+        "name": "step-6",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S07",
+        "name": "step-7",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      },
+      {
+        "step_id": "S08",
+        "name": "step-8",
+        "stage": "custom",
+        "inputs": [],
+        "outputs": [],
+        "timeout_sec": 300,
+        "retry": {
+          "max_attempts": 1
+        }
+      }
+    ],
+    "gates": {
+      "confirm_generate": false,
+      "confirm_dryrun_result": false,
+      "confirm_publish": false
+    },
+    "failure_handling": {
+      "on_schema_mismatch": "continue_llm_interaction_until_valid",
+      "on_api_failure": "block_error_no_fallback",
+      "on_dependency_missing": "ask_user_for_key_and_register"
+    }
+  },
+  "scripts": [
+    {
+      "name": "prepare_input.py",
+      "purpose": "输入文件规范化与字段校验，生成符合input_schema的JSON。",
+      "runtime": "python3",
+      "entry": "python scripts/prepare_input.py --input data/input.csv --output data/input.normalized.json",
+      "dependencies": [
+        "pandas>=2.0.0",
+        "jsonschema>=4.0.0"
+      ]
+    },
+    {
+      "name": "run_address_governance.py",
+      "purpose": "调用Fengtu与高德API执行地址治理主流程，输出治理结果。",
+      "runtime": "python3",
+      "entry": "python scripts/run_address_governance.py --input data/input.normalized.json --output data/output.governed.json",
+      "dependencies": [
+        "requests>=2.31.0",
+        "tenacity>=8.2.0",
+        "pydantic>=2.0.0"
+      ]
+    },
+    {
+      "name": "generate_report.py",
+      "purpose": "根据治理结果生成质量报告与问题分布统计。",
+      "runtime": "python3",
+      "entry": "python scripts/generate_report.py --input data/output.governed.json --report reports/address_governance_report.json",
+      "dependencies": [
+        "pandas>=2.0.0"
+      ]
+    },
+    {
+      "name": "fetch_wp_f5d5b949.py",
+      "purpose": "调用外部API补齐能力：行政区划代码权威校验",
+      "runtime": "python3",
+      "entry": "python scripts/fetch_wp_f5d5b949.py",
+      "dependencies": [
+        "requests>=2.31.0"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "nanobot_workpackage_schema_orchestrator",
+      "name": "nanobot 工作包协议编排",
+      "path": "skills/nanobot_workpackage_schema_orchestrator.md",
+      "purpose": "引导用户补齐工作包 schema 并持续收敛",
+      "required": true
+    },
+    {
+      "skill_id": "opencode_workpackage_builder_guardrails",
+      "name": "opencode 工作包构建护栏",
+      "path": "skills/opencode_workpackage_builder_guardrails.md",
+      "purpose": "生成可执行工件并遵循 no-fallback/no-mock 约束",
+      "required": true
+    }
+  ]
+}

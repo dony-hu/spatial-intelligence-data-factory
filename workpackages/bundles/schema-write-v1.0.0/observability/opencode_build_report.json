@@ -1,0 +1,13 @@
+{
+  "builder": "OpenCodeWorkpackageBuilder",
+  "bundle_name": "schema-write-v1.0.0",
+  "name": "schema-write",
+  "version": "v1.0.0",
+  "objective": "地址标准化与验真，并输出可观测验收结果",
+  "sources": [
+    "fengtu"
+  ],
+  "script_count": 2,
+  "line_metrics_path": "workpackages/bundles/schema-write-v1.0.0/observability/line_metrics.json",
+  "status": "success"
+}
