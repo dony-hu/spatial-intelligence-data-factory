@@ -28,7 +28,21 @@
     ]
   },
   "architecture_context": {
-    "factory_architecture": {},
+    "factory_architecture": {
+      "layers": [
+        "Agent会话编排层",
+        "可信数据Hub层",
+        "工作包执行层",
+        "运行态可观测层"
+      ],
+      "workpackage_lifecycle": [
+        "requirements_confirm",
+        "generate",
+        "dryrun",
+        "publish",
+        "runtime_upload"
+      ]
+    },
     "runtime_env": {
       "python": "3.11"
     }

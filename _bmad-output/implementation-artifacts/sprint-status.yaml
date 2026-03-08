@@ -65,3 +65,12 @@ development_status:
   4-3-ir-p0-03-runtime-stage-enum-dictionary-unification: done
   4-4-ir-p0-04-evidence-index-and-legacy-test-path-fix: done
   epic-4-retrospective: optional
+
+  epic-14: in-progress
+  14-1-shared-contract-freeze-and-consumer-baseline: ready-for-dev
+  14-2-legacy-boundary-freeze-and-directory-ownership: ready-for-dev
+  14-3-factory-agent-modular-split-with-stable-external-contract: ready-for-dev
+  14-4-runtime-api-seam-convergence-and-mainline-boundary-cleanup: ready-for-dev
+  14-5-legacy-test-cleanup-and-baseline-establishment: ready-for-dev
+  14-6-integration-regression-and-first-parallel-admission: ready-for-dev
+  epic-14-retrospective: optional

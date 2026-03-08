@@ -47,16 +47,19 @@
 
 ## 4. 扩展工作流（W-）
 
-| 工作流 | 英文缩写 | 中文缩写 | 说明 |
-| --- | --- | --- | --- |
-| quick-spec | `W-QSP` | `W-快速方案` | 快速规格化 |
-| quick-dev | `W-QDV` | `W-快速开发` | 快速开发路径 |
-| domain-research | `W-DRS` | `W-领域研究` | 领域研究 |
-| market-research | `W-MRS` | `W-市场研究` | 市场研究 |
-| technical-research | `W-TRS` | `W-技术研究` | 技术研究 |
-| generate-project-context | `W-GCTX` | `W-项目上下文` | 生成项目上下文 |
-| document-project | `W-DOC` | `W-项目文档` | 项目文档化 |
-| qa-generate-e2e-tests | `W-E2E` | `W-端到端测` | 生成 E2E 测试 |
+| 工作流                          | 英文缩写     | 中文缩写      | 说明                                    |
+| ---------------------------- | -------- | --------- | ------------------------------------- |
+| quick-spec                   | `W-QSP`  | `W-快速方案`  | 快速规格化                                 |
+| quick-dev                    | `W-QDV`  | `W-快速开发`  | 快速开发路径                                |
+| domain-research              | `W-DRS`  | `W-领域研究`  | 领域研究                                  |
+| market-research              | `W-MRS`  | `W-市场研究`  | 市场研究                                  |
+| technical-research           | `W-TRS`  | `W-技术研究`  | 技术研究                                  |
+| generate-project-context     | `W-GCTX` | `W-项目上下文` | 生成项目上下文                               |
+| document-project             | `W-DOC`  | `W-项目文档`  | 项目文档化                                 |
+| qa-generate-e2e-tests        | `W-E2E`  | `W-端到端测`  | 生成 E2E 测试                             |
+| bmad-story-pipeline          | `W-STP`  | `W-故事流水线` | 在当前分支上执行单 Story 可配置流水线，不做 Worktree 隔离 |
+| bmad-story-pipeline-worktree | `W-STW`  | `W-故事工作树` | 在隔离 Worktree 中执行单 Story 流水线并通过后合并     |
+| bmad-epic-pipeline-worktree  | `W-EPW`  | `W-史诗工作树` | 在隔离 Worktree 中顺序交付整个 Epic 的未完成 Story  |
 
 ## 5. SpecKit 指令（S-）
 
@@ -101,6 +104,9 @@
   - `执行 W-ARC`
   - `Run W-ARC`
   - `执行 S-PLN`
+  - `执行 W-STP 13-1`
+  - `执行 W-STW 13-1`
+  - `执行 W-EPW 13`
 - 角色 + 工作流：
   - `执行 A-ARC + W-ARC`
   - `Run A-PM then W-PRD`
@@ -114,6 +120,12 @@
 - `bmad` CLI 目前只提供安装和状态类命令（如 `install/status/help`），不直接提供 `architect` 这类 workflow 子命令。
 - 在 Codex 内触发工作流，建议使用自然语言或本表缩写（如 `W-ARC`）进行调用。
 - SpecKit 指令清单以 `.codex/prompts/speckit.*.md` 为准，本表仅提供快捷缩写映射。
+- 已安装外部工作树流水线 Skill：
+  - `W-STP` -> `/bmad-story-pipeline`
+  - `W-STW` -> `/bmad-story-pipeline-worktree`
+  - `W-EPW` -> `/bmad-epic-pipeline-worktree`
+- `W-STP` 运行在当前分支，不提供 Worktree 隔离；需要隔离时优先使用 `W-STW` 或 `W-EPW`。
+- `W-EPW`、`W-STW`、`W-STP` 属于外部扩展 Skill，不替代仓库内 `codex/` 分支前缀、Linear 绑定和红区治理规则。
 
 ## 10. 固化到 Skill 的方案（已落地）
 
@@ -128,10 +140,13 @@
   - `执行 A-ARC + W-ARC`
   - `执行 C-STS`
   - `执行 S-PLN`
+  - `执行 W-STP 13-1`
+  - `执行 W-STW 13-1`
+  - `执行 W-EPW 13`
 - 路由 Skill 负责把缩写映射到标准 BMAD skill、SpecKit 指令或 CLI 命令。
 
 ### 10.2 维护方式
 
-- 新增缩写：编辑 `_bmad/core/tasks/shortcuts-router.md` 的映射表。
+- 新增缩写：同步编辑 `_bmad/core/tasks/shortcuts-router.md` 与 `~/.codex/skills/bmad-speckit-shortcuts/references/shortcut-map.md` 的映射表。
 - 调整速查表：同步更新本文件，保持“文档口径”和“路由口径”一致。
 - 升级后：抽查关键映射（`W-PRD`、`W-ARC`、`W-DEV`、`S-PLN`、`S-IMP`、`T-HLP`）是否仍可正确路由。

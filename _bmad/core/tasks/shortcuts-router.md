@@ -55,6 +55,9 @@ Use this task when the user enters shorthand aliases such as `W-ARC`, `S-PLN`, `
 - `W-GCTX` / `W-项目上下文` -> `bmad-bmm-generate-project-context`
 - `W-DOC` / `W-项目文档` -> `bmad-bmm-document-project`
 - `W-E2E` / `W-端到端测` -> `bmad-bmm-qa-generate-e2e-tests`
+- `W-STP` / `W-story-pipeline` / `W-故事流水线` -> `bmad-story-pipeline`
+- `W-STW` / `W-story-worktree` / `W-story-pipeline-worktree` / `W-故事工作树` -> `bmad-story-pipeline-worktree`
+- `W-EPW` / `W-epic-worktree` / `W-epic-pipeline-worktree` / `W-史诗工作树` -> `bmad-epic-pipeline-worktree`
 
 ### SpecKit (`S-`)
 

@@ -1,0 +1,8 @@
+version: "v1"
+status: "active"
+updated_at: "2026-03-07"
+purpose: "当前规格融合状态入口。2026-03-05 之前的历史状态已归档。"
+history_reference:
+  archived_status: "docs/99_研发过程管理/99_归档/截止2026-03-05/项目管理/规格融合/状态.yaml"
+current_summary:
+  note: "当前无新增规格融合待处理项；后续状态直接在本文件更新。"
