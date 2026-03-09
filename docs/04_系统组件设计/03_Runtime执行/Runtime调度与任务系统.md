@@ -44,6 +44,7 @@ flowchart TD
 | PGStateStore | `src/runtime/state_store.py` | 将任务控制态落到 `control_plane.task_state` |
 | PGEvidenceStore | `src/runtime/evidence_store.py` | 将状态转移和执行事件落到 `control_plane.evidence_records` |
 | Approval Policy | `src/runtime/policies.py` | 判定审批是否满足 |
+| RuntimeControlCore | `src/runtime/control_core.py` | 统一 submit/query/evidence 与 `dryrun / publish` 控制主链 |
 
 图说明：这张图展示 Runtime 框架内部的核心组件关系，强调“状态”和“证据”是并行存在的。
 
@@ -258,8 +259,90 @@ flowchart TD
 一个真正的治理 Runtime 至少要有三层能力：
 
 1. 状态推进
-2. bundle 执行
-3. 证据与审计
+
+## 13. EPIC16-S1 Workflow 映射口径
+
+本节用于冻结 Runtime 状态机到 Workflow 的首版映射，避免后续 `EPIC16` 各 Story 各自发明控制语义。
+
+### 13.1 正式状态到 Workflow state 的映射
+
+| 正式状态 | Workflow state | control semantics | 说明 |
+|---|---|---|---|
+| `SUBMITTED` | `SUBMITTED` | `submitted` | 已创建执行实例，等待进入规划。 |
+| `PLANNED` | `PLANNED` | `planned` | 已完成计划装配，等待审批或直进。 |
+| `APPROVAL_PENDING` | `APPROVAL_PENDING` | `awaiting_approval` | 等待人工或系统门禁批准。 |
+| `APPROVED` | `APPROVED` | `approved` | 审批完成，允许继续推进。 |
+| `CHANGESET_READY` | `CHANGESET_READY` | `changeset_ready` | 执行前输入与变更集已就绪。 |
+| `EXECUTING` | `EXECUTING` | `executing` | Worker / Executor 正在执行 bundle。 |
+| `EVALUATING` | `EVALUATING` | `evaluating` | 正在归集执行结果与评估。 |
+| `NEEDS_HUMAN` | `NEEDS_HUMAN` | `awaiting_human` | 需要人工复核或恢复决策。 |
+| `FAILED` | `FAILED` | `failed` | 控制链或执行链失败。 |
+| `ROLLED_BACK` | `ROLLED_BACK` | `rolled_back` | 已执行回滚，当前流程结束。 |
+| `COMPLETED` | `COMPLETED` | `completed` | 本轮 Runtime 执行闭环结束。 |
+
+### 13.2 当前冻结的允许迁移
+
+截至 `EPIC16-S1`，当前冻结的迁移规则如下：
+
+1. `SUBMITTED -> PLANNED / FAILED`
+2. `PLANNED -> APPROVAL_PENDING / APPROVED / FAILED`
+3. `APPROVAL_PENDING -> APPROVED / FAILED`
+4. `APPROVED -> CHANGESET_READY / FAILED`
+5. `CHANGESET_READY -> EXECUTING / FAILED`
+6. `EXECUTING -> EVALUATING / FAILED / ROLLED_BACK`
+7. `EVALUATING -> COMPLETED / FAILED / NEEDS_HUMAN`
+8. `NEEDS_HUMAN -> APPROVED / FAILED`
+
+### 13.3 真相源边界
+
+`EPIC16-S1` 明确冻结以下边界：
+
+1. Workflow 引擎只承接控制过程，不作为正式结构化真相源。
+2. 当前正式真相源仍为：
+   - `control_plane.task_state`
+   - `control_plane.evidence_records`
+   - `runtime.publish_record`
+   - `governance.*`
+3. 任何 Workflow state 变化，都必须能回写到上述正式对象，而不是只停留在引擎内部状态。
+
+### 13.4 最小设计冻结验证
+
+当前已通过 `tests/test_agent_runtime.py` 对以下 contract 做最小验证：
+
+1. `runtime.workflow_state_mapping.v1` schema 标识存在。
+2. `APPROVAL_PENDING / NEEDS_HUMAN / ROLLED_BACK` 控制语义已冻结。
+3. `workflow_engine_is_truth_source = false`。
+
+## 14. EPIC16 完成后的默认执行基线
+
+截至 `2026-03-09`，当前仓库中 Runtime 默认执行基线已更新为：
+
+1. `src/runtime/control_core.py` 固定为 Python adapter，不再承担默认控制主脑。
+2. `src/runtime/go_runtime_bridge.py` + `services/governance_runtime_go/cmd/runtimebridge/main.go` 共同承接默认 `Go Runtime` 控制链。
+3. `src/runtime/go_executor_bridge.py` + `services/governance_runtime_go/cmd/executorbridge/main.go` 共同承接默认 `Go Executor` 执行链。
+4. `Go Executor` 默认优先装载 `entrypoint.py`，bundle 仍保留 `entrypoint.py / entrypoint.sh` 作为正式入口。
+5. OpenCode 生成的 bundle 已在 `entrypoint.py` 内将脚本执行结果汇总为 `output/runtime_output.json`，满足 Worker 统一执行 contract。
+6. `dryrun / publish` 已默认经由 `Go Runtime + Go Executor` 进入：
+   - `SUBMITTED -> PLANNED -> APPROVED -> CHANGESET_READY -> EXECUTING -> EVALUATING -> COMPLETED/FAILED/ROLLED_BACK`
+7. `dryrun / publish` 返回结果已补入统一字段：
+   - `runtime.task_id`
+   - `runtime.trace_id`
+   - `runtime.state`
+   - `runtime.workflow_core`
+   - `runtime.control_plane.impl`
+   - `runtime.control_plane.engine`
+   - `runtime.executor.impl`
+   - `runtime.executor.entrypoint_mode`
+   - `runtime.compat.*`
+8. `EPIC16` 收口后已移除 legacy entrypoint fallback 通路；若 bundle 未产出 `output/runtime_output.json`，Runtime 必须直接阻塞并返回真实失败。
+9. `EPIC16-S2 / S3 / S5` 的正式通过信号应以以下字段为准：
+   - `runtime.control_plane.impl = go_runtime.v1`
+   - `runtime.control_plane.engine = temporal_go`
+   - `runtime.executor.impl = go_executor.v1`
+   - `runtime.executor.entrypoint_mode = workpackage_entrypoint`
+   - `runtime.compat.python_control_fallback_used = false`
+10. bundle 执行仍受 `workpackage_id@version + entrypoint` 唯一执行面约束。
+11. 证据与审计仍以 PostgreSQL + 对象/文件产物层作为正式落点。
 
 如果只有“排队 + 执行脚本”，那它只是一个任务队列，不是治理 Runtime。  
 本项目的设计口径明确要求 Runtime 还要能回答：
@@ -269,7 +352,7 @@ flowchart TD
 3. 失败发生在 bundle 的哪个阶段。
 4. 这次执行对应哪个工作包版本。
 
-## 13. 与 Factory Agent 状态机的关系
+## 15. 与 Factory Agent 状态机的关系
 
 这两套状态机不要混：
 
@@ -282,14 +365,14 @@ flowchart TD
 
 正式交接字段、门禁语义和状态映射，不再散落在多份文档里，统一看 [Agent与Runtime交接契约](Agent与Runtime交接契约.md)。
 
-## 14. 与血缘和数据湖设计的关系
+## 16. 与血缘和数据湖设计的关系
 
 这份文档只解决“任务怎么被提交、调度、推进和留证据”，另外两类问题已经单独收口：
 
 1. 结果如何按 `task_id / trace_id / workpackage_id@version` 回查，统一看 [数据血缘与可追溯设计](数据血缘与可追溯设计.md)。
 2. Runtime 依赖哪些存储服务、执行框架和工作流语言边界，统一看 [数据湖与执行技术架构](数据湖与执行技术架构.md)。
 
-## 15. 当前设计结论
+## 17. 当前设计结论
 
 1. 调度对象必须是 `workpackage_id@version + task_id` 二元组合。
 2. Worker 必须只执行 bundle 入口，不得反向依赖具体治理算法。

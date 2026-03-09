@@ -88,8 +88,79 @@ Runtime 回传给 Agent 的最小内容应包含：
 3. `confirm_publish`
    - 解决是否允许从 Runtime 试运行结果进入正式发布。
 
-## 8. 工业化要求
+## 8. EPIC15 当前对外合同补充
+
+截至 `2026-03-08`，Agent 与 Runtime 交接前后的最小结构化合同补充如下：
+
+1. Agent 对外返回必须带 `orchestration` snapshot。
+2. 该 snapshot 至少包含：
+   - `phase`
+   - `control_state`
+   - `reason_code`
+   - `resume_from_stage`
+   - `pending_gate`
+3. 当 Runtime 尚未被触发时：
+   - `WAIT_USER_GATE` 表示 Agent 仍停留在门禁决策层，不应向 Runtime 自动推进。
+   - `BLOCKED` 表示 Agent 已有结构化阻塞原因，Runtime 不应被假定为已接管。
+4. 当 Runtime 已完成 dryrun 回传时：
+   - Agent 应把门禁等待回写到 `gate_state`
+   - Agent 应把当前人工动作回写到 `interaction_state`
+5. 当发布或执行失败时：
+   - `blocker_ticket` 必须保留 `code / summary / resume_from_stage`
+   - 不允许只返回自由文本错误而缺失恢复位点
+6. 当前中断与门禁控制载荷已补入最小 typed contract：
+   - `factory.recover_request.v1`
+   - `factory.approval_decision.v1`
+7. `factory.recover_request.v1` 只用于 Agent 编排层恢复，不直接作为 Runtime submit payload。
+8. `factory.approval_decision.v1` 只解决 Agent 门禁推进，不等价于 Runtime 内部审批记录。
+9. `EPIC15` 试点验收时，Agent 编排层的 canonical 合同回归入口为：
+   - `tests/test_factory_agent_orchestration_core.py`
+   - `tests/test_factory_agent_runtime_trace_logging.py`
+   - `tests/test_factory_agent_routing.py`
+   - `tests/test_factory_agent_contract.py`
+   - `tests/test_orchestration_context_schema_contract.py`
+10. 上述回归入口仅用于证明 Agent 编排层替换试点的合同回归方式；具体执行结果应保留在对应 Epic 验收与测试产物中。
+11. 该结论不外推为 Runtime 控制层替换完成。
+
+## 9. 工业化要求
 
 1. Agent 与 Runtime 之间的交接必须结构化，不允许靠自然语言消息拼接。
 2. 交接载荷、回传载荷和证据引用必须能进入测试与验收。
 3. 状态机的新增状态如影响交接，必须同步更新本契约和两侧状态机文档。
+
+## 10. EPIC16-S1 最小承接范围
+
+截至 `2026-03-09`，`EPIC16-S1` 对 Agent 与 Runtime 交接的最小承接范围冻结如下：
+
+1. 本阶段只冻结：
+   - Runtime 状态机到 Workflow 的映射
+   - submit / get / evidence 最小承接范围
+   - 真相源边界
+2. 本阶段不提前冻结：
+   - bundle 执行面改造
+   - 全量内部服务契约升级
+   - 正式全量 E2E 门禁
+3. Runtime Workflow state 不得取代以下正式查询对象：
+   - `control_plane.task_state`
+   - `control_plane.evidence_records`
+   - `runtime.publish_record`
+4. 上游 Agent 在 `EPIC16` 中仍只要求 submit/query/evidence 对外交接 contract 稳定，不要求同时升级为新内部协议。
+5. 当前 Python 迁移前置基线中，`dryrun / publish` 对外回执已补入最小控制内核标识：
+   - `runtime.task_id`
+   - `runtime.trace_id`
+   - `runtime.state`
+   - `runtime.workflow_core = runtime_control_core.v1`
+6. 上述 `runtime.workflow_core = runtime_control_core.v1` 仅用于标识 Python 迁移承接层，不得作为 `Go` 语言切换完成信号。
+7. `EPIC16-S2 / S3 / S5` 的正式通过信号应改为：
+   - `runtime.control_plane.impl = go_runtime.v1`
+   - `runtime.control_plane.engine = temporal_go`
+   - `runtime.executor.impl = go_executor.v1`
+   - `runtime.executor.entrypoint_mode = workpackage_entrypoint`
+   - `runtime.compat.python_control_fallback_used = false`
+8. 截至 `EPIC16` 收口，Agent 已可稳定收到：
+   - `runtime.control_plane.impl = go_runtime.v1`
+   - `runtime.control_plane.engine = temporal_go`
+   - `runtime.executor.impl = go_executor.v1`
+   - `runtime.executor.entrypoint_mode = workpackage_entrypoint`
+   - `runtime.compat.python_control_fallback_used = false`
+9. 上述信号已通过 backend smoke 与 PostgreSQL truth-source 回查验证，可作为 `EPIC16` 试点完成口径。

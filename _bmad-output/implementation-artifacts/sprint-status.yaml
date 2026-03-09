@@ -26,7 +26,7 @@
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
 
-generated: "2026-03-03T16:05:00+08:00"
+generated: "2026-03-09T11:05:00+08:00"
 project: spatial-intelligence-data-factory
 project_key: NOKEY
 tracking_system: file-system
@@ -66,11 +66,27 @@ development_status:
   4-4-ir-p0-04-evidence-index-and-legacy-test-path-fix: done
   epic-4-retrospective: optional
 
-  epic-14: in-progress
-  14-1-shared-contract-freeze-and-consumer-baseline: ready-for-dev
-  14-2-legacy-boundary-freeze-and-directory-ownership: ready-for-dev
-  14-3-factory-agent-modular-split-with-stable-external-contract: ready-for-dev
-  14-4-runtime-api-seam-convergence-and-mainline-boundary-cleanup: ready-for-dev
-  14-5-legacy-test-cleanup-and-baseline-establishment: ready-for-dev
-  14-6-integration-regression-and-first-parallel-admission: ready-for-dev
+  epic-14: done
+  14-1-shared-contract-freeze-and-consumer-baseline: done
+  14-2-legacy-boundary-freeze-and-directory-ownership: done
+  14-3-factory-agent-modular-split-with-stable-external-contract: done
+  14-4-runtime-api-seam-convergence-and-mainline-boundary-cleanup: done
+  14-5-legacy-test-cleanup-and-baseline-establishment: done
+  14-6-integration-regression-and-first-parallel-admission: done
   epic-14-retrospective: optional
+
+  epic-15: done
+  15-1-agent-state-machine-and-graph-state-mapping-design-freeze: done
+  15-2-factory-agent-facade-stays-stable-while-switching-to-the-new-orchestration-core: done
+  15-3-discovery-align-io-blueprint-loop-pilot-migration: done
+  15-4-wait-user-input-wait-user-gate-blocked-semantics-migration: done
+  15-5-new-orchestration-core-contract-regression-and-replacement-acceptance: done
+  epic-15-retrospective: done
+
+  epic-16: done
+  16-1-runtime-state-machine-and-workflow-mapping-design-freeze: done
+  16-2-runtime-submit-facade-stays-stable-while-switching-to-the-new-control-core: done
+  16-3-dryrun-control-path-pilot-migration: done
+  16-4-publish-failure-and-recovery-semantics-migration: done
+  16-5-runtime-control-core-contract-regression-and-replacement-acceptance: done
+  epic-16-retrospective: done
